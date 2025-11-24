@@ -8,14 +8,12 @@ import ApplicationLogo from '@/Components/ApplicationLogo.vue';
             <ApplicationLogo class="block h-12 w-auto" />
 
             <h1 class="mt-8 text-2xl font-medium text-gray-900 dark:text-white">
-                Welcome to your Jetstream application!
+                Selamat datang di FanSight by LabqiTech
             </h1>
 
             <p class="mt-6 text-gray-500 dark:text-gray-400 leading-relaxed">
-                Laravel Jetstream provides a beautiful, robust starting point for your next Laravel application. Laravel is designed
-                to help you build your application using a development environment that is simple, powerful, and enjoyable. We believe
-                you should love expressing your creativity through programming, so we have spent time carefully crafting the Laravel
-                ecosystem to be a breath of fresh air. We hope you love it.
+                FanSight dibangun untuk membangun komunitas penggemar yang kuat dan terhubung. Platform ini menyediakan berbagai fitur interaktif yang memungkinkan penggemar untuk berinteraksi, berbagi, dan merayakan minat bersama-sama.
+                Dengan antarmuka yang ramah pengguna dan alat kolaboratif, FanSight bertujuan untuk menciptakan ruang di mana penggemar dapat berpartisipasi menunjukkan dukungan mereka terhadap idola.
             </p>
         </div>
 
@@ -26,12 +24,12 @@ import ApplicationLogo from '@/Components/ApplicationLogo.vue';
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
                     </svg>
                     <h2 class="ms-3 text-xl font-semibold text-gray-900 dark:text-white">
-                        <a href="https://laravel.com/docs">Documentation</a>
+                        <a href="https://laravel.com/docs">Blog</a>
                     </h2>
                 </div>
 
                 <p class="mt-4 text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
-                    Laravel has wonderful documentation covering every aspect of the framework. Whether you're new to the framework or have previous experience, we recommend reading all of the documentation from beginning to end.
+                    Fitur dasar yang memungkinkan anda berbagi tentang tulisan dan interaksi menarik ketika bertemu dan menyaksikan pertunjukan idola.
                 </p>
 
                 <p class="mt-4 text-sm">

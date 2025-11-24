@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\PostController;
+use App\Models\Post;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -24,8 +25,26 @@ Route::middleware([
     })->name('dashboard');
 });
 
-// Blog public routes (Blade)
-Route::get('/blog', [PostController::class, 'index'])->name('blog.index');
+// Blog public routes (Inertia)
+Route::get('/blog', function () {
+    $posts = Post::where('status','published')
+        ->whereNotNull('published_at')
+        ->where('published_at','<=', now())
+        ->orderByDesc('published_at')
+        ->paginate(10)
+        ->through(fn($p) => [
+            'id' => $p->id,
+            'title' => $p->title,
+            'slug' => $p->slug,
+            'excerpt' => $p->excerpt,
+            'published_at' => $p->published_at,
+        ]);
+
+    return Inertia::render('Blog/Index', [
+        'posts' => $posts,
+    ]);
+})->name('blog.index');
+
 Route::get('/blog/{post}', [PostController::class, 'show'])->name('blog.show');
 
 // Auth protected post management (create/edit/delete)
@@ -35,5 +54,20 @@ Route::middleware(['auth'])->group(function () {
 
 // Management page: only authenticated users can access their posts
 Route::middleware(['auth'])->group(function () {
-    Route::get('/dashboard/posts', [PostController::class, 'manage'])->name('posts.manage');
+    Route::get('/posts', function () {
+        $posts = auth()->user()->posts()->orderByDesc('updated_at')->paginate(20)->through(fn($p) => [
+            'id' => $p->id,
+            'title' => $p->title,
+            'slug' => $p->slug,
+            'status' => $p->status,
+            'published_at' => $p->published_at,
+        ]);
+
+        return Inertia::render('Posts/Manage', [
+            'posts' => $posts,
+        ]);
+    })->name('posts.manage');
 });
+
+// Settings (change app name)
+

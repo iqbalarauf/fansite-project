@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
 
 class PostController extends Controller
 {
@@ -26,7 +27,9 @@ class PostController extends Controller
             ->orderByDesc('updated_at')
             ->paginate(20);
 
-        return view('blog.manage', compact('posts'));
+        return Inertia::render('Posts/Manage', [
+            'posts' => $posts,
+        ]);
     }
 
     public function index()
@@ -37,7 +40,9 @@ class PostController extends Controller
             ->orderByDesc('published_at')
             ->paginate(10);
 
-        return view('blog.index', compact('posts'));
+        return Inertia::render('Blog/Index', [
+            'posts' => $posts,
+        ]);
     }
 
     public function show(Post $post)
@@ -46,12 +51,27 @@ class PostController extends Controller
             abort(404);
         }
 
-        return view('blog.show', compact('post'));
+        return Inertia::render('Blog/Show', [
+            'post' => [
+                'id' => $post->id,
+                'title' => $post->title,
+                'slug' => $post->slug,
+                'excerpt' => $post->excerpt,
+                'body' => $post->body,
+                'body_html' => $post->body_html,
+                'featured_image' => $post->featured_image ? Storage::url($post->featured_image) : null,
+                'category' => $post->category,
+                'tags' => $post->tags,
+                'status' => $post->status,
+                'published_at' => $post->published_at,
+                'user' => [ 'id' => $post->user->id, 'name' => $post->user->name ],
+            ],
+        ]);
     }
 
     public function create()
     {
-        return view('blog.create');
+        return Inertia::render('Posts/Create');
     }
 
     public function store(StorePostRequest $request): RedirectResponse
@@ -83,7 +103,20 @@ class PostController extends Controller
     public function edit(Post $post)
     {
         $this->authorize('update', $post);
-        return view('blog.edit', compact('post'));
+        return Inertia::render('Posts/Edit', [
+            'post' => [
+                'id' => $post->id,
+                'title' => $post->title,
+                'slug' => $post->slug,
+                'excerpt' => $post->excerpt,
+                'body' => $post->body,
+                'featured_image' => $post->featured_image ? Storage::url($post->featured_image) : null,
+                'category' => $post->category,
+                'tags' => $post->tags,
+                'status' => $post->status,
+                'published_at' => $post->published_at,
+            ],
+        ]);
     }
 
     public function update(UpdatePostRequest $request, Post $post): RedirectResponse

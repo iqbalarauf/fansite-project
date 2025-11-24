@@ -47,18 +47,16 @@ function handleImageError() {
 
                         <template v-else>
                             <Link
+                                :href="route('blog.index')"
+                                class="rounded-md px-3 py-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white"
+                            >
+                                Blog
+                            </Link>
+                            <Link
                                 :href="route('login')"
                                 class="rounded-md px-3 py-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white"
                             >
                                 Log in
-                            </Link>
-
-                            <Link
-                                v-if="canRegister"
-                                :href="route('register')"
-                                class="rounded-md px-3 py-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white"
-                            >
-                                Register
                             </Link>
                         </template>
                     </nav>
@@ -98,7 +96,8 @@ function handleImageError() {
                                         <h2 class="text-xl font-semibold text-black dark:text-white">Documentation</h2>
 
                                         <p class="mt-4 text-sm/relaxed">
-                                            Laravel has wonderful documentation covering every aspect of the framework. Whether you are a newcomer or have prior experience with Laravel, we recommend reading our documentation from beginning to end.
+                                            FanSight dibangun untuk membangun komunitas penggemar yang kuat dan terhubung. Platform ini menyediakan berbagai fitur interaktif yang memungkinkan penggemar untuk berinteraksi, berbagi, dan merayakan minat bersama-sama.
+                                        Dengan antarmuka yang ramah pengguna dan alat kolaboratif, FanSight bertujuan untuk menciptakan ruang di mana penggemar dapat berpartisipasi menunjukkan dukungan mereka terhadap idola.
                                         </p>
                                     </div>
                                 </div>
