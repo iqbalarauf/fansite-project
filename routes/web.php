@@ -5,13 +5,30 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\PostController;
 use App\Models\Post;
+use Illuminate\Support\Facades\Storage;
 
 Route::get('/', function () {
+    $latestPosts = Post::where('status','published')
+        ->whereNotNull('published_at')
+        ->where('published_at','<=', now())
+        ->orderByDesc('published_at')
+        ->take(5)
+        ->get()
+        ->map(fn($p) => [
+            'id' => $p->id,
+            'title' => $p->title,
+            'slug' => $p->slug,
+            'excerpt' => $p->excerpt,
+            'published_at' => $p->published_at,
+            'thumbnail' => $p->featured_image ? Storage::url($p->featured_image) : null,
+        ]);
+
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
         'laravelVersion' => Application::VERSION,
         'phpVersion' => PHP_VERSION,
+        'latestPosts' => $latestPosts,
     ]);
 });
 

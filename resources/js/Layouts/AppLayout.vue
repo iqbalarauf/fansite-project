@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import ApplicationMark from '@/Components/ApplicationMark.vue';
 import Banner from '@/Components/Banner.vue';
@@ -7,12 +7,43 @@ import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
+import ThemeToggle from '@/Components/ThemeToggle.vue';
 
 defineProps({
     title: String,
 });
 
 const showingNavigationDropdown = ref(false);
+
+// Dark mode state (persisted to localStorage)
+const isDark = ref(false);
+
+const applyDark = (value) => {
+    try {
+        const html = document.documentElement;
+        if (value) html.classList.add('dark'); else html.classList.remove('dark');
+        localStorage.setItem('dark-mode', value ? '1' : '0');
+        isDark.value = !!value;
+    } catch (e) {
+        // ignore server-side or non-browser environments
+    }
+};
+
+const toggleDark = () => applyDark(!isDark.value);
+
+onMounted(() => {
+    try {
+        const stored = localStorage.getItem('dark-mode');
+        if (stored !== null) {
+            applyDark(stored === '1');
+        } else {
+            // default based on current html class
+            isDark.value = document.documentElement.classList.contains('dark');
+        }
+    } catch (e) {
+        // ignore
+    }
+});
 
 const switchToTeam = (team) => {
     router.put(route('current-team.update'), {
@@ -33,7 +64,7 @@ const logout = () => {
 
         <Banner />
 
-        <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
+        <div class="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-500">
             <nav class="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
                 <!-- Primary Navigation Menu -->
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -58,6 +89,9 @@ const logout = () => {
                         </div>
 
                         <div class="hidden sm:flex sm:items-center sm:ms-6">
+                            <!-- Dark mode toggle (left of account dropdown) -->
+                            <ThemeToggle variant="desktop" v-if="$page.props.auth.user" />
+
                             <div class="ms-3 relative">
                                 <!-- Teams Dropdown -->
                                 <Dropdown v-if="$page.props.jetstream.hasTeamFeatures" align="right" width="60">
@@ -205,6 +239,8 @@ const logout = () => {
                     <!-- Responsive Settings Options -->
                     <div class="pt-4 pb-1 border-t border-gray-200 dark:border-gray-600">
                         <div class="flex items-center px-4">
+                            <!-- Mobile dark mode toggle (left of profile info) -->
+                            <ThemeToggle variant="mobile" v-if="$page.props.auth.user" />
                             <div v-if="$page.props.jetstream.managesProfilePhotos" class="shrink-0 me-3">
                                 <img class="size-10 rounded-full object-cover" :src="$page.props.auth.user.profile_photo_url" :alt="$page.props.auth.user.name">
                             </div>
