@@ -41,8 +41,7 @@
                                     <Link :href="route('blog.show', post.slug)">{{ post.title }}</Link>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ post.status }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ post.published_at ? new
-                                    Date(post.published_at).toLocaleDateString() : '-' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ post.published_at ? formatDate(post.published_at) : '-' }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-center">
                                     <Link :href="route('posts.edit', post.slug)"
                                         class="text-indigo-600 hover:text-indigo-900 mr-4">Edit</Link>
@@ -78,6 +77,7 @@
 <script setup>
 import { ref } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
+import { formatDate } from '@/Helpers/formatDate';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
 const title = 'Manage Blog Posts';

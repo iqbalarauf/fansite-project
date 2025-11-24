@@ -1,6 +1,7 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
 import { ref, onMounted } from 'vue';
+import { formatDate } from '@/Helpers/formatDate';
 
 defineProps({
     canLogin: {
@@ -141,10 +142,7 @@ const currentYear = new Date().getFullYear();
                                         <div class="flex items-center justify-between gap-3">
                                             <div class="text-md font-medium text-black dark:text-white truncate">{{
                                                 post.title }}</div>
-                                            <div class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">{{
-                                                post.published_at
-                                                    ? new
-                                                Date(post.published_at).toLocaleDateString() : '-' }}</div>
+                                            <div class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ post.published_at ? formatDate(post.published_at) : '-' }}</div>
                                         </div>
                                         <div class="text-sm text-gray-600 dark:text-gray-400 mt-1 truncate">{{
                                             post.excerpt ??

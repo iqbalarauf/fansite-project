@@ -9,7 +9,7 @@
         <h2 class="text-xl font-semibold">
           <Link :href="route('blog.show', post.slug)">{{ post.title }}</Link>
         </h2>
-        <p class="text-sm text-gray-600">Published: {{ post.published_at ? new Date(post.published_at).toLocaleDateString() : '-' }}</p>
+        <p class="text-sm text-gray-600">Published: {{ post.published_at ? formatDate(post.published_at) : '-' }}</p>
         <p class="mt-2">{{ post.excerpt }}</p>
       </div>
 
@@ -32,6 +32,7 @@
 
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
+import { formatDate } from '@/Helpers/formatDate';
 
 const props = defineProps({
   posts: Object,
