@@ -34,6 +34,8 @@
         <label class="block">Current featured image</label>
         <div v-if="post.featured_image" class="mb-2"><img :src="post.featured_image" class="w-48" /></div>
         <input type="file" @change="onFileChange" />
+        <div class="text-red-600 text-sm pt-1">*Max File Size: 2048 KB/2 MB</div>
+
       </div>
 
       <div class="mb-4">
@@ -59,6 +61,9 @@
           <span v-if="form.processing">Saving…</span>
           <span v-else>Save</span>
         </button>
+        <div class="mt-2">
+          <ActionMessage :on="!!success" class="text-sm text-green-600">{{ success }}</ActionMessage>
+        </div>
       </div>
     </form>
   </div>
@@ -66,6 +71,8 @@
 
 <script setup>
 import { useForm } from '@inertiajs/vue3';
+import ActionMessage from '@/Components/ActionMessage.vue';
+import { ref } from 'vue';
 import { computed } from 'vue';
 
 const props = defineProps({
@@ -75,6 +82,8 @@ const props = defineProps({
 const post = props.post;
 
 const form = useForm({
+  // include _method so FormData contains it when we call form.post (important for file uploads)
+  _method: 'PUT',
   title: post.title || '',
   excerpt: post.excerpt || '',
   body: post.body || '',
@@ -89,11 +98,17 @@ const onFileChange = (e) => {
   form.featured_image = e.target.files[0];
 };
 
+const success = ref('');
+
 const submit = () => {
+  // Post with _method supplied in form data so PHP/Laravel can parse multipart fields
   form.post(route('posts.update', post.slug), {
-    method: 'put',
     forceFormData: true,
-    onSuccess: () => Inertia.visit(route('posts.manage')),
+    onSuccess: () => {
+      success.value = 'Post updated.';
+      // delay navigation briefly so the user can see the success message
+      setTimeout(() => Inertia.visit(route('posts.manage')), 700);
+    },
   });
 };
 

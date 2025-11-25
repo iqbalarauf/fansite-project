@@ -97,7 +97,9 @@ class PostController extends Controller
 
         $post = Post::create($data);
 
-        return redirect()->route('blog.show', $post->slug)->with('success','Post created.');
+        // Redirect to the authenticated user's posts management page so the
+        // server-side flash (Banner) appears on the destination immediately.
+        return redirect()->route('posts.manage')->with('flash', ['banner' => 'Post created.', 'bannerStyle' => 'success']);
     }
 
     public function edit(Post $post)
@@ -146,7 +148,9 @@ class PostController extends Controller
 
         $post->update($data);
 
-        return redirect()->route('blog.show', $post->slug)->with('success','Post updated.');
+        // After updating we redirect to the posts management page so the
+        // banner flash will be visible to the user on the destination page.
+        return redirect()->route('posts.manage')->with('flash', ['banner' => 'Post updated.', 'bannerStyle' => 'success']);
     }
 
     public function destroy(Post $post): RedirectResponse
@@ -156,6 +160,7 @@ class PostController extends Controller
             Storage::disk('public')->delete($post->featured_image);
         }
         $post->delete();
-        return redirect()->route('blog.index')->with('success','Post deleted.');
+        // redirect to posts.manage so the Banner flash shows in the management UI
+        return redirect()->route('posts.manage')->with('flash', ['banner' => 'Post deleted.', 'bannerStyle' => 'success']);
     }
 }

@@ -32,6 +32,7 @@
       <div class="mb-4">
         <label class="block">Featured image</label>
         <input type="file" @change="onFileChange" />
+        <div class="text-red-600 text-sm pt-1">*Max File Size: 2048 KB/2 MB</div>
       </div>
 
       <div class="mb-4">
@@ -57,6 +58,9 @@
           <span v-if="form.processing">Saving…</span>
           <span v-else>Save</span>
         </button>
+        <div class="mt-2">
+          <ActionMessage :on="!!success" class="text-sm text-green-600">{{ success }}</ActionMessage>
+        </div>
       </div>
     </form>
   </div>
@@ -64,7 +68,8 @@
 
 <script setup>
 import { useForm } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import ActionMessage from '@/Components/ActionMessage.vue';
+import { computed, ref } from 'vue';
 
 const form = useForm({
   title: '',
@@ -81,12 +86,15 @@ const onFileChange = (e) => {
   form.featured_image = e.target.files[0];
 };
 
+const success = ref('');
+
 const submit = () => {
   form.post(route('posts.store'), {
     forceFormData: true,
     onSuccess: () => {
-      // navigate to my posts management after create
-      Inertia.visit(route('posts.manage'));
+      // show success briefly then navigate to posts.manage
+      success.value = 'Post created.';
+      setTimeout(() => Inertia.visit(route('posts.manage')), 700);
     }
   });
 };

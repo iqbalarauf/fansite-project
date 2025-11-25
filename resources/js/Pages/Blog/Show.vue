@@ -2,13 +2,12 @@
   <Head :title="post.title" />
   <div class="bg-gray-50 text-black/50 dark:bg-black dark:text-white/50">
     <div
-      class="relative min-h-screen flex flex-col items-center justify-center selection:bg-[#FF2D20] selection:text-white">
-      <!-- Sticky full-width header above the content (so it starts at left:0) -->
-      <div class="sticky top-0 z-50 left-0 right-0 w-full bg-white/60 dark:bg-black/60 backdrop-blur-sm">
-        <div class="max-w-7xl mx-auto px-6">
-          <SiteHeader />
-        </div>
-      </div>
+            class="max-h-screen flex flex-col items-center justify-center selection:bg-[#FF2D20] selection:text-white">
+            <div class="sticky top-0 z-50 left-0 right-0 w-full bg-white/60 dark:bg-black/60 backdrop-blur-sm">
+                <div class="max-w-7xl mx-auto px-6">
+                    <SiteHeader :can-login="canLogin" :can-register="canRegister" />
+                </div>
+            </div>
 
       <div class="relative w-full max-w-2xl px-6 lg:max-w-7xl">
         <div class="max-w-3xl mx-auto py-8">
