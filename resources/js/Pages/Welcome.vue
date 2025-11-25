@@ -36,16 +36,12 @@ const heroSrc = '/storage/hero.jpg';
             src="https://laravel.com/assets/img/welcome/background.svg" />
         <div
             class="min-h-screen flex flex-col items-center justify-center selection:bg-[#FF2D20] selection:text-white">
-            <!-- Sticky full-width header above the hero (placed outside the centered container so it begins at left:0) -->
             <div class="sticky top-0 z-50 left-0 right-0 w-full bg-white/60 dark:bg-black/60 backdrop-blur-sm">
                 <div class="max-w-7xl mx-auto px-6">
                     <SiteHeader :can-login="canLogin" :can-register="canRegister" />
                 </div>
             </div>
 
-              <!-- Hero: full-bleed background image, content centered within max width -->
-              <!-- Negative top margin pulls the hero up so its background reaches the very top of the page
-                  while the sticky header (z-50) remains visually on top. Adjust -mt-20 if header height differs. -->
               <section class="mb-8 w-full -mt-36 relative z-0">
                 <div class="relative w-full overflow-hidden">
                     <!-- 16:9 aspect ratio based on full width -->
@@ -73,7 +69,7 @@ const heroSrc = '/storage/hero.jpg';
             <div class="relative w-full max-w-2xl px-6 lg:max-w-7xl">
                 <main class="mt-6">
                     <div class="grid gap-6 lg:grid-cols-2 lg:gap-8">
-                        <!-- Latest Posts: list of up to 5 articles -->
+                        <!-- Artikel Terbaru - 5 Artikel -->
                         <div id="docs-list" class="flex flex-col gap-4 md:row-span-3 lg:pb-10 bg-white p-6 rounded-lg shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] dark:bg-zinc-900 dark:ring-zinc-800">
                             <h3 class="text-lg font-semibold text-black dark:text-white">Latest Posts</h3>
                             <p class="text-sm/relaxed">
