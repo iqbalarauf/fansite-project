@@ -144,7 +144,9 @@ return [
     */
 
     'features' => [
-        Features::registration(),
+        // Registration routes are disabled here so we can define
+        // our own auth-protected registration routes in web.php.
+        // Features::registration(),
         Features::resetPasswords(),
         Features::emailVerification(),
         Features::updateProfileInformation(),

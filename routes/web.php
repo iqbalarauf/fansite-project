@@ -6,6 +6,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\PostController;
 use App\Models\Post;
 use Illuminate\Support\Facades\Storage;
+use Laravel\Fortify\Http\Controllers\RegisteredUserController;
 
 Route::get('/', function () {
     $latestPosts = Post::where('status','published')
@@ -68,6 +69,18 @@ Route::get('/blog', function () {
 })->name('blog.index');
 
 Route::get('/blog/{post}', [PostController::class, 'show'])->name('blog.show');
+
+// Registration routes that are only accessible to authenticated users.
+// This reuses Fortify's controller but wraps it in the auth middleware.
+Route::middleware([
+    'auth:sanctum',
+    config('jetstream.auth_session'),
+])->group(function () {
+    Route::get('/register', [RegisteredUserController::class, 'create'])
+        ->name('register');
+
+    Route::post('/register', [RegisteredUserController::class, 'store']);
+});
 
 // Auth protected post management (create/edit/delete)
 Route::middleware(['auth'])->group(function () {
