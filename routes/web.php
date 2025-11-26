@@ -41,6 +41,8 @@ Route::middleware([
 });
 
 // Blog public routes (Inertia)
+use Illuminate\Support\Str;
+
 Route::get('/blog', function () {
     $posts = Post::where('status','published')
         ->whereNotNull('published_at')
@@ -52,6 +54,11 @@ Route::get('/blog', function () {
             'title' => $p->title,
             'slug' => $p->slug,
             'excerpt' => $p->excerpt,
+            // include a thumbnail URL where available so the UI can show an image
+            'thumbnail' => $p->featured_image ? Storage::url($p->featured_image) : null,
+            // provide a trimmed preview of the body (120 chars) and whether there's more
+            'summary' => $p->excerpt ?? Str::limit(strip_tags($p->body_html), 120, ''),
+            'has_more' => strlen(strip_tags($p->body_html)) > 120,
             'published_at' => $p->published_at,
         ]);
 
