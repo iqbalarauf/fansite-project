@@ -25,7 +25,9 @@ function handleImageError() {
 }
 
 const currentYear = new Date().getFullYear();
-const heroSrc = '/storage/hero.jpg';
+import { usePage } from '@inertiajs/vue3';
+const page = usePage();
+const heroSrc = page.props.appSettings?.hero_image ?? '/storage/hero.jpg';
 </script>
 
 <template>

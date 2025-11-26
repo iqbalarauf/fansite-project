@@ -72,6 +72,9 @@ Route::get('/blog/{post}', [PostController::class, 'show'])->name('blog.show');
 // Auth protected post management (create/edit/delete)
 Route::middleware(['auth'])->group(function () {
     Route::resource('posts', PostController::class)->except(['index','show']);
+    // Settings management - restrict to users allowed by manage-settings gate
+    Route::get('/settings', [\App\Http\Controllers\SettingsController::class, 'index'])->middleware('can:manage-settings')->name('settings.index');
+    Route::put('/settings', [\App\Http\Controllers\SettingsController::class, 'update'])->middleware('can:manage-settings')->name('settings.update');
 });
 
 // Management page: only authenticated users can access their posts

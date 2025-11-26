@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use App\Models\Setting;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -35,9 +36,22 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        // share app settings with every Inertia response so Vue can read logo/app name/hero/login images
+        $appSettings = Setting::allKeyValues();
+
         return [
             ...parent::share($request),
-            //
+            'appSettings' => [
+                'app_name' => $appSettings['app_name'] ?? config('app.name'),
+                'sidebar_name' => $appSettings['sidebar_name'] ?? null,
+                'logo' => $appSettings['logo'] ?? null,
+                'hero_image' => $appSettings['hero_image'] ?? null,
+                'login_image' => $appSettings['login_image'] ?? null,
+            ],
+            // share whether current user can manage settings
+            'can' => [
+                'manageSettings' => $request->user() ? $request->user()->can('manage-settings') : false,
+            ],
         ];
     }
 }

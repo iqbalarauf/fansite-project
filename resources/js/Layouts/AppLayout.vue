@@ -73,7 +73,7 @@ const logout = () => {
                             <!-- Logo -->
                             <div class="shrink-0 flex items-center">
                                 <Link :href="route('dashboard')">
-                                    <ApplicationMark class="block h-9 w-auto" />
+                                    <ApplicationMark :src="$page.props.appSettings?.logo" />
                                 </Link>
                             </div>
 
@@ -185,6 +185,9 @@ const logout = () => {
 
                                         <div class="border-t border-gray-200 dark:border-gray-600" />
 
+                                        <!-- Settings -->
+                                        <DropdownLink v-if="$page.props.can?.manageSettings" :href="route('settings.index')">Settings</DropdownLink>
+
                                         <!-- Authentication -->
                                         <form @submit.prevent="logout">
                                             <DropdownLink as="button">
@@ -258,6 +261,10 @@ const logout = () => {
                         <div class="mt-3 space-y-1">
                             <ResponsiveNavLink :href="route('profile.show')" :active="route().current('profile.show')">
                                 Profile
+                            </ResponsiveNavLink>
+
+                            <ResponsiveNavLink v-if="$page.props.can?.manageSettings" :href="route('settings.index')" :active="route().current('settings.index')">
+                                Settings
                             </ResponsiveNavLink>
 
                             <ResponsiveNavLink v-if="$page.props.jetstream.hasApiFeatures" :href="route('api-tokens.index')" :active="route().current('api-tokens.index')">

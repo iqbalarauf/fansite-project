@@ -6,10 +6,12 @@ import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 createInertiaApp({
-    title: (title) => `${title} - ${appName}`,
+    // Compose the browser title using the latest app name available on
+    // window.page.props so changes saved to the DB show up immediately
+    // after Inertia visits/redirects.
+    title: (title) => `${title} - ${window?.page?.props?.appSettings?.sidebar_name || window?.page?.props?.appSettings?.app_name || import.meta.env.VITE_APP_NAME || 'Laravel'}`,
     resolve: (name) => resolvePageComponent(`./Pages/${name}.vue`, import.meta.glob('./Pages/**/*.vue')),
     setup({ el, App, props, plugin }) {
         return createApp({ render: () => h(App, props) })

@@ -4,10 +4,22 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
+        @php
+            // Prefer app name and sidebar short name from DB (settings) if available,
+            // otherwise fall back to config.
+            $appName = \App\Models\Setting::get('app_name', config('app.name', 'Laravel'));
+            $sidebarName = \App\Models\Setting::get('sidebar_name', null);
+            $favicon = \App\Models\Setting::get('logo', null);
+        @endphp
+
         @if(isset($page))
-            <title inertia>{{ config('app.name', 'Laravel') }}</title>
+            <title inertia>{{ $sidebarName ?? $appName }}</title>
         @else
-            <title>{{ config('app.name', 'Laravel') }}</title>
+            <title>{{ $sidebarName ?? $appName }}</title>
+        @endif
+
+        @if($favicon)
+            <link rel="icon" type="image/png" href="{{ $favicon }}" />
         @endif
 
         <!-- Fonts -->
@@ -30,7 +42,7 @@
             <header class="bg-white shadow">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
                     <div class="flex items-center space-x-4">
-                        <a href="/" class="text-lg font-semibold">{{ config('app.name', 'Laravel') }}</a>
+                        <a href="/" class="text-lg font-semibold">{{ $appName }}</a>
                         <a href="/blog" class="text-sm text-gray-700">Blog</a>
                         @auth
                             <a href="{{ route('posts.manage') }}" class="text-sm text-gray-700">My Posts</a>
