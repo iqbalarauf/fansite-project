@@ -33,18 +33,18 @@ const heroSrc = page.props.appSettings?.hero_image ?? '/storage/hero.jpg';
 <template>
 
     <Head title="Welcome" />
-    <div class="bg-gray-50 dark:bg-black text-black/50 dark:text-white/50">
+    <div class="bg-gray-100 dark:bg-gray-900 text-black/50 dark:text-white/50">
         <img id="background" class="absolute -left-20 top-0 max-w-[877px]"
             src="https://laravel.com/assets/img/welcome/background.svg" />
         <div
             class="min-h-screen flex flex-col items-center justify-center selection:bg-[#FF2D20] selection:text-white">
-            <div class="sticky top-0 z-50 left-0 right-0 w-full bg-white/60 dark:bg-black/60 backdrop-blur-sm">
+            <div class="sticky top-0 z-50 left-0 right-0 w-full bg-gray-100 dark:bg-gray-900 backdrop-blur-sm">
                 <div class="max-w-7xl mx-auto px-6">
                     <SiteHeader :can-login="canLogin" :can-register="canRegister" />
                 </div>
             </div>
 
-              <section class="mb-8 w-full -mt-36 relative z-0">
+              <section class="mb-8 w-full relative z-0">
                 <div class="relative w-full overflow-hidden">
                     <!-- 16:9 aspect ratio based on full width -->
                     <div class="w-full" style="padding-bottom:56.25%"></div>
@@ -55,8 +55,8 @@ const heroSrc = page.props.appSettings?.hero_image ?? '/storage/hero.jpg';
                     <div class="absolute inset-0 flex items-center justify-start">
                         <div class="max-w-7xl mx-auto w-full px-6">
                             <div class="max-w-3xl text-left py-12 text-white sm:pl-6 md:pl-12">
-                                <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight">Judul Hero Placeholder</h1>
-                                <p class="mt-4 text-sm sm:text-base text-white/90">Ini adalah teks placeholder untuk hero. Gunakan area ini untuk menampilkan penjelasan singkat mengenai situs, panggilan tindakan, atau highlight konten penting lainnya.</p>
+                                <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight">Fan Insight: Cornelia Vanisa</h1>
+                                <p class="mt-4 text-sm sm:text-base text-white/90">Sebuah antologi yang menunagkan segenap dukungan dalam perjalanan Cornelia Vanisa. </p>
 
                                 <div class="mt-6 flex flex-col sm:flex-row gap-3 justify-start">
                                     <Link :href="route('blog.index')" class="inline-flex items-center justify-center px-5 py-3 bg-white text-black font-semibold rounded-md hover:opacity-90">Info Lebih Lanjut</Link>
@@ -68,11 +68,12 @@ const heroSrc = page.props.appSettings?.hero_image ?? '/storage/hero.jpg';
                 </div>
             </section>
 
-            <div class="relative w-full max-w-2xl px-6 lg:max-w-7xl">
+              <div class="relative w-full px-4 sm:px-6 lg:px-8 max-w-full sm:max-w-screen md:max-w-screen lg:max-w-7xl">
                 <main class="mt-6">
-                    <div class="grid gap-6 lg:grid-cols-2 lg:gap-8">
+                    <!-- Single column on small screens, two columns from md upwards -->
+                    <div class="grid gap-4 md:grid-cols-2 lg:gap-8">
                         <!-- Artikel Terbaru - 5 Artikel -->
-                        <div id="docs-list" class="flex flex-col gap-4 md:row-span-3 lg:pb-10 bg-white p-6 rounded-lg shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] dark:bg-zinc-900 dark:ring-zinc-800">
+                        <div id="docs-list" class="flex flex-col gap-3 md:row-span-3 lg:pb-10 p-4 sm:p-6 rounded-lg shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] dark:ring-zinc-800 bg-white dark:bg-gray-800">
                             <h3 class="text-lg font-semibold text-black dark:text-white">Latest Posts</h3>
                             <p class="text-sm/relaxed">
                                     Dapatkan kabar terbaru tentang idolamu di sini. Kamu juga bisa berkontribusi untuk menulis dengan login dan tulis post baru di "Create Post"
@@ -85,11 +86,13 @@ const heroSrc = page.props.appSettings?.hero_image ?? '/storage/hero.jpg';
                                     </div>
                                 </li>
                                 <li v-for="post in (latestPosts || []).slice(0, 5)" :key="post.id"
-                                    class="block rounded-lg bg-white p-4 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.04)] ring-1 ring-white/[0.03] transition hover:shadow-md dark:bg-zinc-900 dark:ring-zinc-800 border border-gray-200 hover:border-gray-500 dark:hover:border-zinc-700">
+                                    class="block rounded-lg bg-white dark:bg-gray-800 p-4 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.04)] ring-1 ring-white/[0.03] transition hover:shadow-md border border-gray-200 hover:border-gray-500 dark:hover:border-zinc-700">
                                     <Link :href="route('blog.show', post.slug)" class="flex items-start gap-3">
                                     <template v-if="post.thumbnail">
+                                        <!-- Show a smaller thumbnail on mobile and a slightly
+                                             larger one on sm+ screens. -->
                                         <img :src="post.thumbnail" alt="thumbnail"
-                                            class="hidden sm:block w-24 h-16 rounded-md object-cover shrink-0" />
+                                            class="w-20 h-12 sm:w-24 sm:h-16 rounded-md object-cover shrink-0" />
                                     </template>
 
                                     <div class="flex-1 min-w-0">
@@ -110,7 +113,7 @@ const heroSrc = page.props.appSettings?.hero_image ?? '/storage/hero.jpg';
                         </div>
 
                         <a href="https://laracasts.com"
-                            class="flex items-start gap-4 rounded-lg bg-white p-6 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] transition duration-300 hover:text-black/70 hover:ring-black/20 focus:outline-none focus-visible:ring-[#FF2D20] lg:pb-10 dark:bg-zinc-900 dark:ring-zinc-800 dark:hover:text-white/70 dark:hover:ring-zinc-700 dark:focus-visible:ring-[#FF2D20]">
+                            class="flex items-start gap-4 rounded-lg bg-white dark:bg-gray-800 p-6 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] transition duration-300 hover:text-black/70 hover:ring-black/20 focus:outline-none focus-visible:ring-[#FF2D20] lg:pb-10 dark:ring-zinc-800 dark:hover:text-white/70 dark:hover:ring-zinc-700 dark:focus-visible:ring-[#FF2D20]">
                             <div
                                 class="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#FF2D20]/10 sm:size-16">
                                 <svg class="size-5 sm:size-6" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -141,7 +144,7 @@ const heroSrc = page.props.appSettings?.hero_image ?? '/storage/hero.jpg';
                         </a>
 
                         <a href="https://laravel-news.com"
-                            class="flex items-start gap-4 rounded-lg bg-white p-6 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] transition duration-300 hover:text-black/70 hover:ring-black/20 focus:outline-none focus-visible:ring-[#FF2D20] lg:pb-10 dark:bg-zinc-900 dark:ring-zinc-800 dark:hover:text-white/70 dark:hover:ring-zinc-700 dark:focus-visible:ring-[#FF2D20]">
+                            class="flex items-start gap-4 rounded-lg bg-white dark:bg-gray-800 p-6 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] transition duration-300 hover:text-black/70 hover:ring-black/20 focus:outline-none focus-visible:ring-[#FF2D20] lg:pb-10 dark:ring-zinc-800 dark:hover:text-white/70 dark:hover:ring-zinc-700 dark:focus-visible:ring-[#FF2D20]">
                             <div
                                 class="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#FF2D20]/10 sm:size-16">
                                 <svg class="size-5 sm:size-6" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -176,7 +179,7 @@ const heroSrc = page.props.appSettings?.hero_image ?? '/storage/hero.jpg';
                         </a>
 
                         <div
-                            class="flex items-start gap-4 rounded-lg bg-white p-6 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] lg:pb-10 dark:bg-zinc-900 dark:ring-zinc-800">
+                            class="flex items-start gap-4 rounded-lg p-6 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] lg:pb-10 bg-white dark:bg-gray-800 dark:ring-zinc-800">
                             <div
                                 class="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#FF2D20]/10 sm:size-16">
                                 <svg class="size-5 sm:size-6" xmlns="http://www.w3.org/2000/svg" fill="none"
