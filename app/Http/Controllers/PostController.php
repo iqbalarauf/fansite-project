@@ -126,11 +126,17 @@ class PostController extends Controller
         $data = $request->validated();
 
         if ($request->hasFile('featured_image')) {
-            // delete old if exists
-            if ($post->featured_image) {
-                Storage::disk('public')->delete($post->featured_image);
+            // Store the new image first. Only if storage succeeds do we remove the
+            // old file. This prevents situations where we delete the old image and
+            // then fail to save the new one, leaving the post without any image.
+            $newPath = $request->file('featured_image')->store('posts', 'public');
+            if ($newPath) {
+                // delete previous file if one exists
+                if ($post->featured_image) {
+                    Storage::disk('public')->delete($post->featured_image);
+                }
+                $data['featured_image'] = $newPath;
             }
-            $data['featured_image'] = $request->file('featured_image')->store('posts','public');
         }
 
         // normalize tags: accept comma-separated string or array
@@ -148,9 +154,9 @@ class PostController extends Controller
 
         $post->update($data);
 
-        // After updating we redirect to the posts management page so the
-        // banner flash will be visible to the user on the destination page.
-        return redirect()->route('posts.manage')->with('flash', ['banner' => 'Post updated.', 'bannerStyle' => 'success']);
+        // After updating, redirect back to the Edit page so the user sees the
+        // newly uploaded image (and page state) immediately.
+        return redirect()->route('posts.edit', $post)->with('flash', ['banner' => 'Post updated.', 'bannerStyle' => 'success']);
     }
 
     public function destroy(Post $post): RedirectResponse
