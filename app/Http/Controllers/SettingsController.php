@@ -2,45 +2,46 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AppSetting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
-use App\Models\Setting;
 
 class SettingsController extends Controller
 {
-    public function index()
+    public function edit()
     {
-        $this->authorize('manage-settings');
-
-        $settings = Setting::allKeyValues();
+        $settings = AppSetting::query()->latest()->first();
 
         return Inertia::render('Settings/Index', [
-            'settings' => $settings,
+            'settings' => $settings ? [
+                'app_name' => $settings->app_name,
+                'sidebar_name' => $settings->sidebar_name,
+            ] : [],
         ]);
     }
 
     public function update(Request $request)
     {
-        $this->authorize('manage-settings');
         $data = $request->validate([
-            'app_name' => 'nullable|string|max:255',
-            'sidebar_name' => 'nullable|string|max:64',
-            'remove_sidebar_name' => 'nullable|boolean',
+            'app_name' => ['nullable', 'string', 'max:255'],
+            'sidebar_name' => ['nullable', 'string', 'max:64'],
+            'remove_sidebar_name' => ['nullable', 'boolean'],
         ]);
 
-        if (isset($data['app_name'])) {
-            Setting::set('app_name', $data['app_name']);
+        $settings = AppSetting::query()->latest()->first() ?? new AppSetting();
+
+        // Basic fields
+        $settings->app_name = $data['app_name'] ?? $settings->app_name;
+        if (($data['remove_sidebar_name'] ?? false) === true) {
+            $settings->sidebar_name = null;
+        } else {
+            $settings->sidebar_name = $data['sidebar_name'] ?? $settings->sidebar_name;
         }
 
-        if (isset($data['sidebar_name'])) {
-            Setting::set('sidebar_name', $data['sidebar_name']);
-        }
+        $settings->save();
 
-        // explicit removal for sidebar_name
-        if ($request->boolean('remove_sidebar_name')) {
-            Setting::set('sidebar_name', null);
-        }
-
-        return back(303)->with('success', 'Settings updated.');
+        return redirect()->route('settings.index')
+            ->with('success', 'Settings updated');
     }
 }

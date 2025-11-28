@@ -23,6 +23,9 @@ class DatabaseSeeder extends Seeder
         ]);
         
         // example posts
-        $this->call(\Database\Seeders\PostSeeder::class);
+        $this->call([
+            \Database\Seeders\AppSettingSeeder::class,
+            \Database\Seeders\PostSeeder::class,
+        ]);
     }
 }

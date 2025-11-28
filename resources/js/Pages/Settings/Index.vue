@@ -60,8 +60,6 @@ watch(() => page.props.appSettings, (server) => {
 }, { deep: true })
 
 const submit = () => {
-    // use form.put to ensure the request method matches the PUT route
-  // If significant changes are present (sidebar_name changed or any removals), ask for confirmation
   const s = latestAppSettings.value || {}
   const sidebarChanged = form.sidebar_name !== (s.sidebar_name || '')
   const willRemove = form.remove_sidebar_name
@@ -71,11 +69,11 @@ const submit = () => {
     return
   }
 
-    form.put(route('settings.update'), {
-        onSuccess: (page) => {
-            syncFormFromServer(page?.props?.appSettings)
-        }
-    })
+  form.put(route('settings.update'), {
+    onSuccess: (page) => {
+      syncFormFromServer(page?.props?.appSettings)
+    }
+  })
 }
 
 const confirmSave = () => {

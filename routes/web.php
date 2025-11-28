@@ -7,6 +7,7 @@ use App\Http\Controllers\PostController;
 use App\Models\Post;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Fortify\Http\Controllers\RegisteredUserController;
+use App\Http\Controllers\SettingsController;
 
 Route::get('/', function () {
     $latestPosts = Post::where('status','published')
@@ -85,11 +86,13 @@ Route::middleware([
 // Auth protected post management (create/edit/delete)
 Route::middleware(['auth'])->group(function () {
     Route::resource('posts', PostController::class)->except(['index','show']);
-    // Settings management - restrict to users allowed by manage-settings gate
-    Route::get('/settings', [\App\Http\Controllers\SettingsController::class, 'index'])->middleware('can:manage-settings')->name('settings.index');
-    Route::put('/settings', [\App\Http\Controllers\SettingsController::class, 'update'])->middleware('can:manage-settings')->name('settings.update');
 });
 
+// Settings routes (auth + verified). Single canonical names:
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.index');
+    Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
+});
 // Management page: only authenticated users can access their posts
 Route::middleware(['auth'])->group(function () {
     Route::get('/posts', function () {
@@ -106,6 +109,3 @@ Route::middleware(['auth'])->group(function () {
         ]);
     })->name('posts.manage');
 });
-
-// Settings (change app name)
-
