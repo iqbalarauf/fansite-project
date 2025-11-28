@@ -14,64 +14,55 @@
           <!-- Left: Body + Preview (spans 2) -->
           <div class="md:col-span-2">
             <div class="mb-4">
-              <label class="block">Body</label>
-              <textarea v-model="form.body" rows="10" class="w-full border px-2 py-1"></textarea>
-              <div v-if="form.errors.body" class="text-red-600 text-sm">{{ form.errors.body }}</div>
-              <div class="text-sm text-gray-600 mt-2">
-                You can use <code>**bold**</code>, <code>*italic*</code>, and links like
-                <code>[label](https://example.com)</code>.
-                Line breaks are preserved.
-              </div>
+              <label class="block mb-2 text-sm font-medium dark:text-white">Title</label>
+              <input v-model="form.title" type="text"
+                class="py-2.5 sm:py-3 px-4 block w-full border-gray-200 rounded-lg sm:text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400 dark:placeholder-neutral-500 dark:focus:ring-neutral-600"
+                placeholder="Title" />
+              <div v-if="form.errors.title" class="text-red-600 text-sm">{{ form.errors.title }}</div>
             </div>
 
-            <div class="mt-4">
-              <h3 class="text-sm font-medium mb-2">Live preview</h3>
-              <div class="mb-2">
-                <img v-if="selectedPreview" :src="selectedPreview" class="w-full" />
-              </div>
-              <div class="p-4 border rounded bg-white prose" v-html="previewHtml"></div>
+            <div class="mb-4">
+              <label class="block mb-2 text-sm font-medium dark:text-white">Body</label>
+              <TiptapEditor v-model="form.body" />
+              <div v-if="form.errors.body" class="text-red-600 text-sm mt-2">{{ form.errors.body }}</div>
             </div>
           </div>
 
           <!-- Right: Title, excerpt, image, category, tags, status, save -->
           <div class="md:col-span-1 space-y-4">
-            <div>
-              <label class="block">Title</label>
-              <input v-model="form.title" class="w-full border px-2 py-1" />
-              <div v-if="form.errors.title" class="text-red-600 text-sm">{{ form.errors.title }}</div>
-            </div>
-
-            <div>
-              <label class="block">Excerpt</label>
-              <input v-model="form.excerpt" class="w-full border px-2 py-1" />
-            </div>
-
-            <div>
+            <div class="mb-4">
               <label class="block">Featured image</label>
+              <div class="mb-2">
+                <img v-if="selectedPreview" :src="selectedPreview" class="w-full h-36 object-cover rounded" />
+              </div>
               <input type="file" @change="onFileChange" />
               <div class="text-red-600 text-sm pt-1">*Max File Size: 2048 KB/2 MB</div>
             </div>
 
-            <div>
-              <label class="block">Category</label>
-              <input v-model="form.category" class="w-full border px-2 py-1" />
+            <div class="mb-4 sm:mb-8">
+              <label class="block mb-2 text-sm font-medium dark:text-white">Category</label>
+              <input v-model="form.category" type="text"
+                class="py-2.5 sm:py-3 px-4 block w-full border-gray-200 rounded-lg sm:text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400 dark:placeholder-neutral-500 dark:focus:ring-neutral-600"
+                placeholder="Category" />
             </div>
 
-            <div>
-              <label class="block">Tags (comma separated)</label>
-              <input v-model="form.tags" class="w-full border px-2 py-1" />
+            <div class="mb-4 sm:mb-8">
+              <label class="block mb-2 text-sm font-medium dark:text-white">Tags (comma separated)</label>
+              <input v-model="form.tags" type="text"
+                class="py-2.5 sm:py-3 px-4 block w-full border-gray-200 rounded-lg sm:text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400 dark:placeholder-neutral-500 dark:focus:ring-neutral-600"
+                placeholder="Tags (comma separated)" />
             </div>
 
-            <div>
-              <label class="block">Status</label>
+            <div class="mb-4 sm:mb-8">
+              <label class="block mb-2 text-sm font-medium dark:text-white">Status</label>
               <select v-model="form.status" class="border px-2 py-1 w-full">
                 <option value="draft">Draft</option>
                 <option value="published">Published</option>
               </select>
             </div>
 
-            <div>
-              <button :disabled="form.processing" class="w-full px-4 py-2 bg-blue-600 text-white rounded">
+            <div class="mt-6 grid">
+              <button :disabled="form.processing" class="w-full py-3 px-4 inline-flex justify-center items-center gap-x-2 text-sm font-medium rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 focus:outline-hidden focus:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none">
                 <span v-if="form.processing">Saving…</span>
                 <span v-else>Save</span>
               </button>
@@ -91,6 +82,7 @@ import { useForm } from '@inertiajs/vue3';
 import ActionMessage from '@/Components/ActionMessage.vue';
 import { computed, ref, onUnmounted } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import TiptapEditor from '@/Components/TiptapEditor.vue';
 
 const form = useForm({
   title: '',
@@ -111,7 +103,7 @@ const onFileChange = (e) => {
 
   // free previous object url if any
   if (selectedPreview.value) {
-    try { URL.revokeObjectURL(selectedPreview.value); } catch (e) {}
+    try { URL.revokeObjectURL(selectedPreview.value); } catch (e) { }
     selectedPreview.value = null;
   }
   if (file) {
@@ -121,7 +113,7 @@ const onFileChange = (e) => {
 
 onUnmounted(() => {
   if (selectedPreview.value) {
-    try { URL.revokeObjectURL(selectedPreview.value); } catch (e) {}
+    try { URL.revokeObjectURL(selectedPreview.value); } catch (e) { }
   }
 });
 
@@ -138,22 +130,5 @@ const submit = () => {
   });
 };
 
-// Simple client-side preview that mirrors the server-side formatting rules.
-const escapeHtml = (str) =>
-  String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-
-const previewHtml = computed(() => {
-  let text = form.body || '';
-  text = escapeHtml(text);
-  text = text.replace(/\[(.*?)\]\((https?:\/\/[^)\s]+)\)/gi, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-  text = text.replace(/\*\*(.*?)\*\*/gs, '<strong>$1</strong>');
-  text = text.replace(/\*(.*?)\*/gs, '<em>$1</em>');
-  text = text.replace(/\n/g, '<br>');
-  return text;
-});
+// Tiptap editor outputs HTML directly, so no need for markdown parsing
 </script>

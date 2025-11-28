@@ -6,35 +6,10 @@
       </h2>
     </template>
 
-    <!-- make 2 column, col-span-2 in left filled with Body and Live Preview, col-span-1 in right filled with Title, Excerpt, Current featured image, category, tags, and Save Button -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <form @submit.prevent="submit">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div class="col-span-2">
-            <div>
-              <label class="block mb-2 text-sm font-medium dark:text-white">Body</label>
-              <textarea rows="3"
-                class="py-2.5 sm:py-3 px-4 block w-full border-gray-200 rounded-lg sm:text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400 dark:placeholder-neutral-500 dark:focus:ring-neutral-600"
-                placeholder="Write your article here" v-model="form.body"></textarea>
-              <div v-if="form.errors.body" class="text-red-600 text-sm">{{ form.errors.body }}</div>
-            </div>
-
-            <div class="text-sm text-gray-600 dark:text-white mt-2">
-              You can use <code>**bold**</code>, <code>*italic*</code>, and links like
-              <code>[label](https://example.com)</code>.
-              Line breaks are preserved.
-            </div>
-
-            <div class="my-6 sm:mb-8">
-              <h3 class="text-sm font-medium mb-2 dark:text-white">Live preview</h3>
-              <div class="mb-2">
-                <img v-if="selectedPreview" :src="selectedPreview" class="w-full" />
-                <img v-else-if="post.featured_image" :src="post.featured_image" class="w-full" />
-              </div>
-              <div class="p-4 border rounded dark:text-neutral-400" v-html="previewHtml"></div>
-            </div>
-          </div>
-          <div class="md:col-span-1">
             <div class="mb-4 sm:mb-8">
               <label class="block mb-2 text-sm font-medium dark:text-white">Title</label>
               <input type="text"
@@ -43,15 +18,19 @@
               <div v-if="form.errors.title" class="text-red-600 text-sm">{{ form.errors.title }}</div>
             </div>
 
-            <div class="mb-4 sm:mb-8">
-              <label class="block mb-2 text-sm font-medium dark:text-white">Excerpt</label>
-              <input type="text"
-                class="py-2.5 sm:py-3 px-4 block w-full border-gray-200 rounded-lg sm:text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400 dark:placeholder-neutral-500 dark:focus:ring-neutral-600"
-                placeholder="Excerpt" v-model="form.excerpt">
+            <div>
+              <label class="block mb-2 text-sm font-medium dark:text-white">Body</label>
+              <TiptapEditor v-model="form.body" />
+              <div v-if="form.errors.body" class="text-red-600 text-sm mt-2">{{ form.errors.body }}</div>
             </div>
-
+          </div>
+          <div class="md:col-span-1">
             <div class="mb-4">
               <label class="block">Current featured image</label>
+              <div class="mb-2">
+                <img v-if="selectedPreview" :src="selectedPreview" class="w-full h-36 object-cover rounded" />
+                <img v-else-if="post.featured_image" :src="post.featured_image" class="w-full h-36 object-cover rounded" />
+              </div>
               <input type="file" @change="onFileChange" />
               <div class="text-red-600 text-sm pt-1">*Max File Size: 2048 KB/2 MB</div>
             </div>
@@ -100,9 +79,8 @@
 import { useForm } from '@inertiajs/vue3';
 import ActionMessage from '@/Components/ActionMessage.vue';
 import { ref, onUnmounted } from 'vue';
-import { computed } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import Dropdown from '@/Components/Dropdown.vue';
+import TiptapEditor from '@/Components/TiptapEditor.vue';
 
 const props = defineProps({
   post: Object,
@@ -158,21 +136,5 @@ const submit = () => {
   });
 };
 
-const escapeHtml = (str) =>
-  String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-
-const previewHtml = computed(() => {
-  let text = form.body || '';
-  text = escapeHtml(text);
-  text = text.replace(/\[(.*?)\]\((https?:\/\/[^)\s]+)\)/gi, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-  text = text.replace(/\*\*(.*?)\*\*/gs, '<strong>$1</strong>');
-  text = text.replace(/\*(.*?)\*/gs, '<em>$1</em>');
-  text = text.replace(/\n/g, '<br>');
-  return text;
-});
+// Tiptap editor outputs HTML directly, so no need for markdown parsing
 </script>

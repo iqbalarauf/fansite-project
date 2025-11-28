@@ -19,7 +19,7 @@
 
                     <img v-if="post.featured_image" :src="post.featured_image" alt="" class="w-full mb-4 rounded" />
 
-                    <div class="prose text-gray-500 dark:text-gray-400" v-html="post.body_html"></div>
+                        <div class="prose max-w-none dark:prose-invert" v-html="post.body"></div>
                 </div>
             </div>
         </div>

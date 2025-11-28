@@ -30,5 +30,14 @@
     },
     "keywords": [],
     "author": "",
-    "license": "ISC"
+    "license": "ISC",
+    "dependencies": {
+        "@tiptap/extension-image": "^3.11.1",
+        "@tiptap/extension-link": "^3.11.1",
+        "@tiptap/extension-text-align": "^3.11.1",
+        "@tiptap/extension-underline": "^3.11.1",
+        "@tiptap/extension-youtube": "^3.11.1",
+        "@tiptap/starter-kit": "^3.11.1",
+        "@tiptap/vue-3": "^3.11.1"
+    }
 }

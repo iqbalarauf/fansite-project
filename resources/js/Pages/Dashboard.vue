@@ -1,7 +1,6 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Welcome from '@/Components/Welcome.vue';
-import ThemeToggle from '@/Components/ThemeToggle.vue';
 </script>
 
 <template>
@@ -11,7 +10,6 @@ import ThemeToggle from '@/Components/ThemeToggle.vue';
                 <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
                     Dashboard
                 </h2>
-                <ThemeToggle variant="desktop" />
             </div>
         </template>
 
