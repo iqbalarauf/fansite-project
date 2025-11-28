@@ -45,21 +45,19 @@ const heroSrc = computed(() => page.props.appSettings?.hero_image || '/storage/h
 
               <section class="mb-8 w-full relative z-0">
                 <div class="relative w-full overflow-hidden">
-                    <!-- 16:9 aspect ratio based on full width -->
-                    <div class="w-full" style="padding-bottom:56.25%"></div>
-
-                    <img :src="heroSrc" alt="Hero background" class="absolute inset-0 w-full h-full object-cover" />
+                    <!-- Hero background image with responsive height -->
+                    <img :src="heroSrc" alt="Hero background" class="w-full h-[500px] sm:h-[400px] md:h-[450px] lg:h-[500px] object-cover" />
                     <div class="absolute inset-0 bg-gradient-to-b from-black/30 to-black/40"></div>
 
                     <div class="absolute inset-0 flex items-center justify-start">
-                        <div class="max-w-7xl mx-auto w-full px-6">
-                            <div class="max-w-3xl text-left py-12 text-white sm:pl-6 md:pl-12">
-                                <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight">{{ page.props.appSettings?.app_name || 'Fan Insight: Cornelia Vanisa' }}</h1>
-                                <p class="mt-4 text-sm sm:text-base text-white/90">{{ page.props.appSettings?.desc_app || 'Sebuah antologi yang menunagkan segenap dukungan dalam perjalanan Cornelia Vanisa.' }}</p>
+                        <div class="max-w-7xl mx-auto w-full px-4 sm:px-6">
+                            <div class="max-w-3xl text-left py-8 sm:py-12 text-white sm:pl-6 md:pl-12">
+                                <h1 class="text-2xl sm:text-4xl md:text-5xl font-extrabold leading-tight">{{ page.props.appSettings?.app_name }}</h1>
+                                <p class="mt-3 sm:mt-4 text-sm sm:text-base text-white/90 leading-relaxed">{{ page.props.appSettings?.desc_app }}</p>
 
-                                <div class="mt-6 flex flex-col sm:flex-row gap-3 justify-start">
-                                    <Link :href="route('blog.index')" class="inline-flex items-center justify-center px-5 py-3 bg-white text-black font-semibold rounded-md hover:opacity-90">Info Lebih Lanjut</Link>
-                                    <Link :href="route('blog.index')" class="inline-flex items-center justify-center px-5 py-3 border border-white text-white font-semibold rounded-md hover:bg-white/10">Temukan Kami</Link>
+                                <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row gap-3 justify-start">
+                                    <Link :href="route('blog.index')" class="inline-flex items-center justify-center px-5 py-3 bg-white text-black font-semibold rounded-md hover:opacity-90 transition">Info Lebih Lanjut</Link>
+                                    <Link :href="route('blog.index')" class="inline-flex items-center justify-center px-5 py-3 border border-white text-white font-semibold rounded-md hover:bg-white/10 transition">Temukan Kami</Link>
                                 </div>
                             </div>
                         </div>
@@ -67,14 +65,14 @@ const heroSrc = computed(() => page.props.appSettings?.hero_image || '/storage/h
                 </div>
             </section>
 
-              <div class="relative w-full px-4 sm:px-6 lg:px-8 max-w-full sm:max-w-screen md:max-w-screen lg:max-w-7xl">
+              <div class="relative w-full px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
                 <main class="mt-6">
                     <!-- Single column on small screens, two columns from md upwards -->
-                    <div class="grid gap-4 md:grid-cols-2 lg:gap-8">
+                    <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:gap-8">
                         <!-- Artikel Terbaru - 5 Artikel -->
-                        <div id="docs-list" class="flex flex-col gap-3 md:row-span-3 lg:pb-10 p-4 sm:p-6 rounded-lg shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] dark:ring-zinc-800 bg-white dark:bg-gray-800">
+                        <div id="docs-list" class="flex flex-col gap-3 md:row-span-3 lg:pb-10 p-4 sm:p-6 rounded-lg shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] dark:ring-zinc-800 bg-white dark:bg-gray-800 w-full overflow-hidden">
                             <h3 class="text-lg font-semibold text-black dark:text-white">Latest Posts</h3>
-                            <p class="text-sm/relaxed">
+                            <p class="text-sm/relaxed break-words">
                                     Dapatkan kabar terbaru tentang idolamu di sini. Kamu juga bisa berkontribusi untuk menulis dengan login dan tulis post baru di "Create Post"
                                 </p>
                             <ul class="space-y-3">
@@ -85,22 +83,22 @@ const heroSrc = computed(() => page.props.appSettings?.hero_image || '/storage/h
                                     </div>
                                 </li>
                                 <li v-for="post in (latestPosts || []).slice(0, 5)" :key="post.id"
-                                    class="block rounded-lg bg-white dark:bg-gray-800 p-4 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.04)] ring-1 ring-white/[0.03] transition hover:shadow-md border border-gray-200 hover:border-gray-500 dark:hover:border-zinc-700">
-                                    <Link :href="route('blog.show', post.slug)" class="flex items-start gap-3">
+                                    class="block rounded-lg bg-white dark:bg-gray-800 p-4 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.04)] ring-1 ring-white/[0.03] transition hover:shadow-md border border-gray-200 hover:border-gray-500 dark:hover:border-zinc-700 w-full overflow-hidden">
+                                    <Link :href="route('blog.show', post.slug)" class="flex items-start gap-3 w-full">
                                     <template v-if="post.thumbnail">
                                         <!-- Show a smaller thumbnail on mobile and a slightly
                                              larger one on sm+ screens. -->
                                         <img :src="post.thumbnail" alt="thumbnail"
-                                            class="w-20 h-12 sm:w-24 sm:h-16 rounded-md object-cover shrink-0" />
+                                            class="w-16 h-12 sm:w-24 sm:h-16 rounded-md object-cover shrink-0" />
                                     </template>
 
-                                    <div class="flex-1 min-w-0">
-                                        <div class="flex items-center justify-between gap-3">
-                                            <div class="text-md font-medium text-black dark:text-white truncate">{{
+                                    <div class="flex-1 min-w-0 overflow-hidden">
+                                        <div class="flex items-start justify-between gap-2 flex-wrap sm:flex-nowrap">
+                                            <div class="text-sm sm:text-md font-medium text-black dark:text-white truncate flex-1 min-w-0">{{
                                                 post.title }}</div>
-                                            <div class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ post.published_at ? formatDate(post.published_at) : '-' }}</div>
+                                            <div class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap shrink-0">{{ post.published_at ? formatDate(post.published_at) : '-' }}</div>
                                         </div>
-                                        <div class="text-sm text-gray-600 dark:text-gray-400 mt-1 truncate">{{
+                                        <div class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2 break-words">{{
                                             post.excerpt ??
                                             post.summary ?? (post.body && post.body.substring ? post.body.substring(0,
                                             120) + '...' :
@@ -112,7 +110,7 @@ const heroSrc = computed(() => page.props.appSettings?.hero_image || '/storage/h
                         </div>
 
                         <a href="https://laracasts.com"
-                            class="flex items-start gap-4 rounded-lg bg-white dark:bg-gray-800 p-6 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] transition duration-300 hover:text-black/70 hover:ring-black/20 focus:outline-none focus-visible:ring-[#FF2D20] lg:pb-10 dark:ring-zinc-800 dark:hover:text-white/70 dark:hover:ring-zinc-700 dark:focus-visible:ring-[#FF2D20]">
+                            class="flex items-start gap-4 rounded-lg bg-white dark:bg-gray-800 p-4 sm:p-6 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] transition duration-300 hover:text-black/70 hover:ring-black/20 focus:outline-none focus-visible:ring-[#FF2D20] lg:pb-10 dark:ring-zinc-800 dark:hover:text-white/70 dark:hover:ring-zinc-700 dark:focus-visible:ring-[#FF2D20] w-full overflow-hidden">
                             <div
                                 class="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#FF2D20]/10 sm:size-16">
                                 <svg class="size-5 sm:size-6" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -124,10 +122,10 @@ const heroSrc = computed(() => page.props.appSettings?.hero_image || '/storage/h
                                 </svg>
                             </div>
 
-                            <div class="pt-3 sm:pt-5">
-                                <h2 class="text-xl font-semibold text-black dark:text-white">Laracasts</h2>
+                            <div class="pt-3 sm:pt-5 flex-1 min-w-0">
+                                <h2 class="text-lg sm:text-xl font-semibold text-black dark:text-white break-words">Laracasts</h2>
 
-                                <p class="mt-4 text-sm/relaxed">
+                                <p class="mt-3 sm:mt-4 text-sm/relaxed break-words">
                                     Laracasts offers thousands of video tutorials on Laravel, PHP, and JavaScript
                                     development. Check
                                     them out, see for yourself, and massively level up your development skills in the
@@ -143,7 +141,7 @@ const heroSrc = computed(() => page.props.appSettings?.hero_image || '/storage/h
                         </a>
 
                         <a href="https://laravel-news.com"
-                            class="flex items-start gap-4 rounded-lg bg-white dark:bg-gray-800 p-6 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] transition duration-300 hover:text-black/70 hover:ring-black/20 focus:outline-none focus-visible:ring-[#FF2D20] lg:pb-10 dark:ring-zinc-800 dark:hover:text-white/70 dark:hover:ring-zinc-700 dark:focus-visible:ring-[#FF2D20]">
+                            class="flex items-start gap-4 rounded-lg bg-white dark:bg-gray-800 p-4 sm:p-6 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] transition duration-300 hover:text-black/70 hover:ring-black/20 focus:outline-none focus-visible:ring-[#FF2D20] lg:pb-10 dark:ring-zinc-800 dark:hover:text-white/70 dark:hover:ring-zinc-700 dark:focus-visible:ring-[#FF2D20] w-full overflow-hidden">
                             <div
                                 class="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#FF2D20]/10 sm:size-16">
                                 <svg class="size-5 sm:size-6" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -159,10 +157,10 @@ const heroSrc = computed(() => page.props.appSettings?.hero_image || '/storage/h
                                 </svg>
                             </div>
 
-                            <div class="pt-3 sm:pt-5">
-                                <h2 class="text-xl font-semibold text-black dark:text-white">Laravel News</h2>
+                            <div class="pt-3 sm:pt-5 flex-1 min-w-0">
+                                <h2 class="text-lg sm:text-xl font-semibold text-black dark:text-white break-words">Laravel News</h2>
 
-                                <p class="mt-4 text-sm/relaxed">
+                                <p class="mt-3 sm:mt-4 text-sm/relaxed break-words">
                                     Laravel News is a community driven portal and newsletter aggregating all of the
                                     latest and most
                                     important news in the Laravel ecosystem, including new package releases and
@@ -178,7 +176,7 @@ const heroSrc = computed(() => page.props.appSettings?.hero_image || '/storage/h
                         </a>
 
                         <div
-                            class="flex items-start gap-4 rounded-lg p-6 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] lg:pb-10 bg-white dark:bg-gray-800 dark:ring-zinc-800">
+                            class="flex items-start gap-4 rounded-lg p-4 sm:p-6 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] lg:pb-10 bg-white dark:bg-gray-800 dark:ring-zinc-800 w-full overflow-hidden">
                             <div
                                 class="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#FF2D20]/10 sm:size-16">
                                 <svg class="size-5 sm:size-6" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -190,10 +188,10 @@ const heroSrc = computed(() => page.props.appSettings?.hero_image || '/storage/h
                                 </svg>
                             </div>
 
-                            <div class="pt-3 sm:pt-5">
-                                <h2 class="text-xl font-semibold text-black dark:text-white">Vibrant Ecosystem</h2>
+                            <div class="pt-3 sm:pt-5 flex-1 min-w-0">
+                                <h2 class="text-lg sm:text-xl font-semibold text-black dark:text-white break-words">Vibrant Ecosystem</h2>
 
-                                <p class="mt-4 text-sm/relaxed">
+                                <p class="mt-3 sm:mt-4 text-sm/relaxed break-words">
                                     Laravel's robust library of first-party tools and libraries, such as <a
                                         href="https://forge.laravel.com"
                                         class="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white dark:focus-visible:ring-[#FF2D20]">Forge</a>,
