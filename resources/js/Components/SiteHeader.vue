@@ -11,7 +11,7 @@ const props = defineProps({
 <template>
   <header class="grid grid-cols-2 items-center gap-2 py-10 lg:grid-cols-3">
     <Link href="/" class="flex lg:justify-left lg:col-start-1">
-      <img v-if="$page.props.appSettings?.logo" :src="$page.props.appSettings.logo" class="h-12 w-auto lg:h-16 object-contain" alt="logo" />
+      <img v-if="$page.props.appSettings?.app_logo" :src="$page.props.appSettings.app_logo" class="h-12 w-auto lg:h-16 object-contain" alt="logo" />
       <template v-else>
         <img src="/storage/logo.svg" class="h-12 w-auto lg:h-16 object-contain" alt="default logo" />
       </template>

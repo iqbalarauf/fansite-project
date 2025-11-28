@@ -60,7 +60,11 @@ class Setting extends Model
         try {
             $updated = DB::table('app_settings')->updateOrInsert(
                 ['key' => $key],
-                ['value' => $value]
+                [
+                    'value' => $value,
+                    'updated_at' => now(),
+                    'created_at' => DB::raw('COALESCE(created_at, NOW())'),
+                ]
             );
 
             self::syncRuntimeConfig($key, $value);

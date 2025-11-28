@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AppSetting;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -11,13 +11,15 @@ class SettingsController extends Controller
 {
     public function edit()
     {
-        $settings = AppSetting::query()->latest()->first();
-
         return Inertia::render('Settings/Index', [
-            'settings' => $settings ? [
-                'app_name' => $settings->app_name,
-                'sidebar_name' => $settings->sidebar_name,
-            ] : [],
+            'settings' => [
+                'app_name' => Setting::get('app_name', ''),
+                'sidebar_name' => Setting::get('sidebar_name', ''),
+                'desc_app' => Setting::get('desc_app', ''),
+                'app_logo' => Setting::get('app_logo', ''),
+                'hero_image' => Setting::get('hero_image', ''),
+                'login_image' => Setting::get('login_image', ''),
+            ],
         ]);
     }
 
@@ -26,20 +28,50 @@ class SettingsController extends Controller
         $data = $request->validate([
             'app_name' => ['nullable', 'string', 'max:255'],
             'sidebar_name' => ['nullable', 'string', 'max:64'],
-            'remove_sidebar_name' => ['nullable', 'boolean'],
+            'desc_app' => ['nullable', 'string', 'max:500'],
+            'app_logo' => ['nullable', 'image', 'max:2048'],
+            'hero_image' => ['nullable', 'image', 'max:5120'],
+            'login_image' => ['nullable', 'image', 'max:5120'],
         ]);
 
-        $settings = AppSetting::query()->latest()->first() ?? new AppSetting();
+        // Update app_name
+        Setting::set('app_name', $data['app_name'] ?? '');
 
-        // Basic fields
-        $settings->app_name = $data['app_name'] ?? $settings->app_name;
-        if (($data['remove_sidebar_name'] ?? false) === true) {
-            $settings->sidebar_name = null;
-        } else {
-            $settings->sidebar_name = $data['sidebar_name'] ?? $settings->sidebar_name;
+        // Update sidebar_name (allow empty to clear)
+        Setting::set('sidebar_name', $data['sidebar_name'] ?? '');
+
+        // Update desc_app
+        Setting::set('desc_app', $data['desc_app'] ?? '');
+
+        // Handle app_logo upload
+        if ($request->hasFile('app_logo')) {
+            $oldLogo = Setting::get('app_logo');
+            if ($oldLogo && Storage::disk('public')->exists(str_replace('/storage/', '', $oldLogo))) {
+                Storage::disk('public')->delete(str_replace('/storage/', '', $oldLogo));
+            }
+            $path = $request->file('app_logo')->store('settings', 'public');
+            Setting::set('app_logo', '/storage/' . $path);
         }
 
-        $settings->save();
+        // Handle hero_image upload
+        if ($request->hasFile('hero_image')) {
+            $oldHero = Setting::get('hero_image');
+            if ($oldHero && Storage::disk('public')->exists(str_replace('/storage/', '', $oldHero))) {
+                Storage::disk('public')->delete(str_replace('/storage/', '', $oldHero));
+            }
+            $path = $request->file('hero_image')->store('settings', 'public');
+            Setting::set('hero_image', '/storage/' . $path);
+        }
+
+        // Handle login_image upload
+        if ($request->hasFile('login_image')) {
+            $oldLogin = Setting::get('login_image');
+            if ($oldLogin && Storage::disk('public')->exists(str_replace('/storage/', '', $oldLogin))) {
+                Storage::disk('public')->delete(str_replace('/storage/', '', $oldLogin));
+            }
+            $path = $request->file('login_image')->store('settings', 'public');
+            Setting::set('login_image', '/storage/' . $path);
+        }
 
         return redirect()->route('settings.index')
             ->with('success', 'Settings updated');

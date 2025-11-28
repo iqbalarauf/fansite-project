@@ -10,10 +10,7 @@ class AppSetting extends Model
     use HasFactory;
 
     protected $fillable = [
-        'app_name',
-        'sidebar_name',
-        'hero_path',
-        'login_image_path',
-        'app_logo_path',
+        'key',
+        'value',
     ];
 }

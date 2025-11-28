@@ -6,9 +6,14 @@
 
         @php
             $appName = config('app.name', 'Laravel');
+            $favicon = \App\Models\Setting::get('app_logo', '/storage/logo.svg');
         @endphp
 
         <title inertia>{{ $appName }}</title>
+
+        <!-- Favicon -->
+        <link rel="icon" type="image/svg+xml" href="{{ $favicon }}">
+        <link rel="icon" type="image/png" href="{{ $favicon }}">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">

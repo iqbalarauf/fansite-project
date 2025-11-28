@@ -9,6 +9,20 @@ return new class extends Migration {
     {
         if (Schema::hasTable('app_settings')) {
             Schema::table('app_settings', function (Blueprint $table) {
+                $columns = ['app_name', 'sidebar_name', 'hero_path', 'login_image_path', 'app_logo_path'];
+                foreach ($columns as $col) {
+                    if (Schema::hasColumn('app_settings', $col)) {
+                        $table->dropColumn($col);
+                    }
+                }
+            });
+        }
+    }
+
+    public function down(): void
+    {
+        if (Schema::hasTable('app_settings')) {
+            Schema::table('app_settings', function (Blueprint $table) {
                 if (!Schema::hasColumn('app_settings', 'app_name')) {
                     $table->string('app_name')->nullable();
                 }
@@ -23,29 +37,6 @@ return new class extends Migration {
                 }
                 if (!Schema::hasColumn('app_settings', 'app_logo_path')) {
                     $table->string('app_logo_path')->nullable();
-                }
-            });
-        }
-    }
-
-    public function down(): void
-    {
-        if (Schema::hasTable('app_settings')) {
-            Schema::table('app_settings', function (Blueprint $table) {
-                if (Schema::hasColumn('app_settings', 'app_name')) {
-                    $table->dropColumn('app_name');
-                }
-                if (Schema::hasColumn('app_settings', 'sidebar_name')) {
-                    $table->dropColumn('sidebar_name');
-                }
-                if (Schema::hasColumn('app_settings', 'hero_path')) {
-                    $table->dropColumn('hero_path');
-                }
-                if (Schema::hasColumn('app_settings', 'login_image_path')) {
-                    $table->dropColumn('login_image_path');
-                }
-                if (Schema::hasColumn('app_settings', 'app_logo_path')) {
-                    $table->dropColumn('app_logo_path');
                 }
             });
         }

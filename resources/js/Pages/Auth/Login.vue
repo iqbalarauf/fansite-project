@@ -49,7 +49,7 @@ const submit = () => {
                 <div class="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
                     <div>
                         <div class="flex flex-col items-start max-w-xs mb-2 sm:mb-4">
-                            <img v-if="$page.props.appSettings?.logo" :src="$page.props.appSettings.logo"
+                            <img v-if="$page.props.appSettings?.app_logo" :src="$page.props.appSettings.app_logo"
                                 class="h-12 w-auto lg:h-16 object-contain" alt="logo" />
                             <template v-else>
                                 <img src="/storage/logo.svg" class="h-36 w-auto lg:h-48 object-contain"

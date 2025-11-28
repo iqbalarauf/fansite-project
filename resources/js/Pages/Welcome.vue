@@ -1,6 +1,6 @@
 <script setup>
-import { Head, Link } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { Head, Link, usePage } from '@inertiajs/vue3';
+import { ref, computed } from 'vue';
 import { formatDate } from '@/Helpers/formatDate';
 import SiteHeader from '@/Components/SiteHeader.vue';
 
@@ -24,8 +24,9 @@ function handleImageError() {
     document.getElementById('background')?.classList?.add('!hidden');
 }
 
+const page = usePage();
 const currentYear = new Date().getFullYear();
-const heroSrc = '/storage/hero.jpg';
+const heroSrc = computed(() => page.props.appSettings?.hero_image || '/storage/hero.jpg');
 </script>
 
 <template>
@@ -53,8 +54,8 @@ const heroSrc = '/storage/hero.jpg';
                     <div class="absolute inset-0 flex items-center justify-start">
                         <div class="max-w-7xl mx-auto w-full px-6">
                             <div class="max-w-3xl text-left py-12 text-white sm:pl-6 md:pl-12">
-                                <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight">Fan Insight: Cornelia Vanisa</h1>
-                                <p class="mt-4 text-sm sm:text-base text-white/90">Sebuah antologi yang menunagkan segenap dukungan dalam perjalanan Cornelia Vanisa. </p>
+                                <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight">{{ page.props.appSettings?.app_name || 'Fan Insight: Cornelia Vanisa' }}</h1>
+                                <p class="mt-4 text-sm sm:text-base text-white/90">{{ page.props.appSettings?.desc_app || 'Sebuah antologi yang menunagkan segenap dukungan dalam perjalanan Cornelia Vanisa.' }}</p>
 
                                 <div class="mt-6 flex flex-col sm:flex-row gap-3 justify-start">
                                     <Link :href="route('blog.index')" class="inline-flex items-center justify-center px-5 py-3 bg-white text-black font-semibold rounded-md hover:opacity-90">Info Lebih Lanjut</Link>

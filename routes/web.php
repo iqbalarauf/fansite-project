@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\AccountController;
 use App\Models\Post;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Fortify\Http\Controllers\RegisteredUserController;
@@ -71,8 +72,8 @@ Route::get('/blog', function () {
 
 Route::get('/blog/{post}', [PostController::class, 'show'])->name('blog.show');
 
-// Registration routes that are only accessible to authenticated users.
-// This reuses Fortify's controller but wraps it in the auth middleware.
+// Registration routes accessible to authenticated users for creating additional accounts.
+// GET uses Fortify's registration page. POST is overridden to avoid switching auth.
 Route::middleware([
     'auth:sanctum',
     config('jetstream.auth_session'),
@@ -80,7 +81,7 @@ Route::middleware([
     Route::get('/register', [RegisteredUserController::class, 'create'])
         ->name('register');
 
-    Route::post('/register', [RegisteredUserController::class, 'store']);
+    Route::post('/register', [AccountController::class, 'register']);
 });
 
 // Auth protected post management (create/edit/delete)
@@ -91,7 +92,7 @@ Route::middleware(['auth'])->group(function () {
 // Settings routes (auth + verified). Single canonical names:
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.index');
-    Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
+    Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update');
 });
 // Management page: only authenticated users can access their posts
 Route::middleware(['auth'])->group(function () {
@@ -102,10 +103,15 @@ Route::middleware(['auth'])->group(function () {
             'slug' => $p->slug,
             'status' => $p->status,
             'published_at' => $p->published_at,
+            'category' => $p->category,
         ]);
 
         return Inertia::render('Posts/Manage', [
             'posts' => $posts,
         ]);
     })->name('posts.manage');
+
+    // Accounts management
+    Route::get('/accounts', [AccountController::class, 'index'])->name('accounts.manage');
+    Route::delete('/accounts/{user}', [AccountController::class, 'destroy'])->name('accounts.destroy');
 });

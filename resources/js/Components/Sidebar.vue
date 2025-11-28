@@ -34,6 +34,12 @@ const menuItems = computed(() => {
             icon: 'M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10',
             active: route().current('posts.manage') || route().current('posts.create') || route().current('posts.edit'),
         },
+        {
+            name: 'Accounts',
+            href: route('accounts.manage'),
+            icon: 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9',
+            active: route().current('accounts.manage'),
+        },
     ];
 
     return items;
@@ -50,7 +56,7 @@ const menuItems = computed(() => {
             <!-- Sidebar Header -->
             <div class="flex items-center justify-between h-20 px-4">
                 <Link :href="route('dashboard')" class="flex items-center" @click="closeSidebar">
-                <img v-if="$page.props.appSettings?.logo" :src="$page.props.appSettings.logo"
+                <img v-if="$page.props.appSettings?.app_logo" :src="$page.props.appSettings.app_logo"
                     class="h-12 w-auto lg:h-16 object-contain" alt="logo" />
                 <img v-else src="/storage/logo.svg" class="h-12 w-auto lg:h-16 object-contain" alt="default logo" />
                 <span class="text-xl font-semibold text-gray-900 dark:text-white ms-3">
