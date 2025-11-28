@@ -46,18 +46,21 @@ const heroSrc = computed(() => page.props.appSettings?.hero_image || '/storage/h
               <section class="mb-8 w-full relative z-0">
                 <div class="relative w-full overflow-hidden">
                     <!-- Hero background image with responsive height -->
-                    <img :src="heroSrc" alt="Hero background" class="w-full h-[500px] sm:h-[400px] md:h-[450px] lg:h-[500px] object-cover" />
-                    <div class="absolute inset-0 bg-gradient-to-b from-black/30 to-black/40"></div>
+                    <!-- Mobile: fixed height, Medium+: 16:9 aspect ratio -->
+                    <div class="w-full h-[500px] md:h-0 md:pb-[56.25%] relative">
+                        <img :src="heroSrc" alt="Hero background" class="absolute inset-0 w-full h-full object-cover object-top" />
+                        <div class="absolute inset-0 bg-gradient-to-b from-black/30 to-black/40"></div>
 
-                    <div class="absolute inset-0 flex items-center justify-start">
-                        <div class="max-w-7xl mx-auto w-full px-4 sm:px-6">
-                            <div class="max-w-3xl text-left py-8 sm:py-12 text-white sm:pl-6 md:pl-12">
-                                <h1 class="text-2xl sm:text-4xl md:text-5xl font-extrabold leading-tight">{{ page.props.appSettings?.app_name }}</h1>
-                                <p class="mt-3 sm:mt-4 text-sm sm:text-base text-white/90 leading-relaxed">{{ page.props.appSettings?.desc_app }}</p>
+                        <div class="absolute inset-0 flex items-center justify-start">
+                            <div class="max-w-7xl mx-auto w-full px-4 sm:px-6">
+                                <div class="max-w-3xl text-left py-8 sm:py-12 text-white sm:pl-6 md:pl-12">
+                                    <h1 class="text-2xl sm:text-4xl md:text-5xl font-extrabold leading-tight">{{ page.props.appSettings?.app_name }}</h1>
+                                    <p class="mt-3 sm:mt-4 text-sm sm:text-base text-white/90 leading-relaxed">{{ page.props.appSettings?.desc_app }}</p>
 
-                                <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row gap-3 justify-start">
-                                    <Link :href="route('blog.index')" class="inline-flex items-center justify-center px-5 py-3 bg-white text-black font-semibold rounded-md hover:opacity-90 transition">Info Lebih Lanjut</Link>
-                                    <Link :href="route('blog.index')" class="inline-flex items-center justify-center px-5 py-3 border border-white text-white font-semibold rounded-md hover:bg-white/10 transition">Temukan Kami</Link>
+                                    <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row gap-3 justify-start">
+                                        <Link :href="route('blog.index')" class="inline-flex items-center justify-center px-5 py-3 bg-white text-black font-semibold rounded-md hover:opacity-90 transition">Info Lebih Lanjut</Link>
+                                        <Link :href="route('blog.index')" class="inline-flex items-center justify-center px-5 py-3 border border-white text-white font-semibold rounded-md hover:bg-white/10 transition">Temukan Kami</Link>
+                                    </div>
                                 </div>
                             </div>
                         </div>
