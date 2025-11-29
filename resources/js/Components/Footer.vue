@@ -1,10 +1,8 @@
 <template>
-    <footer class="bg-white dark:bg-gray-900">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 border-t border-gray-200 dark:border-gray-800">
-                <p class="text-sm text-center text-gray-600 dark:text-gray-400">
-                    {{ copyrightText }}
-                </p>
-        </div>
+    <footer class="py-4">
+        <p class="text-sm text-center text-gray-600 dark:text-gray-400">
+            {{ copyrightText }}
+        </p>
     </footer>
 </template>
 
