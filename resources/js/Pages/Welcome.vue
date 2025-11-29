@@ -32,16 +32,17 @@ const heroSrc = computed(() => page.props.appSettings?.hero_image || '/storage/h
 <template>
 
     <Head title="Welcome" />
-    <div class="bg-gray-100 dark:bg-gray-900 text-black/50 dark:text-white/50">
+    <div class="bg-gray-100 dark:bg-gray-900 text-black/50 dark:text-white/50 min-h-screen flex flex-col">
         <img id="background" class="absolute -left-20 top-0 max-w-[877px]"
             src="https://laravel.com/assets/img/welcome/background.svg" />
-        <div
-            class="min-h-screen flex flex-col items-center justify-center selection:bg-[#FF2D20] selection:text-white">
-            <div class="sticky top-0 z-50 left-0 right-0 w-full bg-gray-100 dark:bg-gray-900 backdrop-blur-sm">
-                <div class="max-w-7xl mx-auto px-6">
-                    <SiteHeader :can-login="canLogin" :can-register="canRegister" />
-                </div>
+        <div class="sticky top-0 z-50 left-0 right-0 w-full bg-gray-100 dark:bg-gray-900 backdrop-blur-sm">
+            <div class="max-w-7xl mx-auto px-6">
+                <SiteHeader :can-login="canLogin" :can-register="canRegister" />
             </div>
+        </div>
+
+        <div
+            class="flex-grow flex flex-col items-center justify-center selection:bg-[#FF2D20] selection:text-white">
 
               <section class="mb-8 w-full relative z-0">
                 <div class="relative w-full overflow-hidden">
@@ -224,6 +225,11 @@ const heroSrc = computed(() => page.props.appSettings?.hero_image || '/storage/h
                     </div>
                 </main>
 
+            </div>
+        </div>
+
+        <div class="w-full">
+            <div class="max-w-7xl mx-auto px-6 py-8">
                 <Footer type="public" />
             </div>
         </div>

@@ -1,7 +1,7 @@
 <template>
 
   <Head title="Blog" />
-  <div class="bg-gray-100 dark:bg-gray-900 text-black/50 dark:text-white/50">
+  <div class="bg-gray-100 dark:bg-gray-900 text-black/50 dark:text-white/50 min-h-screen flex flex-col">
     <div class="sticky top-0 z-50 left-0 right-0 w-full bg-white dark:bg-gray-800 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700">
       <div class="max-w-7xl mx-auto px-6">
         <header class="grid grid-cols-2 items-center gap-2 py-10 lg:grid-cols-3">
@@ -22,8 +22,8 @@
     </div>
 
     <div
-      class="relative min-h-screen flex flex-col items-center justify-center selection:bg-[#FF2D20] selection:text-white">
-      <div class="relative w-full max-w-2xl px-6 lg:max-w-7xl">
+      class="flex-grow relative flex flex-col items-center justify-center selection:bg-[#FF2D20] selection:text-white">
+      <div class="relative w-full max-w-2xl px-6 lg:max-w-7xl flex-grow">
         <main class="mt-6">
           <h1 class="text-3xl font-bold mb-6 text-gray-800 dark:text-white">Blog</h1>
 
@@ -53,16 +53,62 @@
                 </div>
               </div>
 
-            <div class="mt-6">
-              <!-- simple pagination controls -->
-              <div class="flex justify-between items-center">
+            <!-- Pagination -->
+            <div class="mt-8 mb-6">
+              <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                <!-- Previous Button -->
                 <div>
-                  <button v-if="posts.prev_page_url" @click="visit(posts.prev_page_url)"
-                    class="px-3 py-1 bg-gray-200 rounded">Previous</button>
+                  <Link
+                    v-if="posts.prev_page_url"
+                    :href="posts.prev_page_url"
+                    class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-300 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150"
+                  >
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Previous
+                  </Link>
+                  <span
+                    v-else
+                    class="inline-flex items-center px-4 py-2 bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md font-semibold text-xs text-gray-400 dark:text-gray-600 uppercase tracking-widest cursor-not-allowed"
+                  >
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Previous
+                  </span>
                 </div>
+
+                <!-- Page Info -->
+                <div class="text-sm text-gray-700 dark:text-gray-300">
+                  <span class="font-medium">Page {{ posts.current_page }}</span>
+                  <span class="mx-1">of</span>
+                  <span class="font-medium">{{ posts.last_page }}</span>
+                  <span class="mx-2">•</span>
+                  <span>{{ posts.total }} article{{ posts.total !== 1 ? 's' : '' }}</span>
+                </div>
+
+                <!-- Next Button -->
                 <div>
-                  <button v-if="posts.next_page_url" @click="visit(posts.next_page_url)"
-                    class="px-3 py-1 bg-gray-200 rounded">Next</button>
+                  <Link
+                    v-if="posts.next_page_url"
+                    :href="posts.next_page_url"
+                    class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-300 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150"
+                  >
+                    Next
+                    <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                  <span
+                    v-else
+                    class="inline-flex items-center px-4 py-2 bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md font-semibold text-xs text-gray-400 dark:text-gray-600 uppercase tracking-widest cursor-not-allowed"
+                  >
+                    Next
+                    <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </span>
                 </div>
               </div>
             </div>
@@ -70,7 +116,11 @@
 
           <div v-else class="text-gray-600">No posts found.</div>
         </main>
+      </div>
+    </div>
 
+    <div class="w-full">
+      <div class="relative w-full max-w-2xl px-6 lg:max-w-7xl mx-auto">
         <Footer type="public" />
       </div>
     </div>
@@ -88,8 +138,5 @@ const props = defineProps({
   title: String,
 });
 
-const visit = (url) => {
-  Inertia.visit(url);
-};
 const title = "Blog";
 </script>
