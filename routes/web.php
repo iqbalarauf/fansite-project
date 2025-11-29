@@ -87,7 +87,14 @@ Route::middleware([
 // Auth protected post management (create/edit/delete)
 Route::middleware(['auth'])->group(function () {
     Route::resource('posts', PostController::class)->except(['index','show']);
+    Route::resource('pages', \App\Http\Controllers\CustomPageController::class)->except(['show']);
+
+    // Editor uploads
+    Route::post('/uploads/images', [\App\Http\Controllers\UploadController::class, 'storeImage'])->name('uploads.images');
 });
+
+// Public custom page view
+Route::get('/page/{page}', [\App\Http\Controllers\CustomPageController::class, 'show'])->name('pages.show');
 
 // Settings routes (auth + verified). Single canonical names:
 Route::middleware(['auth', 'verified'])->group(function () {

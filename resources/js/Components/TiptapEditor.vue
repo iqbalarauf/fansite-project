@@ -5,8 +5,7 @@
       <button
         type="button"
         @click="editor.chain().focus().toggleBold().run()"
-        :class="{ 'is-active': editor?.isActive('bold') }"
-        class="toolbar-btn"
+        :class="[baseBtnClasses, editor?.isActive('bold') ? activeBtnClasses : '']"
         title="Bold (Ctrl+B)"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -18,8 +17,7 @@
       <button
         type="button"
         @click="editor.chain().focus().toggleItalic().run()"
-        :class="{ 'is-active': editor?.isActive('italic') }"
-        class="toolbar-btn"
+        :class="[baseBtnClasses, editor?.isActive('italic') ? activeBtnClasses : '']"
         title="Italic (Ctrl+I)"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -30,8 +28,7 @@
       <button
         type="button"
         @click="editor.chain().focus().toggleUnderline().run()"
-        :class="{ 'is-active': editor?.isActive('underline') }"
-        class="toolbar-btn"
+        :class="[baseBtnClasses, editor?.isActive('underline') ? activeBtnClasses : '']"
         title="Underline (Ctrl+U)"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -44,8 +41,7 @@
       <button
         type="button"
         @click="editor.chain().focus().toggleHeading({ level: 1 }).run()"
-        :class="{ 'is-active': editor?.isActive('heading', { level: 1 }) }"
-        class="toolbar-btn"
+        :class="[baseBtnClasses, editor?.isActive('heading', { level: 1 }) ? activeBtnClasses : '']"
         title="Heading 1"
       >
         H1
@@ -54,8 +50,7 @@
       <button
         type="button"
         @click="editor.chain().focus().toggleHeading({ level: 2 }).run()"
-        :class="{ 'is-active': editor?.isActive('heading', { level: 2 }) }"
-        class="toolbar-btn"
+        :class="[baseBtnClasses, editor?.isActive('heading', { level: 2 }) ? activeBtnClasses : '']"
         title="Heading 2"
       >
         H2
@@ -64,8 +59,7 @@
       <button
         type="button"
         @click="editor.chain().focus().toggleHeading({ level: 3 }).run()"
-        :class="{ 'is-active': editor?.isActive('heading', { level: 3 }) }"
-        class="toolbar-btn"
+        :class="[baseBtnClasses, editor?.isActive('heading', { level: 3 }) ? activeBtnClasses : '']"
         title="Heading 3"
       >
         H3
@@ -76,8 +70,7 @@
       <button
         type="button"
         @click="editor.chain().focus().toggleBulletList().run()"
-        :class="{ 'is-active': editor?.isActive('bulletList') }"
-        class="toolbar-btn"
+        :class="[baseBtnClasses, editor?.isActive('bulletList') ? activeBtnClasses : '']"
         title="Bullet List"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,8 +81,7 @@
       <button
         type="button"
         @click="editor.chain().focus().toggleOrderedList().run()"
-        :class="{ 'is-active': editor?.isActive('orderedList') }"
-        class="toolbar-btn"
+        :class="[baseBtnClasses, editor?.isActive('orderedList') ? activeBtnClasses : '']"
         title="Ordered List"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -100,8 +92,7 @@
       <button
         type="button"
         @click="editor.chain().focus().toggleBlockquote().run()"
-        :class="{ 'is-active': editor?.isActive('blockquote') }"
-        class="toolbar-btn"
+        :class="[baseBtnClasses, editor?.isActive('blockquote') ? activeBtnClasses : '']"
         title="Blockquote"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -114,8 +105,7 @@
       <button
         type="button"
         @click="setLink"
-        :class="{ 'is-active': editor?.isActive('link') }"
-        class="toolbar-btn"
+        :class="[baseBtnClasses, editor?.isActive('link') ? activeBtnClasses : '']"
         title="Add Link"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -127,7 +117,7 @@
         type="button"
         @click="editor.chain().focus().unsetLink().run()"
         :disabled="!editor?.isActive('link')"
-        class="toolbar-btn"
+        :class="[baseBtnClasses]"
         title="Remove Link"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -139,19 +129,32 @@
 
       <button
         type="button"
-        @click="addImage"
-        class="toolbar-btn"
-        title="Insert Image"
+        @click="triggerImageUpload"
+        :class="[baseBtnClasses]"
+        :disabled="uploading"
+        :title="uploading ? 'Uploading…' : 'Upload & Insert Image'"
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg v-if="!uploading" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
         </svg>
+        <svg v-else class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke-width="4" class="opacity-25" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M4 12a8 8 0 018-8" class="opacity-75" />
+        </svg>
       </button>
+
+      <input
+        ref="fileInput"
+        type="file"
+        accept="image/*"
+        class="hidden"
+        @change="handleFileChange"
+      />
 
       <button
         type="button"
         @click="addYoutubeVideo"
-        class="toolbar-btn"
+        :class="[baseBtnClasses]"
         title="Embed YouTube Video"
       >
         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -165,7 +168,7 @@
         type="button"
         @click="editor.chain().focus().undo().run()"
         :disabled="!editor?.can().undo()"
-        class="toolbar-btn"
+        :class="[baseBtnClasses]"
         title="Undo (Ctrl+Z)"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -177,7 +180,7 @@
         type="button"
         @click="editor.chain().focus().redo().run()"
         :disabled="!editor?.can().redo()"
-        class="toolbar-btn"
+        :class="[baseBtnClasses]"
         title="Redo (Ctrl+Y)"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -188,6 +191,7 @@
 
     <!-- Editor Content -->
     <editor-content :editor="editor" class="prose max-w-none p-4 min-h-[300px] dark:prose-invert" />
+    <div v-if="uploadError" class="px-4 pb-3 text-sm text-red-600 dark:text-red-400">{{ uploadError }}</div>
   </div>
 </template>
 
@@ -199,7 +203,7 @@ import Image from '@tiptap/extension-image';
 import Youtube from '@tiptap/extension-youtube';
 import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
-import { watch } from 'vue';
+import { watch, ref } from 'vue';
 
 const props = defineProps({
   modelValue: {
@@ -213,11 +217,7 @@ const emit = defineEmits(['update:modelValue']);
 const editor = useEditor({
   content: props.modelValue,
   extensions: [
-    StarterKit.configure({
-      heading: {
-        levels: [1, 2, 3],
-      },
-    }),
+    StarterKit,
     Link.configure({
       openOnClick: false,
       HTMLAttributes: {
@@ -226,6 +226,8 @@ const editor = useEditor({
       },
     }),
     Image.configure({
+      inline: true,
+      allowBase64: true,
       HTMLAttributes: {
         class: 'max-w-full h-auto rounded',
       },
@@ -248,6 +250,10 @@ const editor = useEditor({
     emit('update:modelValue', editor.getHTML());
   },
 });
+
+// Reusable toolbar button class strings (removed @apply usage in <style>)
+const baseBtnClasses = 'px-2 py-1 rounded text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-neutral-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors';
+const activeBtnClasses = 'bg-gray-300 dark:bg-neutral-600';
 
 // Watch for external changes to modelValue
 watch(() => props.modelValue, (value) => {
@@ -273,11 +279,48 @@ const setLink = () => {
   editor.value.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
 };
 
-const addImage = () => {
-  const url = window.prompt('Image URL');
+// Image upload integration
+const uploading = ref(false);
+const uploadError = ref('');
+const fileInput = ref(null);
 
-  if (url) {
-    editor.value.chain().focus().setImage({ src: url }).run();
+const triggerImageUpload = () => {
+  uploadError.value = '';
+  if (uploading.value) return;
+  fileInput.value?.click();
+};
+
+const handleFileChange = async (e) => {
+  const file = e.target.files?.[0];
+  e.target.value = '';
+  if (!file) return;
+  uploading.value = true;
+  uploadError.value = '';
+  try {
+    const form = new FormData();
+    form.append('image', file);
+    form.append('folder', 'post-images');
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    const res = await fetch('/uploads/images', {
+      method: 'POST',
+      headers: token ? { 'X-CSRF-TOKEN': token } : {},
+      body: form,
+    });
+    if (!res.ok) {
+      let data; try { data = await res.json(); } catch (_) {}
+      throw new Error(data?.error || 'Upload failed');
+    }
+    const data = await res.json();
+    console.log('Upload success:', data);
+    const alt = file.name.replace(/\.[^.]+$/, '');
+    // Use exposed helper for consistent insertion structure.
+    insertImageAtCursor(data.url, alt);
+    console.log('Image inserted, editor HTML:', editor.value?.getHTML().substring(0, 300));
+  } catch (err) {
+    console.error('Upload error:', err);
+    uploadError.value = err.message || 'Unexpected upload error';
+  } finally {
+    uploading.value = false;
   }
 };
 
@@ -288,63 +331,28 @@ const addYoutubeVideo = () => {
     editor.value.chain().focus().setYoutubeVideo({ src: url }).run();
   }
 };
+
+// Expose helper to insert image at current cursor programmatically
+function insertImageAtCursor(url, alt = '') {
+  if (!url) return;
+  const ed = editor.value;
+  if (!ed) {
+    console.error('Editor not initialized');
+    return;
+  }
+  console.log('Inserting image:', url);
+  // Insert image inline within current paragraph, or create new paragraph if needed
+  ed.chain()
+    .focus()
+    .setImage({ src: url, alt })
+    .run();
+  console.log('After insert, HTML:', ed.getHTML().substring(0, 300));
+}
+
+defineExpose({ insertImageAtCursor });
 </script>
 
 <style scoped>
-.toolbar-btn {
-  @apply px-2 py-1 rounded text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-neutral-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
-}
-
-.toolbar-btn.is-active {
-  @apply bg-gray-300 dark:bg-neutral-600;
-}
-
-:deep(.ProseMirror) {
-  min-height: 300px;
-  outline: none;
-}
-
-:deep(.ProseMirror p.is-editor-empty:first-child::before) {
-  content: attr(data-placeholder);
-  float: left;
-  color: #adb5bd;
-  pointer-events: none;
-  height: 0;
-}
-
-:deep(.ProseMirror) {
-  @apply dark:text-neutral-200;
-}
-
-:deep(.ProseMirror h1) {
-  @apply text-3xl font-bold mt-6 mb-4;
-}
-
-:deep(.ProseMirror h2) {
-  @apply text-2xl font-bold mt-5 mb-3;
-}
-
-:deep(.ProseMirror h3) {
-  @apply text-xl font-bold mt-4 mb-2;
-}
-
-:deep(.ProseMirror ul) {
-  @apply list-disc ml-6 my-4;
-}
-
-:deep(.ProseMirror ol) {
-  @apply list-decimal ml-6 my-4;
-}
-
-:deep(.ProseMirror blockquote) {
-  @apply border-l-4 border-gray-300 dark:border-neutral-600 pl-4 italic my-4;
-}
-
-:deep(.ProseMirror a) {
-  @apply text-blue-600 dark:text-blue-400 underline;
-}
-
-:deep(.ProseMirror code) {
-  @apply bg-gray-100 dark:bg-neutral-800 px-1 py-0.5 rounded text-sm;
-}
+:deep(.ProseMirror){min-height:300px;outline:none;}
+:deep(.ProseMirror p.is-editor-empty:first-child::before){content:attr(data-placeholder);float:left;color:#adb5bd;pointer-events:none;height:0;}
 </style>

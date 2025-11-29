@@ -41,7 +41,7 @@ class AccountController extends Controller
     public function register(Request $request, CreateNewUser $creator): RedirectResponse
     {
         // Use Fortify's CreateNewUser action to validate and create the user
-        $creator->create($request->all());
+        $user = $creator->create($request->all());
 
         // Stay logged in as current user and go back to Accounts page
         return redirect()

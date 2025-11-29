@@ -94,7 +94,6 @@ const form = useForm({
   title: post.title || '',
   excerpt: post.excerpt || '',
   body: post.body || '',
-  featured_image: null,
   category: post.category || '',
   tags: Array.isArray(post.tags) ? post.tags.join(',') : (post.tags || ''),
   status: post.status || 'draft',
@@ -102,10 +101,11 @@ const form = useForm({
 });
 
 const selectedPreview = ref(null);
+const newFeaturedImage = ref(null);
 
 const onFileChange = (e) => {
   const file = e.target.files?.[0] ?? null;
-  form.featured_image = file;
+  newFeaturedImage.value = file;
   // free previous object url if any
   if (selectedPreview.value) {
     try { URL.revokeObjectURL(selectedPreview.value); } catch (e) {}
@@ -125,6 +125,13 @@ onUnmounted(() => {
 const success = ref('');
 
 const submit = () => {
+  // Only include featured_image if a new file was selected
+  if (newFeaturedImage.value) {
+    form.featured_image = newFeaturedImage.value;
+  }
+  
+  console.log('Submitting form.body:', form.body?.substring(0, 200));
+  
   // Post with _method supplied in form data so PHP/Laravel can parse multipart fields
   form.post(route('posts.update', post.slug), {
     forceFormData: true,
@@ -136,5 +143,5 @@ const submit = () => {
   });
 };
 
-// Tiptap editor outputs HTML directly, so no need for markdown parsing
+// TiptapEditor now handles inline image uploads internally.
 </script>

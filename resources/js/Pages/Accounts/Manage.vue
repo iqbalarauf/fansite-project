@@ -16,9 +16,9 @@
       </div>
 
       <div class="flex justify-end mb-6">
-        <Link :href="route('register')" class="inline-block bg-blue-600 text-white px-4 py-2 rounded">
+        <button @click="showCreateModal = true" class="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
           Create Account
-        </Link>
+        </button>
       </div>
 
       <div v-if="usersList && usersList.length">
@@ -100,17 +100,95 @@
 
       <div v-else class="text-gray-600">
         No accounts found.
-        <Link :href="route('register')" class="text-blue-600">Create one</Link>.
+        <button @click="showCreateModal = true" class="text-blue-600 hover:underline">Create one</button>.
       </div>
     </div>
+
+    <!-- Create Account Modal -->
+    <DialogModal :show="showCreateModal" @close="closeCreateModal">
+      <template #title>
+        Create New Account
+      </template>
+
+      <template #content>
+        <form @submit.prevent="submitCreateAccount">
+          <div class="space-y-4">
+            <div>
+              <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
+              <input
+                id="name"
+                v-model="form.name"
+                type="text"
+                required
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              />
+              <div v-if="form.errors.name" class="text-sm text-red-600 mt-1">{{ form.errors.name }}</div>
+            </div>
+
+            <div>
+              <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+              <input
+                id="email"
+                v-model="form.email"
+                type="email"
+                required
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              />
+              <div v-if="form.errors.email" class="text-sm text-red-600 mt-1">{{ form.errors.email }}</div>
+            </div>
+
+            <div>
+              <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+              <input
+                id="password"
+                v-model="form.password"
+                type="password"
+                required
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              />
+              <div v-if="form.errors.password" class="text-sm text-red-600 mt-1">{{ form.errors.password }}</div>
+            </div>
+
+            <div>
+              <label for="password_confirmation" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Confirm Password</label>
+              <input
+                id="password_confirmation"
+                v-model="form.password_confirmation"
+                type="password"
+                required
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              />
+            </div>
+          </div>
+        </form>
+      </template>
+
+      <template #footer>
+        <SecondaryButton @click="closeCreateModal">
+          Cancel
+        </SecondaryButton>
+
+        <PrimaryButton
+          class="ml-3"
+          :class="{ 'opacity-25': form.processing }"
+          :disabled="form.processing"
+          @click="submitCreateAccount"
+        >
+          Create Account
+        </PrimaryButton>
+      </template>
+    </DialogModal>
   </AppLayout>
 </template>
 
 <script setup>
 import { ref, watch, computed } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ActionMessage from '@/Components/ActionMessage.vue';
+import DialogModal from '@/Components/DialogModal.vue';
+import PrimaryButton from '@/Components/PrimaryButton.vue';
+import SecondaryButton from '@/Components/SecondaryButton.vue';
 import { formatDate } from '@/Helpers/formatDate';
 
 const title = 'Manage Accounts';
@@ -124,6 +202,15 @@ const usersMeta = ref(props.users ? { ...props.users } : { prev_page_url: null, 
 const deleting = ref(null);
 const error = ref('');
 const success = ref('');
+const showCreateModal = ref(false);
+
+const form = useForm({
+  name: '',
+  email: '',
+  password: '',
+  password_confirmation: '',
+  terms: true,
+});
 
 watch(() => props.users, (p) => {
   usersList.value = p?.data ? [...p.data] : [];
@@ -186,4 +273,26 @@ const prevPage = () => { if (currentPage.value > 1) currentPage.value -= 1; };
 const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value += 1; };
 
 watch([searchTerm], () => (currentPage.value = 1));
+
+const closeCreateModal = () => {
+  showCreateModal.value = false;
+  form.reset();
+  form.clearErrors();
+};
+
+const submitCreateAccount = () => {
+  form.post(route('register'), {
+    preserveScroll: true,
+    onSuccess: () => {
+      closeCreateModal();
+      success.value = 'Account created successfully.';
+      setTimeout(() => {
+        success.value = '';
+      }, 3000);
+    },
+    onError: () => {
+      // Errors will be displayed in the form
+    },
+  });
+};
 </script>

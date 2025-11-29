@@ -70,6 +70,8 @@
 
           <div v-else class="text-gray-600">No posts found.</div>
         </main>
+
+        <Footer type="public" />
       </div>
     </div>
   </div>
@@ -79,6 +81,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { formatDate } from '@/Helpers/formatDate';
 import ThemeToggle from '@/Components/ThemeToggle.vue';
+import Footer from '@/Components/Footer.vue';
 
 const props = defineProps({
   posts: Object,

@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import Banner from '@/Components/Banner.vue';
 import Sidebar from '@/Components/Sidebar.vue';
+import Footer from '@/Components/Footer.vue';
 
 defineProps({
     title: String,
@@ -62,6 +63,9 @@ onMounted(() => {
             <main>
                 <slot />
             </main>
+
+            <!-- Footer -->
+            <Footer type="auth" />
         </div>
     </div>
 </template>

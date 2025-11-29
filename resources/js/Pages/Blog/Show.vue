@@ -21,6 +21,8 @@
 
                         <div class="prose max-w-none dark:prose-invert" v-html="post.body"></div>
                 </div>
+
+                <Footer type="public" />
             </div>
         </div>
     </div>
@@ -30,6 +32,7 @@
 import { Head } from '@inertiajs/vue3';
 import { formatDate } from '@/Helpers/formatDate';
 import SiteHeader from '@/Components/SiteHeader.vue';
+import Footer from '@/Components/Footer.vue';
 
 const props = defineProps({
     post: Object,

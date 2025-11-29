@@ -80,7 +80,7 @@
 <script setup>
 import { useForm } from '@inertiajs/vue3';
 import ActionMessage from '@/Components/ActionMessage.vue';
-import { computed, ref, onUnmounted } from 'vue';
+import { ref, onUnmounted } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import TiptapEditor from '@/Components/TiptapEditor.vue';
 
@@ -120,6 +120,7 @@ onUnmounted(() => {
 const success = ref('');
 
 const submit = () => {
+  console.log('Submitting form.body:', form.body?.substring(0, 200));
   form.post(route('posts.store'), {
     forceFormData: true,
     onSuccess: () => {
@@ -130,5 +131,5 @@ const submit = () => {
   });
 };
 
-// Tiptap editor outputs HTML directly, so no need for markdown parsing
+// TiptapEditor now handles inline image uploads internally.
 </script>

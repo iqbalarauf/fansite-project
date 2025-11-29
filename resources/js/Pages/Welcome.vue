@@ -3,6 +3,7 @@ import { Head, Link, usePage } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import { formatDate } from '@/Helpers/formatDate';
 import SiteHeader from '@/Components/SiteHeader.vue';
+import Footer from '@/Components/Footer.vue';
 
 defineProps({
     canLogin: {
@@ -25,7 +26,6 @@ function handleImageError() {
 }
 
 const page = usePage();
-const currentYear = new Date().getFullYear();
 const heroSrc = computed(() => page.props.appSettings?.hero_image || '/storage/hero.jpg');
 </script>
 
@@ -224,9 +224,7 @@ const heroSrc = computed(() => page.props.appSettings?.hero_image || '/storage/h
                     </div>
                 </main>
 
-                <footer class="py-16 text-center text-sm text-black dark:text-white/70">
-                    © {{ currentYear }} FanSight.ID - Eksperimental <a href="https://labqitech.my.id" class="underline hover:text-black dark:hover:text-white">LabqiTech</a>, Dikembangkan oleh <a href="https://iqbalarauf.my.id" class="underline hover:text-black dark:hover:text-white">IqbalARauf</a> 
-                </footer>
+                <Footer type="public" />
             </div>
         </div>
     </div>
