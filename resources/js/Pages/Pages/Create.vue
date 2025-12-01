@@ -155,6 +155,38 @@
           <div v-if="form.errors.status" class="text-sm text-red-600 mt-1">{{ form.errors.status }}</div>
         </div>
 
+        <!-- Menu Settings -->
+        <div class="space-y-4 p-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800">
+          <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Menu Settings</h3>
+          
+          <!-- Show in Menu Checkbox -->
+          <div class="flex items-center">
+            <input
+              id="show_in_menu"
+              v-model="form.show_in_menu"
+              type="checkbox"
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600"
+            />
+            <label for="show_in_menu" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+              Show this page in the public navigation menu
+            </label>
+          </div>
+
+          <!-- Menu Order -->
+          <div v-if="form.show_in_menu">
+            <label for="menu_order" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Menu Order (lower numbers appear first)</label>
+            <input
+              id="menu_order"
+              v-model.number="form.menu_order"
+              type="number"
+              min="0"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            />
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Note: Blog and About are permanent menu items</p>
+            <div v-if="form.errors.menu_order" class="text-sm text-red-600 mt-1">{{ form.errors.menu_order }}</div>
+          </div>
+        </div>
+
         <!-- Actions -->
         <div class="flex items-center justify-end gap-4">
           <Link :href="route('pages.index')" class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200">
@@ -191,6 +223,8 @@ const form = useForm({
   cta_button_text: '',
   cta_button_url: '',
   status: 'draft',
+  show_in_menu: false,
+  menu_order: 0,
 });
 
 const heroImagePreview = ref(null);

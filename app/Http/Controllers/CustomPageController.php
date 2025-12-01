@@ -42,7 +42,7 @@ class CustomPageController extends Controller
             abort(404);
         }
 
-        return Inertia::render('Pages/Show', [
+        return Inertia::render('Pages/Edit', [
             'page' => [
                 'id' => $page->id,
                 'title' => $page->title,
@@ -57,6 +57,8 @@ class CustomPageController extends Controller
                 'cta_button_url' => $page->cta_button_url,
                 'status' => $page->status,
                 'published_at' => $page->published_at,
+                'show_in_menu' => $page->show_in_menu,
+                'menu_order' => $page->menu_order,
             ],
         ]);
     }
@@ -79,6 +81,8 @@ class CustomPageController extends Controller
             'cta_button_text' => 'nullable|string|max:100',
             'cta_button_url' => 'nullable|url|max:500',
             'status' => 'required|in:draft,published',
+            'show_in_menu' => 'boolean',
+            'menu_order' => 'nullable|integer|min:0',
         ]);
 
         $data['user_id'] = $request->user()->id;
@@ -119,6 +123,8 @@ class CustomPageController extends Controller
                 'cta_button_url' => $page->cta_button_url,
                 'status' => $page->status,
                 'published_at' => $page->published_at,
+                'show_in_menu' => $page->show_in_menu,
+                'menu_order' => $page->menu_order,
             ],
         ]);
     }
@@ -138,6 +144,8 @@ class CustomPageController extends Controller
             'cta_button_text' => 'nullable|string|max:100',
             'cta_button_url' => 'nullable|url|max:500',
             'status' => 'required|in:draft,published',
+            'show_in_menu' => 'boolean',
+            'menu_order' => 'nullable|integer|min:0',
         ]);
 
         if ($request->hasFile('hero_image')) {

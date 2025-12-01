@@ -24,11 +24,14 @@ class CustomPage extends Model
         'cta_button_url',
         'status',
         'published_at',
+        'show_in_menu',
+        'menu_order',
     ];
 
     protected $casts = [
         'published_at' => 'datetime',
         'has_cta_section' => 'boolean',
+        'show_in_menu' => 'boolean',
     ];
 
     public function user()
