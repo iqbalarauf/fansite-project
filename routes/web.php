@@ -93,14 +93,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/uploads/images', [\App\Http\Controllers\UploadController::class, 'storeImage'])->name('uploads.images');
 });
 
-// Public custom page view
-Route::get('/page/{page}', [\App\Http\Controllers\CustomPageController::class, 'show'])->name('pages.show');
-
 // Settings routes (auth + verified). Single canonical names:
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.index');
     Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update');
 });
+
 // Management page: only authenticated users can access their posts
 Route::middleware(['auth'])->group(function () {
     Route::get('/posts', function () {
@@ -122,3 +120,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/accounts', [AccountController::class, 'index'])->name('accounts.manage');
     Route::delete('/accounts/{user}', [AccountController::class, 'destroy'])->name('accounts.destroy');
 });
+
+// Public custom page view - MUST BE LAST as catch-all fallback
+Route::get('/{page}', [\App\Http\Controllers\CustomPageController::class, 'show'])->name('pages.show');
