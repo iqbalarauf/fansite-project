@@ -4,7 +4,7 @@ import { Link } from '@inertiajs/vue3';
 
 <template>
     <Link :href="'/'">
-        <img v-if="$page.props.appSettings?.logo" :src="$page.props.appSettings.logo" alt="logo" class="size-16 object-contain" />
+        <img v-if="$page.props.appSettings?.app_logo" :src="$page.props.appSettings.app_logo" alt="logo" class="size-24 object-contain" />
         <svg v-else
             class="size-16"
             viewBox="0 0 48 48"
@@ -16,3 +16,11 @@ import { Link } from '@inertiajs/vue3';
         </svg>
     </Link>
 </template>
+
+<!--
+ <img v-if="$page.props.appSettings?.app_logo" :src="$page.props.appSettings.app_logo"
+            class="h-12 w-auto lg:h-16 object-contain" alt="logo" />
+        <template v-else>
+            <img src="/storage/logo.svg" class="h-12 w-auto lg:h-16 object-contain" alt="default logo" />
+        </template>
+-->
