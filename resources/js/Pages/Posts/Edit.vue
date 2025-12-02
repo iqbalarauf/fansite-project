@@ -34,7 +34,7 @@
               <input type="file" @change="onFileChange" />
               <div class="text-red-600 text-sm pt-1">*Max File Size: 2048 KB/2 MB</div>
             </div>
-            
+
             <!-- moved right-column fields here so the right column contains title, excerpt, image, category, tags, status and save -->
             <div class="mb-4 sm:mb-8">
               <label class="block mb-2 text-sm font-medium dark:text-white">Category</label>
@@ -61,7 +61,7 @@
             <!-- SEO Fields -->
             <div class="border-t pt-4 space-y-4">
               <h3 class="text-sm font-semibold dark:text-white">SEO Settings</h3>
-              
+
               <div>
                 <label class="block mb-2 text-sm font-medium dark:text-white">Meta Title</label>
                 <input v-model="form.meta_title" type="text"
@@ -118,8 +118,6 @@ const props = defineProps({
 const post = props.post;
 
 const form = useForm({
-  // include _method so FormData contains it when we call form.post (important for file uploads)
-  _method: 'PUT',
   title: post.title || '',
   excerpt: post.excerpt || '',
   body: post.body || '',
@@ -161,19 +159,24 @@ const submit = () => {
   if (newFeaturedImage.value) {
     form.featured_image = newFeaturedImage.value;
   }
-  
+
   console.log('Submitting form.body:', form.body?.substring(0, 200));
-  
-  // Post with _method supplied in form data so PHP/Laravel can parse multipart fields
+
+  // Use form.post with _method: 'PUT' for file uploads (Laravel will handle it correctly)
   form.post(route('posts.update', post.slug), {
     forceFormData: true,
+    _method: 'PUT',
     onSuccess: () => {
       success.value = 'Post updated.';
+      // Clear the selected image after successful upload
+      newFeaturedImage.value = null;
+      if (selectedPreview.value) {
+        try { URL.revokeObjectURL(selectedPreview.value); } catch (e) {}
+        selectedPreview.value = null;
+      }
       // delay navigation briefly so the user can see the success message
       setTimeout(() => Inertia.visit(route('posts.manage')), 700);
     },
   });
-};
-
-// TiptapEditor now handles inline image uploads internally.
+};// TiptapEditor now handles inline image uploads internally.
 </script>
