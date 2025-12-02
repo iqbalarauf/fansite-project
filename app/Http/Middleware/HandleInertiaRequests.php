@@ -48,6 +48,8 @@ class HandleInertiaRequests extends Middleware
                 'app_logo' => $appSettings['app_logo'] ?? null,
                 'hero_image' => $appSettings['hero_image'] ?? null,
                 'login_image' => $appSettings['login_image'] ?? null,
+                'showroom_room_id' => $appSettings['showroom_room_id'] ?? '416491',
+                'showroom_link' => $appSettings['showroom_link'] ?? 'https://www.showroom-live.com/r/48_KOKOHA_EGUCHI',
             ],
             // share whether current user can manage settings
             'can' => [

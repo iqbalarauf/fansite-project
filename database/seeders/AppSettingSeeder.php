@@ -15,5 +15,7 @@ class AppSettingSeeder extends Seeder
         Setting::set('app_logo', '/storage/logo.png');
         Setting::set('hero_image', '/storage/hero.png');
         Setting::set('login_image', '/storage/login.jpg');
+        Setting::set('showroom_room_id', '416491');
+        Setting::set('showroom_link', 'https://www.showroom-live.com/r/JKT48_Greesel');
     }
 }

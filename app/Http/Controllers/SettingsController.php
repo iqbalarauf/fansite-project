@@ -19,6 +19,8 @@ class SettingsController extends Controller
                 'app_logo' => Setting::get('app_logo', ''),
                 'hero_image' => Setting::get('hero_image', ''),
                 'login_image' => Setting::get('login_image', ''),
+                'showroom_room_id' => Setting::get('showroom_room_id', '416491'),
+                'showroom_link' => Setting::get('showroom_link', 'https://www.showroom-live.com/r/48_KOKOHA_EGUCHI'),
             ],
         ]);
     }
@@ -32,6 +34,8 @@ class SettingsController extends Controller
             'app_logo' => ['nullable', 'image', 'max:2048'],
             'hero_image' => ['nullable', 'image', 'max:5120'],
             'login_image' => ['nullable', 'image', 'max:5120'],
+            'showroom_room_id' => ['nullable', 'string', 'max:255'],
+            'showroom_link' => ['nullable', 'url', 'max:500'],
         ]);
 
         // Update app_name
@@ -42,6 +46,10 @@ class SettingsController extends Controller
 
         // Update desc_app
         Setting::set('desc_app', $data['desc_app'] ?? '');
+
+        // Update showroom settings
+        Setting::set('showroom_room_id', $data['showroom_room_id'] ?? '416491');
+        Setting::set('showroom_link', $data['showroom_link'] ?? 'https://www.showroom-live.com/r/48_KOKOHA_EGUCHI');
 
         // Handle app_logo upload
         if ($request->hasFile('app_logo')) {

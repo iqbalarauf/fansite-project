@@ -9,6 +9,7 @@ use App\Models\Post;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Fortify\Http\Controllers\RegisteredUserController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\ShowroomProxyController;
 
 Route::get('/', function () {
     $latestPosts = Post::where('status','published')
@@ -71,6 +72,9 @@ Route::get('/blog', function () {
 })->name('blog.index');
 
 Route::get('/blog/{post}', [PostController::class, 'show'])->name('blog.show');
+
+// Showroom API proxy to avoid CORS issues
+Route::get('/api/showroom/live/{roomId}', [ShowroomProxyController::class, 'getLiveStatus'])->name('showroom.live');
 
 // Registration routes accessible to authenticated users for creating additional accounts.
 // GET uses Fortify's registration page. POST is overridden to avoid switching auth.

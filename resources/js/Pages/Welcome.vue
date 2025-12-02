@@ -1,6 +1,6 @@
 <script setup>
 import { Head, Link, usePage } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { formatDate } from '@/Helpers/formatDate';
 import SiteHeader from '@/Components/SiteHeader.vue';
 import Footer from '@/Components/Footer.vue';
@@ -27,6 +27,36 @@ function handleImageError() {
 
 const page = usePage();
 const heroSrc = computed(() => page.props.appSettings?.hero_image || '/storage/hero.jpg');
+const showroomRoomId = computed(() => page.props.appSettings?.showroom_room_id || '416491');
+const showroomLink = computed(() => page.props.appSettings?.showroom_link || 'https://www.showroom-live.com/r/48_KOKOHA_EGUCHI');
+
+// Showroom Live Status
+const showroomStatus = ref({
+    isLive: false,
+    loading: true,
+});
+
+// Fetch Showroom live status
+const fetchShowroomStatus = async () => {
+    try {
+        const response = await fetch(`/api/showroom/live/${showroomRoomId.value}`);
+        const data = await response.json();
+        console.log('Showroom API response:', data); // Debug log
+        showroomStatus.value = {
+            isLive: data.live_status === 2,
+            loading: false,
+        };
+    } catch (error) {
+        console.error('Error fetching Showroom status:', error);
+        showroomStatus.value.loading = false;
+    }
+};
+
+onMounted(() => {
+    fetchShowroomStatus();
+    // Refresh status every 60 seconds
+    setInterval(fetchShowroomStatus, 60000);
+});
 </script>
 
 <template>
@@ -92,7 +122,7 @@ const heroSrc = computed(() => page.props.appSettings?.hero_image || '/storage/h
                         <div class="flex flex-col gap-4">
                             <!-- Statistik Section -->
                             <div
-                                class="flex items-center justify-center rounded-lg bg-white dark:bg-gray-800 gap-4 p-6 sm:p-8 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] transition duration-300 hover:text-black/70 hover:ring-black/20 focus:outline-none focus-visible:ring-[#FF2D20] lg:pb-10 dark:ring-zinc-800 dark:hover:text-white/70 dark:hover:ring-zinc-700 dark:focus-visible:ring-[#FF2D20] w-full overflow-hidden">
+                                class="flex items-center justify-center rounded-lg bg-white dark:bg-gray-800 gap-4 p-6 sm:p-8 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] lg:pb-10 dark:ring-zinc-800 dark:hover:text-white/70 w-full overflow-hidden">
                                 <div class="grid grid-cols-3 gap-6 w-full">
                                     <div class="flex flex-col items-center justify-center text-center">
                                         <div class="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#FF2D20] mb-2">100+
@@ -119,28 +149,37 @@ const heroSrc = computed(() => page.props.appSettings?.hero_image || '/storage/h
                             </div>
 
                             <div
-                                class="flex items-center justify-center rounded-lg bg-white dark:bg-gray-800 gap-4 p-6 sm:p-8 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] transition duration-300 hover:text-black/70 hover:ring-black/20 focus:outline-none focus-visible:ring-[#FF2D20] lg:pb-10 dark:ring-zinc-800 dark:hover:text-white/70 dark:hover:ring-zinc-700 dark:focus-visible:ring-[#FF2D20] w-full overflow-hidden">
+                                class="flex items-center justify-center rounded-lg bg-white dark:bg-gray-800 gap-4 p-6 sm:p-8 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] lg:pb-10 dark:ring-zinc-800 dark:hover:text-white/70 w-full overflow-hidden">
                                 <div class="grid grid-cols-2 gap-6 w-full">
-                                    <div class="flex flex-col items-center justify-center text-center">
+                                    <component :is="showroomStatus.isLive ? 'a' : 'div'" 
+                                        :href="showroomStatus.isLive ? showroomLink : undefined"
+                                        :target="showroomStatus.isLive ? '_blank' : undefined"
+                                        :rel="showroomStatus.isLive ? 'noopener noreferrer' : undefined"
+                                        class="flex flex-col items-center justify-center text-center"
+                                        :class="{ 'cursor-pointer hover:opacity-80 transition': showroomStatus.isLive }">
                                         <div>
                                             <img src="https://static.showroom-live.com/assets/img/logo_guidelines/icon.png?t=1667879554"
                                                 class="h-20 mb-4"></img>
                                         </div>
-                                        <div class="text-sm sm:text-base text-gray-600 dark:text-gray-400">80+ Live
-                                        </div>
-                                        <span
-                                            class="inline-flex items-center rounded-md bg-green-400/10 px-2 py-1 text-xs font-medium text-green-400 inset-ring inset-ring-green-500/20 mt-2">Online</span>
-                                    </div>
+                                        <div class="text-sm sm:text-base text-gray-600 dark:text-gray-400">200+ Live</div>
+                                        <span v-if="!showroomStatus.loading"
+                                            class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium inset-ring mt-2"
+                                            :class="showroomStatus.isLive 
+                                                ? 'bg-green-400/10 text-green-400 inset-ring-green-500/20' 
+                                                : 'bg-red-400/10 text-red-400 inset-ring-red-400/20'">
+                                            {{ showroomStatus.isLive ? 'Online' : 'Offline' }}
+                                        </span>
+                                    </component>
 
                                     <div class="flex flex-col items-center justify-center text-center">
                                         <div>
                                             <img src="https://play-lh.googleusercontent.com/vHCUNv03NNuh_aNKRCP63wUpC-HHhPXyrL_gJdFr_Xn7lgsamEAoFhG7mtz1gVBjYA=w480-h960-rw"
                                                 class="h-20 mb-4"></img>
                                         </div>
-                                        <div class="text-sm sm:text-base text-gray-600 dark:text-gray-400">200+ Live
+                                        <div class="text-sm sm:text-base text-gray-600 dark:text-gray-400">80+ Live
                                         </div>
                                         <span
-                                            class="inline-flex items-center rounded-md bg-red-400/10 px-2 py-1 text-xs font-medium text-red-400 inset-ring inset-ring-red-400/20 mt-2">Offline</span>
+                                            class="inline-flex items-center rounded-md bg-red-400/10 px-2 py-1 text-xs font-medium text-red-400 inset-ring inset-ring-red-400/20 mt-2">Not Connected</span>
                                     </div>
                                 </div>
                             </div>

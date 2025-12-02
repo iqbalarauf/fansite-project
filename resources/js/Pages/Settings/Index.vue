@@ -18,6 +18,8 @@ const form = useForm({
   app_logo: null,
   hero_image: null,
   login_image: null,
+  showroom_room_id: latestAppSettings.value.showroom_room_id || '416491',
+  showroom_link: latestAppSettings.value.showroom_link || 'https://www.showroom-live.com/r/48_KOKOHA_EGUCHI',
 })
 
 const confirmingSave = ref(false)
@@ -48,6 +50,8 @@ const hasChanges = computed(() => {
   if (form.app_name !== (s.app_name || '')) return true
   if (form.sidebar_name !== (s.sidebar_name || '')) return true
   if (form.desc_app !== (s.desc_app || '')) return true
+  if (form.showroom_room_id !== (s.showroom_room_id || '416491')) return true
+  if (form.showroom_link !== (s.showroom_link || 'https://www.showroom-live.com/r/JKT48_Greesel')) return true
   if (form.app_logo || form.hero_image || form.login_image) return true
   return false
 })
@@ -57,6 +61,8 @@ const syncFormFromServer = (incoming) => {
   form.app_name = server.app_name ?? form.app_name ?? ''
   form.sidebar_name = server.sidebar_name ?? ''
   form.desc_app = server.desc_app ?? ''
+  form.showroom_room_id = server.showroom_room_id ?? '416491'
+  form.showroom_link = server.showroom_link ?? 'https://www.showroom-live.com/r/JKT48_Greesel'
   form.app_logo = null
   form.hero_image = null
   form.login_image = null
@@ -172,6 +178,28 @@ const confirmSave = () => {
               <p class="text-xs text-gray-400 mt-1">Max 5MB. Displayed on login/register pages.</p>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- Showroom Settings Section -->
+      <div class="bg-white dark:bg-zinc-900 p-6 rounded-lg border ring-1 ring-white/5">
+        <div class="mb-4">
+          <div class="text-lg font-medium text-gray-900 dark:text-gray-200">Showroom Live Settings</div>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Configure Showroom Live integration for your homepage</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Room ID</label>
+          <p class="text-xs text-gray-400 mb-2">The Showroom room ID to check live status (e.g., 416491)</p>
+          <input v-model="form.showroom_room_id" type="text"
+            class="mt-1 block w-full rounded border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-white" />
+        </div>
+
+        <div class="mt-4">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Showroom Link</label>
+          <p class="text-xs text-gray-400 mb-2">Full URL to redirect when live (e.g., https://www.showroom-live.com/r/JKT48_Greesel)</p>
+          <input v-model="form.showroom_link" type="url"
+            class="mt-1 block w-full rounded border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-white" />
         </div>
       </div>
 
