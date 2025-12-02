@@ -60,25 +60,27 @@ const menuItems = computed(() => {
     ]">
         <div class="flex flex-col h-full">
             <!-- Sidebar Header -->
-            <div class="flex items-center justify-between h-20 px-4">
-                <Link :href="route('dashboard')" class="flex items-center" @click="closeSidebar">
+            <div class="flex items-center justify-between h-20 px-4 gap-2">
+                <Link :href="route('dashboard')" class="flex items-center min-w-0 flex-1" @click="closeSidebar">
                 <img v-if="$page.props.appSettings?.app_logo" :src="$page.props.appSettings.app_logo"
-                    class="h-12 w-auto lg:h-16 object-contain" alt="logo" />
-                <img v-else src="/storage/logo.svg" class="h-12 w-auto lg:h-16 object-contain" alt="default logo" />
-                <span class="text-xl font-semibold text-gray-900 dark:text-white ms-3">
+                    class="h-12 w-auto lg:h-16 object-contain shrink-0" alt="logo" />
+                <img v-else src="/storage/logo.svg" class="h-12 w-auto lg:h-16 object-contain shrink-0" alt="default logo" />
+                <span class="text-xl font-semibold text-gray-900 dark:text-white ms-3 truncate">
                     {{ $page.props.appSettings?.sidebar_name || $page.props.appSettings?.app_name || 'Dashboard' }}
                 </span>
                 </Link>
 
-                <ThemeToggle variant="mobile" v-if="$page.props.auth.user" />
+                <div class="flex items-center gap-2 shrink-0">
+                    <ThemeToggle variant="mobile" v-if="$page.props.auth.user" />
 
-                <button @click="closeSidebar"
-                    class="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
+                    <button @click="closeSidebar"
+                        class="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
             </div>
 
             <!-- Navigation Menu -->
