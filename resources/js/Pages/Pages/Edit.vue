@@ -160,20 +160,6 @@
           </div>
         </div>
 
-        <!-- Status -->
-        <div>
-          <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
-          <select
-            id="status"
-            v-model="form.status"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-          >
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
-          </select>
-          <div v-if="form.errors.status" class="text-sm text-red-600 mt-1">{{ form.errors.status }}</div>
-        </div>
-
         <!-- Menu Settings -->
         <div class="space-y-4 p-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800">
           <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Menu Settings</h3>
@@ -248,6 +234,20 @@
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Comma-separated keywords</p>
             <div v-if="form.errors.meta_keywords" class="text-sm text-red-600 mt-1">{{ form.errors.meta_keywords }}</div>
           </div>
+        </div>
+
+        <!-- Status -->
+        <div>
+          <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
+          <select
+            id="status"
+            v-model="form.status"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          >
+            <option value="draft">Draft</option>
+            <option value="published">Published</option>
+          </select>
+          <div v-if="form.errors.status" class="text-sm text-red-600 mt-1">{{ form.errors.status }}</div>
         </div>
 
         <!-- Actions -->
