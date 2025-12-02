@@ -83,6 +83,9 @@ class CustomPageController extends Controller
             'status' => 'required|in:draft,published',
             'show_in_menu' => 'boolean',
             'menu_order' => 'nullable|integer|min:0',
+            'meta_title' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string|max:500',
+            'meta_keywords' => 'nullable|string|max:255',
         ]);
 
         $data['user_id'] = $request->user()->id;
@@ -125,6 +128,9 @@ class CustomPageController extends Controller
                 'published_at' => $page->published_at,
                 'show_in_menu' => $page->show_in_menu,
                 'menu_order' => $page->menu_order,
+                'meta_title' => $page->meta_title,
+                'meta_description' => $page->meta_description,
+                'meta_keywords' => $page->meta_keywords,
             ],
         ]);
     }
@@ -146,6 +152,9 @@ class CustomPageController extends Controller
             'status' => 'required|in:draft,published',
             'show_in_menu' => 'boolean',
             'menu_order' => 'nullable|integer|min:0',
+            'meta_title' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string|max:500',
+            'meta_keywords' => 'nullable|string|max:255',
         ]);
 
         if ($request->hasFile('hero_image')) {

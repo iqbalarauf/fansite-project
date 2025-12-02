@@ -65,6 +65,9 @@ class PostController extends Controller
                 'status' => $post->status,
                 'published_at' => $post->published_at,
                 'user' => [ 'id' => $post->user->id, 'name' => $post->user->name ],
+                'meta_title' => $post->meta_title,
+                'meta_description' => $post->meta_description,
+                'meta_keywords' => $post->meta_keywords,
             ],
         ]);
     }
@@ -117,6 +120,9 @@ class PostController extends Controller
                 'tags' => $post->tags,
                 'status' => $post->status,
                 'published_at' => $post->published_at,
+                'meta_title' => $post->meta_title,
+                'meta_description' => $post->meta_description,
+                'meta_keywords' => $post->meta_keywords,
             ],
         ]);
     }

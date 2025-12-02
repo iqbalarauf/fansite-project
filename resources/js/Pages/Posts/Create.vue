@@ -61,6 +61,35 @@
               </select>
             </div>
 
+            <!-- SEO Fields -->
+            <div class="border-t pt-4 space-y-4">
+              <h3 class="text-sm font-semibold dark:text-white">SEO Settings</h3>
+              
+              <div>
+                <label class="block mb-2 text-sm font-medium dark:text-white">Meta Title</label>
+                <input v-model="form.meta_title" type="text"
+                  class="py-2.5 sm:py-3 px-4 block w-full border-gray-200 rounded-lg sm:text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400 dark:placeholder-neutral-500 dark:focus:ring-neutral-600"
+                  placeholder="Custom meta title" />
+                <p class="text-xs text-gray-500 mt-1">Leave empty to use post title</p>
+              </div>
+
+              <div>
+                <label class="block mb-2 text-sm font-medium dark:text-white">Meta Description</label>
+                <textarea v-model="form.meta_description" rows="3"
+                  class="py-2.5 sm:py-3 px-4 block w-full border-gray-200 rounded-lg sm:text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400 dark:placeholder-neutral-500 dark:focus:ring-neutral-600"
+                  placeholder="Brief description for search engines"></textarea>
+                <p class="text-xs text-gray-500 mt-1">Max 160 characters recommended</p>
+              </div>
+
+              <div>
+                <label class="block mb-2 text-sm font-medium dark:text-white">Meta Keywords</label>
+                <input v-model="form.meta_keywords" type="text"
+                  class="py-2.5 sm:py-3 px-4 block w-full border-gray-200 rounded-lg sm:text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400 dark:placeholder-neutral-500 dark:focus:ring-neutral-600"
+                  placeholder="keyword1, keyword2, keyword3" />
+                <p class="text-xs text-gray-500 mt-1">Comma-separated keywords</p>
+              </div>
+            </div>
+
             <div class="mt-6 grid">
               <button :disabled="form.processing" class="w-full py-3 px-4 inline-flex justify-center items-center gap-x-2 text-sm font-medium rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 focus:outline-hidden focus:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none">
                 <span v-if="form.processing">Saving…</span>
@@ -93,6 +122,9 @@ const form = useForm({
   tags: '',
   status: 'draft',
   published_at: null,
+  meta_title: '',
+  meta_description: '',
+  meta_keywords: '',
 });
 
 const selectedPreview = ref(null);

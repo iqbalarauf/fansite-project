@@ -187,6 +187,50 @@
           </div>
         </div>
 
+        <!-- SEO Settings -->
+        <div class="space-y-4 p-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800">
+          <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">SEO Settings</h3>
+          
+          <div>
+            <label for="meta_title" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Meta Title</label>
+            <input
+              id="meta_title"
+              v-model="form.meta_title"
+              type="text"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              placeholder="Custom meta title"
+            />
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Leave empty to use page title</p>
+            <div v-if="form.errors.meta_title" class="text-sm text-red-600 mt-1">{{ form.errors.meta_title }}</div>
+          </div>
+
+          <div>
+            <label for="meta_description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Meta Description</label>
+            <textarea
+              id="meta_description"
+              v-model="form.meta_description"
+              rows="3"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              placeholder="Brief description for search engines"
+            ></textarea>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Max 160 characters recommended</p>
+            <div v-if="form.errors.meta_description" class="text-sm text-red-600 mt-1">{{ form.errors.meta_description }}</div>
+          </div>
+
+          <div>
+            <label for="meta_keywords" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Meta Keywords</label>
+            <input
+              id="meta_keywords"
+              v-model="form.meta_keywords"
+              type="text"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              placeholder="keyword1, keyword2, keyword3"
+            />
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Comma-separated keywords</p>
+            <div v-if="form.errors.meta_keywords" class="text-sm text-red-600 mt-1">{{ form.errors.meta_keywords }}</div>
+          </div>
+        </div>
+
         <!-- Actions -->
         <div class="flex items-center justify-end gap-4">
           <Link :href="route('pages.index')" class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200">
@@ -225,6 +269,9 @@ const form = useForm({
   status: 'draft',
   show_in_menu: false,
   menu_order: 0,
+  meta_title: '',
+  meta_description: '',
+  meta_keywords: '',
 });
 
 const heroImagePreview = ref(null);

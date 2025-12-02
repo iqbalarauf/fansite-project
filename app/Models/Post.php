@@ -28,6 +28,9 @@ class Post extends Model
         'seo_description',
         'status',
         'published_at',
+        'meta_title',
+        'meta_description',
+        'meta_keywords',
     ];
 
     protected $casts = [

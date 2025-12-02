@@ -1,5 +1,17 @@
 <template>
-  <Head :title="page.title" />
+  <Head>
+    <title>{{ page.meta_title || page.title }}</title>
+    <meta name="description" :content="page.meta_description || ''" />
+    <meta name="keywords" :content="page.meta_keywords || ''" v-if="page.meta_keywords" />
+    <meta property="og:title" :content="page.meta_title || page.title" />
+    <meta property="og:description" :content="page.meta_description || ''" />
+    <meta property="og:image" :content="page.hero_image || ''" v-if="page.hero_image" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" :content="page.meta_title || page.title" />
+    <meta name="twitter:description" :content="page.meta_description || ''" />
+    <meta name="twitter:image" :content="page.hero_image || ''" v-if="page.hero_image" />
+  </Head>
 
   <div class="bg-gray-100 dark:bg-gray-900 text-black/50 dark:text-white/50 min-h-screen flex flex-col">
     <img id="background" class="absolute -left-20 top-0 max-w-[877px]" src="https://laravel.com/assets/img/welcome/background.svg" />

@@ -1,6 +1,18 @@
 <template>
 
-    <Head :title="post.title" />
+    <Head>
+        <title>{{ post.meta_title || post.title }}</title>
+        <meta name="description" :content="post.meta_description || post.excerpt || ''" />
+        <meta name="keywords" :content="post.meta_keywords || ''" v-if="post.meta_keywords" />
+        <meta property="og:title" :content="post.meta_title || post.title" />
+        <meta property="og:description" :content="post.meta_description || post.excerpt || ''" />
+        <meta property="og:image" :content="post.featured_image || ''" v-if="post.featured_image" />
+        <meta property="og:type" content="article" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" :content="post.meta_title || post.title" />
+        <meta name="twitter:description" :content="post.meta_description || post.excerpt || ''" />
+        <meta name="twitter:image" :content="post.featured_image || ''" v-if="post.featured_image" />
+    </Head>
     <div class="bg-gray-100 dark:bg-gray-900 text-black/50 dark:text-white/50 min-h-screen flex flex-col">
         <!-- put the sticky header before the centered content so it remains at the top -->
         <div class="sticky top-0 z-50 left-0 right-0 w-full bg-white dark:bg-gray-800 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700">

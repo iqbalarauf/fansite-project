@@ -26,6 +26,9 @@ class CustomPage extends Model
         'published_at',
         'show_in_menu',
         'menu_order',
+        'meta_title',
+        'meta_description',
+        'meta_keywords',
     ];
 
     protected $casts = [
