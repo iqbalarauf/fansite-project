@@ -1,7 +1,6 @@
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import AuthenticationCard from '@/Components/AuthenticationCard.vue';
-import AuthenticationCardLogo from '@/Components/AuthenticationCardLogo.vue';
+import { onMounted } from 'vue';
 import Checkbox from '@/Components/Checkbox.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
@@ -27,15 +26,29 @@ const submit = () => {
         onFinish: () => form.reset('password'),
     });
 };
+
+// Apply dark mode on mount based on localStorage
+onMounted(() => {
+    try {
+        const stored = localStorage.getItem('dark-mode');
+        if (stored === '1') {
+            document.documentElement.classList.add('dark');
+        } else if (stored === '0') {
+            document.documentElement.classList.remove('dark');
+        }
+    } catch (e) {
+        // ignore
+    }
+});
 </script>
 
 <template>
 
     <Head title="Log in" />
-    <div class="relative p-6 bg-white z-1 dark:bg-gray-900 sm:p-0">
+    <div class="relative p-6 bg-white dark:bg-gray-900 z-1 sm:p-0">
         <div class="relative flex flex-col justify-center w-full h-screen lg:flex-row dark:bg-gray-900">
             <div class="flex flex-col flex-1 w-full lg:w-1/2">
-                <div class="w-full max-w-md pt-10 mx-auto">
+                <div class="w-full max-w-md pt-10 mx-auto flex items-center justify-between">
                     <Link href="/"
                         class="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
                     <svg class="stroke-current" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
