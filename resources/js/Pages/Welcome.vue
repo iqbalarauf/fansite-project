@@ -29,6 +29,28 @@ const page = usePage();
 const heroSrc = computed(() => page.props.appSettings?.hero_image || '/storage/hero.jpg');
 const showroomRoomId = computed(() => page.props.appSettings?.showroom_room_id || '416491');
 const showroomLink = computed(() => page.props.appSettings?.showroom_link || 'https://www.showroom-live.com/r/48_KOKOHA_EGUCHI');
+const teaterStats = computed(() => page.props.teaterStats || { total_shows: 0, unique_setlists: 0, unique_unit_songs: 0 });
+
+// Animated counters
+const animatedShows = ref(0);
+const animatedSetlists = ref(0);
+const animatedUnitSongs = ref(0);
+
+// Animate number counting
+const animateCount = (start, end, duration, callback) => {
+    const startTime = performance.now();
+    const step = (currentTime) => {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easeOutQuad = progress * (2 - progress); // Easing function
+        const current = Math.floor(start + (end - start) * easeOutQuad);
+        callback(current);
+        if (progress < 1) {
+            requestAnimationFrame(step);
+        }
+    };
+    requestAnimationFrame(step);
+};
 
 // Showroom Live Status
 const showroomStatus = ref({
@@ -56,6 +78,11 @@ onMounted(() => {
     fetchShowroomStatus();
     // Refresh status every 60 seconds
     setInterval(fetchShowroomStatus, 60000);
+    
+    // Animate statistics counters
+    animateCount(0, teaterStats.value.total_shows, 3000, (val) => animatedShows.value = val);
+    animateCount(0, teaterStats.value.unique_setlists, 3000, (val) => animatedSetlists.value = val);
+    animateCount(0, teaterStats.value.unique_unit_songs, 3000, (val) => animatedUnitSongs.value = val);
 });
 </script>
 
@@ -125,7 +152,8 @@ onMounted(() => {
                                 class="flex items-center justify-center rounded-lg bg-white dark:bg-gray-800 gap-4 p-6 sm:p-8 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] lg:pb-10 dark:ring-zinc-800 dark:hover:text-white/70 w-full overflow-hidden">
                                 <div class="grid grid-cols-3 gap-6 w-full">
                                     <div class="flex flex-col items-center justify-center text-center">
-                                        <div class="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#FF2D20] mb-2">100+
+                                        <div class="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#FF2D20] mb-2">
+                                            {{ animatedShows }}
                                         </div>
                                         <div class="text-sm sm:text-base text-gray-600 dark:text-gray-400">Show
                                             Teater
@@ -133,14 +161,16 @@ onMounted(() => {
                                     </div>
 
                                     <div class="flex flex-col items-center justify-center text-center">
-                                        <div class="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#FF2D20] mb-2">6
+                                        <div class="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#FF2D20] mb-2">
+                                            {{ animatedSetlists }}
                                         </div>
                                         <div class="text-sm sm:text-base text-gray-600 dark:text-gray-400">Setlist
                                         </div>
                                     </div>
 
                                     <div class="flex flex-col items-center justify-center text-center">
-                                        <div class="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#FF2D20] mb-2">10
+                                        <div class="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#FF2D20] mb-2">
+                                            {{ animatedUnitSongs }}
                                         </div>
                                         <div class="text-sm sm:text-base text-gray-600 dark:text-gray-400">Unit Song
                                         </div>
