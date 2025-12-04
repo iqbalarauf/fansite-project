@@ -40,10 +40,34 @@ class HandleInertiaRequests extends Middleware
         $appSettings = Setting::allKeyValues();
 
         // Get statistics from show_teater table
+        $today = now()->startOfDay();
+        
+        // Get the latest show_date that is before today
+        $lastUpdateDate = \DB::table('show_teater')
+            ->get()
+            ->filter(function ($show) use ($today) {
+                // Try to parse various date formats
+                $date = $this->parseShowDate($show->show_date);
+                return $date && $date->lt($today);
+            })
+            ->sortByDesc(function ($show) {
+                return $this->parseShowDate($show->show_date);
+            })
+            ->first()?->show_date;
+        
+        // Filter and count shows before today
+        $pastShows = \DB::table('show_teater')
+            ->get()
+            ->filter(function ($show) use ($today) {
+                $date = $this->parseShowDate($show->show_date);
+                return $date && $date->lt($today);
+            });
+        
         $teaterStats = [
-            'total_shows' => \DB::table('show_teater')->count(),
-            'unique_setlists' => \DB::table('show_teater')->distinct()->count('setlist'),
-            'unique_unit_songs' => \DB::table('show_teater')->distinct()->count('unit_song'),
+            'total_shows' => $pastShows->count(),
+            'unique_setlists' => $pastShows->unique('setlist')->count(),
+            'unique_unit_songs' => $pastShows->unique('unit_song')->count(),
+            'last_update' => $lastUpdateDate,
         ];
 
         return [
@@ -64,5 +88,45 @@ class HandleInertiaRequests extends Middleware
                 'manageSettings' => $request->user() ? $request->user()->can('manage-settings') : false,
             ],
         ];
+    }
+
+    /**
+     * Parse show_date from various formats
+     */
+    private function parseShowDate($dateString)
+    {
+        try {
+            // Try yyyy-mm-dd format first
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateString)) {
+                return \Carbon\Carbon::createFromFormat('Y-m-d', $dateString);
+            }
+            
+            // Try dd.mm.yyyy format
+            if (preg_match('/^\d{2}\.\d{2}\.\d{4}$/', $dateString)) {
+                $parts = explode('.', $dateString);
+                return \Carbon\Carbon::createFromFormat('Y-m-d', $parts[2] . '-' . $parts[1] . '-' . $parts[0]);
+            }
+            
+            // Try Indonesian format: "Jumat, 28 November 2024"
+            $months = [
+                'Januari' => '01', 'Februari' => '02', 'Maret' => '03', 'April' => '04',
+                'Mei' => '05', 'Juni' => '06', 'Juli' => '07', 'Agustus' => '08',
+                'September' => '09', 'Oktober' => '10', 'November' => '11', 'Desember' => '12'
+            ];
+            
+            foreach ($months as $monthName => $monthNum) {
+                if (strpos($dateString, $monthName) !== false) {
+                    if (preg_match('/(\d{1,2})\s+' . $monthName . '\s+(\d{4})/', $dateString, $matches)) {
+                        $day = str_pad($matches[1], 2, '0', STR_PAD_LEFT);
+                        $year = $matches[2];
+                        return \Carbon\Carbon::createFromFormat('Y-m-d', $year . '-' . $monthNum . '-' . $day);
+                    }
+                }
+            }
+            
+            return null;
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 }

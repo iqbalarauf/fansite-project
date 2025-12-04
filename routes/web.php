@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Storage;
 use Laravel\Fortify\Http\Controllers\RegisteredUserController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ShowroomProxyController;
+use App\Http\Controllers\ShowTeaterController;
 
 Route::get('/', function () {
     $latestPosts = Post::where('status','published')
@@ -123,6 +124,11 @@ Route::middleware(['auth'])->group(function () {
     // Accounts management
     Route::get('/accounts', [AccountController::class, 'index'])->name('accounts.manage');
     Route::delete('/accounts/{user}', [AccountController::class, 'destroy'])->name('accounts.destroy');
+
+    // Show Teater management
+    Route::get('/show-teater', [ShowTeaterController::class, 'index'])->name('show-teater.index');
+    Route::post('/show-teater', [ShowTeaterController::class, 'store'])->name('show-teater.store');
+    Route::put('/show-teater/{id}', [ShowTeaterController::class, 'update'])->name('show-teater.update');
 });
 
 // Public custom page view - MUST BE LAST as catch-all fallback

@@ -20,6 +20,12 @@ const logout = () => {
     router.post(route('logout'));
 };
 
+const openDropdown = ref(null);
+
+const toggleDropdown = (name) => {
+    openDropdown.value = openDropdown.value === name ? null : name;
+};
+
 const menuItems = computed(() => {
     const items = [
         {
@@ -45,6 +51,19 @@ const menuItems = computed(() => {
             href: route('accounts.manage'),
             icon: 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9',
             active: route().current('accounts.manage'),
+        },
+        {
+            name: 'Master Data',
+            icon: 'M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125',
+            active: route().current('show-teater.*'),
+            hasDropdown: true,
+            submenu: [
+                {
+                    name: 'Show Teater',
+                    href: route('show-teater.index'),
+                    active: route().current('show-teater.*'),
+                },
+            ],
         },
     ];
 
@@ -85,17 +104,53 @@ const menuItems = computed(() => {
 
             <!-- Navigation Menu -->
             <nav class="flex-1 px-4 py-4 space-y-2 overflow-y-auto">
-                <Link v-for="item in menuItems" :key="item.name" :href="item.href" @click="closeSidebar" :class="[
-                    'flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors',
-                    item.active
-                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
-                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
-                ]">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon" />
-                </svg>
-                {{ item.name }}
-                </Link>
+                <template v-for="item in menuItems" :key="item.name">
+                    <!-- Menu item with dropdown -->
+                    <div v-if="item.hasDropdown">
+                        <button @click="toggleDropdown(item.name)" :class="[
+                            'w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors',
+                            item.active
+                                ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
+                                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
+                        ]">
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon" />
+                                </svg>
+                                {{ item.name }}
+                            </div>
+                            <svg :class="[
+                                'w-4 h-4 transition-transform',
+                                openDropdown === item.name ? 'rotate-180' : ''
+                            ]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <div v-show="openDropdown === item.name" class="mt-1 ml-8 space-y-1">
+                            <Link v-for="submenu in item.submenu" :key="submenu.name" :href="submenu.href" @click="closeSidebar" :class="[
+                                'block px-4 py-2 text-sm rounded-lg transition-colors',
+                                submenu.active
+                                    ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
+                                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
+                            ]">
+                            {{ submenu.name }}
+                            </Link>
+                        </div>
+                    </div>
+
+                    <!-- Regular menu item -->
+                    <Link v-else :href="item.href" @click="closeSidebar" :class="[
+                        'flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors',
+                        item.active
+                            ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
+                            : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
+                    ]">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon" />
+                    </svg>
+                    {{ item.name }}
+                    </Link>
+                </template>
             </nav>
 
             <!-- Sidebar Footer -->

@@ -2,6 +2,7 @@
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { ref, computed, onMounted } from 'vue';
 import { formatDate } from '@/Helpers/formatDate';
+import { formatDateIndonesia } from '@/Helpers/formatDateIndonesia';
 import SiteHeader from '@/Components/SiteHeader.vue';
 import Footer from '@/Components/Footer.vue';
 
@@ -149,31 +150,38 @@ onMounted(() => {
                         <div class="flex flex-col gap-4">
                             <!-- Statistik Section -->
                             <div
-                                class="flex items-center justify-center rounded-lg bg-white dark:bg-gray-800 gap-4 p-6 sm:p-8 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] lg:pb-10 dark:ring-zinc-800 dark:hover:text-white/70 w-full overflow-hidden">
-                                <div class="grid grid-cols-3 gap-6 w-full">
-                                    <div class="flex flex-col items-center justify-center text-center">
-                                        <div class="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#FF2D20] mb-2">
-                                            {{ animatedShows }}
+                                class="flex items-center justify-center rounded-lg bg-white dark:bg-gray-800 gap-4 p-6 sm:p-8 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] lg:pb-5 dark:ring-zinc-800 dark:hover:text-white/70 w-full overflow-hidden">
+                                <div class="w-full">
+                                    <div class="grid grid-cols-3 gap-6 w-full">
+                                        <div class="flex flex-col items-center justify-center text-center">
+                                            <div class="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#FF2D20] mb-2">
+                                                {{ animatedShows }}
+                                            </div>
+                                            <div class="text-sm sm:text-base text-gray-600 dark:text-gray-400">Show
+                                                Teater
+                                            </div>
                                         </div>
-                                        <div class="text-sm sm:text-base text-gray-600 dark:text-gray-400">Show
-                                            Teater
+
+                                        <div class="flex flex-col items-center justify-center text-center">
+                                            <div class="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#FF2D20] mb-2">
+                                                {{ animatedSetlists }}
+                                            </div>
+                                            <div class="text-sm sm:text-base text-gray-600 dark:text-gray-400">Setlist
+                                            </div>
+                                        </div>
+
+                                        <div class="flex flex-col items-center justify-center text-center">
+                                            <div class="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#FF2D20] mb-2">
+                                                {{ animatedUnitSongs }}
+                                            </div>
+                                            <div class="text-sm sm:text-base text-gray-600 dark:text-gray-400">Unit Song
+                                            </div>
                                         </div>
                                     </div>
-
-                                    <div class="flex flex-col items-center justify-center text-center">
-                                        <div class="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#FF2D20] mb-2">
-                                            {{ animatedSetlists }}
-                                        </div>
-                                        <div class="text-sm sm:text-base text-gray-600 dark:text-gray-400">Setlist
-                                        </div>
-                                    </div>
-
-                                    <div class="flex flex-col items-center justify-center text-center">
-                                        <div class="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#FF2D20] mb-2">
-                                            {{ animatedUnitSongs }}
-                                        </div>
-                                        <div class="text-sm sm:text-base text-gray-600 dark:text-gray-400">Unit Song
-                                        </div>
+                                    <div v-if="teaterStats.last_update" class="mt-4 text-center">
+                                        <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                                            Last Update: <span class="font-medium">{{ formatDateIndonesia(teaterStats.last_update) }}</span>
+                                        </p>
                                     </div>
                                 </div>
                             </div>
