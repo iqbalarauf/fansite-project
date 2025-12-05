@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use App\Models\Setting;
+use App\Models\AboutSetting;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -70,6 +71,10 @@ class HandleInertiaRequests extends Middleware
             'last_update' => $lastUpdateDate,
         ];
 
+        // Get idol photo and transform to URL
+        $idolPhoto = AboutSetting::get('idol_photo', '');
+        $idolPhotoUrl = $idolPhoto ? \Storage::url($idolPhoto) : null;
+
         return [
             ...parent::share($request),
             'appSettings' => [
@@ -83,6 +88,15 @@ class HandleInertiaRequests extends Middleware
                 'showroom_link' => $appSettings['showroom_link'] ?? 'https://www.showroom-live.com/r/48_KOKOHA_EGUCHI',
             ],
             'teaterStats' => $teaterStats,
+            'aboutSettings' => [
+                'idol_name' => AboutSetting::get('idol_name', ''),
+                'idol_slug' => AboutSetting::get('idol_slug', ''),
+                'idol_photo' => $idolPhotoUrl,
+                'idol_description' => AboutSetting::get('idol_description', ''),
+                'idol_show_on_welcome' => AboutSetting::get('idol_show_on_welcome', 'false'),
+                'fanbase_name' => AboutSetting::get('fanbase_name', ''),
+                'fanbase_slug' => AboutSetting::get('fanbase_slug', ''),
+            ],
             // share whether current user can manage settings
             'can' => [
                 'manageSettings' => $request->user() ? $request->user()->can('manage-settings') : false,

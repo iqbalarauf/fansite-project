@@ -148,7 +148,35 @@ onMounted(() => {
                 </div>
             </section>
 
-            <div class="relative w-full px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+            <!-- About Idol Section (Optional) -->
+            <section v-if="page.props.aboutSettings?.idol_show_on_welcome === 'true' || page.props.aboutSettings?.idol_show_on_welcome === true" class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg">
+                    <div class="p-6 sm:p-8">
+                        <div class="grid md:grid-cols-2 gap-8 items-center">
+                            <!-- Photo -->
+                            <div v-if="page.props.aboutSettings.idol_photo" class="flex justify-center order-2 md:order-1">
+                                <img :src="page.props.aboutSettings.idol_photo" :alt="page.props.aboutSettings.idol_name" class="rounded-lg shadow-lg max-h-96 w-full object-cover" />
+                            </div>
+                            
+                            <!-- Info -->
+                            <div class="order-1 md:order-2">
+                                <h3 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">{{ page.props.aboutSettings.idol_name }}</h3>
+                                <div class="prose dark:prose-invert max-w-none">
+                                    <p class="text-gray-700 dark:text-gray-300 whitespace-pre-line">{{ page.props.aboutSettings.idol_description }}</p>
+                                </div>
+                                <div class="mt-6">
+                                    <Link :href="page.props.aboutSettings.idol_slug ? route('about.idol', { slug: page.props.aboutSettings.idol_slug }) : route('about.idol')" 
+                                        class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring focus:ring-indigo-300 transition">
+                                        Learn More
+                                    </Link>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div id="content" class="relative w-full px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
                 <main class="mt-6">
                     <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:gap-8">
                         <div class="flex flex-col gap-4">

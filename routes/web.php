@@ -208,7 +208,16 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/meet-greet', [\App\Http\Controllers\MeetGreetEventController::class, 'store'])->name('meet-greet.store');
     Route::put('/meet-greet/{meetGreet}', [\App\Http\Controllers\MeetGreetEventController::class, 'update'])->name('meet-greet.update');
     Route::delete('/meet-greet/{meetGreet}', [\App\Http\Controllers\MeetGreetEventController::class, 'destroy'])->name('meet-greet.destroy');
+
+    // About Settings management
+    Route::get('/about/settings', [\App\Http\Controllers\AboutSettingsController::class, 'edit'])->name('about.settings');
+    Route::post('/about/settings', [\App\Http\Controllers\AboutSettingsController::class, 'update'])->name('about.settings.update');
+    Route::delete('/about/settings/gallery/{index}', [\App\Http\Controllers\AboutSettingsController::class, 'deleteGalleryImage'])->name('about.settings.gallery.delete');
 });
+
+// Public About pages
+Route::get('/about/idol/{slug?}', [\App\Http\Controllers\AboutController::class, 'idol'])->name('about.idol');
+Route::get('/about/fanbase/{slug?}', [\App\Http\Controllers\AboutController::class, 'fanbase'])->name('about.fanbase');
 
 // Public custom page view - MUST BE LAST as catch-all fallback
 Route::get('/{page}', [\App\Http\Controllers\CustomPageController::class, 'show'])->name('pages.show');
