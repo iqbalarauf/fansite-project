@@ -115,44 +115,38 @@ watch([searchTerm, selectedType], () => {
             </div>
         </template>
 
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div class="flex justify-end mb-6">
-                <button @click="openAddModal"
-                    class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    Add Category
-                </button>
-            </div>
-
-            <div v-if="categories && categories.length">
-                <div class="bg-white dark:bg-gray-800 relative shadow-md sm:rounded-lg overflow-hidden">
-                    <div
-                        class="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4">
-                        <div class="w-full md:w-1/2">
-                            <form class="flex items-center" @submit.prevent>
-                                <label for="search" class="sr-only">Search</label>
-                                <div class="relative w-full">
-                                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                        <svg aria-hidden="true" class="w-5 h-5 text-gray-500 dark:text-gray-400"
-                                            fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                            <path fill-rule="evenodd"
-                                                d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                                                clip-rule="evenodd" />
-                                        </svg>
-                                    </div>
-                                    <input id="search" v-model="searchTerm" type="text"
-                                        placeholder="Search category name..."
-                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" />
-                                </div>
-                            </form>
+        <div class="py-12">
+            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg">
+                    <!-- Header Section -->
+                    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                                    Manage Setlist dan Unit Songs
+                                </h3>
+                                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                                    Kelola kategori setlist dan unit song
+                                </p>
+                            </div>
+                            <button @click="openAddModal"
+                                class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring focus:ring-blue-300 disabled:opacity-25 transition">
+                                Add Category
+                            </button>
                         </div>
-                        <div
-                            class="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 items-stretch md:items-center justify-end md:space-x-3 flex-shrink-0">
-                            <div class="flex items-center space-x-3 w-full md:w-auto">
+                    </div>
+
+                    <!-- Search and Filter Section -->
+                    <div class="p-6 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+                        <div class="flex flex-col md:flex-row gap-4">
+                            <div class="flex-1">
+                                <input v-model="searchTerm" type="text"
+                                    placeholder="Search by category name..."
+                                    class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                            </div>
+                            <div>
                                 <select v-model="selectedType"
-                                    class="w-full md:w-auto flex items-center justify-center py-2 px-6 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700">
+                                    class="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                     <option value="all">All Types</option>
                                     <option value="setlist">Setlist</option>
                                     <option value="unit_song">Unit Song</option>
@@ -160,45 +154,66 @@ watch([searchTerm, selectedType], () => {
                             </div>
                         </div>
                     </div>
+
+                    <!-- Table Section -->
                     <div class="overflow-x-auto">
-                        <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                            <thead
-                                class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead class="bg-gray-50 dark:bg-gray-900">
                                 <tr>
-                                    <th scope="col" class="px-4 py-3">Type</th>
-                                    <th scope="col" class="px-4 py-3">Setlist</th>
-                                    <th scope="col" class="px-4 py-3">Name</th>
-                                    <th scope="col" class="px-4 py-3">
-                                        <span class="sr-only">Actions</span>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        Type
+                                    </th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        Setlist
+                                    </th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        Name
+                                    </th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        Actions
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                <tr v-if="paginatedCategories.length === 0">
+                                    <td colspan="4"
+                                        class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                                        No categories found
+                                    </td>
+                                </tr>
                                 <tr v-for="category in paginatedCategories" :key="category.id"
-                                    class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                                    <td class="px-4 py-3">
-                                        <span class="px-2 py-1 text-xs rounded-full"
-                                            :class="category.type === 'setlist' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'">
+                                    class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span :class="[
+                                            'px-2 inline-flex text-xs leading-5 font-semibold rounded-full',
+                                            category.type === 'setlist'
+                                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                                : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                        ]">
                                             {{ category.type === 'setlist' ? 'Setlist' : 'Unit Song' }}
                                         </span>
                                     </td>
-                                    <td class="px-4 py-3">
-                                        <span v-if="category.type === 'unit_song'" class="text-gray-600 dark:text-gray-400">
-                                            {{ category.setlist_name || '-' }}
-                                        </span>
+                                    <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
+                                        <span v-if="category.type === 'unit_song'">{{ category.setlist_name || '-' }}</span>
                                         <span v-else class="text-gray-400">-</span>
                                     </td>
-                                    <td class="px-4 py-3">{{ category.name }}</td>
-                                    <td class="px-4 py-3 flex items-center justify-end gap-3">
+                                    <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
+                                        {{ category.name }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <button @click="openEditModal(category)"
-                                            class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">
+                                            class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-3">
                                             Edit
                                         </button>
-                                        <button @click="deleteCategory(category)"
-                                            :disabled="deleting === category.id"
-                                            :class="deleting === category.id ? 'text-red-300 cursor-not-allowed' : 'text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300'">
-                                            <span v-if="deleting === category.id">Deleting...</span>
-                                            <span v-else>Delete</span>
+                                        <button @click="deleteCategory(category)" :disabled="deleting === category.id"
+                                            :class="deleting === category.id
+                                                ? 'text-red-300 dark:text-red-700 cursor-not-allowed'
+                                                : 'text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300'">
+                                            {{ deleting === category.id ? 'Deleting...' : 'Delete' }}
                                         </button>
                                     </td>
                                 </tr>
@@ -206,47 +221,31 @@ watch([searchTerm, selectedType], () => {
                         </table>
                     </div>
 
-                    <nav v-if="filteredCategories.length > itemsPerPage"
-                        class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-3 md:space-y-0 p-4"
-                        aria-label="Table navigation">
-                        <ul class="inline-flex items-stretch -space-x-px">
-                            <li>
-                                <button :disabled="currentPage === 1" @click="prevPage"
-                                    class="flex items-center justify-center h-full py-1.5 px-3 ml-0 text-gray-500 bg-white rounded-l-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed">
-                                    <span class="sr-only">Previous</span>
-                                    <svg class="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20"
-                                        xmlns="http://www.w3.org/2000/svg">
-                                        <path fill-rule="evenodd"
-                                            d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-                                            clip-rule="evenodd" />
-                                    </svg>
+                    <!-- Pagination Section -->
+                    <div v-if="filteredCategories.length > itemsPerPage"
+                        class="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center justify-between">
+                            <div class="text-sm text-gray-700 dark:text-gray-300">
+                                Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to
+                                {{ Math.min(currentPage * itemsPerPage, filteredCategories.length) }} of
+                                {{ filteredCategories.length }} results
+                            </div>
+                            <div class="flex gap-2">
+                                <button @click="prevPage" :disabled="currentPage === 1"
+                                    class="px-3 py-1 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                    Previous
                                 </button>
-                            </li>
-                            <span class="text-sm font-normal text-gray-500 dark:text-gray-400 px-3 py-1.5">
-                                Showing
-                                <span class="font-semibold text-gray-900 dark:text-white">{{ currentPage }}</span>
-                                of
-                                <span class="font-semibold text-gray-900 dark:text-white">{{ totalPages }}</span>
-                            </span>
-                            <li>
-                                <button :disabled="currentPage === totalPages" @click="nextPage"
-                                    class="flex items-center justify-center h-full py-1.5 px-3 leading-tight text-gray-500 bg-white rounded-r-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed">
-                                    <span class="sr-only">Next</span>
-                                    <svg class="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20"
-                                        xmlns="http://www.w3.org/2000/svg">
-                                        <path fill-rule="evenodd"
-                                            d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                                            clip-rule="evenodd" />
-                                    </svg>
+                                <span class="px-3 py-1 text-sm text-gray-700 dark:text-gray-300">
+                                    Page {{ currentPage }} of {{ totalPages }}
+                                </span>
+                                <button @click="nextPage" :disabled="currentPage === totalPages"
+                                    class="px-3 py-1 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                    Next
                                 </button>
-                            </li>
-                        </ul>
-                    </nav>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-
-            <div v-else class="bg-white dark:bg-gray-800 shadow-md sm:rounded-lg p-8 text-center">
-                <p class="text-gray-500 dark:text-gray-400">Belum ada kategori</p>
             </div>
         </div>
 
