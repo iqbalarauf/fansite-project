@@ -1,7 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
-import NavLink from '@/Components/NavLink.vue';
 import ThemeToggle from '@/Components/ThemeToggle.vue';
 
 
@@ -55,13 +54,28 @@ const menuItems = computed(() => {
         {
             name: 'Master Data',
             icon: 'M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125',
-            active: route().current('show-teater.*'),
+            active: route().current('show-teater.*') || route().current('concert-events.*') || route().current('meet-greet.*'),
             hasDropdown: true,
             submenu: [
                 {
                     name: 'Show Teater',
                     href: route('show-teater.index'),
-                    active: route().current('show-teater.*'),
+                    active: route().current('show-teater.index'),
+                },
+                {
+                    name: 'Setlist and Unit Songs',
+                    href: route('show-teater.categories.index'),
+                    active: route().current('show-teater.categories.*'),
+                },
+                {
+                    name: 'Concert Events',
+                    href: route('concert-events.index'),
+                    active: route().current('concert-events.*'),
+                },
+                {
+                    name: 'Meet & Greet',
+                    href: route('meet-greet.index'),
+                    active: route().current('meet-greet.*'),
                 },
             ],
         },
@@ -74,12 +88,12 @@ const menuItems = computed(() => {
 <template>
     <!-- Sidebar -->
     <aside :class="[
-        'fixed left-0 z-30 min-h-screen w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-in-out',
+        'fixed left-0 top-0 bottom-0 z-30 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-in-out',
         isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
     ]">
         <div class="flex flex-col h-full">
-            <!-- Sidebar Header -->
-            <div class="flex items-center justify-between h-20 px-4 gap-2">
+            <!-- Sidebar Header - Sticky at top -->
+            <div class="flex items-center justify-between h-20 px-4 gap-2 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shrink-0">
                 <Link :href="route('dashboard')" class="flex items-center min-w-0 flex-1" @click="closeSidebar">
                 <img v-if="$page.props.appSettings?.app_logo" :src="$page.props.appSettings.app_logo"
                     class="h-12 w-auto lg:h-16 object-contain shrink-0" alt="logo" />
@@ -102,7 +116,7 @@ const menuItems = computed(() => {
                 </div>
             </div>
 
-            <!-- Navigation Menu -->
+            <!-- Navigation Menu - Scrollable -->
             <nav class="flex-1 px-4 py-4 space-y-2 overflow-y-auto">
                 <template v-for="item in menuItems" :key="item.name">
                     <!-- Menu item with dropdown -->
@@ -153,8 +167,8 @@ const menuItems = computed(() => {
                 </template>
             </nav>
 
-            <!-- Sidebar Footer -->
-            <div class="border-t border-gray-200 dark:border-gray-700 p-4">
+            <!-- Sidebar Footer - Sticky at bottom -->
+            <div class="border-t border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-800 shrink-0">
                 <div class="flex items-center px-4 py-2">
                     <div v-if="$page.props.jetstream.managesProfilePhotos" class="shrink-0 me-3">
                         <img class="w-10 h-10 rounded-full object-cover" :src="$page.props.auth.user.profile_photo_url"

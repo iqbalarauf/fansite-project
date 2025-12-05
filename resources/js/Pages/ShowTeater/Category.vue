@@ -1,78 +1,85 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import ShowTeaterModal from '@/Components/ShowTeaterModal.vue';
-import { formatDateIndonesia } from '@/Helpers/formatDateIndonesia';
+import CategoryModal from '@/Components/CategoryModal.vue';
 
 const props = defineProps({
-    shows: Array,
-    nextShowId: Number,
-    allSetlists: Array,
-    setlistsWithUnitSongs: Array,
+    categories: Array,
+    setlists: Array,
 });
 
 const showModal = ref(false);
-const editingShow = ref(null);
+const editingCategory = ref(null);
+const deleting = ref(null);
 
 const openAddModal = () => {
-    editingShow.value = null;
+    editingCategory.value = null;
     showModal.value = true;
 };
 
-const openEditModal = (show) => {
-    editingShow.value = { ...show };
+const openEditModal = (category) => {
+    editingCategory.value = { ...category };
     showModal.value = true;
 };
 
 const closeModal = () => {
     showModal.value = false;
-    editingShow.value = null;
+    editingCategory.value = null;
+};
+
+const deleteCategory = (category) => {
+    if (!confirm(`Are you sure you want to delete "${category.name}"?`)) return;
+
+    deleting.value = category.id;
+
+    router.delete(route('show-teater.categories.destroy', category.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            deleting.value = null;
+        },
+        onError: () => {
+            deleting.value = null;
+            alert('Failed to delete category. Please try again.');
+        },
+    });
 };
 
 // Search and filter functionality
 const searchTerm = ref('');
-const selectedSetlist = ref('all');
+const selectedType = ref('all');
 const currentPage = ref(1);
 const itemsPerPage = 10;
 
-// Use all setlists from backend (covers all pages)
-const setlists = computed(() => {
-    return props.allSetlists || [];
-});
+// Filtered categories based on search and filters
+const filteredCategories = computed(() => {
+    if (!props.categories) return [];
 
-// Filtered shows based on search and filters
-const filteredShows = computed(() => {
-    if (!props.shows) return [];
-
-    let filtered = [...props.shows];
+    let filtered = [...props.categories];
 
     // Apply search
     if (searchTerm.value) {
         const term = searchTerm.value.toLowerCase();
-        filtered = filtered.filter(show =>
-            show.show_id?.toString().includes(term) ||
-            show.setlist?.toLowerCase().includes(term) ||
-            show.unit_song?.toLowerCase().includes(term) ||
-            show.is_the_show_has_event?.toLowerCase().includes(term)
+        filtered = filtered.filter(cat =>
+            cat.name?.toLowerCase().includes(term)
         );
     }
 
-    // Apply setlist filter
-    if (selectedSetlist.value !== 'all') {
-        filtered = filtered.filter(show => show.setlist === selectedSetlist.value);
+    // Apply type filter
+    if (selectedType.value !== 'all') {
+        filtered = filtered.filter(cat => cat.type === selectedType.value);
     }
 
     return filtered;
 });
 
 // Pagination for filtered data
-const totalPages = computed(() => Math.ceil(filteredShows.value.length / itemsPerPage));
+const totalPages = computed(() => Math.ceil(filteredCategories.value.length / itemsPerPage));
 
-const paginatedShows = computed(() => {
+const paginatedCategories = computed(() => {
     const start = (currentPage.value - 1) * itemsPerPage;
     const end = start + itemsPerPage;
-    return filteredShows.value.slice(start, end);
+    return filteredCategories.value.slice(start, end);
 });
 
 const prevPage = () => {
@@ -90,53 +97,36 @@ const nextPage = () => {
 };
 
 // Reset to page 1 when filters change
-watch([searchTerm, selectedSetlist], () => {
+watch([searchTerm, selectedType], () => {
     currentPage.value = 1;
 });
 </script>
 
 <template>
 
-    <Head title="Master Data - Show Teater" />
+    <Head title="Setlist dan Unit Songs" />
 
-    <AppLayout title="Show Teater">
+    <AppLayout title="Setlist dan Unit Songs">
         <template #header>
             <div class="flex items-center justify-between">
                 <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                    Master Data - Show Teater
+                    Master Data - Setlist dan Unit Songs
                 </h2>
             </div>
         </template>
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="flex justify-end mb-6">
-                <div class="flex items-center gap-x-3 mr-3">
-                    <label for="hs-basic-with-description-checked"
-                        class="relative inline-block w-11 h-6 cursor-pointer">
-                        <input type="checkbox" id="hs-basic-with-description-checked" class="peer sr-only" checked="">
-                        <span
-                            class="absolute inset-0 bg-gray-200 rounded-full transition-colors duration-200 ease-in-out peer-checked:bg-blue-600 dark:bg-neutral-700 dark:peer-checked:bg-blue-500 peer-disabled:opacity-50 peer-disabled:pointer-events-none"></span>
-                        <span
-                            class="absolute top-1/2 start-0.5 -translate-y-1/2 size-5 bg-white rounded-full shadow-xs transition-transform duration-200 ease-in-out peer-checked:translate-x-full dark:bg-neutral-400 dark:peer-checked:bg-white"></span>
-                    </label>
-                    <label for="hs-basic-with-description-checked"
-                        class="text-sm text-gray-500 dark:text-neutral-400">Use
-                        Scraped Data</label>
-                </div>
-                <button type="button"
-                    class="py-3 px-4 inline-flex items-center gap-x-2 mr-3 text-sm font-medium rounded-lg border border-transparent bg-green-600 text-white hover:bg-green-700 focus:outline-hidden focus:bg-green-700 disabled:opacity-50 disabled:pointer-events-none">
-                    Sync with Sheet
-                </button>
                 <button @click="openAddModal"
                     class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
-                    Tambah Show
+                    Add Category
                 </button>
             </div>
 
-            <div v-if="shows && shows.length">
+            <div v-if="categories && categories.length">
                 <div class="bg-white dark:bg-gray-800 relative shadow-md sm:rounded-lg overflow-hidden">
                     <div
                         class="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4">
@@ -153,7 +143,7 @@ watch([searchTerm, selectedSetlist], () => {
                                         </svg>
                                     </div>
                                     <input id="search" v-model="searchTerm" type="text"
-                                        placeholder="Search setlist, unit song..."
+                                        placeholder="Search category name..."
                                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" />
                                 </div>
                             </form>
@@ -161,10 +151,11 @@ watch([searchTerm, selectedSetlist], () => {
                         <div
                             class="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 items-stretch md:items-center justify-end md:space-x-3 flex-shrink-0">
                             <div class="flex items-center space-x-3 w-full md:w-auto">
-                                <select v-model="selectedSetlist"
+                                <select v-model="selectedType"
                                     class="w-full md:w-auto flex items-center justify-center py-2 px-6 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700">
-                                    <option value="all">Semua Setlist</option>
-                                    <option v-for="s in setlists" :key="s" :value="s">{{ s }}</option>
+                                    <option value="all">All Types</option>
+                                    <option value="setlist">Setlist</option>
+                                    <option value="unit_song">Unit Song</option>
                                 </select>
                             </div>
                         </div>
@@ -174,41 +165,40 @@ watch([searchTerm, selectedSetlist], () => {
                             <thead
                                 class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                                 <tr>
-                                    <th scope="col" class="px-4 py-3">Show ID</th>
-                                    <th scope="col" class="px-4 py-3">Tanggal</th>
+                                    <th scope="col" class="px-4 py-3">Type</th>
                                     <th scope="col" class="px-4 py-3">Setlist</th>
-                                    <th scope="col" class="px-4 py-3">Unit Song</th>
-                                    <th scope="col" class="px-4 py-3">Global Center</th>
-                                    <th scope="col" class="px-4 py-3">US Center</th>
-                                    <th scope="col" class="px-4 py-3">Event</th>
-                                    <th scope="col" class="px-4 py-3">Info Tambahan</th>
+                                    <th scope="col" class="px-4 py-3">Name</th>
                                     <th scope="col" class="px-4 py-3">
                                         <span class="sr-only">Actions</span>
                                     </th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="show in paginatedShows" :key="show.show_id"
+                                <tr v-for="category in paginatedCategories" :key="category.id"
                                     class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                                    <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">{{ show.show_id }}
-                                    </td>
-                                    <td class="px-4 py-3">{{ formatDateIndonesia(show.show_date) }}</td>
-                                    <td class="px-4 py-3">{{ show.setlist }}</td>
-                                    <td class="px-4 py-3">{{ show.unit_song }}</td>
                                     <td class="px-4 py-3">
-                                        <span v-if="show.is_global_center" class="text-green-600">✓</span>
-                                        <span v-else class="text-gray-400">-</span>
+                                        <span class="px-2 py-1 text-xs rounded-full"
+                                            :class="category.type === 'setlist' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'">
+                                            {{ category.type === 'setlist' ? 'Setlist' : 'Unit Song' }}
+                                        </span>
                                     </td>
                                     <td class="px-4 py-3">
-                                        <span v-if="show.is_us_center" class="text-green-600">✓</span>
+                                        <span v-if="category.type === 'unit_song'" class="text-gray-600 dark:text-gray-400">
+                                            {{ category.setlist_name || '-' }}
+                                        </span>
                                         <span v-else class="text-gray-400">-</span>
                                     </td>
-                                    <td class="px-4 py-3">{{ show.is_the_show_has_event || '-' }}</td>
-                                    <td class="px-4 py-3">{{ show.additional_information || '-' }}</td>
-                                    <td class="px-4 py-3 flex items-center justify-end">
-                                        <button @click="openEditModal(show)"
+                                    <td class="px-4 py-3">{{ category.name }}</td>
+                                    <td class="px-4 py-3 flex items-center justify-end gap-3">
+                                        <button @click="openEditModal(category)"
                                             class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">
                                             Edit
+                                        </button>
+                                        <button @click="deleteCategory(category)"
+                                            :disabled="deleting === category.id"
+                                            :class="deleting === category.id ? 'text-red-300 cursor-not-allowed' : 'text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300'">
+                                            <span v-if="deleting === category.id">Deleting...</span>
+                                            <span v-else>Delete</span>
                                         </button>
                                     </td>
                                 </tr>
@@ -216,7 +206,7 @@ watch([searchTerm, selectedSetlist], () => {
                         </table>
                     </div>
 
-                    <nav v-if="filteredShows.length > itemsPerPage"
+                    <nav v-if="filteredCategories.length > itemsPerPage"
                         class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-3 md:space-y-0 p-4"
                         aria-label="Table navigation">
                         <ul class="inline-flex items-stretch -space-x-px">
@@ -256,10 +246,11 @@ watch([searchTerm, selectedSetlist], () => {
             </div>
 
             <div v-else class="bg-white dark:bg-gray-800 shadow-md sm:rounded-lg p-8 text-center">
-                <p class="text-gray-500 dark:text-gray-400">Belum ada data show teater</p>
+                <p class="text-gray-500 dark:text-gray-400">Belum ada kategori</p>
             </div>
         </div>
-        <ShowTeaterModal :show="showModal" :editing-show="editingShow" :next-show-id="nextShowId"
-            :setlists-with-unit-songs="setlistsWithUnitSongs" @close="closeModal" />
+
+        <CategoryModal :show="showModal" :category="editingCategory" :setlists="setlists" @close="closeModal" />
     </AppLayout>
+
 </template>

@@ -93,9 +93,6 @@
                 <span v-if="form.processing">Saving…</span>
                 <span v-else>Save</span>
               </button>
-              <div class="mt-2">
-                <ActionMessage :on="!!success" class="text-sm text-green-600">{{ success }}</ActionMessage>
-              </div>
             </div>
           </div>
         </div>
@@ -106,7 +103,6 @@
 
 <script setup>
 import { useForm } from '@inertiajs/vue3';
-import ActionMessage from '@/Components/ActionMessage.vue';
 import { ref, onUnmounted } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import TiptapEditor from '@/Components/TiptapEditor.vue';
@@ -162,11 +158,16 @@ const submit = () => {
 
   console.log('Submitting form.body:', form.body?.substring(0, 200));
 
-  // Use form.post with _method: 'PUT' for file uploads (Laravel will handle it correctly)
-  form.post(route('posts.update', post.slug), {
+  // Use form.post with forceFormData for file uploads
+  form.transform((data) => ({
+    ...data,
+    _method: 'PUT'
+  })).post(route('posts.update', post.slug), {
     forceFormData: true,
-    _method: 'PUT',
     onSuccess: () => {
+      // Scroll to top to show notification
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
       success.value = 'Post updated.';
       // Clear the selected image after successful upload
       newFeaturedImage.value = null;

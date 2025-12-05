@@ -10,15 +10,44 @@ class ShowTeaterController extends Controller
 {
     public function index()
     {
+        // Get all shows without pagination for client-side filtering
         $shows = DB::table('show_teater')
             ->orderBy('show_id', 'desc')
-            ->paginate(10);
+            ->get();
 
         $nextShowId = DB::table('show_teater')->max('show_id') + 1;
+
+        // Get all unique setlists from categories
+        $allSetlists = DB::table('show_teater_categories')
+            ->where('type', 'setlist')
+            ->orderBy('name')
+            ->pluck('name');
+
+        // Get setlists with their unit songs for dropdown
+        $setlistsWithUnitSongs = DB::table('show_teater_categories as setlists')
+            ->select('setlists.id', 'setlists.name')
+            ->where('setlists.type', 'setlist')
+            ->orderBy('setlists.name')
+            ->get()
+            ->map(function ($setlist) {
+                $unitSongs = DB::table('show_teater_categories')
+                    ->where('type', 'unit_song')
+                    ->where('setlist_id', $setlist->id)
+                    ->orderBy('name')
+                    ->get(['id', 'name']);
+
+                return [
+                    'id' => $setlist->id,
+                    'name' => $setlist->name,
+                    'unit_songs' => $unitSongs,
+                ];
+            });
 
         return Inertia::render('ShowTeater/Index', [
             'shows' => $shows,
             'nextShowId' => $nextShowId,
+            'allSetlists' => $allSetlists,
+            'setlistsWithUnitSongs' => $setlistsWithUnitSongs,
         ]);
     }
 

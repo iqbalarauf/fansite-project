@@ -42,7 +42,7 @@ class CustomPageController extends Controller
             abort(404);
         }
 
-        return Inertia::render('Pages/Edit', [
+        return Inertia::render('Pages/Show', [
             'page' => [
                 'id' => $page->id,
                 'title' => $page->title,

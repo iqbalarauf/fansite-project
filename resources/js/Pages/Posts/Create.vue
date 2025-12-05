@@ -64,7 +64,7 @@
             <!-- SEO Fields -->
             <div class="border-t pt-4 space-y-4">
               <h3 class="text-sm font-semibold dark:text-white">SEO Settings</h3>
-              
+
               <div>
                 <label class="block mb-2 text-sm font-medium dark:text-white">Meta Title</label>
                 <input v-model="form.meta_title" type="text"
@@ -95,9 +95,6 @@
                 <span v-if="form.processing">Saving…</span>
                 <span v-else>Save</span>
               </button>
-              <div class="mt-2">
-                <ActionMessage :on="!!success" class="text-sm text-green-600">{{ success }}</ActionMessage>
-              </div>
             </div>
           </div>
         </div>
@@ -108,7 +105,6 @@
 
 <script setup>
 import { useForm } from '@inertiajs/vue3';
-import ActionMessage from '@/Components/ActionMessage.vue';
 import { ref, onUnmounted } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import TiptapEditor from '@/Components/TiptapEditor.vue';
@@ -156,6 +152,9 @@ const submit = () => {
   form.post(route('posts.store'), {
     forceFormData: true,
     onSuccess: () => {
+      // Scroll to top to show notification
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
       // show success briefly then navigate to posts.manage
       success.value = 'Post created.';
       setTimeout(() => Inertia.visit(route('posts.manage')), 700);

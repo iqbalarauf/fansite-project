@@ -17,6 +17,10 @@ defineProps({
         type: Array,
         default: () => [],
     },
+    upcomingEvents: {
+        type: Array,
+        default: () => [],
+    },
 });
 
 function handleImageError() {
@@ -29,7 +33,7 @@ function handleImageError() {
 const page = usePage();
 const heroSrc = computed(() => page.props.appSettings?.hero_image || '/storage/hero.jpg');
 const showroomRoomId = computed(() => page.props.appSettings?.showroom_room_id || '416491');
-const showroomLink = computed(() => page.props.appSettings?.showroom_link || 'https://www.showroom-live.com/r/48_KOKOHA_EGUCHI');
+const showroomLink = computed(() => page.props.appSettings?.showroom_link || 'https://www.showroom-live.com');
 const teaterStats = computed(() => page.props.teaterStats || { total_shows: 0, unique_setlists: 0, unique_unit_songs: 0 });
 
 // Animated counters
@@ -79,7 +83,7 @@ onMounted(() => {
     fetchShowroomStatus();
     // Refresh status every 60 seconds
     setInterval(fetchShowroomStatus, 60000);
-    
+
     // Animate statistics counters
     animateCount(0, teaterStats.value.total_shows, 3000, (val) => animatedShows.value = val);
     animateCount(0, teaterStats.value.unique_setlists, 3000, (val) => animatedSetlists.value = val);
@@ -189,7 +193,7 @@ onMounted(() => {
                             <div
                                 class="flex items-center justify-center rounded-lg bg-white dark:bg-gray-800 gap-4 p-6 sm:p-8 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] lg:pb-10 dark:ring-zinc-800 dark:hover:text-white/70 w-full overflow-hidden">
                                 <div class="grid grid-cols-2 gap-6 w-full">
-                                    <component :is="showroomStatus.isLive ? 'a' : 'div'" 
+                                    <component :is="showroomStatus.isLive ? 'a' : 'div'"
                                         :href="showroomStatus.isLive ? showroomLink : undefined"
                                         :target="showroomStatus.isLive ? '_blank' : undefined"
                                         :rel="showroomStatus.isLive ? 'noopener noreferrer' : undefined"
@@ -202,8 +206,8 @@ onMounted(() => {
                                         <div class="text-sm sm:text-base text-gray-600 dark:text-gray-400">200+ Live</div>
                                         <span v-if="!showroomStatus.loading"
                                             class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium inset-ring mt-2"
-                                            :class="showroomStatus.isLive 
-                                                ? 'bg-green-400/10 text-green-400 inset-ring-green-500/20' 
+                                            :class="showroomStatus.isLive
+                                                ? 'bg-green-400/10 text-green-400 inset-ring-green-500/20'
                                                 : 'bg-red-400/10 text-red-400 inset-ring-red-400/20'">
                                             {{ showroomStatus.isLive ? 'Online' : 'Offline' }}
                                         </span>
@@ -229,37 +233,25 @@ onMounted(() => {
                                     <h2 class="text-lg sm:text-xl font-semibold text-black dark:text-white break-words">
                                         Oshimen Calendar</h2>
 
-                                    <div class="flex-1 min-w-0 overflow-hidden rounded-lg border border-gray-200 dark:border-zinc-700 p-3 mt-2">
-                                        <div class="flex items-start justify-between gap-2 flex-wrap sm:flex-nowrap">
-                                            <span class="gap-x-1 py-1 px-2 rounded-full text-xs font-medium bg-red-500 text-white">SHOW</span>
-                                            <div
-                                                class="text-sm sm:text-md font-medium text-black dark:text-white truncate flex-1 min-w-0">
-                                                Pertaruhan Cinta</div>
-                                            <div
-                                                class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap shrink-0">
-                                                28 November 2025</div>
+                                    <div v-if="!upcomingEvents || upcomingEvents.length === 0" class="flex-1 min-w-0 overflow-hidden rounded-lg border border-gray-200 dark:border-zinc-700 p-3 mt-2">
+                                        <div class="text-sm text-gray-600 dark:text-gray-300 text-center">
+                                            No upcoming events in the next 7 days
                                         </div>
                                     </div>
-                                    <div class="flex-1 min-w-0 overflow-hidden rounded-lg border border-gray-200 dark:border-zinc-700 p-3 mt-2">
+
+                                    <div v-for="(event, index) in upcomingEvents" :key="index"
+                                        class="flex-1 min-w-0 overflow-hidden rounded-lg border border-gray-200 dark:border-zinc-700 p-3 mt-2">
                                         <div class="flex items-start justify-between gap-2 flex-wrap sm:flex-nowrap">
-                                            <span class="gap-x-1 py-1 px-2 rounded-full text-xs font-medium bg-green-500 text-white">OFF-AIR</span>
+                                            <span :class="[
+                                                'gap-x-1 py-1 px-2 rounded-full text-xs font-medium text-white',
+                                                event.color
+                                            ]">{{ event.type }}</span>
                                             <div
                                                 class="text-sm sm:text-md font-medium text-black dark:text-white truncate flex-1 min-w-0">
-                                                Don't Play Play Festival - Jakarta</div>
+                                                {{ event.name }}</div>
                                             <div
                                                 class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap shrink-0">
-                                                29 November 2025</div>
-                                        </div>
-                                    </div>
-                                    <div class="flex-1 min-w-0 overflow-hidden rounded-lg border border-gray-200 dark:border-zinc-700 p-3 mt-2">
-                                        <div class="flex items-start justify-between gap-2 flex-wrap sm:flex-nowrap">
-                                            <span class="gap-x-1 py-1 px-2 rounded-full text-xs font-medium bg-green-500 text-white">OFF-AIR</span>
-                                            <div
-                                                class="text-sm sm:text-md font-medium text-black dark:text-white truncate flex-1 min-w-0">
-                                                Now Playing Festival - Bandung</div>
-                                            <div
-                                                class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap shrink-0">
-                                                30 November 2025</div>
+                                                {{ formatDateIndonesia(event.date) }}</div>
                                         </div>
                                     </div>
                                 </div>

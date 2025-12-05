@@ -12,11 +12,6 @@
         </template>
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div class="mb-4">
-                <ActionMessage :on="!!success" class="text-sm text-green-600">{{ success }}</ActionMessage>
-                <div v-if="error" class="text-sm text-red-600 mt-1">{{ error }}</div>
-            </div>
-
             <div class="flex justify-end mb-6">
                 <Link :href="route('posts.create')"
                     class="inline-block bg-blue-600 text-white px-4 py-2 rounded justify-end">
@@ -110,7 +105,7 @@
                             </tbody>
                         </table>
                     </div>
-                    <nav class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-3 md:space-y-0 p-4"
+                    <nav v-if="filteredPosts.length > itemsPerPage" class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-3 md:space-y-0 p-4"
                         aria-label="Table navigation">
                         <ul class="inline-flex items-stretch -space-x-px">
                             <li>
@@ -158,7 +153,6 @@
 
 <script setup>
 import { ref, watch } from 'vue';
-import ActionMessage from '@/Components/ActionMessage.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { formatDate } from '@/Helpers/formatDate';
 import AppLayout from '@/Layouts/AppLayout.vue';
@@ -211,6 +205,9 @@ const destroy = (slug) => {
         preserveState: true,
         preserveScroll: true,
         onSuccess: () => {
+            // Scroll to top to show notification
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
             success.value = 'Post deleted.';
             deleting.value = null;
 
@@ -221,6 +218,9 @@ const destroy = (slug) => {
             }
         },
         onError: () => {
+            // Scroll to top to show error notification
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
             // revert optimistic removal
             postsList.value.splice(index, 0, removed);
             deleting.value = null;

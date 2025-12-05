@@ -11,6 +11,8 @@ use Laravel\Fortify\Http\Controllers\RegisteredUserController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ShowroomProxyController;
 use App\Http\Controllers\ShowTeaterController;
+use App\Http\Controllers\ShowTeaterCategoryController;
+use Illuminate\Support\Facades\DB;
 
 Route::get('/', function () {
     $latestPosts = Post::where('status','published')
@@ -28,10 +30,69 @@ Route::get('/', function () {
             'thumbnail' => $p->featured_image ? Storage::url($p->featured_image) : null,
         ]);
 
+    // Get events for the next 7 days
+    $startDate = now()->startOfDay();
+    $endDate = now()->addDays(7)->endOfDay();
+
+    $upcomingEvents = collect();
+
+    // Get Show Teater events
+    $showTeaterEvents = DB::table('show_teater')
+        ->whereBetween('show_date', [$startDate, $endDate])
+        ->get()
+        ->map(fn($show) => [
+            'type' => 'SHOW',
+            'name' => $show->setlist,
+            'date' => $show->show_date,
+            'color' => 'bg-red-500',
+        ]);
+
+    // Get Concert Events
+    $concertEvents = \App\Models\ConcertEvent::whereBetween('event_date', [$startDate, $endDate])
+        ->get()
+        ->map(fn($concert) => [
+            'type' => $concert->status === 'on-air' ? 'ON-AIR' : 'OFF-AIR',
+            'name' => $concert->event_name,
+            'date' => $concert->event_date,
+            'color' => $concert->status === 'on-air' ? 'bg-blue-500' : 'bg-green-500',
+        ]);
+
+    // Get Meet & Greet Events
+    $meetGreetEvents = \App\Models\MeetGreetEvent::where(function($query) use ($startDate, $endDate) {
+        $query->whereBetween('event_date', [$startDate, $endDate])
+              ->orWhereBetween('event_date_2', [$startDate, $endDate]);
+    })->get()->map(fn($event) => [
+        'type' => $event->event_type === 'video-call' ? 'VIDEO CALL' : 'MEET & GREET',
+        'name' => $event->event_name,
+        'date' => $event->event_date,
+        'color' => $event->event_type === 'video-call' ? 'bg-purple-500' : 'bg-pink-500',
+    ]);
+
+    // Get Meet & Greet ticket sale events
+    $ticketSaleEvents = \App\Models\MeetGreetEvent::whereNotNull('ticket_sale_datetime')
+        ->whereBetween('ticket_sale_datetime', [$startDate, $endDate])
+        ->get()
+        ->map(fn($event) => [
+            'type' => 'TICKET SALE',
+            'name' => 'Pembelian Tiket ' . $event->event_name,
+            'date' => $event->ticket_sale_datetime,
+            'color' => 'bg-yellow-500',
+        ]);
+
+    // Combine all events and sort by date
+    $upcomingEvents = $upcomingEvents
+        ->concat($showTeaterEvents)
+        ->concat($concertEvents)
+        ->concat($meetGreetEvents)
+        ->concat($ticketSaleEvents)
+        ->sortBy('date')
+        ->values();
+
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
         'latestPosts' => $latestPosts,
+        'upcomingEvents' => $upcomingEvents,
     ]);
 });
 
@@ -129,6 +190,24 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/show-teater', [ShowTeaterController::class, 'index'])->name('show-teater.index');
     Route::post('/show-teater', [ShowTeaterController::class, 'store'])->name('show-teater.store');
     Route::put('/show-teater/{id}', [ShowTeaterController::class, 'update'])->name('show-teater.update');
+
+    // Show Teater Categories management
+    Route::get('/show-teater/categories', [ShowTeaterCategoryController::class, 'index'])->name('show-teater.categories.index');
+    Route::post('/show-teater/categories', [ShowTeaterCategoryController::class, 'store'])->name('show-teater.categories.store');
+    Route::put('/show-teater/categories/{id}', [ShowTeaterCategoryController::class, 'update'])->name('show-teater.categories.update');
+    Route::delete('/show-teater/categories/{id}', [ShowTeaterCategoryController::class, 'destroy'])->name('show-teater.categories.destroy');
+
+    // Concert Events management
+    Route::get('/concert-events', [\App\Http\Controllers\ConcertEventController::class, 'index'])->name('concert-events.index');
+    Route::post('/concert-events', [\App\Http\Controllers\ConcertEventController::class, 'store'])->name('concert-events.store');
+    Route::put('/concert-events/{concertEvent}', [\App\Http\Controllers\ConcertEventController::class, 'update'])->name('concert-events.update');
+    Route::delete('/concert-events/{concertEvent}', [\App\Http\Controllers\ConcertEventController::class, 'destroy'])->name('concert-events.destroy');
+
+    // Meet & Greet Events management
+    Route::get('/meet-greet', [\App\Http\Controllers\MeetGreetEventController::class, 'index'])->name('meet-greet.index');
+    Route::post('/meet-greet', [\App\Http\Controllers\MeetGreetEventController::class, 'store'])->name('meet-greet.store');
+    Route::put('/meet-greet/{meetGreet}', [\App\Http\Controllers\MeetGreetEventController::class, 'update'])->name('meet-greet.update');
+    Route::delete('/meet-greet/{meetGreet}', [\App\Http\Controllers\MeetGreetEventController::class, 'destroy'])->name('meet-greet.destroy');
 });
 
 // Public custom page view - MUST BE LAST as catch-all fallback

@@ -11,11 +11,6 @@
     </template>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div class="mb-4">
-        <ActionMessage :on="!!success" class="text-sm text-green-600">{{ success }}</ActionMessage>
-        <div v-if="error" class="text-sm text-red-600 mt-1">{{ error }}</div>
-      </div>
-
       <div class="flex justify-end mb-6">
         <Link :href="route('pages.create')" class="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
           Create Page
@@ -78,7 +73,7 @@
             </table>
           </div>
 
-          <nav class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-3 md:space-y-0 p-4" aria-label="Table navigation">
+          <nav v-if="filteredPages.length > itemsPerPage" class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-3 md:space-y-0 p-4" aria-label="Table navigation">
             <ul class="inline-flex items-stretch -space-x-px">
               <li>
                 <button :disabled="currentPage === 1" @click="prevPage" class="flex items-center justify-center h-full py-1.5 px-3 ml-0 text-gray-500 bg-white rounded-l-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed">
@@ -117,7 +112,6 @@
 
 <script setup>
 import { ref, watch, computed } from 'vue';
-import ActionMessage from '@/Components/ActionMessage.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { formatDate } from '@/Helpers/formatDate';
 import AppLayout from '@/Layouts/AppLayout.vue';
@@ -158,6 +152,9 @@ const destroy = (slug) => {
     preserveState: true,
     preserveScroll: true,
     onSuccess: () => {
+      // Scroll to top to show notification
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
       success.value = 'Page deleted.';
       deleting.value = null;
 
@@ -166,6 +163,9 @@ const destroy = (slug) => {
       }
     },
     onError: () => {
+      // Scroll to top to show error notification
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
       pagesList.value.splice(index, 0, removed);
       deleting.value = null;
       error.value = 'Failed to delete page — please try again.';
