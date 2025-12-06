@@ -20,7 +20,10 @@ class SettingsController extends Controller
                 'hero_image' => Setting::get('hero_image', ''),
                 'login_image' => Setting::get('login_image', ''),
                 'showroom_room_id' => Setting::get('showroom_room_id', '416491'),
-                'showroom_link' => Setting::get('showroom_link', 'https://www.showroom-live.com/r/48_KOKOHA_EGUCHI'),
+                'showroom_link' => Setting::get('showroom_link', 'https://www.showroom-live.com/'),
+                'instagram_url' => Setting::get('instagram_url', ''),
+                'twitter_url' => Setting::get('twitter_url', ''),
+                'tiktok_url' => Setting::get('tiktok_url', ''),
             ],
         ]);
     }
@@ -36,6 +39,9 @@ class SettingsController extends Controller
             'login_image' => ['nullable', 'image', 'max:5120'],
             'showroom_room_id' => ['nullable', 'string', 'max:255'],
             'showroom_link' => ['nullable', 'url', 'max:500'],
+            'instagram_url' => ['nullable', 'url', 'max:500'],
+            'twitter_url' => ['nullable', 'url', 'max:500'],
+            'tiktok_url' => ['nullable', 'url', 'max:500'],
         ]);
 
         // Update app_name
@@ -49,7 +55,12 @@ class SettingsController extends Controller
 
         // Update showroom settings
         Setting::set('showroom_room_id', $data['showroom_room_id'] ?? '416491');
-        Setting::set('showroom_link', $data['showroom_link'] ?? 'https://www.showroom-live.com/r/48_KOKOHA_EGUCHI');
+        Setting::set('showroom_link', $data['showroom_link'] ?? 'https://www.showroom-live.com/');
+
+        // Update social media URLs
+        Setting::set('instagram_url', $data['instagram_url'] ?? '');
+        Setting::set('twitter_url', $data['twitter_url'] ?? '');
+        Setting::set('tiktok_url', $data['tiktok_url'] ?? '');
 
         // Handle app_logo upload
         if ($request->hasFile('app_logo')) {

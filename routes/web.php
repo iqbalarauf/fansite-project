@@ -13,6 +13,7 @@ use App\Http\Controllers\ShowroomProxyController;
 use App\Http\Controllers\ShowTeaterController;
 use App\Http\Controllers\ShowTeaterCategoryController;
 use Illuminate\Support\Facades\DB;
+use App\Models\LiveStreaming;
 
 Route::get('/', function () {
     $latestPosts = Post::where('status','published')
@@ -88,11 +89,19 @@ Route::get('/', function () {
         ->sortBy('date')
         ->values();
 
+    // Count live streaming by platform
+    $showroomCount = LiveStreaming::where('platform', 'Showroom')->count();
+    $idnAppCount = LiveStreaming::where('platform', 'IDN App')->count();
+
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
         'latestPosts' => $latestPosts,
         'upcomingEvents' => $upcomingEvents,
+        'liveStreamingStats' => [
+            'showroom_count' => $showroomCount,
+            'idn_app_count' => $idnAppCount,
+        ],
     ]);
 });
 
@@ -208,6 +217,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/meet-greet', [\App\Http\Controllers\MeetGreetEventController::class, 'store'])->name('meet-greet.store');
     Route::put('/meet-greet/{meetGreet}', [\App\Http\Controllers\MeetGreetEventController::class, 'update'])->name('meet-greet.update');
     Route::delete('/meet-greet/{meetGreet}', [\App\Http\Controllers\MeetGreetEventController::class, 'destroy'])->name('meet-greet.destroy');
+
+    // Live Streaming management
+    Route::get('/live-streaming', [\App\Http\Controllers\LiveStreamingController::class, 'index'])->name('live-streaming.index');
+    Route::post('/live-streaming', [\App\Http\Controllers\LiveStreamingController::class, 'store'])->name('live-streaming.store');
+    Route::put('/live-streaming/{liveStreaming}', [\App\Http\Controllers\LiveStreamingController::class, 'update'])->name('live-streaming.update');
+    Route::delete('/live-streaming/{liveStreaming}', [\App\Http\Controllers\LiveStreamingController::class, 'destroy'])->name('live-streaming.destroy');
 
     // About Settings management
     Route::get('/about/settings', [\App\Http\Controllers\AboutSettingsController::class, 'edit'])->name('about.settings');

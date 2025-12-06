@@ -104,17 +104,36 @@
 
                             <!-- Section 3: Social Media -->
                             <div class="bg-gray-50 p-4 rounded-lg">
-                                <h4 class="font-semibold mb-4">Section 3: Social Media Embeds</h4>
+                                <h4 class="font-semibold mb-4">Section 3: Social Media Links</h4>
 
                                 <div class="mb-4">
-                                    <label class="block text-sm font-medium text-gray-700">Social Media Embed Codes</label>
-                                    <textarea
-                                        v-model="form.idol_social_media"
-                                        rows="6"
-                                        placeholder="Paste embed codes (Instagram, Twitter, etc.)"
+                                    <label class="block text-sm font-medium text-gray-700">Instagram URL</label>
+                                    <input
+                                        v-model="form.idol_social_media_instagram"
+                                        type="url"
+                                        placeholder="https://instagram.com/username"
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                    ></textarea>
-                                    <p class="text-xs text-gray-500 mt-1">Paste embed codes from social media platforms</p>
+                                    />
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700">TikTok URL</label>
+                                    <input
+                                        v-model="form.idol_social_media_tiktok"
+                                        type="url"
+                                        placeholder="https://tiktok.com/@username"
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    />
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700">Twitter/X URL</label>
+                                    <input
+                                        v-model="form.idol_social_media_twitter"
+                                        type="url"
+                                        placeholder="https://twitter.com/username"
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    />
                                 </div>
                             </div>
 
@@ -334,7 +353,9 @@ const form = useForm({
     idol_description: props.settings.idol_description || '',
     idol_achievements: props.settings.idol_achievements || '',
     idol_discography: props.settings.idol_discography || '',
-    idol_social_media: props.settings.idol_social_media || '',
+    idol_social_media_instagram: props.settings.idol_social_media_instagram || '',
+    idol_social_media_tiktok: props.settings.idol_social_media_tiktok || '',
+    idol_social_media_twitter: props.settings.idol_social_media_twitter || '',
     idol_show_on_welcome: props.settings.idol_show_on_welcome === 'true' || props.settings.idol_show_on_welcome === true,
 
     // Fanbase fields

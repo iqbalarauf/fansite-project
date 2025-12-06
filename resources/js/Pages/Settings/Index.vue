@@ -20,6 +20,9 @@ const form = useForm({
   login_image: null,
   showroom_room_id: latestAppSettings.value.showroom_room_id || '416491',
   showroom_link: latestAppSettings.value.showroom_link || 'https://www.showroom-live.com/r/48_KOKOHA_EGUCHI',
+  instagram_url: latestAppSettings.value.instagram_url || '',
+  twitter_url: latestAppSettings.value.twitter_url || '',
+  tiktok_url: latestAppSettings.value.tiktok_url || '',
 })
 
 const confirmingSave = ref(false)
@@ -52,6 +55,9 @@ const hasChanges = computed(() => {
   if (form.desc_app !== (s.desc_app || '')) return true
   if (form.showroom_room_id !== (s.showroom_room_id || '416491')) return true
   if (form.showroom_link !== (s.showroom_link || 'https://www.showroom-live.com/r/JKT48_Greesel')) return true
+  if (form.instagram_url !== (s.instagram_url || '')) return true
+  if (form.twitter_url !== (s.twitter_url || '')) return true
+  if (form.tiktok_url !== (s.tiktok_url || '')) return true
   if (form.app_logo || form.hero_image || form.login_image) return true
   return false
 })
@@ -63,6 +69,9 @@ const syncFormFromServer = (incoming) => {
   form.desc_app = server.desc_app ?? ''
   form.showroom_room_id = server.showroom_room_id ?? '416491'
   form.showroom_link = server.showroom_link ?? 'https://www.showroom-live.com/r/JKT48_Greesel'
+  form.instagram_url = server.instagram_url ?? ''
+  form.twitter_url = server.twitter_url ?? ''
+  form.tiktok_url = server.tiktok_url ?? ''
   form.app_logo = null
   form.hero_image = null
   form.login_image = null
@@ -200,6 +209,38 @@ const confirmSave = () => {
           <p class="text-xs text-gray-400 mb-2">Full URL to redirect when live (e.g., https://www.showroom-live.com/r/JKT48_Greesel)</p>
           <input v-model="form.showroom_link" type="url"
             class="mt-1 block w-full rounded border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-white" />
+        </div>
+      </div>
+
+      <!-- Social Media Settings Section -->
+      <div class="bg-white dark:bg-zinc-900 p-6 rounded-lg border ring-1 ring-white/5">
+        <div class="mb-4">
+          <div class="text-lg font-medium text-gray-900 dark:text-gray-200">Social Media Links</div>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Add your social media profile URLs to display icons in the header</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Instagram URL</label>
+          <p class="text-xs text-gray-400 mb-2">Full Instagram profile URL (e.g., https://instagram.com/yourprofile)</p>
+          <input v-model="form.instagram_url" type="url"
+            class="mt-1 block w-full rounded border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+            placeholder="https://instagram.com/yourprofile" />
+        </div>
+
+        <div class="mt-4">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Twitter/X URL</label>
+          <p class="text-xs text-gray-400 mb-2">Full Twitter/X profile URL (e.g., https://twitter.com/yourprofile)</p>
+          <input v-model="form.twitter_url" type="url"
+            class="mt-1 block w-full rounded border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+            placeholder="https://twitter.com/yourprofile" />
+        </div>
+
+        <div class="mt-4">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">TikTok URL</label>
+          <p class="text-xs text-gray-400 mb-2">Full TikTok profile URL (e.g., https://tiktok.com/@yourprofile)</p>
+          <input v-model="form.tiktok_url" type="url"
+            class="mt-1 block w-full rounded border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+            placeholder="https://tiktok.com/@yourprofile" />
         </div>
       </div>
 

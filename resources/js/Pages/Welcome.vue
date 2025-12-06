@@ -21,6 +21,10 @@ defineProps({
         type: Array,
         default: () => [],
     },
+    liveStreamingStats: {
+        type: Object,
+        default: () => ({ showroom_count: 0, idn_app_count: 0 }),
+    },
 });
 
 function handleImageError() {
@@ -40,6 +44,8 @@ const teaterStats = computed(() => page.props.teaterStats || { total_shows: 0, u
 const animatedShows = ref(0);
 const animatedSetlists = ref(0);
 const animatedUnitSongs = ref(0);
+const animatedShowroom = ref(0);
+const animatedIdnApp = ref(0);
 
 // Animate number counting
 const animateCount = (start, end, duration, callback) => {
@@ -88,6 +94,11 @@ onMounted(() => {
     animateCount(0, teaterStats.value.total_shows, 3000, (val) => animatedShows.value = val);
     animateCount(0, teaterStats.value.unique_setlists, 3000, (val) => animatedSetlists.value = val);
     animateCount(0, teaterStats.value.unique_unit_songs, 3000, (val) => animatedUnitSongs.value = val);
+
+    // Animate live streaming counters
+    const liveStats = page.props.liveStreamingStats || { showroom_count: 0, idn_app_count: 0 };
+    animateCount(0, liveStats.showroom_count, 3000, (val) => animatedShowroom.value = val);
+    animateCount(0, liveStats.idn_app_count, 3000, (val) => animatedIdnApp.value = val);
 });
 </script>
 
@@ -157,15 +168,52 @@ onMounted(() => {
                             <div v-if="page.props.aboutSettings.idol_photo" class="flex justify-center order-2 md:order-1">
                                 <img :src="page.props.aboutSettings.idol_photo" :alt="page.props.aboutSettings.idol_name" class="rounded-lg shadow-lg max-h-96 w-full object-cover" />
                             </div>
-                            
+
                             <!-- Info -->
                             <div class="order-1 md:order-2">
                                 <h3 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">{{ page.props.aboutSettings.idol_name }}</h3>
                                 <div class="prose dark:prose-invert max-w-none">
                                     <p class="text-gray-700 dark:text-gray-300 whitespace-pre-line">{{ page.props.aboutSettings.idol_description }}</p>
                                 </div>
+
+                                <!-- Social Media Icons -->
+                                <div v-if="page.props.aboutSettings.idol_social_media_instagram || page.props.aboutSettings.idol_social_media_tiktok || page.props.aboutSettings.idol_social_media_twitter" class="mt-4 flex gap-3">
+                                    <!-- Instagram -->
+                                    <a v-if="page.props.aboutSettings.idol_social_media_instagram"
+                                       :href="page.props.aboutSettings.idol_social_media_instagram"
+                                       target="_blank"
+                                       rel="noopener noreferrer"
+                                       class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500 hover:scale-110 transition-transform duration-200">
+                                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                                        </svg>
+                                    </a>
+
+                                    <!-- TikTok -->
+                                    <a v-if="page.props.aboutSettings.idol_social_media_tiktok"
+                                       :href="page.props.aboutSettings.idol_social_media_tiktok"
+                                       target="_blank"
+                                       rel="noopener noreferrer"
+                                       class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-black hover:scale-110 transition-transform duration-200">
+                                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+                                        </svg>
+                                    </a>
+
+                                    <!-- Twitter/X -->
+                                    <a v-if="page.props.aboutSettings.idol_social_media_twitter"
+                                       :href="page.props.aboutSettings.idol_social_media_twitter"
+                                       target="_blank"
+                                       rel="noopener noreferrer"
+                                       class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-black hover:scale-110 transition-transform duration-200">
+                                        <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                                        </svg>
+                                    </a>
+                                </div>
+
                                 <div class="mt-6">
-                                    <Link :href="page.props.aboutSettings.idol_slug ? route('about.idol', { slug: page.props.aboutSettings.idol_slug }) : route('about.idol')" 
+                                    <Link :href="page.props.aboutSettings.idol_slug ? route('about.idol', { slug: page.props.aboutSettings.idol_slug }) : route('about.idol')"
                                         class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring focus:ring-indigo-300 transition">
                                         Learn More
                                     </Link>
@@ -226,12 +274,12 @@ onMounted(() => {
                                         :target="showroomStatus.isLive ? '_blank' : undefined"
                                         :rel="showroomStatus.isLive ? 'noopener noreferrer' : undefined"
                                         class="flex flex-col items-center justify-center text-center"
-                                        :class="{ 'cursor-pointer hover:opacity-80 transition': showroomStatus.isLive }">
+                                        :class="{ 'cursor-pointer hover:opacity-80 transition': showroomStatus.isLive }" id="showroomlive">
                                         <div>
                                             <img src="https://static.showroom-live.com/assets/img/logo_guidelines/icon.png?t=1667879554"
                                                 class="h-20 mb-4"></img>
                                         </div>
-                                        <div class="text-sm sm:text-base text-gray-600 dark:text-gray-400">200+ Live</div>
+                                        <div class="text-sm sm:text-base text-gray-600 dark:text-gray-400">{{ animatedShowroom }}+ Live</div>
                                         <span v-if="!showroomStatus.loading"
                                             class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium inset-ring mt-2"
                                             :class="showroomStatus.isLive
@@ -241,12 +289,12 @@ onMounted(() => {
                                         </span>
                                     </component>
 
-                                    <div class="flex flex-col items-center justify-center text-center">
+                                    <div id="idnlive" class="flex flex-col items-center justify-center text-center">
                                         <div>
                                             <img src="https://play-lh.googleusercontent.com/vHCUNv03NNuh_aNKRCP63wUpC-HHhPXyrL_gJdFr_Xn7lgsamEAoFhG7mtz1gVBjYA=w480-h960-rw"
                                                 class="h-20 mb-4"></img>
                                         </div>
-                                        <div class="text-sm sm:text-base text-gray-600 dark:text-gray-400">80+ Live
+                                        <div class="text-sm sm:text-base text-gray-600 dark:text-gray-400">{{ animatedIdnApp }}+ Live
                                         </div>
                                         <span
                                             class="inline-flex items-center rounded-md bg-red-400/10 px-2 py-1 text-xs font-medium text-red-400 inset-ring inset-ring-red-400/20 mt-2">Not Connected</span>

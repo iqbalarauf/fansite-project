@@ -25,7 +25,9 @@ class AboutController extends Controller
             'idol_description' => AboutSetting::get('idol_description', ''),
             'idol_achievements' => AboutSetting::get('idol_achievements', ''),
             'idol_discography' => AboutSetting::get('idol_discography', ''),
-            'idol_social_media' => AboutSetting::get('idol_social_media', ''),
+            'idol_social_media_instagram' => AboutSetting::get('idol_social_media_instagram', ''),
+            'idol_social_media_tiktok' => AboutSetting::get('idol_social_media_tiktok', ''),
+            'idol_social_media_twitter' => AboutSetting::get('idol_social_media_twitter', ''),
         ];
 
         return Inertia::render('About/Idol', [
