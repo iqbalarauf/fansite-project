@@ -193,11 +193,11 @@ class AboutSettingsSeeder extends Seeder
             ],
         ];
 
-        foreach ($settings as $setting) {
-            DB::table('about_settings')->updateOrInsert(
-                ['key' => $setting['key']],
-                $setting
-            );
-        }
+        // Use bulk upsert for better performance
+        DB::table('about_settings')->upsert(
+            $settings,
+            ['key'], // unique column
+            ['value', 'updated_at'] // columns to update
+        );
     }
 }

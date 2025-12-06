@@ -23,8 +23,9 @@ class PostFactory extends Factory
             'featured_image' => null,
             'category' => $this->faker->randomElement(['General','News','Tutorial']),
             'tags' => [$this->faker->word(), $this->faker->word()],
-            'seo_title' => null,
-            'seo_description' => null,
+            'meta_title' => null,
+            'meta_description' => null,
+            'meta_keywords' => null,
             'status' => $this->faker->randomElement(['draft','published']),
             'published_at' => $this->faker->dateTimeBetween('-1 year','now'),
         ];

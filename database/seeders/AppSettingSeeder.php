@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use App\Models\Setting;
 
 class AppSettingSeeder extends Seeder
@@ -78,11 +79,11 @@ class AppSettingSeeder extends Seeder
             ],
         ];
 
-        foreach ($settings as $setting) {
-            DB::table('app_settings')->updateOrInsert(
-                ['key' => $setting['key']],
-                $setting
-            );
-        }
+        // Use bulk insert for better performance
+        DB::table('app_settings')->upsert(
+            $settings,
+            ['key'], // unique column
+            ['value', 'updated_at'] // columns to update
+        );
     }
 }
