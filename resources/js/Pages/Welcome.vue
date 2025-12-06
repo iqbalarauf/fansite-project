@@ -191,7 +191,7 @@ onMounted(() => {
                     <!-- Hero background image with responsive height. Mobile: fixed height, Medium+: 16:9 aspect ratio -->
                     <div class="w-full h-[500px] md:h-0 md:pb-[40%] relative">
                         <img :src="heroSrc" alt="Hero background"
-                            class="absolute inset-0 w-full h-full object-cover object-top" />
+                            class="absolute inset-0 w-full h-full object-cover object-center" />
                         <div class="absolute inset-0 bg-gradient-to-b from-black/30 to-black/40"></div>
 
                         <div class="absolute inset-0 flex items-center justify-start">
