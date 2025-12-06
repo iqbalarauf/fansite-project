@@ -23,6 +23,13 @@ const form = useForm({
   instagram_url: latestAppSettings.value.instagram_url || '',
   twitter_url: latestAppSettings.value.twitter_url || '',
   tiktok_url: latestAppSettings.value.tiktok_url || '',
+  hero_button_1_text: latestAppSettings.value.hero_button_1_text || 'Info Lebih Lanjut',
+  hero_button_1_link: latestAppSettings.value.hero_button_1_link || '/blog',
+  hero_button_2_text: latestAppSettings.value.hero_button_2_text || 'Temukan Kami',
+  hero_button_2_link: latestAppSettings.value.hero_button_2_link || '/blog',
+  show_youtube_playlist: latestAppSettings.value.show_youtube_playlist || 'false',
+  youtube_playlist_url: latestAppSettings.value.youtube_playlist_url || '',
+  show_gallery_carousel: latestAppSettings.value.show_gallery_carousel || 'true',
 })
 
 const confirmingSave = ref(false)
@@ -58,6 +65,13 @@ const hasChanges = computed(() => {
   if (form.instagram_url !== (s.instagram_url || '')) return true
   if (form.twitter_url !== (s.twitter_url || '')) return true
   if (form.tiktok_url !== (s.tiktok_url || '')) return true
+  if (form.hero_button_1_text !== (s.hero_button_1_text || 'Info Lebih Lanjut')) return true
+  if (form.hero_button_1_link !== (s.hero_button_1_link || '/blog')) return true
+  if (form.hero_button_2_text !== (s.hero_button_2_text || 'Temukan Kami')) return true
+  if (form.hero_button_2_link !== (s.hero_button_2_link || '/blog')) return true
+  if (form.show_youtube_playlist !== (s.show_youtube_playlist || 'false')) return true
+  if (form.youtube_playlist_url !== (s.youtube_playlist_url || '')) return true
+  if (form.show_gallery_carousel !== (s.show_gallery_carousel || 'true')) return true
   if (form.app_logo || form.hero_image || form.login_image) return true
   return false
 })
@@ -72,6 +86,13 @@ const syncFormFromServer = (incoming) => {
   form.instagram_url = server.instagram_url ?? ''
   form.twitter_url = server.twitter_url ?? ''
   form.tiktok_url = server.tiktok_url ?? ''
+  form.hero_button_1_text = server.hero_button_1_text ?? 'Info Lebih Lanjut'
+  form.hero_button_1_link = server.hero_button_1_link ?? '/blog'
+  form.hero_button_2_text = server.hero_button_2_text ?? 'Temukan Kami'
+  form.hero_button_2_link = server.hero_button_2_link ?? '/blog'
+  form.show_youtube_playlist = server.show_youtube_playlist ?? 'false'
+  form.youtube_playlist_url = server.youtube_playlist_url ?? ''
+  form.show_gallery_carousel = server.show_gallery_carousel ?? 'true'
   form.app_logo = null
   form.hero_image = null
   form.login_image = null
@@ -241,6 +262,92 @@ const confirmSave = () => {
           <input v-model="form.tiktok_url" type="url"
             class="mt-1 block w-full rounded border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
             placeholder="https://tiktok.com/@yourprofile" />
+        </div>
+
+        <!-- Hero Button Settings -->
+        <div class="mt-6 border-t border-gray-200 dark:border-gray-700 pt-6">
+          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Hero Section Buttons</h3>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Button 1 Text</label>
+              <p class="text-xs text-gray-400 mb-2">Text for the first button in hero section</p>
+              <input v-model="form.hero_button_1_text" type="text"
+                class="mt-1 block w-full rounded border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                placeholder="Info Lebih Lanjut" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Button 1 Link</label>
+              <p class="text-xs text-gray-400 mb-2">URL or route path (e.g., /blog or https://example.com)</p>
+              <input v-model="form.hero_button_1_link" type="text"
+                class="mt-1 block w-full rounded border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                placeholder="/blog" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Button 2 Text</label>
+              <p class="text-xs text-gray-400 mb-2">Text for the second button in hero section</p>
+              <input v-model="form.hero_button_2_text" type="text"
+                class="mt-1 block w-full rounded border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                placeholder="Temukan Kami" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Button 2 Link</label>
+              <p class="text-xs text-gray-400 mb-2">URL or route path (e.g., /blog or https://example.com)</p>
+              <input v-model="form.hero_button_2_link" type="text"
+                class="mt-1 block w-full rounded border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                placeholder="/blog" />
+            </div>
+          </div>
+        </div>
+
+        <!-- YouTube Playlist Settings -->
+        <div class="mt-6 border-t border-gray-200 dark:border-gray-700 pt-6">
+          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">YouTube Playlist</h3>
+
+          <div class="mb-4">
+            <label class="flex items-center">
+              <input
+                type="checkbox"
+                :checked="form.show_youtube_playlist === 'true'"
+                @change="form.show_youtube_playlist = $event.target.checked ? 'true' : 'false'"
+                class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 dark:bg-gray-800 dark:border-gray-700"
+              />
+              <span class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">Show YouTube Playlist on Homepage</span>
+            </label>
+            <p class="text-xs text-gray-400 mt-1 ml-6">Enable this to display a YouTube playlist embed on the homepage</p>
+          </div>
+
+          <div v-if="form.show_youtube_playlist === 'true'" class="mt-4">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">YouTube Playlist URL</label>
+            <p class="text-xs text-gray-400 mb-2">Full YouTube playlist URL (e.g., https://www.youtube.com/playlist?list=...)</p>
+            <input
+              v-model="form.youtube_playlist_url"
+              type="url"
+              class="mt-1 block w-full rounded border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+              placeholder="https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxx"
+            />
+          </div>
+        </div>
+
+        <!-- Gallery Carousel Settings -->
+        <div class="mt-6 border-t border-gray-200 dark:border-gray-700 pt-6">
+          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Gallery Carousel</h3>
+
+          <div class="mb-4">
+            <label class="flex items-center">
+              <input
+                type="checkbox"
+                :checked="form.show_gallery_carousel === 'true'"
+                @change="form.show_gallery_carousel = $event.target.checked ? 'true' : 'false'"
+                class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 dark:bg-gray-800 dark:border-gray-700"
+              />
+              <span class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">Show Gallery Carousel on Homepage</span>
+            </label>
+            <p class="text-xs text-gray-400 mt-1 ml-6">Enable this to display 5 latest gallery photos in a carousel on the homepage</p>
+          </div>
         </div>
       </div>
 

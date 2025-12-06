@@ -93,6 +93,20 @@ Route::get('/', function () {
     $showroomCount = LiveStreaming::where('platform', 'Showroom')->count();
     $idnAppCount = LiveStreaming::where('platform', 'IDN App')->count();
 
+    // Get latest 5 published gallery photos for carousel
+    $latestGallery = \App\Models\Gallery::where('is_published', true)
+        ->where('type', 'photo')
+        ->orderBy('created_at', 'desc')
+        ->take(5)
+        ->get()
+        ->map(fn($item) => [
+            'id' => $item->id,
+            'title' => $item->title,
+            'description' => $item->description,
+            'credit' => $item->credit,
+            'image_path' => $item->image_path ? Storage::url($item->image_path) : null,
+        ]);
+
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
@@ -102,6 +116,7 @@ Route::get('/', function () {
             'showroom_count' => $showroomCount,
             'idn_app_count' => $idnAppCount,
         ],
+        'latestGallery' => $latestGallery,
     ]);
 });
 
@@ -224,6 +239,12 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/live-streaming/{liveStreaming}', [\App\Http\Controllers\LiveStreamingController::class, 'update'])->name('live-streaming.update');
     Route::delete('/live-streaming/{liveStreaming}', [\App\Http\Controllers\LiveStreamingController::class, 'destroy'])->name('live-streaming.destroy');
 
+    // Gallery management
+    Route::get('/manage/gallery', [\App\Http\Controllers\GalleryController::class, 'index'])->name('gallery.index');
+    Route::post('/manage/gallery', [\App\Http\Controllers\GalleryController::class, 'store'])->name('gallery.store');
+    Route::put('/manage/gallery/{gallery}', [\App\Http\Controllers\GalleryController::class, 'update'])->name('gallery.update');
+    Route::delete('/manage/gallery/{gallery}', [\App\Http\Controllers\GalleryController::class, 'destroy'])->name('gallery.destroy');
+
     // About Settings management
     Route::get('/about/settings', [\App\Http\Controllers\AboutSettingsController::class, 'edit'])->name('about.settings');
     Route::post('/about/settings', [\App\Http\Controllers\AboutSettingsController::class, 'update'])->name('about.settings.update');
@@ -233,6 +254,9 @@ Route::middleware(['auth'])->group(function () {
 // Public About pages
 Route::get('/about/idol/{slug?}', [\App\Http\Controllers\AboutController::class, 'idol'])->name('about.idol');
 Route::get('/about/fanbase/{slug?}', [\App\Http\Controllers\AboutController::class, 'fanbase'])->name('about.fanbase');
+
+// Public Gallery
+Route::get('/gallery', [\App\Http\Controllers\PublicGalleryController::class, 'index'])->name('public.gallery');
 
 // Public custom page view - MUST BE LAST as catch-all fallback
 Route::get('/{page}', [\App\Http\Controllers\CustomPageController::class, 'show'])->name('pages.show');

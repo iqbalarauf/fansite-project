@@ -89,6 +89,13 @@ class HandleInertiaRequests extends Middleware
                 'instagram_url' => $appSettings['instagram_url'] ?? null,
                 'twitter_url' => $appSettings['twitter_url'] ?? null,
                 'tiktok_url' => $appSettings['tiktok_url'] ?? null,
+                'hero_button_1_text' => $appSettings['hero_button_1_text'] ?? 'Info Lebih Lanjut',
+                'hero_button_1_link' => $appSettings['hero_button_1_link'] ?? '/blog',
+                'hero_button_2_text' => $appSettings['hero_button_2_text'] ?? 'Temukan Kami',
+                'hero_button_2_link' => $appSettings['hero_button_2_link'] ?? '/blog',
+                'show_youtube_playlist' => $appSettings['show_youtube_playlist'] ?? 'false',
+                'youtube_playlist_url' => $appSettings['youtube_playlist_url'] ?? '',
+                'show_gallery_carousel' => $appSettings['show_gallery_carousel'] ?? 'true',
             ],
             'teaterStats' => $teaterStats,
             'aboutSettings' => [

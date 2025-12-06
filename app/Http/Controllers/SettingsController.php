@@ -24,6 +24,13 @@ class SettingsController extends Controller
                 'instagram_url' => Setting::get('instagram_url', ''),
                 'twitter_url' => Setting::get('twitter_url', ''),
                 'tiktok_url' => Setting::get('tiktok_url', ''),
+                'hero_button_1_text' => Setting::get('hero_button_1_text', 'Info Lebih Lanjut'),
+                'hero_button_1_link' => Setting::get('hero_button_1_link', '/blog'),
+                'hero_button_2_text' => Setting::get('hero_button_2_text', 'Temukan Kami'),
+                'hero_button_2_link' => Setting::get('hero_button_2_link', '/blog'),
+                'show_youtube_playlist' => Setting::get('show_youtube_playlist', 'false'),
+                'youtube_playlist_url' => Setting::get('youtube_playlist_url', ''),
+                'show_gallery_carousel' => Setting::get('show_gallery_carousel', 'true'),
             ],
         ]);
     }
@@ -42,6 +49,13 @@ class SettingsController extends Controller
             'instagram_url' => ['nullable', 'url', 'max:500'],
             'twitter_url' => ['nullable', 'url', 'max:500'],
             'tiktok_url' => ['nullable', 'url', 'max:500'],
+            'hero_button_1_text' => ['nullable', 'string', 'max:255'],
+            'hero_button_1_link' => ['nullable', 'string', 'max:500'],
+            'hero_button_2_text' => ['nullable', 'string', 'max:255'],
+            'hero_button_2_link' => ['nullable', 'string', 'max:500'],
+            'show_youtube_playlist' => ['nullable', 'string', 'in:true,false'],
+            'youtube_playlist_url' => ['nullable', 'url', 'max:500'],
+            'show_gallery_carousel' => ['nullable', 'string', 'in:true,false'],
         ]);
 
         // Update app_name
@@ -61,6 +75,19 @@ class SettingsController extends Controller
         Setting::set('instagram_url', $data['instagram_url'] ?? '');
         Setting::set('twitter_url', $data['twitter_url'] ?? '');
         Setting::set('tiktok_url', $data['tiktok_url'] ?? '');
+
+        // Update hero button settings
+        Setting::set('hero_button_1_text', $data['hero_button_1_text'] ?? 'Info Lebih Lanjut');
+        Setting::set('hero_button_1_link', $data['hero_button_1_link'] ?? '/blog');
+        Setting::set('hero_button_2_text', $data['hero_button_2_text'] ?? 'Temukan Kami');
+        Setting::set('hero_button_2_link', $data['hero_button_2_link'] ?? '/blog');
+
+        // Update YouTube playlist settings
+        Setting::set('show_youtube_playlist', $data['show_youtube_playlist'] ?? 'false');
+        Setting::set('youtube_playlist_url', $data['youtube_playlist_url'] ?? '');
+
+        // Update Gallery carousel settings
+        Setting::set('show_gallery_carousel', $data['show_gallery_carousel'] ?? 'true');
 
         // Handle app_logo upload
         if ($request->hasFile('app_logo')) {

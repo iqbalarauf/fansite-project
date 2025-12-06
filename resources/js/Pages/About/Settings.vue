@@ -102,9 +102,71 @@
                                 </div>
                             </div>
 
-                            <!-- Section 3: Social Media -->
+                            <!-- Section 3: Profile Details -->
                             <div class="bg-gray-50 p-4 rounded-lg">
-                                <h4 class="font-semibold mb-4">Section 3: Social Media Links</h4>
+                                <h4 class="font-semibold mb-4">Section 3: Profile Details (Biodata)</h4>
+
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700">Jikoshoukai (Salam Perkenalan)</label>
+                                    <textarea
+                                        v-model="form.idol_jikoshoukai"
+                                        rows="3"
+                                        placeholder="e.g., Minasan konnichiwa! ... desu!"
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    ></textarea>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Tanggal Lahir</label>
+                                        <input
+                                            v-model="form.idol_birth_date"
+                                            type="date"
+                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Tempat Lahir</label>
+                                        <input
+                                            v-model="form.idol_birth_place"
+                                            type="text"
+                                            placeholder="e.g., Jakarta, Indonesia"
+                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Golongan Darah</label>
+                                        <select
+                                            v-model="form.idol_blood_type"
+                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        >
+                                            <option value="">Pilih Golongan Darah</option>
+                                            <option value="A">A</option>
+                                            <option value="B">B</option>
+                                            <option value="AB">AB</option>
+                                            <option value="O">O</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Tinggi Badan (cm)</label>
+                                        <input
+                                            v-model="form.idol_height"
+                                            type="number"
+                                            placeholder="e.g., 165"
+                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Section 4: Social Media -->
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-semibold mb-4">Section 4: Social Media Links</h4>
 
                                 <div class="mb-4">
                                     <label class="block text-sm font-medium text-gray-700">Instagram URL</label>
@@ -353,6 +415,11 @@ const form = useForm({
     idol_description: props.settings.idol_description || '',
     idol_achievements: props.settings.idol_achievements || '',
     idol_discography: props.settings.idol_discography || '',
+    idol_jikoshoukai: props.settings.idol_jikoshoukai || '',
+    idol_birth_date: props.settings.idol_birth_date || '',
+    idol_birth_place: props.settings.idol_birth_place || '',
+    idol_blood_type: props.settings.idol_blood_type || '',
+    idol_height: props.settings.idol_height || '',
     idol_social_media_instagram: props.settings.idol_social_media_instagram || '',
     idol_social_media_tiktok: props.settings.idol_social_media_tiktok || '',
     idol_social_media_twitter: props.settings.idol_social_media_twitter || '',

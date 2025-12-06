@@ -10,7 +10,7 @@
                     <!-- Section 1: Basic Information -->
                     <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg mb-8">
                         <div class="p-6 sm:p-8">
-                            <div class="grid md:grid-cols-2 gap-8 items-center">
+                            <div class="grid md:grid-cols-2 gap-8 items-start">
                                 <!-- Photo -->
                                 <div v-if="settings.idol_photo" class="flex justify-center">
                                     <img :src="settings.idol_photo" :alt="settings.idol_name" class="rounded-lg shadow-lg max-h-96 object-cover" />
@@ -19,7 +19,35 @@
                                 <!-- Info -->
                                 <div>
                                     <h3 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">{{ settings.idol_name }}</h3>
-                                    <div class="prose dark:prose-invert max-w-none">
+
+                                    <!-- Jikoshoukai -->
+                                    <div v-if="settings.idol_jikoshoukai" class="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                        <p class="text-gray-700 dark:text-gray-300 italic whitespace-pre-line">{{ settings.idol_jikoshoukai }}</p>
+                                    </div>
+
+                                    <!-- Biodata -->
+                                    <div class="space-y-3 mb-6">
+                                        <div v-if="settings.idol_birth_date || settings.idol_birth_place" class="flex items-start">
+                                            <span class="font-semibold text-gray-700 dark:text-gray-300 w-32">Kelahiran:</span>
+                                            <span class="text-gray-600 dark:text-gray-400">
+                                                <span v-if="settings.idol_birth_place">{{ settings.idol_birth_place }}</span>
+                                                <span v-if="settings.idol_birth_place && settings.idol_birth_date">, </span>
+                                                <span v-if="settings.idol_birth_date">{{ formatDate(settings.idol_birth_date) }}</span>
+                                            </span>
+                                        </div>
+                                        <div v-if="settings.idol_blood_type" class="flex items-start">
+                                            <span class="font-semibold text-gray-700 dark:text-gray-300 w-32">Golongan Darah:</span>
+                                            <span class="text-gray-600 dark:text-gray-400">{{ settings.idol_blood_type }}</span>
+                                        </div>
+                                        <div v-if="settings.idol_height" class="flex items-start">
+                                            <span class="font-semibold text-gray-700 dark:text-gray-300 w-32">Tinggi Badan:</span>
+                                            <span class="text-gray-600 dark:text-gray-400">{{ settings.idol_height }} cm</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Description -->
+                                    <div v-if="settings.idol_description" class="prose dark:prose-invert max-w-none border-t pt-4">
+                                        <h4 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Description</h4>
                                         <p class="text-gray-700 dark:text-gray-300 whitespace-pre-line">{{ settings.idol_description }}</p>
                                     </div>
                                 </div>
@@ -109,4 +137,11 @@ import Footer from '@/Components/Footer.vue';
 defineProps({
     settings: Object
 });
+
+const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return date.toLocaleDateString('id-ID', options);
+};
 </script>

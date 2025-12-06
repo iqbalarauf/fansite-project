@@ -25,6 +25,10 @@ defineProps({
         type: Object,
         default: () => ({ showroom_count: 0, idn_app_count: 0 }),
     },
+    latestGallery: {
+        type: Array,
+        default: () => [],
+    },
 });
 
 function handleImageError() {
@@ -69,6 +73,56 @@ const showroomStatus = ref({
     loading: true,
 });
 
+// YouTube Playlist ID extraction
+const getYouTubePlaylistId = (url) => {
+    if (!url) return null;
+    const match = url.match(/[?&]list=([^&]+)/);
+    return match ? match[1] : null;
+};
+
+const youtubePlaylistId = computed(() => {
+    const url = page.props.appSettings?.youtube_playlist_url;
+    return getYouTubePlaylistId(url);
+});
+
+const showYoutubePlaylist = computed(() => {
+    return page.props.appSettings?.show_youtube_playlist === 'true' && youtubePlaylistId.value;
+});
+
+// Gallery Carousel
+const showGalleryCarousel = computed(() => {
+    return page.props.appSettings?.show_gallery_carousel === 'true' && page.props.latestGallery && page.props.latestGallery.length > 0;
+});
+
+const currentSlide = ref(0);
+const autoplayInterval = ref(null);
+
+const nextSlide = () => {
+    if (page.props.latestGallery && page.props.latestGallery.length > 0) {
+        currentSlide.value = (currentSlide.value + 1) % page.props.latestGallery.length;
+    }
+};
+
+const prevSlide = () => {
+    if (page.props.latestGallery && page.props.latestGallery.length > 0) {
+        currentSlide.value = (currentSlide.value - 1 + page.props.latestGallery.length) % page.props.latestGallery.length;
+    }
+};
+
+const goToSlide = (index) => {
+    currentSlide.value = index;
+};
+
+const startAutoplay = () => {
+    autoplayInterval.value = setInterval(nextSlide, 5000); // Change slide every 5 seconds
+};
+
+const stopAutoplay = () => {
+    if (autoplayInterval.value) {
+        clearInterval(autoplayInterval.value);
+    }
+};
+
 // Fetch Showroom live status
 const fetchShowroomStatus = async () => {
     try {
@@ -99,6 +153,11 @@ onMounted(() => {
     const liveStats = page.props.liveStreamingStats || { showroom_count: 0, idn_app_count: 0 };
     animateCount(0, liveStats.showroom_count, 3000, (val) => animatedShowroom.value = val);
     animateCount(0, liveStats.idn_app_count, 3000, (val) => animatedIdnApp.value = val);
+
+    // Start carousel autoplay
+    if (showGalleryCarousel.value) {
+        startAutoplay();
+    }
 });
 </script>
 
@@ -129,9 +188,8 @@ onMounted(() => {
 
             <section class="mb-8 w-full relative z-0">
                 <div class="relative w-full overflow-hidden">
-                    <!-- Hero background image with responsive height -->
-                    <!-- Mobile: fixed height, Medium+: 16:9 aspect ratio -->
-                    <div class="w-full h-[500px] md:h-0 md:pb-[56.25%] relative">
+                    <!-- Hero background image with responsive height. Mobile: fixed height, Medium+: 16:9 aspect ratio -->
+                    <div class="w-full h-[500px] md:h-0 md:pb-[40%] relative">
                         <img :src="heroSrc" alt="Hero background"
                             class="absolute inset-0 w-full h-full object-cover object-top" />
                         <div class="absolute inset-0 bg-gradient-to-b from-black/30 to-black/40"></div>
@@ -145,12 +203,22 @@ onMounted(() => {
                                         page.props.appSettings?.desc_app }}</p>
 
                                     <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row gap-3 justify-start">
-                                        <Link :href="route('blog.index')"
+                                        <component
+                                            :is="page.props.appSettings?.hero_button_1_link?.startsWith('http') ? 'a' : Link"
+                                            :href="page.props.appSettings?.hero_button_1_link || route('blog.index')"
+                                            :target="page.props.appSettings?.hero_button_1_link?.startsWith('http') ? '_blank' : undefined"
+                                            :rel="page.props.appSettings?.hero_button_1_link?.startsWith('http') ? 'noopener noreferrer' : undefined"
                                             class="inline-flex items-center justify-center px-5 py-3 bg-white text-black font-semibold rounded-md hover:opacity-90 transition">
-                                        Info Lebih Lanjut</Link>
-                                        <Link :href="route('blog.index')"
+                                            {{ page.props.appSettings?.hero_button_1_text || 'Info Lebih Lanjut' }}
+                                        </component>
+                                        <component
+                                            :is="page.props.appSettings?.hero_button_2_link?.startsWith('http') ? 'a' : Link"
+                                            :href="page.props.appSettings?.hero_button_2_link || route('blog.index')"
+                                            :target="page.props.appSettings?.hero_button_2_link?.startsWith('http') ? '_blank' : undefined"
+                                            :rel="page.props.appSettings?.hero_button_2_link?.startsWith('http') ? 'noopener noreferrer' : undefined"
                                             class="inline-flex items-center justify-center px-5 py-3 border border-white text-white font-semibold rounded-md hover:bg-white/10 transition">
-                                        Temukan Kami</Link>
+                                            {{ page.props.appSettings?.hero_button_2_text || 'Temukan Kami' }}
+                                        </component>
                                     </div>
                                 </div>
                             </div>
@@ -160,62 +228,71 @@ onMounted(() => {
             </section>
 
             <!-- About Idol Section (Optional) -->
-            <section v-if="page.props.aboutSettings?.idol_show_on_welcome === 'true' || page.props.aboutSettings?.idol_show_on_welcome === true" class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+            <section
+                v-if="page.props.aboutSettings?.idol_show_on_welcome === 'true' || page.props.aboutSettings?.idol_show_on_welcome === true"
+                class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg">
                     <div class="p-6 sm:p-8">
                         <div class="grid md:grid-cols-2 gap-8 items-center">
                             <!-- Photo -->
-                            <div v-if="page.props.aboutSettings.idol_photo" class="flex justify-center order-2 md:order-1">
-                                <img :src="page.props.aboutSettings.idol_photo" :alt="page.props.aboutSettings.idol_name" class="rounded-lg shadow-lg max-h-96 w-full object-cover" />
+                            <div v-if="page.props.aboutSettings.idol_photo"
+                                class="flex justify-center order-2 md:order-1">
+                                <img :src="page.props.aboutSettings.idol_photo"
+                                    :alt="page.props.aboutSettings.idol_name"
+                                    class="rounded-lg shadow-lg max-h-96 w-full object-cover" />
                             </div>
 
                             <!-- Info -->
                             <div class="order-1 md:order-2">
-                                <h3 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">{{ page.props.aboutSettings.idol_name }}</h3>
+                                <h3 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">{{
+                                    page.props.aboutSettings.idol_name }}</h3>
                                 <div class="prose dark:prose-invert max-w-none">
-                                    <p class="text-gray-700 dark:text-gray-300 whitespace-pre-line">{{ page.props.aboutSettings.idol_description }}</p>
+                                    <p class="text-gray-700 dark:text-gray-300 whitespace-pre-line">{{
+                                        page.props.aboutSettings.idol_description }}</p>
                                 </div>
 
                                 <!-- Social Media Icons -->
-                                <div v-if="page.props.aboutSettings.idol_social_media_instagram || page.props.aboutSettings.idol_social_media_tiktok || page.props.aboutSettings.idol_social_media_twitter" class="mt-4 flex gap-3">
+                                <div v-if="page.props.aboutSettings.idol_social_media_instagram || page.props.aboutSettings.idol_social_media_tiktok || page.props.aboutSettings.idol_social_media_twitter"
+                                    class="mt-4 flex gap-3">
                                     <!-- Instagram -->
                                     <a v-if="page.props.aboutSettings.idol_social_media_instagram"
-                                       :href="page.props.aboutSettings.idol_social_media_instagram"
-                                       target="_blank"
-                                       rel="noopener noreferrer"
-                                       class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500 hover:scale-110 transition-transform duration-200">
+                                        :href="page.props.aboutSettings.idol_social_media_instagram" target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500 hover:scale-110 transition-transform duration-200">
                                         <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                                            <path
+                                                d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
                                         </svg>
                                     </a>
 
                                     <!-- TikTok -->
                                     <a v-if="page.props.aboutSettings.idol_social_media_tiktok"
-                                       :href="page.props.aboutSettings.idol_social_media_tiktok"
-                                       target="_blank"
-                                       rel="noopener noreferrer"
-                                       class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-black hover:scale-110 transition-transform duration-200">
+                                        :href="page.props.aboutSettings.idol_social_media_tiktok" target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-black hover:scale-110 transition-transform duration-200">
                                         <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+                                            <path
+                                                d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
                                         </svg>
                                     </a>
 
                                     <!-- Twitter/X -->
                                     <a v-if="page.props.aboutSettings.idol_social_media_twitter"
-                                       :href="page.props.aboutSettings.idol_social_media_twitter"
-                                       target="_blank"
-                                       rel="noopener noreferrer"
-                                       class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-black hover:scale-110 transition-transform duration-200">
+                                        :href="page.props.aboutSettings.idol_social_media_twitter" target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-black hover:scale-110 transition-transform duration-200">
                                         <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                                            <path
+                                                d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                                         </svg>
                                     </a>
                                 </div>
 
                                 <div class="mt-6">
-                                    <Link :href="page.props.aboutSettings.idol_slug ? route('about.idol', { slug: page.props.aboutSettings.idol_slug }) : route('about.idol')"
+                                    <Link
+                                        :href="page.props.aboutSettings.idol_slug ? route('about.idol', { slug: page.props.aboutSettings.idol_slug }) : route('about.idol')"
                                         class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring focus:ring-indigo-300 transition">
-                                        Learn More
+                                    Learn More
                                     </Link>
                                 </div>
                             </div>
@@ -260,7 +337,8 @@ onMounted(() => {
                                     </div>
                                     <div v-if="teaterStats.last_update" class="mt-4 text-center">
                                         <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                                            Last Update: <span class="font-medium">{{ formatDateIndonesia(teaterStats.last_update) }}</span>
+                                            Last Update: <span class="font-medium">{{
+                                                formatDateIndonesia(teaterStats.last_update) }}</span>
                                         </p>
                                     </div>
                                 </div>
@@ -274,12 +352,14 @@ onMounted(() => {
                                         :target="showroomStatus.isLive ? '_blank' : undefined"
                                         :rel="showroomStatus.isLive ? 'noopener noreferrer' : undefined"
                                         class="flex flex-col items-center justify-center text-center"
-                                        :class="{ 'cursor-pointer hover:opacity-80 transition': showroomStatus.isLive }" id="showroomlive">
+                                        :class="{ 'cursor-pointer hover:opacity-80 transition': showroomStatus.isLive }"
+                                        id="showroomlive">
                                         <div>
                                             <img src="https://static.showroom-live.com/assets/img/logo_guidelines/icon.png?t=1667879554"
                                                 class="h-20 mb-4"></img>
                                         </div>
-                                        <div class="text-sm sm:text-base text-gray-600 dark:text-gray-400">{{ animatedShowroom }}+ Live</div>
+                                        <div class="text-sm sm:text-base text-gray-600 dark:text-gray-400">{{
+                                            animatedShowroom }}+ Live</div>
                                         <span v-if="!showroomStatus.loading"
                                             class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium inset-ring mt-2"
                                             :class="showroomStatus.isLive
@@ -294,10 +374,12 @@ onMounted(() => {
                                             <img src="https://play-lh.googleusercontent.com/vHCUNv03NNuh_aNKRCP63wUpC-HHhPXyrL_gJdFr_Xn7lgsamEAoFhG7mtz1gVBjYA=w480-h960-rw"
                                                 class="h-20 mb-4"></img>
                                         </div>
-                                        <div class="text-sm sm:text-base text-gray-600 dark:text-gray-400">{{ animatedIdnApp }}+ Live
+                                        <div class="text-sm sm:text-base text-gray-600 dark:text-gray-400">{{
+                                            animatedIdnApp }}+ Live
                                         </div>
                                         <span
-                                            class="inline-flex items-center rounded-md bg-red-400/10 px-2 py-1 text-xs font-medium text-red-400 inset-ring inset-ring-red-400/20 mt-2">Not Connected</span>
+                                            class="inline-flex items-center rounded-md bg-red-400/10 px-2 py-1 text-xs font-medium text-red-400 inset-ring inset-ring-red-400/20 mt-2">Not
+                                            Connected</span>
                                     </div>
                                 </div>
                             </div>
@@ -309,7 +391,8 @@ onMounted(() => {
                                     <h2 class="text-lg sm:text-xl font-semibold text-black dark:text-white break-words">
                                         Oshimen Calendar</h2>
 
-                                    <div v-if="!upcomingEvents || upcomingEvents.length === 0" class="flex-1 min-w-0 overflow-hidden rounded-lg border border-gray-200 dark:border-zinc-700 p-3 mt-2">
+                                    <div v-if="!upcomingEvents || upcomingEvents.length === 0"
+                                        class="flex-1 min-w-0 overflow-hidden rounded-lg border border-gray-200 dark:border-zinc-700 p-3 mt-2">
                                         <div class="text-sm text-gray-600 dark:text-gray-300 text-center">
                                             No upcoming events in the next 7 days
                                         </div>
@@ -385,6 +468,93 @@ onMounted(() => {
                 </main>
             </div>
         </div>
+
+        <!-- Gallery Carousel Section (Optional) -->
+        <section v-if="showGalleryCarousel" class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-8">
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg p-6 sm:p-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+                        Latest Gallery
+                    </h2>
+                    <Link href="/gallery"
+                        class="text-[#FF2D20] hover:text-[#FF5643] font-medium flex items-center gap-2">
+                        View All
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                        </svg>
+                    </Link>
+                </div>
+
+                <div class="relative">
+                    <!-- Carousel Container -->
+                    <div class="overflow-hidden rounded-lg">
+                        <div class="relative aspect-video bg-gray-100 dark:bg-gray-900">
+                            <!-- Slides -->
+                            <div v-for="(photo, index) in page.props.latestGallery" :key="photo.id"
+                                v-show="currentSlide === index"
+                                class="absolute inset-0 transition-opacity duration-500"
+                                :class="currentSlide === index ? 'opacity-100' : 'opacity-0'">
+                                <img :src="photo.image_path" :alt="photo.title"
+                                    class="w-full h-full object-contain">
+                                <div
+                                    class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 sm:p-6">
+                                    <h3 class="text-white font-bold text-lg sm:text-xl mb-1">{{ photo.title }}</h3>
+                                    <p v-if="photo.description" class="text-gray-200 text-sm">{{ photo.description }}
+                                    </p>
+                                    <p v-if="photo.credit" class="text-gray-300 text-xs mt-1">Credit: {{ photo.credit
+                                        }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Previous Button -->
+                            <button @click="prevSlide"
+                                class="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 sm:p-3 rounded-full transition-all">
+                                <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15 19l-7-7 7-7" />
+                                </svg>
+                            </button>
+
+                            <!-- Next Button -->
+                            <button @click="nextSlide"
+                                class="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 sm:p-3 rounded-full transition-all">
+                                <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 5l7 7-7 7" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Dots Navigation -->
+                    <div class="flex justify-center gap-2 mt-4">
+                        <button v-for="(photo, index) in page.props.latestGallery" :key="`dot-${photo.id}`"
+                            @click="goToSlide(index)"
+                            class="w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all"
+                            :class="currentSlide === index ? 'bg-[#FF2D20] w-6 sm:w-8' : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400'">
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- YouTube Playlist Section (Optional) -->
+        <section v-if="showYoutubePlaylist" class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-8">
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg">
+                <div class="p-6 sm:p-8">
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">Video Playlist</h3>
+                    <div class="aspect-video w-full">
+                        <iframe :src="`https://www.youtube.com/embed/videoseries?list=${youtubePlaylistId}`"
+                            class="w-full h-full rounded-lg" frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowfullscreen></iframe>
+                    </div>
+                </div>
+            </div>
+        </section>
 
         <div class="w-full">
             <div class="max-w-7xl mx-auto px-6 py-8">

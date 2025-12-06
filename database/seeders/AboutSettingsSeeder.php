@@ -70,6 +70,36 @@ class AboutSettingsSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
+                'key' => 'idol_jikoshoukai',
+                'value' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'key' => 'idol_birth_date',
+                'value' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'key' => 'idol_birth_place',
+                'value' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'key' => 'idol_blood_type',
+                'value' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'key' => 'idol_height',
+                'value' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
                 'key' => 'idol_show_on_welcome',
                 'value' => 'false',
                 'created_at' => now(),
