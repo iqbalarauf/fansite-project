@@ -126,7 +126,27 @@ Route::middleware([
     'verified',
 ])->group(function () {
     Route::get('/dashboard', function () {
-        return Inertia::render('Dashboard');
+        // Get idol birthday from settings
+        $idolBirthday = \App\Models\AboutSetting::get('idol_birth_date', null);
+        $idolName = \App\Models\AboutSetting::get('idol_name', '');
+
+        // Calculate next milestone (show teater in multiples of 100)
+        $currentShowCount = DB::table('show_teater')->count();
+        $nextMilestoneNumber = (floor($currentShowCount / 100) + 1) * 100;
+
+        $nextMilestone = null;
+        if ($currentShowCount > 0) {
+            $nextMilestone = [
+                'showNumber' => $nextMilestoneNumber,
+                'currentCount' => $currentShowCount,
+            ];
+        }
+
+        return Inertia::render('Dashboard', [
+            'idolBirthday' => $idolBirthday,
+            'idolName' => $idolName,
+            'nextMilestone' => $nextMilestone,
+        ]);
     })->name('dashboard');
 });
 
