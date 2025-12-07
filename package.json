@@ -13,7 +13,7 @@
         "@tailwindcss/vite": "^4.1.17",
         "@vitejs/plugin-vue": "^6.0.2",
         "autoprefixer": "^10.4.16",
-        "axios": "^1.11.0",
+        "axios": "^1.13.2",
         "concurrently": "^9.0.1",
         "laravel-vite-plugin": "^2.0.1",
         "postcss": "^8.4.32",
@@ -38,6 +38,8 @@
         "@tiptap/extension-underline": "^3.11.1",
         "@tiptap/extension-youtube": "^3.11.1",
         "@tiptap/starter-kit": "^3.11.1",
-        "@tiptap/vue-3": "^3.11.1"
+        "@tiptap/vue-3": "^3.11.1",
+        "cheerio": "^1.1.2",
+        "puppeteer": "^24.32.0"
     }
 }
