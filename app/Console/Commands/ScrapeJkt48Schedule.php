@@ -41,29 +41,37 @@ class ScrapeJkt48Schedule extends Command
                 return strcmp($a['date'], $b['date']);
             });
 
-            // Clear existing data
-            ShowTeater::truncate();
+            // Get the last show_id from existing data
+            $lastShowId = ShowTeater::max('show_id') ?? 0;
 
-            // Save to database with sequential show_id
-            $showId = 1;
+            // Save to database with sequential show_id starting from last + 1
+            $showId = $lastShowId + 1;
             foreach ($data as $performance) {
-                ShowTeater::create([
-                    'show_id' => $showId,
-                    'show_date' => $performance['date'],
-                    'setlist' => $performance['setlist'],
-                    'unit_song' => '', // Leave empty for now
-                    'is_global_center' => null,
-                    'is_us_center' => null,
-                    'is_the_show_has_event' => null,
-                    'additional_information' => null
-                ]);
+                // Check if this show_date already exists
+                $existing = ShowTeater::where('show_date', $performance['date'])->first();
+                
+                if (!$existing) {
+                    ShowTeater::create([
+                        'show_id' => $showId,
+                        'show_date' => $performance['date'],
+                        'setlist' => $performance['setlist'],
+                        'unit_song' => '', // Leave empty for now
+                        'is_global_center' => null,
+                        'is_us_center' => null,
+                        'is_the_show_has_event' => null,
+                        'additional_information' => null
+                    ]);
 
-                $this->line("  Show: {$performance['date']}");
-                $this->line("  Setlist: {$performance['setlist']}");
-                $this->line("  Saved with show_id: {$showId}");
-                $this->line('');
+                    $this->line("  Show: {$performance['date']}");
+                    $this->line("  Setlist: {$performance['setlist']}");
+                    $this->line("  Saved with show_id: {$showId}");
+                    $this->line('');
 
-                $showId++;
+                    $showId++;
+                } else {
+                    $this->line("  Show: {$performance['date']} already exists, skipping...");
+                    $this->line('');
+                }
             }
 
             $this->info('Data saved to database successfully.');
