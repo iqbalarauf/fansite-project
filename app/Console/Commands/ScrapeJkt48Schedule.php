@@ -49,7 +49,7 @@ class ScrapeJkt48Schedule extends Command
             foreach ($data as $performance) {
                 // Check if this show_date already exists
                 $existing = ShowTeater::where('show_date', $performance['date'])->first();
-                
+
                 if (!$existing) {
                     ShowTeater::create([
                         'show_id' => $showId,
