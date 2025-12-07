@@ -73,6 +73,13 @@ const showroomStatus = ref({
     loading: true,
 });
 
+// IDN Live Status
+const idnStatus = ref({
+    isLive: false,
+    loading: true,
+    liveUrl: null,
+});
+
 // YouTube Playlist ID extraction
 const getYouTubePlaylistId = (url) => {
     if (!url) return null;
@@ -139,10 +146,29 @@ const fetchShowroomStatus = async () => {
     }
 };
 
+// Fetch IDN Live status
+const fetchIdnStatus = async () => {
+    try {
+        const response = await fetch('/api/idn-live');
+        const data = await response.json();
+        console.log('IDN Live API response:', data); // Debug log
+        idnStatus.value = {
+            isLive: data.is_live || false,
+            loading: false,
+            liveUrl: data.live_url || null,
+        };
+    } catch (error) {
+        console.error('Error fetching IDN Live status:', error);
+        idnStatus.value.loading = false;
+    }
+};
+
 onMounted(() => {
     fetchShowroomStatus();
+    fetchIdnStatus();
     // Refresh status every 60 seconds
     setInterval(fetchShowroomStatus, 60000);
+    setInterval(fetchIdnStatus, 60000);
 
     // Animate statistics counters
     animateCount(0, teaterStats.value.total_shows, 3000, (val) => animatedShows.value = val);
@@ -369,7 +395,13 @@ onMounted(() => {
                                         </span>
                                     </component>
 
-                                    <div id="idnlive" class="flex flex-col items-center justify-center text-center">
+                                    <component :is="idnStatus.isLive ? 'a' : 'div'"
+                                        :href="idnStatus.isLive ? idnStatus.liveUrl : undefined"
+                                        :target="idnStatus.isLive ? '_blank' : undefined"
+                                        :rel="idnStatus.isLive ? 'noopener noreferrer' : undefined"
+                                        class="flex flex-col items-center justify-center text-center"
+                                        :class="{ 'cursor-pointer hover:opacity-80 transition': idnStatus.isLive }"
+                                        id="idnlive">
                                         <div>
                                             <img src="https://play-lh.googleusercontent.com/vHCUNv03NNuh_aNKRCP63wUpC-HHhPXyrL_gJdFr_Xn7lgsamEAoFhG7mtz1gVBjYA=w480-h960-rw"
                                                 class="h-20 mb-4"></img>
@@ -377,10 +409,18 @@ onMounted(() => {
                                         <div class="text-sm sm:text-base text-gray-600 dark:text-gray-400">{{
                                             animatedIdnApp }}+ Live
                                         </div>
-                                        <span
-                                            class="inline-flex items-center rounded-md bg-red-400/10 px-2 py-1 text-xs font-medium text-red-400 inset-ring inset-ring-red-400/20 mt-2">Not
-                                            Connected</span>
-                                    </div>
+                                        <span v-if="!idnStatus.loading"
+                                            class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium inset-ring mt-2"
+                                            :class="idnStatus.isLive
+                                                ? 'bg-green-400/10 text-green-400 inset-ring-green-500/20'
+                                                : 'bg-red-400/10 text-red-400 inset-ring-red-400/20'">
+                                            {{ idnStatus.isLive ? 'Online' : 'Offline' }}
+                                        </span>
+                                        <span v-else
+                                            class="inline-flex items-center rounded-md bg-gray-400/10 px-2 py-1 text-xs font-medium text-gray-400 inset-ring inset-ring-gray-400/20 mt-2">
+                                            Loading...
+                                        </span>
+                                    </component>
                                 </div>
                             </div>
 
