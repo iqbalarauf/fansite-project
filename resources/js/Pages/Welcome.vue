@@ -39,9 +39,9 @@ function handleImageError() {
 }
 
 const page = usePage();
-const heroSrc = computed(() => page.props.appSettings?.hero_image || '/storage/hero.jpg');
-const showroomRoomId = computed(() => page.props.appSettings?.showroom_room_id || '416491');
-const showroomLink = computed(() => page.props.appSettings?.showroom_link || 'https://www.showroom-live.com');
+const heroSrc = computed(() => page.props.homepageAppSettings?.hero_image || '/storage/hero.jpg');
+const showroomRoomId = computed(() => page.props.homepageAppSettings?.showroom_room_id || '416491');
+const showroomLink = computed(() => page.props.homepageAppSettings?.showroom_link || 'https://www.showroom-live.com');
 const teaterStats = computed(() => page.props.teaterStats || { total_shows: 0, unique_setlists: 0, unique_unit_songs: 0 });
 
 // Animated counters
@@ -81,17 +81,17 @@ const getYouTubePlaylistId = (url) => {
 };
 
 const youtubePlaylistId = computed(() => {
-    const url = page.props.appSettings?.youtube_playlist_url;
+    const url = page.props.homepageAppSettings?.youtube_playlist_url;
     return getYouTubePlaylistId(url);
 });
 
 const showYoutubePlaylist = computed(() => {
-    return page.props.appSettings?.show_youtube_playlist === 'true' && youtubePlaylistId.value;
+    return page.props.homepageAppSettings?.show_youtube_playlist === 'true' && youtubePlaylistId.value;
 });
 
 // Gallery Carousel
 const showGalleryCarousel = computed(() => {
-    return page.props.appSettings?.show_gallery_carousel === 'true' && page.props.latestGallery && page.props.latestGallery.length > 0;
+    return page.props.homepageAppSettings?.show_gallery_carousel === 'true' && page.props.latestGallery && page.props.latestGallery.length > 0;
 });
 
 const currentSlide = ref(0);
@@ -165,14 +165,14 @@ onMounted(() => {
 
     <Head>
         <title>Home</title>
-        <meta name="description" :content="page.props.appSettings?.desc_app || 'Welcome to our website'" />
+        <meta name="description" :content="page.props.homepageAppSettings?.desc_app || 'Welcome to our website'" />
         <meta property="og:title" :content="page.props.appSettings?.app_name || 'Fansight'" />
-        <meta property="og:description" :content="page.props.appSettings?.desc_app || 'Welcome to our website'" />
+        <meta property="og:description" :content="page.props.homepageAppSettings?.desc_app || 'Welcome to our website'" />
         <meta property="og:image" :content="heroSrc" />
         <meta property="og:type" content="website" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" :content="page.props.appSettings?.app_name || 'Fansight'" />
-        <meta name="twitter:description" :content="page.props.appSettings?.desc_app || 'Welcome to our website'" />
+        <meta name="twitter:description" :content="page.props.homepageAppSettings?.desc_app || 'Welcome to our website'" />
         <meta name="twitter:image" :content="heroSrc" />
     </Head>
     <div class="bg-gray-100 dark:bg-gray-900 text-black/50 dark:text-white/50 min-h-screen flex flex-col">
@@ -200,24 +200,24 @@ onMounted(() => {
                                     <h1 class="text-2xl sm:text-4xl md:text-5xl font-extrabold leading-tight">{{
                                         page.props.appSettings?.app_name }}</h1>
                                     <p class="mt-3 sm:mt-4 text-sm sm:text-base text-white/90 leading-relaxed">{{
-                                        page.props.appSettings?.desc_app }}</p>
+                                        page.props.homepageAppSettings?.desc_app }}</p>
 
                                     <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row gap-3 justify-start">
                                         <component
-                                            :is="page.props.appSettings?.hero_button_1_link?.startsWith('http') ? 'a' : Link"
-                                            :href="page.props.appSettings?.hero_button_1_link || route('blog.index')"
-                                            :target="page.props.appSettings?.hero_button_1_link?.startsWith('http') ? '_blank' : undefined"
-                                            :rel="page.props.appSettings?.hero_button_1_link?.startsWith('http') ? 'noopener noreferrer' : undefined"
+                                            :is="page.props.homepageAppSettings?.hero_button_1_link?.startsWith('http') ? 'a' : Link"
+                                            :href="page.props.homepageAppSettings?.hero_button_1_link || route('blog.index')"
+                                            :target="page.props.homepageAppSettings?.hero_button_1_link?.startsWith('http') ? '_blank' : undefined"
+                                            :rel="page.props.homepageAppSettings?.hero_button_1_link?.startsWith('http') ? 'noopener noreferrer' : undefined"
                                             class="inline-flex items-center justify-center px-5 py-3 bg-white text-black font-semibold rounded-md hover:opacity-90 transition">
-                                            {{ page.props.appSettings?.hero_button_1_text || 'Info Lebih Lanjut' }}
+                                            {{ page.props.homepageAppSettings?.hero_button_1_text || 'Info Lebih Lanjut' }}
                                         </component>
                                         <component
-                                            :is="page.props.appSettings?.hero_button_2_link?.startsWith('http') ? 'a' : Link"
-                                            :href="page.props.appSettings?.hero_button_2_link || route('blog.index')"
-                                            :target="page.props.appSettings?.hero_button_2_link?.startsWith('http') ? '_blank' : undefined"
-                                            :rel="page.props.appSettings?.hero_button_2_link?.startsWith('http') ? 'noopener noreferrer' : undefined"
+                                            :is="page.props.homepageAppSettings?.hero_button_2_link?.startsWith('http') ? 'a' : Link"
+                                            :href="page.props.homepageAppSettings?.hero_button_2_link || route('blog.index')"
+                                            :target="page.props.homepageAppSettings?.hero_button_2_link?.startsWith('http') ? '_blank' : undefined"
+                                            :rel="page.props.homepageAppSettings?.hero_button_2_link?.startsWith('http') ? 'noopener noreferrer' : undefined"
                                             class="inline-flex items-center justify-center px-5 py-3 border border-white text-white font-semibold rounded-md hover:bg-white/10 transition">
-                                            {{ page.props.appSettings?.hero_button_2_text || 'Temukan Kami' }}
+                                            {{ page.props.homepageAppSettings?.hero_button_2_text || 'Temukan Kami' }}
                                         </component>
                                     </div>
                                 </div>
@@ -229,15 +229,15 @@ onMounted(() => {
 
             <!-- About Idol Section (Optional) -->
             <section
-                v-if="page.props.aboutSettings?.idol_show_on_welcome === 'true' || page.props.aboutSettings?.idol_show_on_welcome === true"
+                v-if="page.props.homepageIdolSettings?.idol_show_on_welcome === 'true' || page.props.homepageIdolSettings?.idol_show_on_welcome === true"
                 class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg">
                     <div class="p-6 sm:p-8">
                         <div class="grid md:grid-cols-2 gap-8 items-center">
                             <!-- Photo -->
-                            <div v-if="page.props.aboutSettings.idol_photo"
+                            <div v-if="page.props.homepageIdolSettings.idol_photo"
                                 class="flex justify-center order-2 md:order-1">
-                                <img :src="page.props.aboutSettings.idol_photo"
+                                <img :src="page.props.homepageIdolSettings.idol_photo"
                                     :alt="page.props.aboutSettings.idol_name"
                                     class="rounded-lg shadow-lg max-h-96 w-full object-cover" />
                             </div>
@@ -248,15 +248,15 @@ onMounted(() => {
                                     page.props.aboutSettings.idol_name }}</h3>
                                 <div class="prose dark:prose-invert max-w-none">
                                     <p class="text-gray-700 dark:text-gray-300 whitespace-pre-line">{{
-                                        page.props.aboutSettings.idol_description }}</p>
+                                        page.props.homepageIdolSettings.idol_description }}</p>
                                 </div>
 
                                 <!-- Social Media Icons -->
-                                <div v-if="page.props.aboutSettings.idol_social_media_instagram || page.props.aboutSettings.idol_social_media_tiktok || page.props.aboutSettings.idol_social_media_twitter"
+                                <div v-if="page.props.homepageIdolSettings.idol_social_media_instagram || page.props.homepageIdolSettings.idol_social_media_tiktok || page.props.homepageIdolSettings.idol_social_media_twitter"
                                     class="mt-4 flex gap-3">
                                     <!-- Instagram -->
-                                    <a v-if="page.props.aboutSettings.idol_social_media_instagram"
-                                        :href="page.props.aboutSettings.idol_social_media_instagram" target="_blank"
+                                    <a v-if="page.props.homepageIdolSettings.idol_social_media_instagram"
+                                        :href="page.props.homepageIdolSettings.idol_social_media_instagram" target="_blank"
                                         rel="noopener noreferrer"
                                         class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500 hover:scale-110 transition-transform duration-200">
                                         <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -266,8 +266,8 @@ onMounted(() => {
                                     </a>
 
                                     <!-- TikTok -->
-                                    <a v-if="page.props.aboutSettings.idol_social_media_tiktok"
-                                        :href="page.props.aboutSettings.idol_social_media_tiktok" target="_blank"
+                                    <a v-if="page.props.homepageIdolSettings.idol_social_media_tiktok"
+                                        :href="page.props.homepageIdolSettings.idol_social_media_tiktok" target="_blank"
                                         rel="noopener noreferrer"
                                         class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-black hover:scale-110 transition-transform duration-200">
                                         <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -277,8 +277,8 @@ onMounted(() => {
                                     </a>
 
                                     <!-- Twitter/X -->
-                                    <a v-if="page.props.aboutSettings.idol_social_media_twitter"
-                                        :href="page.props.aboutSettings.idol_social_media_twitter" target="_blank"
+                                    <a v-if="page.props.homepageIdolSettings.idol_social_media_twitter"
+                                        :href="page.props.homepageIdolSettings.idol_social_media_twitter" target="_blank"
                                         rel="noopener noreferrer"
                                         class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-black hover:scale-110 transition-transform duration-200">
                                         <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">

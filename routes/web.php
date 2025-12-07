@@ -14,6 +14,48 @@ use App\Http\Controllers\ShowTeaterController;
 use App\Http\Controllers\ShowTeaterCategoryController;
 use Illuminate\Support\Facades\DB;
 use App\Models\LiveStreaming;
+use App\Models\Setting;
+use App\Models\AboutSetting;
+
+/**
+ * Parse show_date from various formats
+ */
+function parseShowDate($dateString)
+{
+    try {
+        // Try yyyy-mm-dd format first
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateString)) {
+            return \Carbon\Carbon::createFromFormat('Y-m-d', $dateString);
+        }
+
+        // Try dd.mm.yyyy format
+        if (preg_match('/^\d{2}\.\d{2}\.\d{4}$/', $dateString)) {
+            $parts = explode('.', $dateString);
+            return \Carbon\Carbon::createFromFormat('Y-m-d', $parts[2] . '-' . $parts[1] . '-' . $parts[0]);
+        }
+
+        // Try Indonesian format: "Jumat, 28 November 2024"
+        $months = [
+            'Januari' => '01', 'Februari' => '02', 'Maret' => '03', 'April' => '04',
+            'Mei' => '05', 'Juni' => '06', 'Juli' => '07', 'Agustus' => '08',
+            'September' => '09', 'Oktober' => '10', 'November' => '11', 'Desember' => '12'
+        ];
+
+        foreach ($months as $monthName => $monthNum) {
+            if (strpos($dateString, $monthName) !== false) {
+                if (preg_match('/(\d{1,2})\s+' . $monthName . '\s+(\d{4})/', $dateString, $matches)) {
+                    $day = str_pad($matches[1], 2, '0', STR_PAD_LEFT);
+                    $year = $matches[2];
+                    return \Carbon\Carbon::createFromFormat('Y-m-d', $year . '-' . $monthNum . '-' . $day);
+                }
+            }
+        }
+
+        return null;
+    } catch (\Exception $e) {
+        return null;
+    }
+}
 
 Route::get('/', function () {
     $latestPosts = Post::where('status','published')
@@ -107,6 +149,63 @@ Route::get('/', function () {
             'image_path' => $item->image_path ? Storage::url($item->image_path) : null,
         ]);
 
+    // Get app settings for homepage only (lazy loaded)
+    $appSettings = Setting::allKeyValues();
+    $homepageAppSettings = [
+        'desc_app' => $appSettings['desc_app'] ?? null,
+        'hero_image' => $appSettings['hero_image'] ?? null,
+        'showroom_room_id' => $appSettings['showroom_room_id'] ?? '416491',
+        'showroom_link' => $appSettings['showroom_link'] ?? 'https://www.showroom-live.com/',
+        'hero_button_1_text' => $appSettings['hero_button_1_text'] ?? 'Info Lebih Lanjut',
+        'hero_button_1_link' => $appSettings['hero_button_1_link'] ?? '/blog',
+        'hero_button_2_text' => $appSettings['hero_button_2_text'] ?? 'Temukan Kami',
+        'hero_button_2_link' => $appSettings['hero_button_2_link'] ?? '/blog',
+        'show_youtube_playlist' => $appSettings['show_youtube_playlist'] ?? 'false',
+        'youtube_playlist_url' => $appSettings['youtube_playlist_url'] ?? '',
+        'show_gallery_carousel' => $appSettings['show_gallery_carousel'] ?? 'true',
+    ];
+
+    // Get teater statistics (lazy loaded, only for homepage)
+    $today = now()->startOfDay();
+
+    // Get the latest show_date that is before today
+    $lastUpdateDate = DB::table('show_teater')
+        ->get()
+        ->filter(function ($show) use ($today) {
+            $date = parseShowDate($show->show_date);
+            return $date && $date->lt($today);
+        })
+        ->sortByDesc(function ($show) {
+            return parseShowDate($show->show_date);
+        })
+        ->first()?->show_date;
+
+    // Filter and count shows before today
+    $pastShows = DB::table('show_teater')
+        ->get()
+        ->filter(function ($show) use ($today) {
+            $date = parseShowDate($show->show_date);
+            return $date && $date->lt($today);
+        });
+
+    $teaterStats = [
+        'total_shows' => $pastShows->count(),
+        'unique_setlists' => DB::table('show_teater_categories')->where('type', 'setlist')->count(),
+        'unique_unit_songs' => DB::table('show_teater_categories')->where('type', 'unit_song')->count(),
+        'last_update' => $lastUpdateDate,
+    ];
+
+    // Get idol settings for homepage section (lazy loaded)
+    $idolPhoto = AboutSetting::get('idol_photo', '');
+    $homepageIdolSettings = [
+        'idol_photo' => $idolPhoto ? Storage::url($idolPhoto) : null,
+        'idol_description' => AboutSetting::get('idol_description', ''),
+        'idol_social_media_instagram' => AboutSetting::get('idol_social_media_instagram', ''),
+        'idol_social_media_tiktok' => AboutSetting::get('idol_social_media_tiktok', ''),
+        'idol_social_media_twitter' => AboutSetting::get('idol_social_media_twitter', ''),
+        'idol_show_on_welcome' => AboutSetting::get('idol_show_on_welcome', 'false'),
+    ];
+
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
@@ -117,6 +216,9 @@ Route::get('/', function () {
             'idn_app_count' => $idnAppCount,
         ],
         'latestGallery' => $latestGallery,
+        'homepageAppSettings' => $homepageAppSettings,
+        'teaterStats' => $teaterStats,
+        'homepageIdolSettings' => $homepageIdolSettings,
     ]);
 });
 
