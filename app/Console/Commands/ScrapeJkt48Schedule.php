@@ -35,8 +35,7 @@ class ScrapeJkt48Schedule extends Command
         if (json_last_error() === JSON_ERROR_NONE && !empty($data)) {
             $this->info('Found performances for Cornelia Vanisa:');
             foreach ($data as $performance) {
-                $this->line("- Date: {$performance['date']}");
-                $this->line("  Show: {$performance['show']}");
+                $this->line("  Show: {$performance['date']}");
                 $this->line("  Setlist: {$performance['setlist']}");
                 $this->line('');
             }
