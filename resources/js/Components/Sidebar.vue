@@ -92,6 +92,14 @@ const menuItems = computed(() => {
             isLabel: true,
         },
         {
+            name: 'Online Photobooth',
+            icon: 'M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z',
+        },
+        {
+            name: '2-shot Online',
+            icon: 'M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z',
+        },
+        {
             name: 'Settings',
             isLabel: true,
         },
@@ -143,44 +151,11 @@ const menuItems = computed(() => {
             </div>
 
             <!-- Navigation Menu - Scrollable -->
-            <nav class="flex-1 px-4 py-4 space-y-2 overflow-y-auto">
+            <nav class="flex-1 px-4 py-4 space-y-2 overflow-y-auto hide-scrollbar">
                 <template v-for="item in menuItems" :key="item.name">
                     <!-- Label/Header (non-clickable) -->
                     <div v-if="item.isLabel" class="px-4 py-2 mt-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         {{ item.name }}
-                    </div>
-
-                    <!-- Menu item with dropdown -->
-                    <div v-else-if="item.hasDropdown">
-                        <button @click="toggleDropdown(item.name)" :class="[
-                            'w-full flex items-center justify-between px-4 py-3 text-lg font-medium rounded-lg transition-colors',
-                            item.active
-                                ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
-                                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
-                        ]">
-                            <div class="flex items-center">
-                                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon" />
-                                </svg>
-                                {{ item.name }}
-                            </div>
-                            <svg :class="[
-                                'w-4 h-4 transition-transform',
-                                openDropdown === item.name ? 'rotate-180' : ''
-                            ]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </button>
-                        <div v-show="openDropdown === item.name" class="mt-1 ml-8 space-y-1">
-                            <Link v-for="submenu in item.submenu" :key="submenu.name" :href="submenu.href" @click="closeSidebar" :class="[
-                                'block px-4 py-2 text-sm rounded-lg transition-colors',
-                                submenu.active
-                                    ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
-                                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
-                            ]">
-                            {{ submenu.name }}
-                            </Link>
-                        </div>
                     </div>
 
                     <!-- Regular menu item -->
@@ -211,3 +186,16 @@ const menuItems = computed(() => {
         </svg>
     </button>
 </template>
+
+<style scoped>
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.hide-scrollbar {
+    scrollbar-width: none;
+}
+</style>
+
+<!--
+
+-->
