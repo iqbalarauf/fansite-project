@@ -259,17 +259,17 @@ onMounted(() => {
                 class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg">
                     <div class="p-6 sm:p-8">
-                        <div class="grid md:grid-cols-2 gap-8 items-center">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                             <!-- Photo -->
                             <div v-if="page.props.homepageIdolSettings.idol_photo"
-                                class="flex justify-center order-2 md:order-1">
+                                class="flex justify-center order-1 md:order-1">
                                 <img :src="page.props.homepageIdolSettings.idol_photo"
                                     :alt="page.props.aboutSettings.idol_name"
                                     class="rounded-lg shadow-lg max-h-96 w-full object-cover" />
                             </div>
 
                             <!-- Info -->
-                            <div class="order-1 md:order-2">
+                            <div class="order-2 md:order-2">
                                 <h3 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">{{
                                     page.props.aboutSettings.idol_name }}</h3>
                                 <div class="prose dark:prose-invert max-w-none">
