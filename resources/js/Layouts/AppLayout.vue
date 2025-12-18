@@ -44,6 +44,10 @@ onMounted(() => {
         // ignore
     }
 });
+
+const logout = () => {
+    router.post(route('logout'));
+};
 </script>
 
 <template>

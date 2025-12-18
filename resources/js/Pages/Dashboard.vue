@@ -6,6 +6,9 @@ defineProps({
     idolBirthday: String,
     idolName: String,
     nextMilestone: Object,
+    teaterStats: Object,
+    lastWeekEvents: Array,
+    thisWeekEvents: Array,
 });
 </script>
 
@@ -26,6 +29,9 @@ defineProps({
                         :idol-birthday="idolBirthday"
                         :idol-name="idolName"
                         :next-milestone="nextMilestone"
+                        :teater-stats="teaterStats"
+                        :last-week-events="lastWeekEvents"
+                        :this-week-events="thisWeekEvents"
                     />
                 </div>
             </div>

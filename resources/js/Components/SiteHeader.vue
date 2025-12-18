@@ -86,12 +86,12 @@ const closeMobileMenu = () => {
                     class="rounded-md px-3 py-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white">
                     {{ page.title }}</Link>
 
-                <ThemeToggle variant="desktop" class="border-r" />
+                <ThemeToggle variant="desktop" class="pr-2 border-r border-gray-700 dark:border-gray-200" />
 
                 <!-- Social Media Icons -->
                 <a v-if="$page.props.appSettings?.instagram_url" :href="$page.props.appSettings.instagram_url"
                     target="_blank" rel="noopener noreferrer"
-                    class="rounded-md p-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white"
+                    class="rounded-md pr-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white"
                     title="Instagram">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                         <path
@@ -101,7 +101,7 @@ const closeMobileMenu = () => {
 
                 <a v-if="$page.props.appSettings?.twitter_url" :href="$page.props.appSettings.twitter_url"
                     target="_blank" rel="noopener noreferrer"
-                    class="rounded-md p-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white"
+                    class="rounded-md pr-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white"
                     title="Twitter/X">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                         <path
@@ -111,7 +111,7 @@ const closeMobileMenu = () => {
 
                 <a v-if="$page.props.appSettings?.tiktok_url" :href="$page.props.appSettings.tiktok_url" target="_blank"
                     rel="noopener noreferrer"
-                    class="rounded-md p-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white"
+                    class="rounded-md text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white"
                     title="TikTok">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                         <path

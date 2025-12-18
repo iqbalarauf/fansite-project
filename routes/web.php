@@ -188,10 +188,21 @@ Route::get('/', function () {
             return $date && $date->lt($today);
         });
 
+    // Count center and global center appearances
+    $usCenterCount = DB::table('show_teater')
+        ->where('is_us_center', 1)
+        ->count();
+
+    $globalCenterCount = DB::table('show_teater')
+        ->where('is_global_center', 1)
+        ->count();
+
     $teaterStats = [
         'total_shows' => $pastShows->count(),
         'unique_setlists' => DB::table('show_teater_categories')->where('type', 'setlist')->count(),
         'unique_unit_songs' => DB::table('show_teater_categories')->where('type', 'unit_song')->count(),
+        'us_center_count' => $usCenterCount,
+        'global_center_count' => $globalCenterCount,
         'last_update' => $lastUpdateDate,
     ];
 
@@ -244,10 +255,151 @@ Route::middleware([
             ];
         }
 
+        // Get teater statistics
+        $usCenterCount = DB::table('show_teater')
+            ->where('is_us_center', 1)
+            ->count();
+
+        $globalCenterCount = DB::table('show_teater')
+            ->where('is_global_center', 1)
+            ->count();
+
+        $teaterStats = [
+            'total_shows' => $currentShowCount,
+            'unique_setlists' => DB::table('show_teater_categories')->where('type', 'setlist')->count(),
+            'unique_unit_songs' => DB::table('show_teater_categories')->where('type', 'unit_song')->count(),
+            'us_center_count' => $usCenterCount,
+            'global_center_count' => $globalCenterCount,
+        ];
+
+        // Get last week's completed shows
+        $lastWeekStart = now()->startOfWeek()->subWeek();
+        $lastWeekEnd = now()->endOfWeek()->subWeek();
+
+        $lastWeekShows = DB::table('show_teater')
+            ->whereBetween('show_date', [$lastWeekStart, $lastWeekEnd])
+            ->get()
+            ->map(function ($show) {
+                $date = parseShowDate($show->show_date);
+                return [
+                    'type' => 'show_teater',
+                    'show_id' => $show->show_id,
+                    'show_date' => $show->show_date,
+                    'setlist' => $show->setlist,
+                    'unit_song' => $show->unit_song,
+                    'is_global_center' => $show->is_global_center,
+                    'is_us_center' => $show->is_us_center,
+                    'additional_information' => $show->additional_information,
+                    'is_the_show_has_event' => $show->is_the_show_has_event,
+                    'parsed_date' => $date ? $date->format('Y-m-d') : null,
+                ];
+            });
+
+        // Get last week's concert events
+        $lastWeekConcertEvents = \App\Models\ConcertEvent::whereBetween('event_date', [$lastWeekStart, $lastWeekEnd])
+            ->get()
+            ->map(function ($event) {
+                return [
+                    'type' => 'concert',
+                    'id' => $event->id,
+                    'event_name' => $event->event_name,
+                    'event_date' => $event->event_date->format('Y-m-d'),
+                    'location' => $event->location,
+                    'status' => $event->status,
+                    'parsed_date' => $event->event_date->format('Y-m-d'),
+                ];
+            });
+
+        // Get last week's meet & greet events
+        $lastWeekMeetGreetEvents = \App\Models\MeetGreetEvent::where(function($query) use ($lastWeekStart, $lastWeekEnd) {
+            $query->whereBetween('event_date', [$lastWeekStart, $lastWeekEnd])
+                  ->orWhereBetween('event_date_2', [$lastWeekStart, $lastWeekEnd]);
+        })->get()->map(function ($event) {
+            return [
+                'type' => 'meet_greet',
+                'id' => $event->id,
+                'event_name' => $event->event_name,
+                'event_type' => $event->event_type,
+                'event_date' => $event->event_date->format('Y-m-d'),
+                'event_date_2' => $event->event_date_2 ? $event->event_date_2->format('Y-m-d') : null,
+                'location' => $event->event_type === 'video-call' ? 'Video Call' : 'TBD',
+                'parsed_date' => $event->event_date->format('Y-m-d'),
+            ];
+        });
+
+        // Combine last week's events and sort by date
+        $lastWeekEvents = collect()
+            ->concat($lastWeekShows)
+            ->concat($lastWeekConcertEvents)
+            ->concat($lastWeekMeetGreetEvents)
+            ->sortBy('parsed_date')
+            ->values();
+
+        // Get this week's upcoming shows
+        $thisWeekStart = now()->startOfWeek();
+        $thisWeekEnd = now()->endOfWeek();
+
+        $thisWeekShows = DB::table('show_teater')
+            ->whereBetween('show_date', [$thisWeekStart, $thisWeekEnd])
+            ->get()
+            ->map(function ($show) {
+                $date = parseShowDate($show->show_date);
+                return [
+                    'type' => 'show_teater',
+                    'show_id' => $show->show_id,
+                    'show_date' => $show->show_date,
+                    'setlist' => $show->setlist,
+                    'parsed_date' => $date ? $date->format('Y-m-d') : null,
+                ];
+            });
+
+        // Get this week's concert events
+        $thisWeekConcertEvents = \App\Models\ConcertEvent::whereBetween('event_date', [$thisWeekStart, $thisWeekEnd])
+            ->get()
+            ->map(function ($event) {
+                return [
+                    'type' => 'concert',
+                    'id' => $event->id,
+                    'event_name' => $event->event_name,
+                    'event_date' => $event->event_date->format('Y-m-d'),
+                    'location' => $event->location,
+                    'status' => $event->status,
+                    'parsed_date' => $event->event_date->format('Y-m-d'),
+                ];
+            });
+
+        // Get this week's meet & greet events
+        $thisWeekMeetGreetEvents = \App\Models\MeetGreetEvent::where(function($query) use ($thisWeekStart, $thisWeekEnd) {
+            $query->whereBetween('event_date', [$thisWeekStart, $thisWeekEnd])
+                  ->orWhereBetween('event_date_2', [$thisWeekStart, $thisWeekEnd]);
+        })->get()->map(function ($event) {
+            return [
+                'type' => 'meet_greet',
+                'id' => $event->id,
+                'event_name' => $event->event_name,
+                'event_type' => $event->event_type,
+                'event_date' => $event->event_date->format('Y-m-d'),
+                'event_date_2' => $event->event_date_2 ? $event->event_date_2->format('Y-m-d') : null,
+                'location' => $event->event_type === 'video-call' ? 'Video Call' : 'TBD',
+                'parsed_date' => $event->event_date->format('Y-m-d'),
+            ];
+        });
+
+        // Combine this week's events and sort by date
+        $thisWeekEvents = collect()
+            ->concat($thisWeekShows)
+            ->concat($thisWeekConcertEvents)
+            ->concat($thisWeekMeetGreetEvents)
+            ->sortBy('parsed_date')
+            ->values();
+
         return Inertia::render('Dashboard', [
             'idolBirthday' => $idolBirthday,
             'idolName' => $idolName,
             'nextMilestone' => $nextMilestone,
+            'teaterStats' => $teaterStats,
+            'lastWeekEvents' => $lastWeekEvents,
+            'thisWeekEvents' => $thisWeekEvents,
         ]);
     })->name('dashboard');
 });
