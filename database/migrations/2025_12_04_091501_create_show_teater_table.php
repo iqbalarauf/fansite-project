@@ -15,7 +15,7 @@ return new class extends Migration
             $table->integer('show_id')->primary();
             $table->string('show_date', 25);
             $table->string('setlist', 32);
-            $table->string('unit_song', 29);
+            $table->string('unit_song', 29)->nullable();
             $table->integer('is_global_center')->nullable();
             $table->integer('is_us_center')->nullable();
             $table->string('is_the_show_has_event', 41)->nullable();

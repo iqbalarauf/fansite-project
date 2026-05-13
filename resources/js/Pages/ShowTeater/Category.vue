@@ -202,7 +202,7 @@ watch([searchTerm, selectedType], () => {
                                         <span v-else class="text-gray-400">-</span>
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                                        {{ category.name }}
+                                        {{ category.display_name || category.name }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <button @click="openEditModal(category)"

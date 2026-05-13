@@ -197,10 +197,29 @@ Route::get('/', function () {
         ->where('is_global_center', 1)
         ->count();
 
+    $uniqueSetlists = collect(DB::table('show_teater')->distinct()->pluck('setlist'))
+        ->filter(fn($value) => $value !== null && $value !== '')
+        ->values()
+        ->count();
+
+    $uniqueUnitSongs = collect(DB::table('show_teater')->pluck('unit_song'))
+        ->flatMap(function ($unitSong) {
+            if (!is_string($unitSong) || trim($unitSong) === '') {
+                return [];
+            }
+
+            return collect(explode(',', $unitSong))
+                ->map(fn($item) => preg_replace('/\s+/', ' ', trim($item)))
+                ->filter();
+        })
+        ->unique()
+        ->values()
+        ->count();
+
     $teaterStats = [
         'total_shows' => $pastShows->count(),
-        'unique_setlists' => DB::table('show_teater_categories')->where('type', 'setlist')->count(),
-        'unique_unit_songs' => DB::table('show_teater_categories')->where('type', 'unit_song')->count(),
+        'unique_setlists' => $uniqueSetlists,
+        'unique_unit_songs' => $uniqueUnitSongs,
         'us_center_count' => $usCenterCount,
         'global_center_count' => $globalCenterCount,
         'last_update' => $lastUpdateDate,
@@ -264,10 +283,29 @@ Route::middleware([
             ->where('is_global_center', 1)
             ->count();
 
+        $uniqueSetlists = collect(DB::table('show_teater')->distinct()->pluck('setlist'))
+            ->filter(fn($value) => $value !== null && $value !== '')
+            ->values()
+            ->count();
+
+        $uniqueUnitSongs = collect(DB::table('show_teater')->pluck('unit_song'))
+            ->flatMap(function ($unitSong) {
+                if (!is_string($unitSong) || trim($unitSong) === '') {
+                    return [];
+                }
+
+                return collect(explode(',', $unitSong))
+                    ->map(fn($item) => preg_replace('/\s+/', ' ', trim($item)))
+                    ->filter();
+            })
+            ->unique()
+            ->values()
+            ->count();
+
         $teaterStats = [
             'total_shows' => $currentShowCount,
-            'unique_setlists' => DB::table('show_teater_categories')->where('type', 'setlist')->count(),
-            'unique_unit_songs' => DB::table('show_teater_categories')->where('type', 'unit_song')->count(),
+            'unique_setlists' => $uniqueSetlists,
+            'unique_unit_songs' => $uniqueUnitSongs,
             'us_center_count' => $usCenterCount,
             'global_center_count' => $globalCenterCount,
         ];

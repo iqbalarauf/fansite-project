@@ -57,6 +57,16 @@
                                             class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                             :placeholder="form.type === 'setlist' ? 'Enter setlist name' : 'Enter unit song name'" />
                                     </div>
+
+                                    <!-- JP Name Field -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                            Nama (Bahasa Jepang)
+                                        </label>
+                                        <input v-model="form.jp_name" type="text"
+                                            class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            :placeholder="form.type === 'setlist' ? 'Enter setlist name in Japanese' : 'Enter unit song name in Japanese'" />
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -92,6 +102,7 @@ const emit = defineEmits(['close']);
 const form = ref({
     type: 'setlist',
     name: '',
+    jp_name: '',
     setlist_id: '',
 });
 
@@ -103,6 +114,7 @@ watch(() => props.category, (newCategory) => {
         form.value = {
             type: newCategory.type,
             name: newCategory.name,
+            jp_name: newCategory.jp_name || '',
             setlist_id: newCategory.setlist_id || '',
         };
     } else {
@@ -110,6 +122,7 @@ watch(() => props.category, (newCategory) => {
         form.value = {
             type: 'setlist',
             name: '',
+            jp_name: '',
             setlist_id: '',
         };
     }
@@ -135,7 +148,7 @@ const handleSubmit = () => {
             preserveScroll: true,
             onSuccess: () => {
                 emit('close');
-                form.value = { type: 'setlist', name: '', setlist_id: '' };
+                form.value = { type: 'setlist', name: '', jp_name: '', setlist_id: '' };
             },
         });
     }
