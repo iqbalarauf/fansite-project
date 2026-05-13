@@ -23,8 +23,8 @@ class ShowTeaterController extends Controller
             ->select('show_teater.*',
                      'setlist_cat.jp_name as setlist_jp_name',
                      'unit_song_cat.jp_name as unit_song_jp_name',
-                     DB::raw("CONCAT(show_teater.setlist, IF(setlist_cat.jp_name IS NOT NULL, CONCAT(' (', setlist_cat.jp_name, ')'), '')) as display_setlist"),
-                     DB::raw("CONCAT(show_teater.unit_song, IF(unit_song_cat.jp_name IS NOT NULL, CONCAT(' (', unit_song_cat.jp_name, ')'), '')) as display_unit_song"))
+                     DB::raw("CONCAT(show_teater.setlist, IF(setlist_cat.jp_name IS NOT NULL AND setlist_cat.jp_name != '', CONCAT(' (', setlist_cat.jp_name, ')'), '')) as display_setlist"),
+                     DB::raw("CONCAT(show_teater.unit_song, IF(unit_song_cat.jp_name IS NOT NULL AND unit_song_cat.jp_name != '', CONCAT(' (', unit_song_cat.jp_name, ')'), '')) as display_unit_song"))
             ->orderBy('show_teater.show_id', 'desc')
             ->get();
 

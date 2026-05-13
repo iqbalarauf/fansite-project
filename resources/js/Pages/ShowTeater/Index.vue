@@ -226,10 +226,10 @@ watch([searchTerm, selectedSetlist], () => {
                                         {{ formatDateIndonesia(show.show_date) }}
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                                        {{ show.setlist }}
+                                        {{ show.display_setlist || show.setlist }}
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                                        {{ show.unit_song }}
+                                        {{ show.display_unit_song || show.unit_song }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                                         <span v-if="show.is_global_center" class="text-green-600">✓</span>

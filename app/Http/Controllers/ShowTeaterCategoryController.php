@@ -15,7 +15,7 @@ class ShowTeaterCategoryController extends Controller
                 $join->on('show_teater_categories.setlist_id', '=', 'setlists.id')
                      ->where('setlists.type', '=', 'setlist');
             })
-            ->select('show_teater_categories.*', 'setlists.name as setlist_name', DB::raw("CONCAT(show_teater_categories.name, IF(show_teater_categories.jp_name IS NOT NULL, CONCAT(' (', show_teater_categories.jp_name, ')'), '')) as display_name"))
+            ->select('show_teater_categories.*', 'setlists.name as setlist_name', DB::raw("CONCAT(show_teater_categories.name, IF(show_teater_categories.jp_name IS NOT NULL AND show_teater_categories.jp_name != '', CONCAT(' (', show_teater_categories.jp_name, ')'), '')) as display_name"))
             ->orderBy('type')
             ->orderBy('name')
             ->get();
