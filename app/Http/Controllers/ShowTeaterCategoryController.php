@@ -15,7 +15,7 @@ class ShowTeaterCategoryController extends Controller
                 $join->on('show_teater_categories.setlist_id', '=', 'setlists.id')
                      ->where('setlists.type', '=', 'setlist');
             })
-            ->select('show_teater_categories.*', 'setlists.name as setlist_name')
+            ->select('show_teater_categories.*', 'setlists.name as setlist_name', DB::raw("CONCAT(show_teater_categories.name, IF(show_teater_categories.jp_name IS NOT NULL, CONCAT(' (', show_teater_categories.jp_name, ')'), '')) as display_name"))
             ->orderBy('type')
             ->orderBy('name')
             ->get();
@@ -37,6 +37,7 @@ class ShowTeaterCategoryController extends Controller
         $validated = $request->validate([
             'type' => 'required|in:setlist,unit_song',
             'name' => 'required|string|max:100',
+            'jp_name' => 'nullable|string|max:100',
             'setlist_id' => 'required_if:type,unit_song|nullable|exists:show_teater_categories,id',
         ]);
 
@@ -56,9 +57,10 @@ class ShowTeaterCategoryController extends Controller
         DB::table('show_teater_categories')->insert([
             'type' => $validated['type'],
             'name' => $validated['name'],
+            'jp_name' => $validated['jp_name'] ?? null,
             'setlist_id' => $validated['type'] === 'unit_song' ? $validated['setlist_id'] : null,
+            'is_active' => true,
             'created_at' => now(),
-            'updated_at' => now(),
         ]);
 
         return redirect()->route('show-teater.categories.index')->with('success', 'Category added successfully');
@@ -69,6 +71,7 @@ class ShowTeaterCategoryController extends Controller
         $validated = $request->validate([
             'type' => 'required|in:setlist,unit_song',
             'name' => 'required|string|max:100',
+            'jp_name' => 'nullable|string|max:100',
             'setlist_id' => 'required_if:type,unit_song|nullable|exists:show_teater_categories,id',
         ]);
 
@@ -90,6 +93,7 @@ class ShowTeaterCategoryController extends Controller
             ->where('id', $id)
             ->update([
                 'name' => $validated['name'],
+                'jp_name' => $validated['jp_name'] ?? null,
                 'setlist_id' => $validated['type'] === 'unit_song' ? $validated['setlist_id'] : null,
                 'updated_at' => now(),
             ]);

@@ -11,15 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('show_teater_categories', function (Blueprint $table) {
+        Schema::create('theater_references', function (Blueprint $table) {
             $table->id();
-            $table->enum('type', ['setlist', 'unit_song']);
-            $table->string('name', 100);
-            $table->string('jp_name', 100)->nullable();
-            $table->boolean('is_active')->default(true);
+            $table->string('reference_code')->unique();
+            $table->integer('month');
+            $table->integer('year');
             $table->timestamps();
-
-            $table->unique(['type', 'name']);
+            $table->timestamp('processed_at')->nullable()->after('year');
         });
     }
 
@@ -28,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('show_teater_categories');
+        Schema::dropIfExists('theater_references');
     }
 };
