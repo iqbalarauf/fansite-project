@@ -9,6 +9,7 @@ class ShowTeaterCategorySeeder extends Seeder
 {
     /**
      * Run the database seeds.
+     * Data diambil dari nama setlist resmi yang pernah dibawakan JKT48 hingga Mei 2026
      */
     public function run(): void
     {
@@ -40,7 +41,7 @@ class ShowTeaterCategorySeeder extends Seeder
             ['id' => 21, 'type' => 'setlist', 'setlist_id' => null, 'name' => 'Demi Seseorang', 'jp_name' => 'Dareka no Tame ni', 'created_at' => $now],
             ['id' => 22, 'type' => 'setlist', 'setlist_id' => null, 'name' => 'Bel Terakhir Telah Berbunyi', 'jp_name' => 'Saishuu Bell ga Naru', 'created_at' => $now],
             ['id' => 23, 'type' => 'setlist', 'setlist_id' => null, 'name' => 'Ingin Bertemu', 'jp_name' => 'Aitakatta', 'created_at' => $now],
-            ['id' => 24, 'type' => 'setlist', 'setlist_id' => null, 'name' => 'Bunga Matahari', 'jp_name' => 'Himawarigumi', 'created_at' => $now],
+            ['id' => 24, 'type' => 'setlist', 'setlist_id' => null, 'name' => 'Himawarigumi', 'jp_name' => '', 'created_at' => $now],
 
             ['id' => 25, 'type' => 'unit_song', 'setlist_id' => 1, 'name' => 'Malaikat Hitam', 'jp_name' => 'Kuroi Tenshi', 'created_at' => $now],
             ['id' => 26, 'type' => 'unit_song', 'setlist_id' => 1, 'name' => 'Mawar Natal Musim Panas', 'jp_name' => 'Manatsu no Christmas Rose', 'created_at' => $now],
@@ -132,6 +133,86 @@ class ShowTeaterCategorySeeder extends Seeder
             ['id' => 103, 'type' => 'unit_song', 'setlist_id' => 10, 'name' => 'Indra Keenam Seorang Gadis', 'jp_name' => 'Onna no Ko no Dairokkan', 'created_at' => $now],
             ['id' => 104, 'type' => 'unit_song', 'setlist_id' => 10, 'name' => 'Serigala dan Pride', 'jp_name' => 'Ookami to Pride', 'created_at' => $now],
             ['id' => 105, 'type' => 'unit_song', 'setlist_id' => 10, 'name' => 'Stasiun Daun Kering', 'jp_name' => 'Kareha no Station', 'created_at' => $now],
+
+            ['id' => 106, 'type' => 'unit_song', 'setlist_id' => 11, 'name' => 'Candy', 'jp_name' => '', 'created_at' => $now],
+            ['id' => 107, 'type' => 'unit_song', 'setlist_id' => 11, 'name' => 'Hubungan Kau Dan Aku', 'jp_name' => 'Kimi to Boku no Kankei', 'created_at' => $now],
+            ['id' => 108, 'type' => 'unit_song', 'setlist_id' => 11, 'name' => 'Maafkan, Permataku', 'jp_name' => 'Gomen ne Jewel', 'created_at' => $now],
+            ['id' => 109, 'type' => 'unit_song', 'setlist_id' => 11, 'name' => 'Natasha Yang Kucinta', 'jp_name' => 'Itoshiki Natasha', 'created_at' => $now],
+
+            ['id' => 110, 'type' => 'unit_song', 'setlist_id' => 12, 'name' => 'Berikanlah Coklat Dengan Bibir', 'jp_name' => 'Kuchi Utsushi no Chocolate', 'created_at' => $now],
+            ['id' => 111, 'type' => 'unit_song', 'setlist_id' => 12, 'name' => 'Pencuri Cinta Pertama', 'jp_name' => 'Hatsukoi Dorobou', 'created_at' => $now],
+            ['id' => 112, 'type' => 'unit_song', 'setlist_id' => 12, 'name' => 'Khayalan', 'jp_name' => 'Shinkirou', 'created_at' => $now],
+            ['id' => 113, 'type' => 'unit_song', 'setlist_id' => 12, 'name' => 'Karaage Cinta yang Tak Berbalas', 'jp_name' => 'Kataomoi no Karaage', 'created_at' => $now],
+
+            ['id' => 114, 'type' => 'unit_song', 'setlist_id' => 13, 'name' => 'Bird', 'jp_name' => '', 'created_at' => $now],
+            ['id' => 115, 'type' => 'unit_song', 'setlist_id' => 13, 'name' => 'Pulang Kampung', 'jp_name' => 'Kikyou', 'created_at' => $now],
+            ['id' => 116, 'type' => 'unit_song', 'setlist_id' => 13, 'name' => 'Dua Orang yang Terlarang', 'jp_name' => 'Kinjirareta Futari', 'created_at' => $now],
+            ['id' => 117, 'type' => 'unit_song', 'setlist_id' => 13, 'name' => 'Berandalan di Surga', 'jp_name' => 'Tengoku Yarou', 'created_at' => $now],
+
+            ['id' => 118, 'type' => 'unit_song', 'setlist_id' => 14, 'name' => 'End Roll', 'jp_name' => '', 'created_at' => $now],
+            ['id' => 119, 'type' => 'unit_song', 'setlist_id' => 14, 'name' => 'Si Bintang Jatuh yang Egois', 'jp_name' => 'Wagamama na Nareboshi', 'created_at' => $now],
+            ['id' => 120, 'type' => 'unit_song', 'setlist_id' => 14, 'name' => 'Pada Malam yang Berbadai', 'jp_name' => 'Arashi no Yoru ni Wa', 'created_at' => $now],
+            ['id' => 121, 'type' => 'unit_song', 'setlist_id' => 14, 'name' => 'Sang Hujan yang Kelam', 'jp_name' => 'Zankoku na Ame', 'created_at' => $now],
+
+            ['id' => 122, 'type' => 'unit_song', 'setlist_id' => 15, 'name' => 'Cinta Pertama di Jam 7 Lewat 12', 'jp_name' => '7ji 12fun no Hatsukoi', 'created_at' => $now],
+            ['id' => 123, 'type' => 'unit_song', 'setlist_id' => 15, 'name' => 'Sampai Musim Semi Tiba', 'jp_name' => 'Haru ga Kuru Made', 'created_at' => $now],
+            ['id' => 124, 'type' => 'unit_song', 'setlist_id' => 15, 'name' => 'Cinta yang Tulus, Crescendo', 'jp_name' => 'Junai no Crescendo', 'created_at' => $now],
+            ['id' => 125, 'type' => 'unit_song', 'setlist_id' => 15, 'name' => 'Faint', 'jp_name' => '', 'created_at' => $now],
+            ['id' => 126, 'type' => 'unit_song', 'setlist_id' => 15, 'name' => 'Pulang Kampung', 'jp_name' => 'Kikyou', 'created_at' => $now],
+
+            ['id' => 127, 'type' => 'unit_song', 'setlist_id' => 16, 'name' => 'Berikanlah Coklat Dengan Bibir', 'jp_name' => 'Kuchi Utsushi no Chocolate', 'created_at' => $now],
+            ['id' => 128, 'type' => 'unit_song', 'setlist_id' => 16, 'name' => 'Sang Hujan yang Kelam', 'jp_name' => 'Zankoku na Ame', 'created_at' => $now],
+            ['id' => 129, 'type' => 'unit_song', 'setlist_id' => 16, 'name' => 'Garis Diaginal Cinta Searah', 'jp_name' => 'Kataomoi no Taikakusen', 'created_at' => $now],
+            ['id' => 130, 'type' => 'unit_song', 'setlist_id' => 16, 'name' => 'Berandalan di Surga', 'jp_name' => 'Tengoku Yarou', 'created_at' => $now],
+            ['id' => 131, 'type' => 'unit_song', 'setlist_id' => 16, 'name' => 'Natasha Yang Kucinta', 'jp_name' => 'Itoshiki Natasha', 'created_at' => $now],
+
+            ['id' => 132, 'type' => 'unit_song', 'setlist_id' => 17, 'name' => 'End Roll', 'jp_name' => '', 'created_at' => $now],
+            ['id' => 133, 'type' => 'unit_song', 'setlist_id' => 17, 'name' => 'Si Bintang Jatuh yang Egois', 'jp_name' => 'Wagamama na Nareboshi', 'created_at' => $now],
+            ['id' => 134, 'type' => 'unit_song', 'setlist_id' => 17, 'name' => 'Warna Cinta', 'jp_name' => 'Ai no Iro', 'created_at' => $now],
+            ['id' => 135, 'type' => 'unit_song', 'setlist_id' => 17, 'name' => 'Jika Aku Dipelukmu', 'jp_name' => 'Dakishimerareta', 'created_at' => $now],
+            ['id' => 136, 'type' => 'unit_song', 'setlist_id' => 17, 'name' => 'Balada Serangga', 'jp_name' => 'Mushi no Ballad', 'created_at' => $now],
+
+            ['id' => 137, 'type' => 'unit_song', 'setlist_id' => 18, 'name' => 'Cinta Pertama, Selamat Siang', 'jp_name' => 'Hatsukoi yo, Konnichiwa', 'created_at' => $now],
+            ['id' => 138, 'type' => 'unit_song', 'setlist_id' => 18, 'name' => 'Pada Malam yang Berbadai', 'jp_name' => 'Arashi no Yoru ni Wa', 'created_at' => $now],
+            ['id' => 139, 'type' => 'unit_song', 'setlist_id' => 18, 'name' => 'Candy', 'jp_name' => '', 'created_at' => $now],
+            ['id' => 140, 'type' => 'unit_song', 'setlist_id' => 18, 'name' => 'Locker Room Boy', 'jp_name' => '', 'created_at' => $now],
+            ['id' => 141, 'type' => 'unit_song', 'setlist_id' => 18, 'name' => 'Perbuatan Angin Malam', 'jp_name' => 'Yokaze no Shiwaza', 'created_at' => $now],
+
+            ['id' => 142, 'type' => 'unit_song', 'setlist_id' => 19, 'name' => 'Virus Tipe Hati', 'jp_name' => 'Heart Gata Virus', 'created_at' => $now],
+            ['id' => 143, 'type' => 'unit_song', 'setlist_id' => 19, 'name' => 'Tsundere!', 'jp_name' => 'Tsundere!', 'created_at' => $now],
+            ['id' => 144, 'type' => 'unit_song', 'setlist_id' => 19, 'name' => 'Pada Malam yang Berbadai', 'jp_name' => 'Arashi no Yoru ni Wa', 'created_at' => $now],
+            ['id' => 145, 'type' => 'unit_song', 'setlist_id' => 19, 'name' => 'Dua Orang yang Terlarang', 'jp_name' => 'Kinjirareta Futari', 'created_at' => $now],
+            ['id' => 146, 'type' => 'unit_song', 'setlist_id' => 19, 'name' => 'Bunga Matahari', 'jp_name' => 'Himawari', 'created_at' => $now],
+
+            ['id' => 147, 'type' => 'unit_song', 'setlist_id' => 20, 'name' => 'Bird', 'jp_name' => '', 'created_at' => $now],
+            ['id' => 148, 'type' => 'unit_song', 'setlist_id' => 20, 'name' => 'Kaca Berbentuk I LOVE YOU', 'jp_name' => 'Glass no I LOVE YOU', 'created_at' => $now],
+            ['id' => 149, 'type' => 'unit_song', 'setlist_id' => 20, 'name' => 'Classmate', 'jp_name' => '', 'created_at' => $now],
+            ['id' => 150, 'type' => 'unit_song', 'setlist_id' => 20, 'name' => 'Hubungan Kau Dan Aku', 'jp_name' => 'Kimi to Boku no Kankei', 'created_at' => $now],
+            ['id' => 151, 'type' => 'unit_song', 'setlist_id' => 20, 'name' => 'Lagu Dua Puluh Dua Bersaudari', 'jp_name' => '22nin Shimai no Uta', 'created_at' => $now],
+
+            ['id' => 152, 'type' => 'unit_song', 'setlist_id' => 21, 'name' => 'Bird', 'jp_name' => '', 'created_at' => $now],
+            ['id' => 153, 'type' => 'unit_song', 'setlist_id' => 21, 'name' => 'Jatuhkan dengan Kiss Bye!', 'jp_name' => 'Nage Kiss de Uchi Otose!', 'created_at' => $now],
+            ['id' => 154, 'type' => 'unit_song', 'setlist_id' => 21, 'name' => 'Khayalan', 'jp_name' => 'Shinkirou', 'created_at' => $now],
+            ['id' => 155, 'type' => 'unit_song', 'setlist_id' => 21, 'name' => 'Rider', 'jp_name' => '', 'created_at' => $now],
+
+            ['id' => 156, 'type' => 'unit_song', 'setlist_id' => 22, 'name' => 'Return Match', 'jp_name' => '', 'created_at' => $now],
+            ['id' => 157, 'type' => 'unit_song', 'setlist_id' => 22, 'name' => 'Pencuri Cinta Pertama', 'jp_name' => 'Hatsukoi Dorobou', 'created_at' => $now],
+            ['id' => 158, 'type' => 'unit_song', 'setlist_id' => 22, 'name' => 'Maafkan Permataku', 'jp_name' => 'Gomen ne Jewel', 'created_at' => $now],
+            ['id' => 159, 'type' => 'unit_song', 'setlist_id' => 22, 'name' => 'Putik, Benang Sari, dan Kupu-Kupu Malam', 'jp_name' => 'Oshibe to Meshibe to Yoru no Chouchou', 'created_at' => $now],
+            ['id' => 160, 'type' => 'unit_song', 'setlist_id' => 22, 'name' => 'Lagu Delapan Belas Bersaudari', 'jp_name' => '18nin Shimai no Uta', 'created_at' => $now],
+
+            ['id' => 161, 'type' => 'unit_song', 'setlist_id' => 23, 'name' => 'Boneka yang Sedih', 'jp_name' => 'Nageki no Figure', 'created_at' => $now],
+            ['id' => 162, 'type' => 'unit_song', 'setlist_id' => 23, 'name' => 'Air Mata Shounan', 'jp_name' => 'Namida no Shounan', 'created_at' => $now],
+            ['id' => 163, 'type' => 'unit_song', 'setlist_id' => 23, 'name' => 'Cherry Tepi Pantai', 'jp_name' => 'Nagisa no Cherry', 'created_at' => $now],
+            ['id' => 164, 'type' => 'unit_song', 'setlist_id' => 23, 'name' => 'Kaca Berbentuk I LOVE YOU', 'jp_name' => 'Glass no I LOVE YOU', 'created_at' => $now],
+            ['id' => 165, 'type' => 'unit_song', 'setlist_id' => 23, 'name' => 'Rencana Cinta', 'jp_name' => 'Koi no Plan', 'created_at' => $now],
+            ['id' => 166, 'type' => 'unit_song', 'setlist_id' => 23, 'name' => 'Peluklah Aku dari Belakang', 'jp_name' => 'Senaka Kara Dakishimete', 'created_at' => $now],
+
+            ['id' => 167, 'type' => 'unit_song', 'setlist_id' => 24, 'name' => 'Virus Tipe Hati', 'jp_name' => 'Heart Gata Virus', 'created_at' => $now],
+            ['id' => 168, 'type' => 'unit_song', 'setlist_id' => 24, 'name' => 'Pertahanan dari Cinta', 'jp_name' => 'Itoshisa no Defense', 'created_at' => $now],
+            ['id' => 169, 'type' => 'unit_song', 'setlist_id' => 24, 'name' => 'Prinsip Kesucian Hati', 'jp_name' => 'Junjou Shugi', 'created_at' => $now],
+            ['id' => 170, 'type' => 'unit_song', 'setlist_id' => 24, 'name' => 'Dua Orang yang Terlarang', 'jp_name' => 'Kinjirareta Futari', 'created_at' => $now],
+            ['id' => 171, 'type' => 'unit_song', 'setlist_id' => 24, 'name' => 'Rider', 'jp_name' => '', 'created_at' => $now],
         ];
 
         DB::table('show_teater_categories')->insert($categories);
