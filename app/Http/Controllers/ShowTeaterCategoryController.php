@@ -59,7 +59,6 @@ class ShowTeaterCategoryController extends Controller
             'name' => $validated['name'],
             'jp_name' => $validated['jp_name'] ?? null,
             'setlist_id' => $validated['type'] === 'unit_song' ? $validated['setlist_id'] : null,
-            'is_active' => true,
             'created_at' => now(),
         ]);
 

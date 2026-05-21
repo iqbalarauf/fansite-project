@@ -109,10 +109,6 @@ const logout = () => {
                                             Profile
                                         </DropdownLink>
 
-                                        <DropdownLink v-if="$page.props.jetstream.hasApiFeatures" :href="route('api-tokens.index')">
-                                            API Tokens
-                                        </DropdownLink>
-
                                         <div class="border-t border-gray-200 dark:border-gray-600" />
 
                                         <!-- Authentication -->
@@ -185,10 +181,6 @@ const logout = () => {
 
                                 <ResponsiveNavLink :href="route('profile.show')" :active="route().current('profile.show')">
                                     Profile
-                                </ResponsiveNavLink>
-
-                                <ResponsiveNavLink v-if="$page.props.jetstream.hasApiFeatures" :href="route('api-tokens.index')" :active="route().current('api-tokens.index')">
-                                    API Tokens
                                 </ResponsiveNavLink>
 
                                 <!-- Authentication -->

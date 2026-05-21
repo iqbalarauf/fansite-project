@@ -526,6 +526,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/show-teater', [ShowTeaterController::class, 'index'])->name('show-teater.index');
     Route::post('/show-teater', [ShowTeaterController::class, 'store'])->name('show-teater.store');
     Route::put('/show-teater/{id}', [ShowTeaterController::class, 'update'])->name('show-teater.update');
+    Route::post('/show-teater/{id}/confirm-member', [ShowTeaterController::class, 'confirmMemberShow'])->name('show-teater.confirm-member');
+    Route::delete('/show-teater/{id}/reject-member', [ShowTeaterController::class, 'rejectMemberShow'])->name('show-teater.reject-member');
+    Route::post('/show-teater/fetch/manual', [ShowTeaterController::class, 'fetchManually'])->name('show-teater.fetch-manual');
 
     // Show Teater Categories management
     Route::get('/show-teater/categories', [ShowTeaterCategoryController::class, 'index'])->name('show-teater.categories.index');

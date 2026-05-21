@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Artisan;
 use Inertia\Inertia;
+use App\Models\ShowTeater;
 
 class ShowTeaterController extends Controller
 {
@@ -65,11 +67,17 @@ class ShowTeaterController extends Controller
                 ];
             });
 
+        // Get last fetch timestamp
+        $lastFetchAt = DB::table('show_teater')
+            ->where('is_scraped_data', 1)
+            ->max('last_fetch_at');
+
         return Inertia::render('ShowTeater/Index', [
             'shows' => $shows,
             'nextShowId' => $nextShowId,
             'allSetlists' => $allSetlists,
             'setlistsWithUnitSongs' => $setlistsWithUnitSongs,
+            'lastFetchAt' => $lastFetchAt,
         ]);
     }
 
@@ -79,11 +87,11 @@ class ShowTeaterController extends Controller
             'show_id' => 'required|integer|unique:show_teater,show_id',
             'show_date' => 'required|string|max:25',
             'setlist' => 'required|string|max:32',
-            'unit_song' => 'required|string|max:29',
+            'unit_song' => 'required|string|max:100',
             'is_global_center' => 'nullable|boolean',
             'is_us_center' => 'nullable|boolean',
-            'is_the_show_has_event' => 'nullable|string|max:41',
-            'additional_information' => 'nullable|string|max:48',
+            'is_the_show_has_event' => 'nullable|string|max:56',
+            'additional_information' => 'nullable|string|max:56',
         ]);
 
         DB::table('show_teater')->insert([
@@ -105,11 +113,11 @@ class ShowTeaterController extends Controller
         $validated = $request->validate([
             'show_date' => 'required|string|max:25',
             'setlist' => 'required|string|max:32',
-            'unit_song' => 'required|string|max:29',
+            'unit_song' => 'required|string|max:100',
             'is_global_center' => 'nullable|boolean',
             'is_us_center' => 'nullable|boolean',
-            'is_the_show_has_event' => 'nullable|string|max:41',
-            'additional_information' => 'nullable|string|max:48',
+            'is_the_show_has_event' => 'nullable|string|max:56',
+            'additional_information' => 'nullable|string|max:56',
         ]);
 
         DB::table('show_teater')
@@ -125,5 +133,62 @@ class ShowTeaterController extends Controller
             ]);
 
         return redirect()->route('show-teater.index')->with('success', 'Show berhasil diupdate');
+    }
+
+    public function confirmMemberShow(Request $request, $id)
+    {
+        $show = DB::table('show_teater')
+            ->where('show_id', $id)
+            ->first();
+
+        if (!$show) {
+            return response()->json(['error' => 'Show not found'], 404);
+        }
+
+        DB::table('show_teater')
+            ->where('show_id', $id)
+            ->update(['is_member_show' => 1]);
+
+        return response()->json(['success' => true, 'message' => 'Show confirmed as member show']);
+    }
+
+    public function rejectMemberShow(Request $request, $id)
+    {
+        $show = DB::table('show_teater')
+            ->where('show_id', $id)
+            ->first();
+
+        if (!$show) {
+            return response()->json(['error' => 'Show not found'], 404);
+        }
+
+        DB::table('show_teater')
+            ->where('show_id', $id)
+            ->delete();
+
+        return response()->json(['success' => true, 'message' => 'Show has been deleted']);
+    }
+
+    public function fetchManually(Request $request)
+    {
+        try {
+            Artisan::call('app:fetch-theater-shows');
+
+            // Update last_fetch_at for scraped data
+            DB::table('show_teater')
+                ->where('is_scraped_data', 1)
+                ->update(['last_fetch_at' => now()]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data fetched successfully',
+                'timestamp' => now()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching data: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

@@ -442,7 +442,7 @@ onMounted(() => {
                                         class="flex-1 min-w-0 overflow-hidden rounded-lg border border-gray-200 dark:border-zinc-700 p-3 mt-2">
                                         <div class="flex items-start justify-between gap-2 flex-wrap sm:flex-nowrap">
                                             <span :class="[
-                                                'gap-x-1 py-1 px-2 rounded-full text-xs font-medium text-white',
+                                                'gap-x-1 py-1 px-2 rounded-full text-xs font-medium text:black dark:text-white',
                                                 event.color
                                             ]">{{ event.type }}</span>
                                             <div

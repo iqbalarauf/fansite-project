@@ -139,7 +139,7 @@ const formatEventDates = (event) => {
                                 <div class="flex items-center gap-2">
                                     <label for="hs-basic-with-description-checked"
                                         class="relative inline-block w-11 h-6 cursor-pointer">
-                                        <input type="checkbox" id="hs-basic-with-description-checked" class="peer sr-only"
+                                        <input type="checkbox" id="hs-basic-with-description-checked" class="peer sr-only disabled:cursor-not-allowed"
                                             checked="">
                                         <span
                                             class="absolute inset-0 bg-gray-200 rounded-full transition-colors duration-200 ease-in-out peer-checked:bg-blue-600 dark:bg-neutral-700 dark:peer-checked:bg-blue-500 peer-disabled:opacity-50 peer-disabled:pointer-events-none"></span>

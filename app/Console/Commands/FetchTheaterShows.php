@@ -114,6 +114,7 @@ class FetchTheaterShows extends Command
                     'show_id' => $newShowId,
                     'show_date' => $showDate,
                     'setlist' => $data['title'],
+                    'is_scraped_data' => 1,
                 ]);
 
                 $this->info("Saved show: {$newShowId} - {$data['date']} - {$data['title']}");
