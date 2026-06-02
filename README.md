@@ -23,24 +23,23 @@ Laravel is accessible, powerful, and provides tools required for large, robust a
 
 ## Learning Laravel
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
 
-## Laravel Sponsors
+You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Agentic Development
 
-### Premium Partners
+Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```bash
+composer require laravel/boost --dev
+
+php artisan boost:install
+```
+
+Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
 
 ## Contributing
 
@@ -53,31 +52,6 @@ In order to ensure that the Laravel community is welcoming to all, please review
 ## Security Vulnerabilities
 
 If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## Automated Tasks (Scheduler)
-
-This project uses Laravel's task scheduler for automated tasks:
-
-### JKT48 Theater Schedule Scraper
-- Runs automatically **every Tuesday at 9:00 AM** (Asia/Jakarta timezone)
-- Scrapes JKT48 schedule and saves to database
-- See [SCRAPER_README.md](SCRAPER_README.md) for details
-
-### Setup Scheduler
-
-To enable automated tasks in production, add this cron entry:
-
-```bash
-* * * * * cd /path-to-project && php artisan schedule:run >> /dev/null 2>&1
-```
-
-For detailed setup instructions (Windows/Linux), see [SCHEDULER_SETUP.md](SCHEDULER_SETUP.md)
-
-### View Scheduled Tasks
-
-```bash
-php artisan schedule:list
-```
 
 ## License
 
