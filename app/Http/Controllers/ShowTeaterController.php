@@ -28,7 +28,9 @@ class ShowTeaterController extends Controller
                      DB::raw("CONCAT(show_teater.setlist, IF(setlist_cat.jp_name IS NOT NULL AND setlist_cat.jp_name != '', CONCAT(' (', setlist_cat.jp_name, ')'), '')) as display_setlist"),
                      DB::raw("CONCAT(show_teater.unit_song, IF(unit_song_cat.jp_name IS NOT NULL AND unit_song_cat.jp_name != '', CONCAT(' (', unit_song_cat.jp_name, ')'), '')) as display_unit_song"))
             ->orderBy('show_teater.show_id', 'desc')
-            ->get();
+            ->get()
+            ->unique('show_id')
+            ->values();
 
         $nextShowId = DB::table('show_teater')->max('show_id') + 1;
 

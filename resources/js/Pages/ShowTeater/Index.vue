@@ -4,6 +4,8 @@ import { Head, Link, usePage, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ShowTeaterModal from '@/Components/ShowTeaterModal.vue';
 import { formatDateIndonesia } from '@/Helpers/formatDateIndonesia';
+import { VueDatePicker } from '@vuepic/vue-datepicker';
+import '@vuepic/vue-datepicker/dist/main.css';
 
 const props = defineProps({
     shows: Array,
@@ -36,12 +38,21 @@ const closeModal = () => {
 // Search and filter functionality
 const searchTerm = ref('');
 const selectedSetlist = ref('all');
+const selectedDateRange = ref(null);
+const sortField = ref('show_date');
+const sortDirection = ref('asc');
 const currentPage = ref(1);
 const itemsPerPage = 10;
 
-// Use all setlists from backend (covers all pages)
+// Use setlist values from show_teater data
 const setlists = computed(() => {
-    return props.allSetlists || [];
+    if (!props.shows) return [];
+
+    return Array.from(new Set(
+        props.shows
+            .map(show => show.setlist)
+            .filter(Boolean)
+    )).sort((a, b) => a.localeCompare(b));
 });
 
 // Format last fetch date (use local time)
@@ -59,7 +70,7 @@ const formattedLastFetch = computed(() => {
     return date.toLocaleString('id-ID', options);
 });
 
-// Filtered shows based on search and filters
+// Filtered shows based on search, setlist and date range
 const filteredShows = computed(() => {
     if (!props.shows) return [];
 
@@ -81,16 +92,53 @@ const filteredShows = computed(() => {
         filtered = filtered.filter(show => show.setlist === selectedSetlist.value);
     }
 
+    // Apply date range filter
+    if (selectedDateRange.value) {
+        const dates = Array.isArray(selectedDateRange.value) ? selectedDateRange.value : [selectedDateRange.value];
+        const start = dates[0] ? new Date(dates[0]) : null;
+        const end = dates[1] ? new Date(dates[1]) : dates[0] ? new Date(dates[0]) : null;
+
+        filtered = filtered.filter(show => {
+            const showDate = new Date(show.show_date);
+            if (start && showDate < start) return false;
+            if (end && showDate > end) return false;
+            return true;
+        });
+    }
+
     return filtered;
 });
 
-// Pagination for filtered data
-const totalPages = computed(() => Math.ceil(filteredShows.value.length / itemsPerPage));
+const sortedShows = computed(() => {
+    const sorted = [...filteredShows.value];
+
+    sorted.sort((a, b) => {
+        let aValue = a[sortField.value];
+        let bValue = b[sortField.value];
+
+        if (sortField.value === 'show_date') {
+            aValue = new Date(aValue);
+            bValue = new Date(bValue);
+        } else {
+            aValue = aValue ?? '';
+            bValue = bValue ?? '';
+        }
+
+        if (aValue < bValue) return sortDirection.value === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortDirection.value === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    return sorted;
+});
+
+// Pagination for filtered and sorted data
+const totalPages = computed(() => Math.ceil(sortedShows.value.length / itemsPerPage));
 
 const paginatedShows = computed(() => {
     const start = (currentPage.value - 1) * itemsPerPage;
     const end = start + itemsPerPage;
-    return filteredShows.value.slice(start, end);
+    return sortedShows.value.slice(start, end);
 });
 
 const goToFirstPage = () => {
@@ -130,8 +178,8 @@ watch([currentPage, totalPages], () => {
     }
 });
 
-// Reset to page 1 when filters change
-watch([searchTerm, selectedSetlist], () => {
+// Reset to page 1 when filters or sorting change
+watch([searchTerm, selectedSetlist, selectedDateRange, sortField, sortDirection], () => {
     currentPage.value = 1;
 });
 
@@ -277,17 +325,39 @@ const rejectMemberShow = async (showId) => {
 
                     <!-- Search and Filter Section -->
                     <div class="p-6 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-                        <div class="flex flex-col md:flex-row gap-4">
+                        <div class="flex gap-4 flex-nowrap">
                             <div class="flex-1">
                                 <input v-model="searchTerm" type="text" placeholder="Search by setlist, unit song..."
                                     class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
                             </div>
-                            <div>
+                            <div class="flex-shrink-0 w-48">
+                                <VueDatePicker
+                                    v-model="selectedDateRange"
+                                    range
+                                    placeholder="Select date range"
+                                    format="dd/MM/yyyy"
+                                    :clearable="true"
+                                    :enable-time-picker="false"
+                                />
+                            </div>
+                            <div class="flex-shrink-0 w-40">
                                 <select v-model="selectedSetlist"
-                                    class="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                     <option value="all">Semua Setlist</option>
                                     <option v-for="s in setlists" :key="s" :value="s">{{ s }}</option>
                                 </select>
+                            </div>
+                            <div class="flex items-center gap-2 flex-shrink-0">
+                                <select v-model="sortField"
+                                    class="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                                    <option value="show_date">Tanggal</option>
+                                    <option value="show_id">Show ID</option>
+                                    <option value="setlist">Setlist</option>
+                                </select>
+                                <button type="button" @click="sortDirection = sortDirection === 'asc' ? 'desc' : 'asc'"
+                                    class="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 whitespace-nowrap">
+                                    {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -406,13 +476,13 @@ const rejectMemberShow = async (showId) => {
                     </div>
 
                     <!-- Pagination Section -->
-                    <div v-if="filteredShows.length > itemsPerPage"
+                    <div v-if="sortedShows.length > itemsPerPage"
                         class="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
                         <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                             <div class="text-sm text-gray-700 dark:text-gray-300">
                                 Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to
-                                {{ Math.min(currentPage * itemsPerPage, filteredShows.length) }} of
-                                {{ filteredShows.length }} results
+                                {{ Math.min(currentPage * itemsPerPage, sortedShows.length) }} of
+                                {{ sortedShows.length }} results
                             </div>
                             <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
                                 <button @click="goToFirstPage" :disabled="currentPage === 1"
