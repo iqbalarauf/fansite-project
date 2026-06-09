@@ -573,13 +573,15 @@ Route::get('/about/fanbase/{slug?}', [\App\Http\Controllers\AboutController::cla
 // Public Gallery
 Route::get('/gallery', [\App\Http\Controllers\PublicGalleryController::class, 'index'])->name('public.gallery');
 
-// Error test routes
+// Error test routes (for development only)
+if (app()->environment('local')) {
     Route::get('/_test/error/400', fn() => response()->json(['error' => 'Bad Request'], 400));
     Route::get('/_test/error/403', fn() => response()->json(['error' => 'Forbidden'], 403));
     Route::get('/_test/error/404', fn() => response()->json(['error' => 'Not Found'], 404));
     Route::get('/_test/error/500', function () {
         throw new \Exception('Test 500 error');
     });
+}
 
 // Public custom page view - MUST BE LAST as catch-all fallback
 Route::get('/{page}', [\App\Http\Controllers\CustomPageController::class, 'show'])->name('pages.show');

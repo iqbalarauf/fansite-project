@@ -27,7 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->respond(function (\Symfony\Component\HttpFoundation\Response $response) {
-            if (in_array($response->getStatusCode(), [400, 403, 404, 500])) {
+            if (! app()->environment(['local', 'testing']) && in_array($response->getStatusCode(), [400, 403, 404, 500])) {
                 return inertia('Errors/Error' . $response->getStatusCode(), [
                     'message' => match ($response->getStatusCode()) {
                         400 => 'The request could not be understood by the server.',
