@@ -54,31 +54,6 @@ In order to ensure that the Laravel community is welcoming to all, please review
 
 If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
 
-## Automated Tasks (Scheduler)
-
-This project uses Laravel's task scheduler for automated tasks:
-
-### JKT48 Theater Schedule Scraper
-- Runs automatically **every Tuesday at 9:00 AM** (Asia/Jakarta timezone)
-- Scrapes JKT48 schedule and saves to database
-- See [SCRAPER_README.md](SCRAPER_README.md) for details
-
-### Setup Scheduler
-
-To enable automated tasks in production, add this cron entry:
-
-```bash
-* * * * * cd /path-to-project && php artisan schedule:run >> /dev/null 2>&1
-```
-
-For detailed setup instructions (Windows/Linux), see [SCHEDULER_SETUP.md](SCHEDULER_SETUP.md)
-
-### View Scheduled Tasks
-
-```bash
-php artisan schedule:list
-```
-
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
