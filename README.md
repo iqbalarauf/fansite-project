@@ -1,59 +1,42 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+<p align="center"><a href="https://fansite.labqitech.my.id" target="_blank"><img src="https://fansite.labqitech.my.id/storage/logo.svg" width="200" alt="Fansight Logo"></a></p>
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Tentang FANSIGHT
 
-## About Laravel
+**“FANSIGHT”** adalah sebuah aplikasi web yang dirancang untuk mengumpulkan informasi dan konten penggemar yang didedikasikan untuk sang idola. 
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Proses yang dicakup pada aplikasi ini meliputi pengelolaan data statistik penampilan sang idola, pengelolaan konten fancam dan postingan media sosial idola, dan pengelolaan informasi fanbase. Aplikasi ini diharapkan dapat mempermudah pengelolaan data yang dilakukan fanbase agar dapat dibagikan secara terbuka kepada umum.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Aplikasi ini dibangun dengan basis web dan menggunakan tech stack terbaru sehingga dapat diakses dari banyak perangkat, baik PC maupun mobile. Sistem ini dirancang menggunakan arsitektur terpusat sehingga seluruh data dan rekap dapat dikelola secara real-time dan terintegrasi. Untuk memastikan penggunaan yang responsif dan nyaman, antarmuka aplikasi ini dirancang agar tetap intuitif dan user-friendly.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Arsitektur Teknologi
 
-## Learning Laravel
+- Backend: Laravel 12
+- Frontend: Vue.js
+- Routing: Laravel Router + Inertia.js
+- Database: MariaDB MySQL
+- Build Tools: Vite
+- Auth: Laravel Jetstream
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+Available Soon
+- Automation Testing Tools: Cypress
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Dokumentasi Pengembangan Project
 
-## Laravel Sponsors
+Aplikasi ini merupakan eksperimen untuk portofolio pengembangan perangkat lunak. Baca lebih lengkap mengenai project ini melalui [dokumentasi produk](https://fansite.labqitech.my.id/documentation).
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Security Vulnerabilities & Bug Defect
 
-### Premium Partners
+Jika anda menemukan bug atau masalah keamanan pada project ini, anda dapat menghubungi saya via [iqbalarauf.official@gmail.com](mailto:iqbalarauf.official@gmail.com). Saya sangat mengapresiasi setiap masukan yang ada
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## Catatan Mengenai Lisensi
 
-## Contributing
+Pengembang sangat terbuka bagi setiap orang/komunitas/fanbase yang ingin menggunakan repositori ini, apresiasi akan diberikan jika anda menginformasikannya kepada saya (tenang, saya tidak akan meminta apa-apa)
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Project ini dikembangkan untuk kebutuhan eksperimental, sehingga tidak ada kebutuhan komersialisasi.
 
-## Code of Conduct
+Sebagai catatan, pada proses pengembangan aplikasinya (terkhusus pada aspek coding & building) umumnya di-handle dengan bantuan Kecerdasan Buatan (AI) alias vibe coding. Sehingga legacy code mungkin akan sulit dipahami
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Tentang IqbalARauf dan LabqiTech
 
-## Security Vulnerabilities
+Temukan portofolio real-case saya yang lain di [portfolio web](https://iqbalarauf.my.id) atau cek [Linkedin](https://linkedin.com/in/iqbalarauf) saya. Lihat lebih jauh seluruh eksperimen saya di [sini](https://labqitech.my.id)
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
