@@ -12,6 +12,7 @@ const props = defineProps({
 const showModal = ref(false);
 const editingCategory = ref(null);
 const deleting = ref(null);
+const activeTab = ref('setlist');
 
 const openAddModal = () => {
     editingCategory.value = null;
@@ -45,41 +46,70 @@ const deleteCategory = (category) => {
     });
 };
 
-// Search and filter functionality
+// Search and pagination state
 const searchTerm = ref('');
-const selectedType = ref('all');
+const sortDirection = ref('asc');
 const currentPage = ref(1);
 const itemsPerPage = 10;
 
-// Filtered categories based on search and filters
-const filteredCategories = computed(() => {
+const filteredSetlistCategories = computed(() => {
     if (!props.categories) return [];
 
-    let filtered = [...props.categories];
+    let filtered = props.categories.filter(cat => cat.type === 'setlist');
 
-    // Apply search
     if (searchTerm.value) {
         const term = searchTerm.value.toLowerCase();
         filtered = filtered.filter(cat =>
-            cat.name?.toLowerCase().includes(term)
+            (cat.display_name || cat.name || '').toLowerCase().includes(term)
         );
-    }
-
-    // Apply type filter
-    if (selectedType.value !== 'all') {
-        filtered = filtered.filter(cat => cat.type === selectedType.value);
     }
 
     return filtered;
 });
 
-// Pagination for filtered data
-const totalPages = computed(() => Math.ceil(filteredCategories.value.length / itemsPerPage));
+const filteredUnitSongCategories = computed(() => {
+    if (!props.categories) return [];
+
+    let filtered = props.categories.filter(cat => cat.type === 'unit_song');
+
+    if (searchTerm.value) {
+        const term = searchTerm.value.toLowerCase();
+        filtered = filtered.filter(cat =>
+            (cat.display_name || cat.name || '').toLowerCase().includes(term) ||
+            (cat.setlist_name || '').toLowerCase().includes(term)
+        );
+    }
+
+    return filtered;
+});
+
+const sortCategories = (categories) => {
+    return [...categories].sort((a, b) => {
+        const aValue = (a.display_name || a.name || '').toLowerCase();
+        const bValue = (b.display_name || b.name || '').toLowerCase();
+
+        if (aValue < bValue) {
+            return sortDirection.value === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+            return sortDirection.value === 'asc' ? 1 : -1;
+        }
+        return 0;
+    });
+};
+
+const sortedSetlistCategories = computed(() => sortCategories(filteredSetlistCategories.value));
+const sortedUnitSongCategories = computed(() => sortCategories(filteredUnitSongCategories.value));
+
+const currentCategories = computed(() =>
+    activeTab.value === 'setlist' ? sortedSetlistCategories.value : sortedUnitSongCategories.value
+);
+
+const totalPages = computed(() => Math.ceil(currentCategories.value.length / itemsPerPage));
 
 const paginatedCategories = computed(() => {
     const start = (currentPage.value - 1) * itemsPerPage;
-    const end = start + itemsPerPage;
-    return filteredCategories.value.slice(start, end);
+    return currentCategories.value.slice(start, start + itemsPerPage);
 });
 
 const prevPage = () => {
@@ -96,8 +126,7 @@ const nextPage = () => {
     }
 };
 
-// Reset to page 1 when filters change
-watch([searchTerm, selectedType], () => {
+watch([searchTerm, activeTab, sortDirection], () => {
     currentPage.value = 1;
 });
 </script>
@@ -136,21 +165,38 @@ watch([searchTerm, selectedType], () => {
                         </div>
                     </div>
 
-                    <!-- Search and Filter Section -->
+                    <!-- Search and Tab Section -->
                     <div class="p-6 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-                        <div class="flex flex-col md:flex-row gap-4">
-                            <div class="flex-1">
-                                <input v-model="searchTerm" type="text"
-                                    placeholder="Search by category name..."
-                                    class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                        <div class="flex flex-col gap-4">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <button type="button" @click="activeTab = 'setlist'"
+                                    :class="activeTab === 'setlist'
+                                        ? 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white'
+                                        : 'bg-transparent text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'"
+                                    class="px-4 py-2 border rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    Setlist
+                                </button>
+                                <button type="button" @click="activeTab = 'unit_song'"
+                                    :class="activeTab === 'unit_song'
+                                        ? 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white'
+                                        : 'bg-transparent text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'"
+                                    class="px-4 py-2 border rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    Unit Song
+                                </button>
                             </div>
-                            <div>
-                                <select v-model="selectedType"
-                                    class="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                    <option value="all">All Types</option>
-                                    <option value="setlist">Setlist</option>
-                                    <option value="unit_song">Unit Song</option>
-                                </select>
+
+                            <div class="flex flex-col md:flex-row gap-4">
+                                <div class="flex-1">
+                                    <input v-model="searchTerm" type="text"
+                                        placeholder="Search by name or setlist..."
+                                        class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" @click="sortDirection = sortDirection === 'asc' ? 'desc' : 'asc'"
+                                        class="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 whitespace-nowrap">
+                                        {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -162,15 +208,15 @@ watch([searchTerm, selectedType], () => {
                                 <tr>
                                     <th scope="col"
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                        Type
+                                        No
                                     </th>
                                     <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        {{ activeTab === 'setlist' ? 'Setlist Name' : 'Unit Song' }}
+                                    </th>
+                                    <th v-if="activeTab === 'unit_song'" scope="col"
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                         Setlist
-                                    </th>
-                                    <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                        Name
                                     </th>
                                     <th scope="col"
                                         class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -185,24 +231,16 @@ watch([searchTerm, selectedType], () => {
                                         No categories found
                                     </td>
                                 </tr>
-                                <tr v-for="category in paginatedCategories" :key="category.id"
+                                <tr v-for="(category, index) in paginatedCategories" :key="category.id"
                                     class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span :class="[
-                                            'px-2 inline-flex text-xs leading-5 font-semibold rounded-full',
-                                            category.type === 'setlist'
-                                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-                                                : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                                        ]">
-                                            {{ category.type === 'setlist' ? 'Setlist' : 'Unit Song' }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                                        <span v-if="category.type === 'unit_song'">{{ category.setlist_name || '-' }}</span>
-                                        <span v-else class="text-gray-400">-</span>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                        {{ (currentPage - 1) * itemsPerPage + index + 1 }}
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
                                         {{ category.display_name || category.name }}
+                                    </td>
+                                    <td v-if="activeTab === 'unit_song'" class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
+                                        {{ category.setlist_name || '-' }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <button @click="openEditModal(category)"
@@ -222,13 +260,13 @@ watch([searchTerm, selectedType], () => {
                     </div>
 
                     <!-- Pagination Section -->
-                    <div v-if="filteredCategories.length > itemsPerPage"
+                    <div v-if="currentCategories.length > itemsPerPage"
                         class="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
-                        <div class="flex items-center justify-between">
+                        <div class="flex flex-col md:flex-row items-center justify-between gap-3">
                             <div class="text-sm text-gray-700 dark:text-gray-300">
-                                Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to
-                                {{ Math.min(currentPage * itemsPerPage, filteredCategories.length) }} of
-                                {{ filteredCategories.length }} results
+                                Showing {{ currentCategories.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1 }} to
+                                {{ Math.min(currentPage * itemsPerPage, currentCategories.length) }} of
+                                {{ currentCategories.length }} results
                             </div>
                             <div class="flex gap-2">
                                 <button @click="prevPage" :disabled="currentPage === 1"

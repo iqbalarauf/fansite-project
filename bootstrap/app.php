@@ -26,5 +26,19 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->respond(function (\Symfony\Component\HttpFoundation\Response $response) {
+            if (in_array($response->getStatusCode(), [400, 403, 404, 500])) {
+                return inertia('Errors/Error' . $response->getStatusCode(), [
+                    'message' => match ($response->getStatusCode()) {
+                        400 => 'The request could not be understood by the server.',
+                        403 => 'You do not have permission to access this resource.',
+                        404 => 'The page or resource you are looking for does not exist.',
+                        500 => 'Something went wrong on our end. Please try again later.',
+                        default => 'An error occurred.'
+                    }
+                ])->toResponse(request());
+            }
+
+            return $response;
+        });
     })->create();

@@ -1,5 +1,5 @@
 ﻿<script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import LiveStreamingModal from '@/Components/LiveStreamingModal.vue';
@@ -11,6 +11,8 @@ const props = defineProps({
 
 const showModal = ref(false);
 const editingStream = ref(null);
+const sortDirection = ref('asc');
+const searchTerm = ref('');
 
 const openAddModal = () => {
     editingStream.value = null;
@@ -28,10 +30,38 @@ const closeModal = () => {
 };
 
 const getPlatformBadgeClass = (platform) => {
-    return platform === 'Showroom' 
+    return platform === 'Showroom'
         ? 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200'
         : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
 };
+
+const filteredAndSortedStreams = computed(() => {
+    if (!props.liveStreams) return [];
+
+    let filtered = [...props.liveStreams];
+
+    if (searchTerm.value) {
+        const term = searchTerm.value.toLowerCase();
+        filtered = filtered.filter(stream =>
+            stream.platform?.toLowerCase().includes(term) ||
+            stream.additional_info?.toLowerCase().includes(term)
+        );
+    }
+
+    return filtered.sort((a, b) => {
+        const aValue = a.platform?.toLowerCase() || '';
+        const bValue = b.platform?.toLowerCase() || '';
+
+        if (aValue < bValue) {
+            return sortDirection.value === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+            return sortDirection.value === 'asc' ? 1 : -1;
+        }
+        return 0;
+    });
+});
+
 </script>
 
 <template>
@@ -46,17 +76,19 @@ const getPlatformBadgeClass = (platform) => {
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg">
                     <div class="p-6 sm:p-8">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                                Live Streaming Data
-                            </h3>
-                            <button @click="openAddModal"
-                                class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 transition">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                                </svg>
-                                Add Live Stream
-                            </button>
+                        <div class="flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
+                            <div class="flex-1">
+                                <input v-model="searchTerm" type="text"
+                                    placeholder="Search by platform or info..."
+                                    class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Urut:</span>
+                                <button type="button" @click="sortDirection = sortDirection === 'asc' ? 'desc' : 'asc'"
+                                    class="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 whitespace-nowrap">
+                                    {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                                </button>
+                            </div>
                         </div>
 
                         <div class="overflow-x-auto">
@@ -72,12 +104,12 @@ const getPlatformBadgeClass = (platform) => {
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                    <tr v-if="!liveStreams || liveStreams.length === 0">
+                                    <tr v-if="!filteredAndSortedStreams || filteredAndSortedStreams.length === 0">
                                         <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
                                             No live streaming data found.
                                         </td>
                                     </tr>
-                                    <tr v-for="stream in liveStreams" :key="stream.id" class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                    <tr v-for="stream in filteredAndSortedStreams" :key="stream.id" class="hover:bg-gray-50 dark:hover:bg-gray-700">
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                                             #{{ stream.id }}
                                         </td>

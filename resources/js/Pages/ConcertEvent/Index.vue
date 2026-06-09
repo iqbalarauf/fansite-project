@@ -48,6 +48,7 @@ const deleteEvent = (event) => {
 // Search and filter functionality
 const searchTerm = ref('');
 const selectedStatus = ref('all');
+const sortDirection = ref('asc');
 const currentPage = ref(1);
 const itemsPerPage = 10;
 
@@ -71,7 +72,19 @@ const filteredEvents = computed(() => {
         filtered = filtered.filter(event => event.status === selectedStatus.value);
     }
 
-    return filtered;
+    // Apply sorting
+    return filtered.sort((a, b) => {
+        const aValue = (a.event_name || '').toLowerCase();
+        const bValue = (b.event_name || '').toLowerCase();
+
+        if (aValue < bValue) {
+            return sortDirection.value === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+            return sortDirection.value === 'asc' ? 1 : -1;
+        }
+        return 0;
+    });
 });
 
 // Pagination for filtered data
@@ -98,7 +111,7 @@ const nextPage = () => {
 };
 
 // Reset to page 1 when filters change
-watch([searchTerm, selectedStatus], () => {
+watch([searchTerm, selectedStatus, sortDirection], () => {
     currentPage.value = 1;
 });
 </script>
@@ -129,10 +142,6 @@ watch([searchTerm, selectedStatus], () => {
                                 </p>
                             </div>
                             <div class="flex items-center gap-3">
-                                <button type="button"
-                                    class="py-2 px-4 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-transparent bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:bg-green-700 disabled:opacity-50 disabled:pointer-events-none">
-                                    Sync with Sheet
-                                </button>
                                 <button @click="openAddModal"
                                     class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring focus:ring-blue-300 disabled:opacity-25 transition">
                                     Add Concert Event
@@ -149,13 +158,20 @@ watch([searchTerm, selectedStatus], () => {
                                     placeholder="Search by event name or location..."
                                     class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
                             </div>
-                            <div>
+                            <div class="flex items-center gap-2">
                                 <select v-model="selectedStatus"
                                     class="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                     <option value="all">All Status</option>
                                     <option value="off-air">Off-Air</option>
                                     <option value="on-air">On-Air</option>
                                 </select>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Urut:</span>
+                                <button type="button" @click="sortDirection = sortDirection === 'asc' ? 'desc' : 'asc'"
+                                    class="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 whitespace-nowrap">
+                                    {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                                </button>
                             </div>
                         </div>
                     </div>
