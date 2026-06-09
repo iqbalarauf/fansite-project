@@ -17,7 +17,7 @@ return new class extends Migration
             $table->integer('month');
             $table->integer('year');
             $table->timestamps();
-            $table->timestamp('processed_at')->nullable()->after('year');
+            $table->timestamp('processed_at')->nullable();
         });
     }
 
