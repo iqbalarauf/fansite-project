@@ -4,6 +4,8 @@ import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import MeetGreetModal from '@/Components/MeetGreetModal.vue';
 import { formatDateIndonesia } from '@/Helpers/formatDateIndonesia';
+import { VueDatePicker } from '@vuepic/vue-datepicker';
+import '@vuepic/vue-datepicker/dist/main.css';
 
 const props = defineProps({
     events: Array,
@@ -48,9 +50,19 @@ const deleteEvent = (event) => {
 // Search and filter functionality
 const searchTerm = ref('');
 const selectedType = ref('all');
+const selectedLocation = ref('all');
+const selectedDateRange = ref(null);
 const sortDirection = ref('asc');
 const currentPage = ref(1);
 const itemsPerPage = 10;
+
+// Unique locations from data
+const locations = computed(() => {
+    if (!props.events) return [];
+    return Array.from(new Set(
+        props.events.map(e => e.location).filter(Boolean)
+    )).sort((a, b) => a.localeCompare(b));
+});
 
 // Filtered events based on search and filters
 const filteredEvents = computed(() => {
@@ -71,18 +83,33 @@ const filteredEvents = computed(() => {
         filtered = filtered.filter(event => event.event_type === selectedType.value);
     }
 
-    // Apply sorting
-    return filtered.sort((a, b) => {
-        const aValue = (a.event_name || '').toLowerCase();
-        const bValue = (b.event_name || '').toLowerCase();
+    // Apply location filter
+    if (selectedLocation.value !== 'all') {
+        filtered = filtered.filter(event => event.location === selectedLocation.value);
+    }
 
-        if (aValue < bValue) {
-            return sortDirection.value === 'asc' ? -1 : 1;
-        }
-        if (aValue > bValue) {
-            return sortDirection.value === 'asc' ? 1 : -1;
-        }
-        return 0;
+    // Apply date range filter
+    if (selectedDateRange.value) {
+        const dates = Array.isArray(selectedDateRange.value) ? selectedDateRange.value : [selectedDateRange.value];
+        const start = dates[0] ? new Date(dates[0]) : null;
+        const end = dates[1] ? new Date(dates[1]) : dates[0] ? new Date(dates[0]) : null;
+        if (end) end.setHours(23, 59, 59, 999);
+        filtered = filtered.filter(event => {
+            const d = new Date(event.event_date);
+            if (start && d < start) return false;
+            if (end && d > end) return false;
+            return true;
+        });
+    }
+
+    // Apply sorting by event date
+    return filtered.sort((a, b) => {
+        const aDate = a.event_date ? new Date(a.event_date) : new Date(0);
+        const bDate = b.event_date ? new Date(b.event_date) : new Date(0);
+
+        return sortDirection.value === 'asc'
+            ? aDate - bDate
+            : bDate - aDate;
     });
 });
 
@@ -110,7 +137,7 @@ const nextPage = () => {
 };
 
 // Reset to page 1 when filters change
-watch([searchTerm, selectedType, sortDirection], () => {
+watch([searchTerm, selectedType, selectedLocation, selectedDateRange, sortDirection], () => {
     currentPage.value = 1;
 });
 
@@ -159,20 +186,37 @@ const formatEventDates = (event) => {
 
                     <!-- Search and Filter Section -->
                     <div class="p-6 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-                        <div class="flex flex-col md:flex-row gap-4">
-                            <div class="flex-1">
+                        <div class="flex flex-col md:flex-row gap-3 flex-wrap">
+                            <div class="flex-1 min-w-[180px]">
                                 <input v-model="searchTerm" type="text" placeholder="Search by event name..."
                                     class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
                             </div>
-                            <div class="flex items-center gap-2">
+                            <div class="flex-shrink-0 w-48">
+                                <VueDatePicker
+                                    v-model="selectedDateRange"
+                                    range
+                                    placeholder="Select date range"
+                                    format="dd/MM/yyyy"
+                                    :clearable="true"
+                                    :enable-time-picker="false"
+                                />
+                            </div>
+                            <div class="flex-shrink-0">
+                                <select v-model="selectedLocation"
+                                    class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <option value="all">All Locations</option>
+                                    <option v-for="loc in locations" :key="loc" :value="loc">{{ loc }}</option>
+                                </select>
+                            </div>
+                            <div class="flex-shrink-0">
                                 <select v-model="selectedType"
                                     class="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                     <option value="all">All Types</option>
-                                    <option value="meet-greet">Meet & Greet Festival</option>
+                                    <option value="meet-greet">Meet &amp; Greet Festival</option>
                                     <option value="video-call">Video Call</option>
                                 </select>
                             </div>
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-2 flex-shrink-0">
                                 <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Urut:</span>
                                 <button type="button" @click="sortDirection = sortDirection === 'asc' ? 'desc' : 'asc'"
                                     class="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 whitespace-nowrap">
@@ -187,10 +231,6 @@ const formatEventDates = (event) => {
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead class="bg-gray-50 dark:bg-gray-900">
                                 <tr>
-                                    <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                        ID
-                                    </th>
                                     <th scope="col"
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                         Event Name
@@ -219,16 +259,13 @@ const formatEventDates = (event) => {
                             </thead>
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 <tr v-if="paginatedEvents.length === 0">
-                                    <td colspan="7"
+                                    <td colspan="6"
                                         class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
                                         No meet & greet events found
                                     </td>
                                 </tr>
                                 <tr v-for="event in paginatedEvents" :key="event.id"
                                     class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                        {{ event.id }}
-                                    </td>
                                     <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
                                         {{ event.event_name }}
                                     </td>
