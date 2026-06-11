@@ -177,7 +177,7 @@ const close = () => {
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                             <option value="">Pilih Setlist</option>
                             <option v-for="setlist in setlistsWithUnitSongs" :key="setlist.id" :value="setlist.id">
-                                {{ setlist.name }}
+                                {{ setlist.jp_name ? `${setlist.name} - ${setlist.jp_name}` : setlist.name }}
                             </option>
                         </select>
                         <div v-if="form.errors.setlist" class="text-sm text-red-600 mt-1">{{ form.errors.setlist }}
@@ -204,7 +204,7 @@ const close = () => {
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed">
                                 <option value="">Pilih Unit Song</option>
                                 <option v-for="unitSong in availableUnitSongs" :key="unitSong.id" :value="unitSong.name">
-                                    {{ unitSong.name }}
+                                    {{ unitSong.jp_name ? `${unitSong.name} - ${unitSong.jp_name}` : unitSong.name }}
                                 </option>
                             </select>
                         </div>
@@ -214,14 +214,14 @@ const close = () => {
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed">
                                 <option value="">Pilih Unit Song 1</option>
                                 <option v-for="unitSong in availableUnitSongs" :key="unitSong.id" :value="unitSong.name">
-                                    {{ unitSong.name }}
+                                    {{ unitSong.jp_name ? `${unitSong.name} - ${unitSong.jp_name}` : unitSong.name }}
                                 </option>
                             </select>
                             <select id="unit_song_2" v-model="form.unit_song_2" required :disabled="!selectedSetlistId"
                                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed">
                                 <option value="">Pilih Unit Song 2</option>
                                 <option v-for="unitSong in availableUnitSongs" :key="unitSong.id + '_2'" :value="unitSong.name">
-                                    {{ unitSong.name }}
+                                    {{ unitSong.jp_name ? `${unitSong.name} - ${unitSong.jp_name}` : unitSong.name }}
                                 </option>
                             </select>
                         </div>

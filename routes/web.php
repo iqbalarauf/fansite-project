@@ -431,13 +431,82 @@ Route::middleware([
             ->sortBy('parsed_date')
             ->values();
 
+        // ── All raw data for frontend filtering ──────────────────────────────
+        $allShowTeater = DB::table('show_teater')
+            ->get()
+            ->map(function ($show) {
+                $date = parseShowDate($show->show_date);
+                return [
+                    'type'                   => 'show_teater',
+                    'show_id'                => $show->show_id,
+                    'show_date'              => $show->show_date,
+                    'setlist'                => $show->setlist,
+                    'unit_song'              => $show->unit_song ?? null,
+                    'is_global_center'       => $show->is_global_center ?? 0,
+                    'is_us_center'           => $show->is_us_center ?? 0,
+                    'additional_information' => $show->additional_information ?? null,
+                    'is_the_show_has_event'  => $show->is_the_show_has_event ?? false,
+                    'parsed_date'            => $date ? $date->format('Y-m-d') : null,
+                ];
+            })
+            ->filter(fn($s) => $s['parsed_date'] !== null)
+            ->values();
+
+        $allConcerts = \App\Models\ConcertEvent::orderBy('event_date')
+            ->get()
+            ->map(fn($event) => [
+                'type'        => 'concert',
+                'id'          => $event->id,
+                'event_name'  => $event->event_name,
+                'event_date'  => $event->event_date->format('Y-m-d'),
+                'location'    => $event->location,
+                'status'      => $event->status,
+                'parsed_date' => $event->event_date->format('Y-m-d'),
+            ]);
+
+        $allMeetGreets = \App\Models\MeetGreetEvent::orderBy('event_date')
+            ->get()
+            ->map(fn($event) => [
+                'type'         => 'meet_greet',
+                'id'           => $event->id,
+                'event_name'   => $event->event_name,
+                'event_type'   => $event->event_type,
+                'event_date'   => $event->event_date->format('Y-m-d'),
+                'event_date_2' => $event->event_date_2 ? $event->event_date_2->format('Y-m-d') : null,
+                'location'     => $event->event_type === 'video-call' ? 'Video Call' : ($event->location ?? 'TBD'),
+                'parsed_date'  => $event->event_date->format('Y-m-d'),
+            ]);
+
+        $allLiveStreamings = \App\Models\LiveStreaming::orderBy('live_date')
+            ->get()
+            ->map(function ($stream) {
+                $liveDate = null;
+                if ($stream->live_date) {
+                    try { $liveDate = \Carbon\Carbon::parse($stream->live_date)->format('Y-m-d'); }
+                    catch (\Exception $e) { $liveDate = null; }
+                }
+                return [
+                    'id'              => $stream->id,
+                    'platform'        => $stream->platform,
+                    'live_date'       => $liveDate,
+                    'duration'        => $stream->duration ?? null,
+                    'additional_info' => $stream->additional_info ?? null,
+                ];
+            })
+            ->filter(fn($s) => $s['live_date'] !== null)
+            ->values();
+
         return Inertia::render('Dashboard', [
-            'idolBirthday' => $idolBirthday,
-            'idolName' => $idolName,
-            'nextMilestone' => $nextMilestone,
-            'teaterStats' => $teaterStats,
-            'lastWeekEvents' => $lastWeekEvents,
-            'thisWeekEvents' => $thisWeekEvents,
+            'idolBirthday'      => $idolBirthday,
+            'idolName'          => $idolName,
+            'nextMilestone'     => $nextMilestone,
+            'teaterStats'       => $teaterStats,
+            'lastWeekEvents'    => $lastWeekEvents,
+            'thisWeekEvents'    => $thisWeekEvents,
+            'allShowTeater'     => $allShowTeater,
+            'allConcerts'       => $allConcerts,
+            'allMeetGreets'     => $allMeetGreets,
+            'allLiveStreamings' => $allLiveStreamings,
         ]);
     })->name('dashboard');
 });
