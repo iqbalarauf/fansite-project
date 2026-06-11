@@ -1,6 +1,6 @@
 <template>
-    <div v-if="show" class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center" aria-labelledby="modal-title" role="dialog"
-        aria-modal="true">
+    <div v-if="show" class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center"
+        aria-labelledby="modal-title" role="dialog" aria-modal="true">
         <div class="flex items-center justify-center min-h-screen px-4">
             <!-- Modal panel -->
             <div
@@ -22,14 +22,18 @@
                                         </label>
                                         <div class="flex gap-4">
                                             <label class="flex items-center cursor-pointer">
-                                                <input type="radio" v-model="form.type" value="setlist" :disabled="editing"
+                                                <input type="radio" v-model="form.type" value="setlist"
+                                                    :disabled="editing"
                                                     class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 dark:border-gray-600 dark:focus:ring-blue-600">
-                                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Setlist</span>
+                                                <span
+                                                    class="ml-2 text-sm text-gray-700 dark:text-gray-300">Setlist</span>
                                             </label>
                                             <label class="flex items-center cursor-pointer">
-                                                <input type="radio" v-model="form.type" value="unit_song" :disabled="editing"
+                                                <input type="radio" v-model="form.type" value="unit_song"
+                                                    :disabled="editing"
                                                     class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 dark:border-gray-600 dark:focus:ring-blue-600">
-                                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Unit Song</span>
+                                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Unit
+                                                    Song</span>
                                             </label>
                                         </div>
                                     </div>
@@ -51,7 +55,8 @@
                                     <!-- Name Field -->
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                            {{ form.type === 'setlist' ? 'Setlist Name' : 'Unit Song Name' }} <span class="text-red-500">*</span>
+                                            {{ form.type === 'setlist' ? 'Setlist Name' : 'Unit Song Name' }} <span
+                                                class="text-red-500">*</span>
                                         </label>
                                         <input v-model="form.name" type="text" required
                                             class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
