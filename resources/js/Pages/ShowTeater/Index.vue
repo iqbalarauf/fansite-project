@@ -284,7 +284,7 @@ const rejectMemberShow = async (showId) => {
         </template>
 
         <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="max-w-full mx-auto sm:px-6 lg:px-8">
                 <div class="flex justify-end mb-3">
                     <span class="text-xs text-gray-500 dark:text-gray-400 text-right">
                         Last Fetch: {{ formattedLastFetch }}

@@ -3,7 +3,7 @@
     <Head title="Blog" />
     <div class="bg-gray-100 dark:bg-gray-900 text-black/50 dark:text-white/50 min-h-screen flex flex-col">
         <div class="sticky top-0 z-50 left-0 right-0 w-full bg-white dark:bg-gray-800 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700">
-            <div class="max-w-7xl mx-auto px-6">
+            <div class="max-w-screen mx-auto px-6">
                 <SiteHeader />
             </div>
         </div>

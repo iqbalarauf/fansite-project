@@ -83,9 +83,9 @@ const logout = () => {
             <div class="flex-1">
                 <!-- Page Heading -->
                 <header v-if="$slots.header" class="bg-white dark:bg-gray-800 shadow">
-                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+                    <div class="max-w-screen py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
                         <!-- Left side: Header slot -->
-                        <div class="flex items-center gap-3 ml-12 lg:ml-0">
+                        <div class="flex items-left gap-3 ml-12 lg:ml-0">
                             <slot name="header" />
                         </div>
 

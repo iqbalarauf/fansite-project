@@ -11,7 +11,7 @@
             </div>
         </template>
 
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="max-w-screen mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="flex justify-end mb-6">
                 <Link :href="route('posts.create')"
                     class="inline-block bg-blue-600 text-white px-4 py-2 rounded justify-end">
