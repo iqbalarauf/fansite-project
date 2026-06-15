@@ -256,7 +256,7 @@ onMounted(() => {
             <!-- About Idol Section (Optional) -->
             <section
                 v-if="page.props.homepageIdolSettings?.idol_show_on_welcome === 'true' || page.props.homepageIdolSettings?.idol_show_on_welcome === true"
-                class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+                class="w-full max-w-screen mx-auto px-4 sm:px-6 lg:px-8 mb-8">
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg">
                     <div class="p-6 sm:p-8">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
@@ -327,7 +327,7 @@ onMounted(() => {
                 </div>
             </section>
 
-            <div id="content" class="relative w-full px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+            <div id="content" class="relative w-full px-4 sm:px-6 lg:px-8 max-w-screen mx-auto">
                 <main class="mt-6">
                     <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:gap-8">
                         <div class="flex flex-col gap-4">
@@ -597,7 +597,7 @@ onMounted(() => {
         </section>
 
         <div class="w-full">
-            <div class="max-w-7xl mx-auto px-6 py-8">
+            <div class="max-w-screen mx-auto px-6 py-8">
                 <Footer type="public" />
             </div>
         </div>

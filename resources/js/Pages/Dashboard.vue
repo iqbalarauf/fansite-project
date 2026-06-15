@@ -648,7 +648,7 @@ const captureScreenshot = async () => {
                             </span>
                             <span v-else-if="event.type === 'meet_greet'"
                                 class="shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300">
-                                {{ event.event_type === 'video-call' ? 'VC' : 'MG' }}
+                                {{ event.event_type === 'video-call' ? 'VC' : 'Meet&Greet' }}
                             </span>
 
                             <!-- Info -->
@@ -662,9 +662,9 @@ const captureScreenshot = async () => {
                             <!-- Stars -->
                             <div class="flex gap-0.5 shrink-0">
                                 <span v-if="event.is_global_center == 1" title="Global Center"
-                                    class="text-amber-400 text-sm leading-none">⭐</span>
+                                    class="shrink-0 text-sm font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-amber-400 dark:bg-purple-900/50 dark:text-amber-300 leading-none">Global Center</span>
                                 <span v-if="event.is_us_center == 1" title="Center Unit Song"
-                                    class="text-pink-400 text-sm leading-none">★</span>
+                                    class="shrink-0 text-sm font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-indigo-700 dark:bg-purple-900/50 dark:text-indigo-300 leading-none">US Center</span>
                             </div>
                         </div>
                     </div>
@@ -704,7 +704,7 @@ const captureScreenshot = async () => {
                             <!-- Badge -->
                             <span v-if="event.type === 'show_teater'"
                                 class="shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300">
-                                Show
+                                Show Teater
                             </span>
                             <span v-else-if="event.type === 'concert'"
                                 class="shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300">
@@ -712,7 +712,7 @@ const captureScreenshot = async () => {
                             </span>
                             <span v-else-if="event.type === 'meet_greet'"
                                 class="shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300">
-                                {{ event.event_type === 'video-call' ? 'VC' : 'MG' }}
+                                {{ event.event_type === 'video-call' ? 'VC' : 'Meet&Greet' }}
                             </span>
 
                             <!-- Info -->
