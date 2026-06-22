@@ -21,13 +21,5 @@ class DatabaseSeeder extends Seeder
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
-
-        // example posts
-        $this->call([
-            \Database\Seeders\AppSettingSeeder::class,
-            \Database\Seeders\AboutSettingsSeeder::class,
-            \Database\Seeders\IdnLiveSettingsSeeder::class,
-            \Database\Seeders\PostSeeder::class,
-        ]);
     }
 }
