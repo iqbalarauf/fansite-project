@@ -1,0 +1,34 @@
+<?php
+
+namespace App\Models;
+
+use Database\Factories\ShowTeaterFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class ShowTeater extends Model
+{
+    /** @use HasFactory<ShowTeaterFactory> */
+    use HasFactory;
+
+    protected $table = 'show_teater';
+
+    protected $primaryKey = 'show_id';
+
+    public $incrementing = false;
+
+    protected $keyType = 'int';
+
+    public $timestamps = false;
+
+    protected $fillable = [
+        'show_id',
+        'show_date',
+        'setlist',
+        'unit_song',
+        'is_global_center',
+        'is_us_center',
+        'is_the_show_has_event',
+        'additional_information',
+    ];
+}
