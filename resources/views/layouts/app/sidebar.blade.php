@@ -23,17 +23,23 @@
                     <flux:sidebar.item icon="musical-note" :href="route('show-teater.categories.index')" :current="request()->routeIs('show-teater.categories.*')" wire:navigate>
                         {{ __('Setlist & Unit Song') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="ticket" :href="route('meet-greet-events.index')" :current="request()->routeIs('meet-greet-events.*')" wire:navigate>
+                        {{ __('Meet & Greet Events') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="radio" :href="route('concert-events.index')" :current="request()->routeIs('concert-events.*')" wire:navigate>
+                        {{ __('Concerts Events') }}
+                    </flux:sidebar.item>
                 </flux:sidebar.group>
             </flux:sidebar.nav>
 
             <flux:spacer />
 
             <flux:sidebar.nav>
-                <flux:sidebar.item icon="folder-git-2" href="https://github.com/laravel/livewire-starter-kit" target="_blank">
+                <flux:sidebar.item icon="folder-git-2" href="https://github.com/iqbalarauf/fansite-project" target="_blank">
                     {{ __('Repository') }}
                 </flux:sidebar.item>
 
-                <flux:sidebar.item icon="book-open-text" href="https://laravel.com/docs/starter-kits#livewire" target="_blank">
+                <flux:sidebar.item icon="book-open-text" href="https://fansite.labqitech.my.id/documentation" target="_blank">
                     {{ __('Documentation') }}
                 </flux:sidebar.item>
             </flux:sidebar.nav>

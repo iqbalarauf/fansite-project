@@ -40,6 +40,8 @@ class DashboardTest extends TestCase
             'stats',
             'period',
             'showComparison',
+            'eventDisplayMode',
+            'eventDisplayLimit',
             'chartDates',
             'chartShowTeater',
             'chartKonser',
@@ -49,7 +51,9 @@ class DashboardTest extends TestCase
             'nextMilestone',
             'milestoneProgress',
             'milestoneRemaining',
-            'recentLiveStreaming',
+            'liveStreamingEvents',
+            'pastEvents',
+            'upcomingEvents',
         ]);
     }
 
@@ -58,11 +62,33 @@ class DashboardTest extends TestCase
         $user = User::factory()->create();
         $this->actingAs($user);
 
-        foreach (['default', '7days', 'monthly', 'quarter', '6months', 'yearly'] as $period) {
+        foreach (['7days', 'monthly', 'quarter', '6months', 'yearly'] as $period) {
             $response = $this->get(route('dashboard', ['period' => $period]));
             $response->assertOk();
             $response->assertViewHas('period', $period);
         }
+
+        $response = $this->get(route('dashboard'));
+        $response->assertOk();
+        $response->assertViewHas('period', '7days');
+        $response->assertDontSee('Default');
+        $response->assertSee('7 Hari', false);
+    }
+
+    public function test_dashboard_event_display_controls_pass_through(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $response = $this->get(route('dashboard', [
+            'event_display_mode' => 'count',
+            'event_display_limit' => 10,
+        ]));
+
+        $response->assertOk();
+        $response->assertViewHas('eventDisplayMode', 'count');
+        $response->assertViewHas('eventDisplayLimit', 10);
+        $response->assertSee('Berdasarkan jumlah event', false);
     }
 
     public function test_dashboard_comparison_toggle_passes_data(): void

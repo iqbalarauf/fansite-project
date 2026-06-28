@@ -21,9 +21,10 @@
             <form method="GET" action="{{ route('dashboard') }}" id="period-form" class="flex flex-wrap items-center gap-2">
                 <input type="hidden" name="comparison" value="{{ $showComparison ? '1' : '0' }}" id="comparison-hidden" />
                 <input type="hidden" name="period" value="{{ $period }}" id="period-hidden" />
+                <input type="hidden" name="event_display_mode" value="{{ $eventDisplayMode }}" id="period-event-display-mode-hidden" />
+                <input type="hidden" name="event_display_limit" value="{{ $eventDisplayLimit }}" id="period-event-display-limit-hidden" />
                 <div class="flex items-center rounded-xl border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-700 dark:bg-zinc-800">
                     @foreach ([
-                        'default' => 'Default',
                         '7days'  => '7 Hari',
                         'monthly'=> 'Bulanan',
                         'quarter'=> 'Kuartal',
@@ -72,7 +73,7 @@
                 </div>
             </form>
 
-            <div class="flex items-center gap-3">
+            <div class="flex flex-wrap items-center gap-3">
                 {{-- Comparison toggle --}}
                 <div class="flex items-center gap-2">
                     <span class="text-sm text-zinc-500 dark:text-zinc-400">Perbandingan</span>
@@ -86,6 +87,33 @@
                         <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform
                             {{ $showComparison ? 'translate-x-6' : 'translate-x-1' }}"></span>
                     </button>
+                </div>
+
+                <div class="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900">
+                    <span class="text-sm font-medium text-zinc-600 dark:text-zinc-300">Mode Event</span>
+                    <button
+                        type="button"
+                        onclick="setEventDisplayMode('{{ $eventDisplayMode === 'period' ? 'count' : 'period' }}')"
+                        class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {{ $eventDisplayMode === 'period' ? 'bg-blue-600' : 'bg-zinc-300 dark:bg-zinc-600' }}"
+                    >
+                        <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform {{ $eventDisplayMode === 'period' ? 'translate-x-6' : 'translate-x-1' }}"></span>
+                    </button>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">
+                        {{ $eventDisplayMode === 'period' ? 'Ikuti periode dashboard' : 'Berdasarkan jumlah event' }}
+                    </span>
+                </div>
+
+                <div class="flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900">
+                    <span class="text-sm font-medium text-zinc-600 dark:text-zinc-300">Jumlah event</span>
+                    <div class="flex items-center gap-2">
+                        @foreach ([5, 10, 15] as $limit)
+                            <button
+                                type="button"
+                                onclick="setEventDisplayLimit({{ $limit }})"
+                                class="flex size-8 items-center justify-center rounded-lg border text-xs font-medium transition-colors {{ $eventDisplayLimit === $limit ? 'border-blue-500 bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400' : 'border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800' }}"
+                            >{{ $limit }}</button>
+                        @endforeach
+                    </div>
                 </div>
 
                 {{-- Capture button --}}
@@ -164,7 +192,7 @@
                 <div class="mb-4 flex items-center justify-between">
                     <flux:heading size="sm" class="font-semibold">Oshimen Activity</flux:heading>
                     <span class="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                        {{ match($period) { 'default' => 'Default', '7days' => '7 Hari', 'monthly' => 'Bulanan', 'quarter' => 'Kuartal', '6months' => '6 Bulan', 'yearly' => '1 Tahun', 'custom' => 'Custom' } }}
+                        {{ match($period) { '7days' => '7 Hari', 'monthly' => 'Bulanan', 'quarter' => 'Kuartal', '6months' => '6 Bulan', 'yearly' => '1 Tahun', 'custom' => 'Custom' } }}
                     </span>
                 </div>
                 {{-- Legend --}}
@@ -206,7 +234,7 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" class="size-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
                                 </svg>
-                                Reminder H-{{ $birthdayCountdown }}: Siapkan Project Sellersal!
+                                Reminder H-{{ $birthdayCountdown }}: Siapkan Project Seitansai!
                             </div>
                         @endif
                     @else
@@ -242,9 +270,11 @@
             <div class="col-span-1 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">
                 <div class="mb-4 flex items-center justify-between">
                     <flux:heading size="sm" class="font-semibold">Live Streaming</flux:heading>
-                    <span class="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">7 Hari</span>
+                    <span class="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                        {{ match($period) { '7days' => '7 Hari', 'monthly' => 'Bulanan', 'quarter' => 'Kuartal', '6months' => '6 Bulan', 'yearly' => '1 Tahun', 'custom' => 'Custom' } }}
+                    </span>
                 </div>
-                @forelse ($recentLiveStreaming as $ls)
+                @forelse ($liveStreamingEvents as $ls)
                     <div class="mb-3 flex items-center gap-3 rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-800/50">
                         <div class="rounded-lg bg-green-100 p-2 text-green-600 dark:bg-green-900/30 dark:text-green-400">
                             <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -285,23 +315,9 @@
                         <flux:heading size="sm" class="font-semibold">Event Telah Berlalu</flux:heading>
                     </div>
                     <span class="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
-                        {{ $pastShowTeater->count() + $pastConcerts->count() + $pastMeetGreet->count() }} total
+                        {{ $pastEvents->count() }} total
                     </span>
                 </div>
-
-                @php
-                    $pastEvents = collect();
-                    foreach ($pastShowTeater as $s) {
-                        $pastEvents->push(['type' => 'Show Teater', 'name' => $s->is_the_show_has_event, 'date' => $s->show_date, 'badge_color' => 'blue']);
-                    }
-                    foreach ($pastConcerts as $c) {
-                        $pastEvents->push(['type' => 'Konser', 'name' => $c->event_name, 'date' => $c->event_date, 'badge_color' => 'red']);
-                    }
-                    foreach ($pastMeetGreet as $m) {
-                        $pastEvents->push(['type' => 'Meet & Greet', 'name' => $m->event_name, 'date' => $m->event_date, 'badge_color' => 'orange']);
-                    }
-                    $pastEvents = $pastEvents->sortByDesc('date')->take(8);
-                @endphp
 
                 @forelse ($pastEvents as $event)
                     <div class="mb-2 flex items-center gap-3 rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-800/50">
@@ -331,23 +347,9 @@
                         <flux:heading size="sm" class="font-semibold">Event Mendatang</flux:heading>
                     </div>
                     <span class="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                        {{ $upcomingShowTeater->count() + $upcomingConcerts->count() + $upcomingMeetGreet->count() }} total
+                        {{ $upcomingEvents->count() }} total
                     </span>
                 </div>
-
-                @php
-                    $upcomingEvents = collect();
-                    foreach ($upcomingShowTeater as $s) {
-                        $upcomingEvents->push(['type' => 'Show Teater', 'name' => $s->is_the_show_has_event, 'date' => $s->show_date, 'badge_color' => 'blue']);
-                    }
-                    foreach ($upcomingConcerts as $c) {
-                        $upcomingEvents->push(['type' => 'Konser', 'name' => $c->event_name, 'date' => $c->event_date, 'badge_color' => 'red']);
-                    }
-                    foreach ($upcomingMeetGreet as $m) {
-                        $upcomingEvents->push(['type' => 'Meet & Greet', 'name' => $m->event_name, 'date' => $m->event_date, 'badge_color' => 'orange']);
-                    }
-                    $upcomingEvents = $upcomingEvents->sortBy('date');
-                @endphp
 
                 @forelse ($upcomingEvents as $event)
                     @php
@@ -376,6 +378,15 @@
                 @endforelse
             </div>
         </div>
+
+        <form method="GET" action="{{ route('dashboard') }}" id="event-controls-form" class="hidden">
+            <input type="hidden" name="period" value="{{ $period }}" />
+            <input type="hidden" name="comparison" value="{{ $showComparison ? '1' : '0' }}" />
+            <input type="hidden" name="date_from" value="{{ $customFrom }}" />
+            <input type="hidden" name="date_to" value="{{ $customTo }}" />
+            <input type="hidden" name="event_display_mode" id="event-controls-display-mode-hidden" value="{{ $eventDisplayMode }}" />
+            <input type="hidden" name="event_display_limit" id="event-controls-display-limit-hidden" value="{{ $eventDisplayLimit }}" />
+        </form>
 
     </div>
 
@@ -417,6 +428,17 @@
             const current = hidden.value === '1';
             hidden.value = current ? '0' : '1';
             document.getElementById('period-form').submit();
+        }
+
+        function setEventDisplayMode(mode) {
+            document.getElementById('event-controls-display-mode-hidden').value = mode;
+            document.getElementById('event-controls-form').submit();
+        }
+
+        function setEventDisplayLimit(limit) {
+            document.getElementById('event-controls-display-limit-hidden').value = limit;
+            document.getElementById('event-controls-display-mode-hidden').value = 'count';
+            document.getElementById('event-controls-form').submit();
         }
 
         // --- Capture ---

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -12,10 +13,34 @@ class DashboardController extends Controller
 {
     public function index(Request $request)
     {
-        $period = $request->get('period', 'default');
+        $period = $request->get('period', '7days');
+        if ($period === 'default') {
+            $period = '7days';
+        }
+
+        $allowedPeriods = ['7days', 'monthly', 'quarter', '6months', 'yearly', 'custom'];
+        if (! in_array($period, $allowedPeriods, true)) {
+            $period = '7days';
+        }
+
         $showComparison = $request->boolean('comparison', false);
         $customFrom = $request->get('date_from');
         $customTo = $request->get('date_to');
+        $eventDisplayMode = $request->get('event_display_mode', 'period');
+        $eventDisplayLimit = (int) $request->get('event_display_limit', 5);
+        $eventLimit = (int) $request->integer('event_limit', 5);
+        $eventLimit = in_array($eventLimit, [5, 10, 15], true) ? $eventLimit : 5;
+        $eventsFollowPeriod = $request->has('events_follow_period')
+            ? $request->boolean('events_follow_period')
+            : true;
+
+        if (! in_array($eventDisplayMode, ['period', 'count'], true)) {
+            $eventDisplayMode = 'period';
+        }
+
+        if (! in_array($eventDisplayLimit, [5, 10, 15], true)) {
+            $eventDisplayLimit = 5;
+        }
 
         // Auto-detect custom period when dates are provided
         if ($customFrom && $customTo) {
@@ -43,29 +68,20 @@ class DashboardController extends Controller
         }
 
         // --- Current period stats ---
-        if ($period === 'default') {
-            $stats = Cache::remember(
-                'dashboard_stats_total',
-                300,
-                fn () => $this->getTotalStats()
-            );
-            $prevStats = null;
-        } else {
-            $stats = Cache::remember(
-                "dashboard_stats_{$dateFrom->toDateString()}_{$dateTo->toDateString()}",
-                300,
-                fn () => $this->getStats($dateFrom, $dateTo)
-            );
+        $stats = Cache::remember(
+            "dashboard_stats_{$dateFrom->toDateString()}_{$dateTo->toDateString()}",
+            300,
+            fn () => $this->getStats($dateFrom, $dateTo)
+        );
 
-            // --- Previous period stats (for comparison) ---
-            $prevStats = null;
-            if ($showComparison) {
-                $prevStats = Cache::remember(
-                    "dashboard_stats_{$prevFrom->toDateString()}_{$prevTo->toDateString()}",
-                    300,
-                    fn () => $this->getStats($prevFrom, $prevTo)
-                );
-            }
+        // --- Previous period stats (for comparison) ---
+        $prevStats = null;
+        if ($showComparison) {
+            $prevStats = Cache::remember(
+                "dashboard_stats_{$prevFrom->toDateString()}_{$prevTo->toDateString()}",
+                300,
+                fn () => $this->getStats($prevFrom, $prevTo)
+            );
         }
 
         // Determine chart aggregation type based on period
@@ -94,6 +110,7 @@ class DashboardController extends Controller
         $concertColExpr = str_replace('{col}', 'event_date', $groupExpression);
         $concertActivity = DB::table('concert_events')
             ->whereBetween('event_date', [$dateFrom->toDateString(), $dateTo->toDateString()])
+            ->whereNull('deleted_at')
             ->selectRaw("$concertColExpr as group_key, COUNT(*) as count")
             ->groupBy('group_key')
             ->get()
@@ -103,6 +120,7 @@ class DashboardController extends Controller
         $mgColExpr = str_replace('{col}', 'event_date', $groupExpression);
         $mgActivity = DB::table('meet_greet_events')
             ->whereBetween('event_date', [$dateFrom->toDateString(), $dateTo->toDateString()])
+            ->whereNull('deleted_at')
             ->selectRaw("$mgColExpr as group_key, COUNT(*) as count")
             ->groupBy('group_key')
             ->get()
@@ -169,129 +187,29 @@ class DashboardController extends Controller
         $milestoneProgress = $totalShows - $prevMilestone;
         $milestoneRemaining = $nextMilestone - $totalShows;
 
-        // --- Live streaming last 7 days ---
-        $todayStr = now()->toDateString();
-        $recentLiveStreaming = collect(Cache::remember(
-            "recent_live_streaming_{$todayStr}",
+        // --- Live streaming follows the selected dashboard period ---
+        $liveStreamingEvents = collect(Cache::remember(
+            "recent_live_streaming_{$dateFrom->toDateString()}_{$dateTo->toDateString()}",
             300,
             fn () => DB::table('live_streaming')
-                ->where('live_date', '>=', now()->subDays(7)->toDateString())
+                ->whereBetween('live_date', [$dateFrom->toDateString(), $dateTo->toDateString()])
                 ->orderByDesc('live_date')
                 ->get()
                 ->map(fn ($item) => (array) $item)
                 ->all()
         ))->map(fn ($item) => (object) $item);
 
-        // --- Past events (shows + concerts + MG) ---
+        // --- Past / upcoming events ---
         $today = now()->toDateString();
+        $fromStr = $dateFrom->toDateString();
+        $toStr = $dateTo->toDateString();
 
-        if ($period === 'default') {
-            $pastShowTeater = collect(Cache::remember("past_show_teater_default_{$today}", 300, fn () => DB::table('show_teater')
-                ->where('show_date', '<', $today)
-                ->where('is_the_show_has_event', '!=', '')
-                ->whereNotNull('is_the_show_has_event')
-                ->orderByDesc('show_date')
-                ->limit(5)
-                ->get()
-                ->map(fn ($item) => (array) $item)
-                ->all()))->map(fn ($item) => (object) $item);
-
-            $pastConcerts = collect(Cache::remember("past_concerts_default_{$today}", 300, fn () => DB::table('concert_events')
-                ->where('event_date', '<', $today)
-                ->orderByDesc('event_date')
-                ->limit(5)
-                ->get()
-                ->map(fn ($item) => (array) $item)
-                ->all()))->map(fn ($item) => (object) $item);
-
-            $pastMeetGreet = collect(Cache::remember("past_meet_greet_default_{$today}", 300, fn () => DB::table('meet_greet_events')
-                ->where('event_date', '<', $today)
-                ->orderByDesc('event_date')
-                ->limit(5)
-                ->get()
-                ->map(fn ($item) => (array) $item)
-                ->all()))->map(fn ($item) => (object) $item);
-
-            $upcomingShowTeater = collect(Cache::remember("upcoming_show_teater_default_{$today}", 300, fn () => DB::table('show_teater')
-                ->where('show_date', '>=', $today)
-                ->whereNotNull('is_the_show_has_event')
-                ->where('is_the_show_has_event', '!=', '')
-                ->orderBy('show_date')
-                ->limit(5)
-                ->get()
-                ->map(fn ($item) => (array) $item)
-                ->all()))->map(fn ($item) => (object) $item);
-
-            $upcomingConcerts = collect(Cache::remember("upcoming_concerts_default_{$today}", 300, fn () => DB::table('concert_events')
-                ->where('event_date', '>=', $today)
-                ->orderBy('event_date')
-                ->limit(5)
-                ->get()
-                ->map(fn ($item) => (array) $item)
-                ->all()))->map(fn ($item) => (object) $item);
-
-            $upcomingMeetGreet = collect(Cache::remember("upcoming_meet_greet_default_{$today}", 300, fn () => DB::table('meet_greet_events')
-                ->where('event_date', '>=', $today)
-                ->orderBy('event_date')
-                ->limit(5)
-                ->get()
-                ->map(fn ($item) => (array) $item)
-                ->all()))->map(fn ($item) => (object) $item);
+        if ($eventsFollowPeriod) {
+            $pastEvents = $this->buildTimelineEvents('past', $fromStr, $toStr, $today, $eventDisplayMode, $eventDisplayLimit);
+            $upcomingEvents = $this->buildTimelineEvents('upcoming', $fromStr, $toStr, $today, $eventDisplayMode, $eventDisplayLimit);
         } else {
-            $fromStr = $dateFrom->toDateString();
-            $toStr = $dateTo->toDateString();
-
-            $pastShowTeater = collect(Cache::remember("past_show_teater_{$fromStr}_{$toStr}", 300, fn () => DB::table('show_teater')
-                ->where('show_date', '<', $today)
-                ->where('show_date', '>=', $fromStr)
-                ->where('is_the_show_has_event', '!=', '')
-                ->whereNotNull('is_the_show_has_event')
-                ->orderByDesc('show_date')
-                ->get()
-                ->map(fn ($item) => (array) $item)
-                ->all()))->map(fn ($item) => (object) $item);
-
-            $pastConcerts = collect(Cache::remember("past_concerts_{$fromStr}_{$toStr}", 300, fn () => DB::table('concert_events')
-                ->where('event_date', '<', $today)
-                ->where('event_date', '>=', $fromStr)
-                ->orderByDesc('event_date')
-                ->get()
-                ->map(fn ($item) => (array) $item)
-                ->all()))->map(fn ($item) => (object) $item);
-
-            $pastMeetGreet = collect(Cache::remember("past_meet_greet_{$fromStr}_{$toStr}", 300, fn () => DB::table('meet_greet_events')
-                ->where('event_date', '<', $today)
-                ->where('event_date', '>=', $fromStr)
-                ->orderByDesc('event_date')
-                ->get()
-                ->map(fn ($item) => (array) $item)
-                ->all()))->map(fn ($item) => (object) $item);
-
-            $upcomingShowTeater = collect(Cache::remember("upcoming_show_teater_{$fromStr}_{$toStr}", 300, fn () => DB::table('show_teater')
-                ->where('show_date', '>=', $today)
-                ->where('show_date', '<=', $toStr)
-                ->whereNotNull('is_the_show_has_event')
-                ->where('is_the_show_has_event', '!=', '')
-                ->orderBy('show_date')
-                ->get()
-                ->map(fn ($item) => (array) $item)
-                ->all()))->map(fn ($item) => (object) $item);
-
-            $upcomingConcerts = collect(Cache::remember("upcoming_concerts_{$fromStr}_{$toStr}", 300, fn () => DB::table('concert_events')
-                ->where('event_date', '>=', $today)
-                ->where('event_date', '<=', $toStr)
-                ->orderBy('event_date')
-                ->get()
-                ->map(fn ($item) => (array) $item)
-                ->all()))->map(fn ($item) => (object) $item);
-
-            $upcomingMeetGreet = collect(Cache::remember("upcoming_meet_greet_{$fromStr}_{$toStr}", 300, fn () => DB::table('meet_greet_events')
-                ->where('event_date', '>=', $today)
-                ->where('event_date', '<=', $toStr)
-                ->orderBy('event_date')
-                ->get()
-                ->map(fn ($item) => (array) $item)
-                ->all()))->map(fn ($item) => (object) $item);
+            $pastEvents = $this->buildTimelineEvents('past', null, null, $today, $eventDisplayMode, $eventDisplayLimit);
+            $upcomingEvents = $this->buildTimelineEvents('upcoming', null, null, $today, $eventDisplayMode, $eventDisplayLimit);
         }
 
         return view('dashboard', compact(
@@ -305,6 +223,8 @@ class DashboardController extends Controller
             'showComparison',
             'customFrom',
             'customTo',
+            'eventDisplayMode',
+            'eventDisplayLimit',
             'chartDates',
             'chartShowTeater',
             'chartKonser',
@@ -315,13 +235,9 @@ class DashboardController extends Controller
             'prevMilestone',
             'milestoneProgress',
             'milestoneRemaining',
-            'recentLiveStreaming',
-            'pastShowTeater',
-            'pastConcerts',
-            'pastMeetGreet',
-            'upcomingShowTeater',
-            'upcomingConcerts',
-            'upcomingMeetGreet',
+            'liveStreamingEvents',
+            'pastEvents',
+            'upcomingEvents',
         ));
     }
 
@@ -384,5 +300,111 @@ class DashboardController extends Controller
             'us_center' => (int) ($shows->us_center ?? 0),
             'global_center' => (int) ($shows->global_center ?? 0),
         ];
+    }
+
+    /**
+     * @return Collection<int, array{type: string, name: string|null, date: string, badge_color: string}>
+     */
+    private function buildTimelineEvents(string $direction, ?string $from, ?string $to, string $today, string $mode, int $limit): Collection
+    {
+        $past = $direction === 'past';
+
+        $showQuery = DB::table('show_teater')
+            ->whereNotNull('is_the_show_has_event')
+            ->where('is_the_show_has_event', '!=', '')
+            ->when($mode === 'period' && $from && $to, function ($query) use ($from, $to, $past, $today): void {
+                $query->whereBetween('show_date', [$from, $to]);
+
+                if ($past) {
+                    $query->where('show_date', '<', $today);
+                } else {
+                    $query->where('show_date', '>=', $today);
+                }
+            })
+            ->when($mode === 'count', function ($query) use ($past, $today): void {
+                if ($past) {
+                    $query->where('show_date', '<', $today);
+                } else {
+                    $query->where('show_date', '>=', $today);
+                }
+            })
+            ->orderBy($past ? 'show_date' : 'show_date', $past ? 'desc' : 'asc');
+
+        $concertQuery = DB::table('concert_events')
+            ->whereNull('deleted_at')
+            ->when($mode === 'period' && $from && $to, function ($query) use ($from, $to, $past, $today): void {
+                $query->whereBetween('event_date', [$from, $to]);
+
+                if ($past) {
+                    $query->where('event_date', '<', $today);
+                } else {
+                    $query->where('event_date', '>=', $today);
+                }
+            })
+            ->when($mode === 'count', function ($query) use ($past, $today): void {
+                if ($past) {
+                    $query->where('event_date', '<', $today);
+                } else {
+                    $query->where('event_date', '>=', $today);
+                }
+            })
+            ->orderBy('event_date', $past ? 'desc' : 'asc');
+
+        $meetGreetQuery = DB::table('meet_greet_events')
+            ->whereNull('deleted_at')
+            ->when($mode === 'period' && $from && $to, function ($query) use ($from, $to, $past, $today): void {
+                $query->whereBetween('event_date', [$from, $to]);
+
+                if ($past) {
+                    $query->where('event_date', '<', $today);
+                } else {
+                    $query->where('event_date', '>=', $today);
+                }
+            })
+            ->when($mode === 'count', function ($query) use ($past, $today): void {
+                if ($past) {
+                    $query->where('event_date', '<', $today);
+                } else {
+                    $query->where('event_date', '>=', $today);
+                }
+            })
+            ->orderBy('event_date', $past ? 'desc' : 'asc');
+
+        $events = collect();
+
+        foreach ($showQuery->get() as $show) {
+            $events->push([
+                'type' => 'Show Teater',
+                'name' => $show->setlist,
+                'date' => $show->show_date,
+                'badge_color' => 'blue',
+            ]);
+        }
+
+        foreach ($concertQuery->get() as $concert) {
+            $events->push([
+                'type' => 'Konser',
+                'name' => $concert->event_name,
+                'date' => $concert->event_date,
+                'badge_color' => 'red',
+            ]);
+        }
+
+        foreach ($meetGreetQuery->get() as $meetGreet) {
+            $events->push([
+                'type' => 'Meet & Greet',
+                'name' => $meetGreet->event_name,
+                'date' => $meetGreet->event_date,
+                'badge_color' => 'orange',
+            ]);
+        }
+
+        $events = $past ? $events->sortByDesc('date')->values() : $events->sortBy('date')->values();
+
+        if ($mode === 'count') {
+            $events = $events->take($limit)->values();
+        }
+
+        return $events;
     }
 }
