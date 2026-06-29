@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ConcertEventsController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LiveStreamingController;
 use App\Http\Controllers\MeetGreetEventsController;
 use App\Http\Controllers\ShowTeaterCategoriesController;
 use App\Http\Controllers\ShowTeaterController;
@@ -37,6 +38,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('concert-events', [ConcertEventsController::class, 'store'])->name('concert-events.store');
     Route::put('concert-events/{concertEvent}', [ConcertEventsController::class, 'update'])->name('concert-events.update');
     Route::delete('concert-events/{concertEvent}', [ConcertEventsController::class, 'destroy'])->name('concert-events.destroy');
+
+    // Live Streaming
+    Route::get('live-streaming', [LiveStreamingController::class, 'index'])->name('live-streaming.index');
+    Route::post('live-streaming', [LiveStreamingController::class, 'store'])->name('live-streaming.store');
+    Route::put('live-streaming/{liveStreaming}', [LiveStreamingController::class, 'update'])->name('live-streaming.update');
 });
 
 require __DIR__.'/settings.php';

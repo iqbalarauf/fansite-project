@@ -29,6 +29,9 @@
                     <flux:sidebar.item icon="radio" :href="route('concert-events.index')" :current="request()->routeIs('concert-events.*')" wire:navigate>
                         {{ __('Concerts Events') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="video-camera" :href="route('live-streaming.index')" :current="request()->routeIs('live-streaming.*')" wire:navigate>
+                        {{ __('Live Streaming') }}
+                    </flux:sidebar.item>
                 </flux:sidebar.group>
             </flux:sidebar.nav>
 

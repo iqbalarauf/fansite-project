@@ -111,7 +111,7 @@
                         @forelse ($events as $event)
                             <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors">
                                 <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-200">{{ $event->event_name }}</td>
-                                <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $event->event_date?->format('Y-m-d') }}</td>
+                                <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $event->event_date?->translatedFormat('d F Y') }}</td>
                                 <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $event->location }}</td>
                                 <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">
                                     @if ($event->status === 'on-air')

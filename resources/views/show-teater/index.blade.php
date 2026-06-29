@@ -148,7 +148,16 @@
                         @forelse ($shows as $show)
                             <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors">
                                 <td class="px-4 py-3 font-medium text-blue-600 dark:text-blue-400">{{ $show->show_id }}</td>
-                                <td class="px-4 py-3 text-blue-600 dark:text-blue-400">{{ $show->show_date }}</td>
+                                @php
+                                    $showDateDisplay = $show->show_date;
+
+                                    try {
+                                        $showDateDisplay = \Illuminate\Support\Carbon::parse($show->show_date)->translatedFormat('d F Y');
+                                    } catch (\Throwable $exception) {
+                                        // Keep original value if parsing fails.
+                                    }
+                                @endphp
+                                <td class="px-4 py-3 text-blue-600 dark:text-blue-400">{{ $showDateDisplay }}</td>
                                 <td class="px-4 py-3 text-blue-600 dark:text-blue-400">{{ $show->display_setlist ?: $show->setlist }}</td>
                                 <td class="px-4 py-3 text-blue-600 dark:text-blue-400">{{ $show->display_unit_song ?: $show->unit_song }}</td>
                                 <td class="px-4 py-3 text-center">

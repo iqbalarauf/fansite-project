@@ -119,10 +119,10 @@
                                     @endif
                                 </td>
                                 <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">
-                                    {{ $event->event_date?->format('Y-m-d') }}{{ $event->event_date_2 ? ', '.$event->event_date_2->format('Y-m-d') : '' }}
+                                    {{ $event->event_date?->translatedFormat('d F Y') }}{{ $event->event_date_2 ? ', '.$event->event_date_2->translatedFormat('d F Y') : '' }}
                                 </td>
                                 <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">
-                                    {{ $event->ticket_sale_datetime?->format('Y-m-d') ?? '–' }}
+                                    {{ $event->ticket_sale_datetime?->translatedFormat('d F Y') ?? '–' }}
                                 </td>
                                 <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">
                                     @if ($event->purchase_link)
