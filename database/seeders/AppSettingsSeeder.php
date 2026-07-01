@@ -4,27 +4,28 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use App\Models\Setting;
 
-class AppSettingSeeder extends Seeder
+class AppSettingsSeeder extends Seeder
 {
     public function run(): void
     {
         $settings = [
             [
                 'key' => 'app_name',
-                'value' => 'Fansite Project',
+                'value' => 'FANSIGHT DEV',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
                 'key' => 'sidebar_name',
-                'value' => 'Fansite',
+                'value' => 'FANSIGHT DEV',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
                 'key' => 'desc_app',
-                'value' => 'Welcome to our fansite - your ultimate destination for all things related to your favorite idol!',
+                'value' => 'Welcome to FANSIGHT - your ultimate destination for all things related to your favorite idol!',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -42,36 +43,6 @@ class AppSettingSeeder extends Seeder
             ],
             [
                 'key' => 'login_image',
-                'value' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'showroom_room_id',
-                'value' => '416491',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'showroom_link',
-                'value' => 'https://www.showroom-live.com',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'instagram_url',
-                'value' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'twitter_url',
-                'value' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'tiktok_url',
                 'value' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
