@@ -62,7 +62,7 @@ const close = () => {
 <template>
     <DialogModal :show="show" @close="close" max-width="2xl">
         <template #title>
-            {{ editingEvent ? 'Edit Concert Event' : 'Add Concert Event' }}
+            {{ editingEvent ? 'Edit Concert/Event' : 'Add Concert/Event' }}
         </template>
 
         <template #content>
@@ -104,23 +104,20 @@ const close = () => {
                         </div>
                     </div>
 
-                    <!-- Status (Radio Buttons) -->
+                    <!-- Status (Dropdown) -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Status
                         </label>
-                        <div class="flex gap-6">
-                            <label class="inline-flex items-center">
-                                <input v-model="form.status" type="radio" value="off-air"
-                                    class="rounded-full border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600" />
-                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Off-Air</span>
-                            </label>
-                            <label class="inline-flex items-center">
-                                <input v-model="form.status" type="radio" value="on-air"
-                                    class="rounded-full border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600" />
-                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">On-Air</span>
-                            </label>
-                        </div>
+                        <select id="status" v-model="form.status" required
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            <option value="off-air">Off-Air</option>
+                            <option value="on-air">On-Air</option>
+                            <option value="jkt48-event">JKT48 Concert</option>
+                            <option value="media">Media</option>
+                            <option value="ofc-event">OFC Event</option>
+                            <option value="brand">Brand</option>
+                        </select>
                         <div v-if="form.errors.status" class="text-sm text-red-600 mt-1">
                             {{ form.errors.status }}
                         </div>

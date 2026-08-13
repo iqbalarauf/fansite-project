@@ -17,6 +17,7 @@ return new class extends Migration
             $table->enum('event_type', ['meet-greet', 'video-call'])->default('meet-greet');
             $table->date('event_date');
             $table->date('event_date_2')->nullable(); // For video call second date
+            $table->string('location');
             $table->datetime('ticket_sale_datetime')->nullable(); // Jadwal pembelian tiket
             $table->string('purchase_link')->nullable();
             $table->timestamps();

@@ -145,12 +145,12 @@ watch([searchTerm, selectedStatus, selectedLocation, selectedDateRange, sortDire
 
 <template>
 
-    <Head title="Concert Events" />
+    <Head title="Concert &Events" />
 
-    <AppLayout title="Concert Events">
+    <AppLayout title="Concert & Events">
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                Master Data - Concert Events
+                Master Data - Concert and Events
             </h2>
         </template>
 
@@ -162,16 +162,16 @@ watch([searchTerm, selectedStatus, selectedLocation, selectedDateRange, sortDire
                         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                             <div>
                                 <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-                                    Manage Concert Events
+                                    Manage Concert and Events
                                 </h3>
                                 <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                                    Kelola data concert event di luar setlist teater
+                                    Kelola data concert dan event di luar setlist teater
                                 </p>
                             </div>
                             <div class="flex items-center gap-3">
                                 <button @click="openAddModal"
                                     class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring focus:ring-blue-300 disabled:opacity-25 transition">
-                                    Add Concert Event
+                                    Add Concert/Event
                                 </button>
                             </div>
                         </div>
@@ -186,14 +186,8 @@ watch([searchTerm, selectedStatus, selectedLocation, selectedDateRange, sortDire
                                     class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
                             </div>
                             <div class="flex-shrink-0 w-48">
-                                <VueDatePicker
-                                    v-model="selectedDateRange"
-                                    range
-                                    placeholder="Select date range"
-                                    format="dd/MM/yyyy"
-                                    :clearable="true"
-                                    :enable-time-picker="false"
-                                />
+                                <VueDatePicker v-model="selectedDateRange" range placeholder="Select date range"
+                                    format="dd/MM/yyyy" :clearable="true" :enable-time-picker="false" />
                             </div>
                             <div class="flex-shrink-0">
                                 <select v-model="selectedLocation"
@@ -208,6 +202,10 @@ watch([searchTerm, selectedStatus, selectedLocation, selectedDateRange, sortDire
                                     <option value="all">All Status</option>
                                     <option value="off-air">Off-Air</option>
                                     <option value="on-air">On-Air</option>
+                                    <option value="jkt48-event">JKT48 Concert</option>
+                                    <option value="media">Media</option>
+                                    <option value="ofc-event">OFC Event</option>
+                                    <option value="brand">Brand</option>
                                 </select>
                             </div>
                             <div class="flex items-center gap-2 flex-shrink-0">
@@ -255,7 +253,7 @@ watch([searchTerm, selectedStatus, selectedLocation, selectedDateRange, sortDire
                                 <tr v-if="paginatedEvents.length === 0">
                                     <td colspan="6"
                                         class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-                                        No concert events found
+                                        No concert/events found
                                     </td>
                                 </tr>
                                 <tr v-for="event in paginatedEvents" :key="event.id"

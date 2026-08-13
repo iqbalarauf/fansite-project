@@ -1,21 +1,20 @@
 <?php
 
-use Illuminate\Foundation\Application;
-use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
-use App\Http\Controllers\PostController;
 use App\Http\Controllers\AccountController;
-use App\Models\Post;
-use Illuminate\Support\Facades\Storage;
-use Laravel\Fortify\Http\Controllers\RegisteredUserController;
+use App\Http\Controllers\PostController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ShowroomProxyController;
-use App\Http\Controllers\ShowTeaterController;
 use App\Http\Controllers\ShowTeaterCategoryController;
-use Illuminate\Support\Facades\DB;
-use App\Models\LiveStreaming;
-use App\Models\Setting;
+use App\Http\Controllers\ShowTeaterController;
 use App\Models\AboutSetting;
+use App\Models\LiveStreaming;
+use App\Models\Post;
+use App\Models\Setting;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
+use Laravel\Fortify\Http\Controllers\RegisteredUserController;
 
 /**
  * Parse show_date from various formats
@@ -31,22 +30,24 @@ function parseShowDate($dateString)
         // Try dd.mm.yyyy format
         if (preg_match('/^\d{2}\.\d{2}\.\d{4}$/', $dateString)) {
             $parts = explode('.', $dateString);
-            return \Carbon\Carbon::createFromFormat('Y-m-d', $parts[2] . '-' . $parts[1] . '-' . $parts[0]);
+
+            return \Carbon\Carbon::createFromFormat('Y-m-d', $parts[2].'-'.$parts[1].'-'.$parts[0]);
         }
 
         // Try Indonesian format: "Jumat, 28 November 2024"
         $months = [
             'Januari' => '01', 'Februari' => '02', 'Maret' => '03', 'April' => '04',
             'Mei' => '05', 'Juni' => '06', 'Juli' => '07', 'Agustus' => '08',
-            'September' => '09', 'Oktober' => '10', 'November' => '11', 'Desember' => '12'
+            'September' => '09', 'Oktober' => '10', 'November' => '11', 'Desember' => '12',
         ];
 
         foreach ($months as $monthName => $monthNum) {
             if (strpos($dateString, $monthName) !== false) {
-                if (preg_match('/(\d{1,2})\s+' . $monthName . '\s+(\d{4})/', $dateString, $matches)) {
+                if (preg_match('/(\d{1,2})\s+'.$monthName.'\s+(\d{4})/', $dateString, $matches)) {
                     $day = str_pad($matches[1], 2, '0', STR_PAD_LEFT);
                     $year = $matches[2];
-                    return \Carbon\Carbon::createFromFormat('Y-m-d', $year . '-' . $monthNum . '-' . $day);
+
+                    return \Carbon\Carbon::createFromFormat('Y-m-d', $year.'-'.$monthNum.'-'.$day);
                 }
             }
         }
@@ -58,13 +59,13 @@ function parseShowDate($dateString)
 }
 
 Route::get('/', function () {
-    $latestPosts = Post::where('status','published')
+    $latestPosts = Post::where('status', 'published')
         ->whereNotNull('published_at')
-        ->where('published_at','<=', now())
+        ->where('published_at', '<=', now())
         ->orderByDesc('published_at')
         ->take(5)
         ->get()
-        ->map(fn($p) => [
+        ->map(fn ($p) => [
             'id' => $p->id,
             'title' => $p->title,
             'slug' => $p->slug,
@@ -83,28 +84,36 @@ Route::get('/', function () {
     $showTeaterEvents = DB::table('show_teater')
         ->whereBetween('show_date', [$startDate, $endDate])
         ->get()
-        ->map(fn($show) => [
+        ->map(fn ($show) => [
             'type' => 'SHOW',
             'name' => $show->setlist,
             'date' => $show->show_date,
             'color' => 'bg-red-500',
         ]);
 
-    // Get Concert Events
+    // Get Concert/Events
     $concertEvents = \App\Models\ConcertEvent::whereBetween('event_date', [$startDate, $endDate])
         ->get()
-        ->map(fn($concert) => [
-            'type' => $concert->status === 'on-air' ? 'ON-AIR' : 'OFF-AIR',
+        ->map(fn ($concert) => [
+            'type' => $concert->status,
             'name' => $concert->event_name,
             'date' => $concert->event_date,
-            'color' => $concert->status === 'on-air' ? 'bg-blue-500' : 'bg-green-500',
+            'color' => match ($concert->status) {
+                'on-air' => 'bg-blue-500',
+                'off-air' => 'bg-green-500',
+                'jkt48-event' => 'bg-red-500',
+                'media' => 'bg-yellow-500',
+                'ofc-event' => 'bg-purple-500',
+                'brand' => 'bg-pink-500',
+                default => 'bg-gray-500',
+            },
         ]);
 
     // Get Meet & Greet Events
-    $meetGreetEvents = \App\Models\MeetGreetEvent::where(function($query) use ($startDate, $endDate) {
+    $meetGreetEvents = \App\Models\MeetGreetEvent::where(function ($query) use ($startDate, $endDate) {
         $query->whereBetween('event_date', [$startDate, $endDate])
-              ->orWhereBetween('event_date_2', [$startDate, $endDate]);
-    })->get()->map(fn($event) => [
+            ->orWhereBetween('event_date_2', [$startDate, $endDate]);
+    })->get()->map(fn ($event) => [
         'type' => $event->event_type === 'video-call' ? 'VIDEO CALL' : 'MEET & GREET',
         'name' => $event->event_name,
         'date' => $event->event_date,
@@ -115,9 +124,9 @@ Route::get('/', function () {
     $ticketSaleEvents = \App\Models\MeetGreetEvent::whereNotNull('ticket_sale_datetime')
         ->whereBetween('ticket_sale_datetime', [$startDate, $endDate])
         ->get()
-        ->map(fn($event) => [
+        ->map(fn ($event) => [
             'type' => 'TICKET SALE',
-            'name' => 'Pembelian Tiket ' . $event->event_name,
+            'name' => 'Pembelian Tiket '.$event->event_name,
             'date' => $event->ticket_sale_datetime,
             'color' => 'bg-yellow-500',
         ]);
@@ -141,7 +150,7 @@ Route::get('/', function () {
         ->orderBy('created_at', 'desc')
         ->take(5)
         ->get()
-        ->map(fn($item) => [
+        ->map(fn ($item) => [
             'id' => $item->id,
             'title' => $item->title,
             'description' => $item->description,
@@ -173,6 +182,7 @@ Route::get('/', function () {
         ->get()
         ->filter(function ($show) use ($today) {
             $date = parseShowDate($show->show_date);
+
             return $date && $date->lt($today);
         })
         ->sortByDesc(function ($show) {
@@ -185,6 +195,7 @@ Route::get('/', function () {
         ->get()
         ->filter(function ($show) use ($today) {
             $date = parseShowDate($show->show_date);
+
             return $date && $date->lt($today);
         });
 
@@ -198,18 +209,18 @@ Route::get('/', function () {
         ->count();
 
     $uniqueSetlists = collect(DB::table('show_teater')->distinct()->pluck('setlist'))
-        ->filter(fn($value) => $value !== null && $value !== '')
+        ->filter(fn ($value) => $value !== null && $value !== '')
         ->values()
         ->count();
 
     $uniqueUnitSongs = collect(DB::table('show_teater')->pluck('unit_song'))
         ->flatMap(function ($unitSong) {
-            if (!is_string($unitSong) || trim($unitSong) === '') {
+            if (! is_string($unitSong) || trim($unitSong) === '') {
                 return [];
             }
 
             return collect(explode(',', $unitSong))
-                ->map(fn($item) => preg_replace('/\s+/', ' ', trim($item)))
+                ->map(fn ($item) => preg_replace('/\s+/', ' ', trim($item)))
                 ->filter();
         })
         ->unique()
@@ -284,18 +295,18 @@ Route::middleware([
             ->count();
 
         $uniqueSetlists = collect(DB::table('show_teater')->distinct()->pluck('setlist'))
-            ->filter(fn($value) => $value !== null && $value !== '')
+            ->filter(fn ($value) => $value !== null && $value !== '')
             ->values()
             ->count();
 
         $uniqueUnitSongs = collect(DB::table('show_teater')->pluck('unit_song'))
             ->flatMap(function ($unitSong) {
-                if (!is_string($unitSong) || trim($unitSong) === '') {
+                if (! is_string($unitSong) || trim($unitSong) === '') {
                     return [];
                 }
 
                 return collect(explode(',', $unitSong))
-                    ->map(fn($item) => preg_replace('/\s+/', ' ', trim($item)))
+                    ->map(fn ($item) => preg_replace('/\s+/', ' ', trim($item)))
                     ->filter();
             })
             ->unique()
@@ -319,6 +330,7 @@ Route::middleware([
             ->get()
             ->map(function ($show) {
                 $date = parseShowDate($show->show_date);
+
                 return [
                     'type' => 'show_teater',
                     'show_id' => $show->show_id,
@@ -333,7 +345,7 @@ Route::middleware([
                 ];
             });
 
-        // Get last week's concert events
+        // Get last week's concert/events
         $lastWeekConcertEvents = \App\Models\ConcertEvent::whereBetween('event_date', [$lastWeekStart, $lastWeekEnd])
             ->get()
             ->map(function ($event) {
@@ -349,9 +361,9 @@ Route::middleware([
             });
 
         // Get last week's meet & greet events
-        $lastWeekMeetGreetEvents = \App\Models\MeetGreetEvent::where(function($query) use ($lastWeekStart, $lastWeekEnd) {
+        $lastWeekMeetGreetEvents = \App\Models\MeetGreetEvent::where(function ($query) use ($lastWeekStart, $lastWeekEnd) {
             $query->whereBetween('event_date', [$lastWeekStart, $lastWeekEnd])
-                  ->orWhereBetween('event_date_2', [$lastWeekStart, $lastWeekEnd]);
+                ->orWhereBetween('event_date_2', [$lastWeekStart, $lastWeekEnd]);
         })->get()->map(function ($event) {
             return [
                 'type' => 'meet_greet',
@@ -382,6 +394,7 @@ Route::middleware([
             ->get()
             ->map(function ($show) {
                 $date = parseShowDate($show->show_date);
+
                 return [
                     'type' => 'show_teater',
                     'show_id' => $show->show_id,
@@ -391,7 +404,7 @@ Route::middleware([
                 ];
             });
 
-        // Get this week's concert events
+        // Get this week's concert/events
         $thisWeekConcertEvents = \App\Models\ConcertEvent::whereBetween('event_date', [$thisWeekStart, $thisWeekEnd])
             ->get()
             ->map(function ($event) {
@@ -407,9 +420,9 @@ Route::middleware([
             });
 
         // Get this week's meet & greet events
-        $thisWeekMeetGreetEvents = \App\Models\MeetGreetEvent::where(function($query) use ($thisWeekStart, $thisWeekEnd) {
+        $thisWeekMeetGreetEvents = \App\Models\MeetGreetEvent::where(function ($query) use ($thisWeekStart, $thisWeekEnd) {
             $query->whereBetween('event_date', [$thisWeekStart, $thisWeekEnd])
-                  ->orWhereBetween('event_date_2', [$thisWeekStart, $thisWeekEnd]);
+                ->orWhereBetween('event_date_2', [$thisWeekStart, $thisWeekEnd]);
         })->get()->map(function ($event) {
             return [
                 'type' => 'meet_greet',
@@ -436,45 +449,46 @@ Route::middleware([
             ->get()
             ->map(function ($show) {
                 $date = parseShowDate($show->show_date);
+
                 return [
-                    'type'                   => 'show_teater',
-                    'show_id'                => $show->show_id,
-                    'show_date'              => $show->show_date,
-                    'setlist'                => $show->setlist,
-                    'unit_song'              => $show->unit_song ?? null,
-                    'is_global_center'       => $show->is_global_center ?? 0,
-                    'is_us_center'           => $show->is_us_center ?? 0,
+                    'type' => 'show_teater',
+                    'show_id' => $show->show_id,
+                    'show_date' => $show->show_date,
+                    'setlist' => $show->setlist,
+                    'unit_song' => $show->unit_song ?? null,
+                    'is_global_center' => $show->is_global_center ?? 0,
+                    'is_us_center' => $show->is_us_center ?? 0,
                     'additional_information' => $show->additional_information ?? null,
-                    'is_the_show_has_event'  => $show->is_the_show_has_event ?? false,
-                    'parsed_date'            => $date ? $date->format('Y-m-d') : null,
+                    'is_the_show_has_event' => $show->is_the_show_has_event ?? false,
+                    'parsed_date' => $date ? $date->format('Y-m-d') : null,
                 ];
             })
-            ->filter(fn($s) => $s['parsed_date'] !== null)
+            ->filter(fn ($s) => $s['parsed_date'] !== null)
             ->values();
 
         $allConcerts = \App\Models\ConcertEvent::orderBy('event_date')
             ->get()
-            ->map(fn($event) => [
-                'type'        => 'concert',
-                'id'          => $event->id,
-                'event_name'  => $event->event_name,
-                'event_date'  => $event->event_date->format('Y-m-d'),
-                'location'    => $event->location,
-                'status'      => $event->status,
+            ->map(fn ($event) => [
+                'type' => 'concert',
+                'id' => $event->id,
+                'event_name' => $event->event_name,
+                'event_date' => $event->event_date->format('Y-m-d'),
+                'location' => $event->location,
+                'status' => $event->status,
                 'parsed_date' => $event->event_date->format('Y-m-d'),
             ]);
 
         $allMeetGreets = \App\Models\MeetGreetEvent::orderBy('event_date')
             ->get()
-            ->map(fn($event) => [
-                'type'         => 'meet_greet',
-                'id'           => $event->id,
-                'event_name'   => $event->event_name,
-                'event_type'   => $event->event_type,
-                'event_date'   => $event->event_date->format('Y-m-d'),
+            ->map(fn ($event) => [
+                'type' => 'meet_greet',
+                'id' => $event->id,
+                'event_name' => $event->event_name,
+                'event_type' => $event->event_type,
+                'event_date' => $event->event_date->format('Y-m-d'),
                 'event_date_2' => $event->event_date_2 ? $event->event_date_2->format('Y-m-d') : null,
-                'location'     => $event->event_type === 'video-call' ? 'Video Call' : ($event->location ?? 'TBD'),
-                'parsed_date'  => $event->event_date->format('Y-m-d'),
+                'location' => $event->event_type === 'video-call' ? 'Video Call' : ($event->location ?? 'TBD'),
+                'parsed_date' => $event->event_date->format('Y-m-d'),
             ]);
 
         $allLiveStreamings = \App\Models\LiveStreaming::orderBy('live_date')
@@ -482,30 +496,34 @@ Route::middleware([
             ->map(function ($stream) {
                 $liveDate = null;
                 if ($stream->live_date) {
-                    try { $liveDate = \Carbon\Carbon::parse($stream->live_date)->format('Y-m-d'); }
-                    catch (\Exception $e) { $liveDate = null; }
+                    try {
+                        $liveDate = \Carbon\Carbon::parse($stream->live_date)->format('Y-m-d');
+                    } catch (\Exception $e) {
+                        $liveDate = null;
+                    }
                 }
+
                 return [
-                    'id'              => $stream->id,
-                    'platform'        => $stream->platform,
-                    'live_date'       => $liveDate,
-                    'duration'        => $stream->duration ?? null,
+                    'id' => $stream->id,
+                    'platform' => $stream->platform,
+                    'live_date' => $liveDate,
+                    'duration' => $stream->duration ?? null,
                     'additional_info' => $stream->additional_info ?? null,
                 ];
             })
-            ->filter(fn($s) => $s['live_date'] !== null)
+            ->filter(fn ($s) => $s['live_date'] !== null)
             ->values();
 
         return Inertia::render('Dashboard', [
-            'idolBirthday'      => $idolBirthday,
-            'idolName'          => $idolName,
-            'nextMilestone'     => $nextMilestone,
-            'teaterStats'       => $teaterStats,
-            'lastWeekEvents'    => $lastWeekEvents,
-            'thisWeekEvents'    => $thisWeekEvents,
-            'allShowTeater'     => $allShowTeater,
-            'allConcerts'       => $allConcerts,
-            'allMeetGreets'     => $allMeetGreets,
+            'idolBirthday' => $idolBirthday,
+            'idolName' => $idolName,
+            'nextMilestone' => $nextMilestone,
+            'teaterStats' => $teaterStats,
+            'lastWeekEvents' => $lastWeekEvents,
+            'thisWeekEvents' => $thisWeekEvents,
+            'allShowTeater' => $allShowTeater,
+            'allConcerts' => $allConcerts,
+            'allMeetGreets' => $allMeetGreets,
             'allLiveStreamings' => $allLiveStreamings,
         ]);
     })->name('dashboard');
@@ -515,12 +533,12 @@ Route::middleware([
 use Illuminate\Support\Str;
 
 Route::get('/blog', function () {
-    $posts = Post::where('status','published')
+    $posts = Post::where('status', 'published')
         ->whereNotNull('published_at')
-        ->where('published_at','<=', now())
+        ->where('published_at', '<=', now())
         ->orderByDesc('published_at')
         ->paginate(10)
-        ->through(fn($p) => [
+        ->through(fn ($p) => [
             'id' => $p->id,
             'title' => $p->title,
             'slug' => $p->slug,
@@ -557,7 +575,7 @@ Route::middleware([
 
 // Auth protected post management (create/edit/delete)
 Route::middleware(['auth'])->group(function () {
-    Route::resource('posts', PostController::class)->except(['index','show']);
+    Route::resource('posts', PostController::class)->except(['index', 'show']);
     Route::resource('pages', \App\Http\Controllers\CustomPageController::class)->except(['show']);
 
     // Editor uploads
@@ -573,7 +591,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // Management page: only authenticated users can access their posts
 Route::middleware(['auth'])->group(function () {
     Route::get('/posts', function () {
-        $posts = auth()->user()->posts()->orderByDesc('updated_at')->paginate(20)->through(fn($p) => [
+        $posts = auth()->user()->posts()->orderByDesc('updated_at')->paginate(20)->through(fn ($p) => [
             'id' => $p->id,
             'title' => $p->title,
             'slug' => $p->slug,
@@ -605,7 +623,7 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/show-teater/categories/{id}', [ShowTeaterCategoryController::class, 'update'])->name('show-teater.categories.update');
     Route::delete('/show-teater/categories/{id}', [ShowTeaterCategoryController::class, 'destroy'])->name('show-teater.categories.destroy');
 
-    // Concert Events management
+    // Concert & Events management
     Route::get('/concert-events', [\App\Http\Controllers\ConcertEventController::class, 'index'])->name('concert-events.index');
     Route::post('/concert-events', [\App\Http\Controllers\ConcertEventController::class, 'store'])->name('concert-events.store');
     Route::put('/concert-events/{concertEvent}', [\App\Http\Controllers\ConcertEventController::class, 'update'])->name('concert-events.update');
@@ -644,9 +662,9 @@ Route::get('/gallery', [\App\Http\Controllers\PublicGalleryController::class, 'i
 
 // Error test routes (for development only)
 if (app()->environment('local')) {
-    Route::get('/_test/error/400', fn() => response()->json(['error' => 'Bad Request'], 400));
-    Route::get('/_test/error/403', fn() => response()->json(['error' => 'Forbidden'], 403));
-    Route::get('/_test/error/404', fn() => response()->json(['error' => 'Not Found'], 404));
+    Route::get('/_test/error/400', fn () => response()->json(['error' => 'Bad Request'], 400));
+    Route::get('/_test/error/403', fn () => response()->json(['error' => 'Forbidden'], 403));
+    Route::get('/_test/error/404', fn () => response()->json(['error' => 'Not Found'], 404));
     Route::get('/_test/error/500', function () {
         throw new \Exception('Test 500 error');
     });

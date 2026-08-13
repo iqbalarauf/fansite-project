@@ -17,6 +17,7 @@ const form = useForm({
     event_type: 'meet-greet',
     event_date: '',
     event_date_2: '',
+    location: '',
     ticket_sale_datetime: '',
     purchase_link: '',
 });
@@ -30,6 +31,7 @@ watch(() => props.editingEvent, (newVal) => {
         form.event_type = newVal.event_type || 'meet-greet';
         form.event_date = newVal.event_date || '';
         form.event_date_2 = newVal.event_date_2 || '';
+        form.location = newVal.location || '';
         form.ticket_sale_datetime = newVal.ticket_sale_datetime || '';
         form.purchase_link = newVal.purchase_link || '';
     } else {
@@ -117,6 +119,18 @@ const close = () => {
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
                         <div v-if="form.errors.event_name" class="text-sm text-red-600 mt-1">
                             {{ form.errors.event_name }}
+                        </div>
+                    </div>
+
+                    <!-- Location -->
+                    <div>
+                        <label for="location" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Location
+                        </label>
+                        <input id="location" v-model="form.location" type="text" required
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                        <div v-if="form.errors.location" class="text-sm text-red-600 mt-1">
+                            {{ form.errors.location }}
                         </div>
                     </div>
 
