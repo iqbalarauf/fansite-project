@@ -11,6 +11,7 @@ class MeetGreetEvent extends Model
         'event_type',
         'event_date',
         'event_date_2',
+        'location',
         'ticket_sale_datetime',
         'purchase_link',
     ];

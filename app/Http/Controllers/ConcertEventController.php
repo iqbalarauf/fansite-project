@@ -35,14 +35,14 @@ class ConcertEventController extends Controller
             'event_name' => 'required|string|max:255',
             'event_date' => 'required|date',
             'location' => 'required|string|max:255',
-            'status' => 'required|in:off-air,on-air',
+            'status' => 'required|in:off-air,on-air,jkt48-event,media,ofc-event,brand',
             'purchase_link' => 'nullable|url|max:500',
         ]);
 
         ConcertEvent::create($validated);
 
         return redirect()->route('concert-events.index')
-            ->with('flash', ['banner' => 'Concert event created successfully.', 'bannerStyle' => 'success']);
+            ->with('flash', ['banner' => 'Concert/event created successfully.', 'bannerStyle' => 'success']);
     }
 
     public function update(Request $request, ConcertEvent $concertEvent)
@@ -51,14 +51,14 @@ class ConcertEventController extends Controller
             'event_name' => 'required|string|max:255',
             'event_date' => 'required|date',
             'location' => 'required|string|max:255',
-            'status' => 'required|in:off-air,on-air',
+            'status' => 'required|in:off-air,on-air,jkt48-event,media,ofc-event,brand',
             'purchase_link' => 'nullable|url|max:500',
         ]);
 
         $concertEvent->update($validated);
 
         return redirect()->route('concert-events.index')
-            ->with('flash', ['banner' => 'Concert event updated successfully.', 'bannerStyle' => 'success']);
+            ->with('flash', ['banner' => 'Concert/event updated successfully.', 'bannerStyle' => 'success']);
     }
 
     public function destroy(ConcertEvent $concertEvent)
@@ -66,6 +66,6 @@ class ConcertEventController extends Controller
         $concertEvent->delete();
 
         return redirect()->route('concert-events.index')
-            ->with('flash', ['banner' => 'Concert event deleted successfully.', 'bannerStyle' => 'success']);
+            ->with('flash', ['banner' => 'Concert/event deleted successfully.', 'bannerStyle' => 'success']);
     }
 }

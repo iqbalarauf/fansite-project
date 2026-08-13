@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('event_name');
             $table->date('event_date');
             $table->string('location');
-            $table->enum('status', ['off-air', 'on-air'])->default('off-air');
+            $table->enum('status', ['off-air', 'on-air', 'jkt48-event', 'media', 'ofc-event', 'brand'])->default('off-air');
             $table->string('purchase_link')->nullable();
             $table->timestamps();
         });

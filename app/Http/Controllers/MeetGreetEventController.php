@@ -19,6 +19,7 @@ class MeetGreetEventController extends Controller
                     'event_type' => $event->event_type,
                     'event_date' => $event->event_date->format('Y-m-d'),
                     'event_date_2' => $event->event_date_2 ? $event->event_date_2->format('Y-m-d') : null,
+                    'location' => $event->location,
                     'ticket_sale_datetime' => $event->ticket_sale_datetime ? $event->ticket_sale_datetime->format('Y-m-d\\TH:i') : null,
                     'purchase_link' => $event->purchase_link,
                 ];
@@ -37,6 +38,7 @@ class MeetGreetEventController extends Controller
             'event_type' => 'required|in:meet-greet,video-call',
             'event_date' => 'required|date',
             'event_date_2' => 'nullable|date|after_or_equal:event_date',
+            'location' => 'required|string|max:255',
             'ticket_sale_datetime' => 'nullable|date',
             'purchase_link' => 'nullable|url|max:500',
         ]);
@@ -54,6 +56,7 @@ class MeetGreetEventController extends Controller
             'event_type' => 'required|in:meet-greet,video-call',
             'event_date' => 'required|date',
             'event_date_2' => 'nullable|date|after_or_equal:event_date',
+            'location' => 'required|string|max:255',
             'ticket_sale_datetime' => 'nullable|date',
             'purchase_link' => 'nullable|url|max:500',
         ]);

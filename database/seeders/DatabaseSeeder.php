@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
             \Database\Seeders\AboutSettingsSeeder::class,
             \Database\Seeders\IdnLiveSettingsSeeder::class,
             \Database\Seeders\PostSeeder::class,
+            \Database\Seeders\ShowTeaterCategorySeeder::class,
         ]);
     }
 }

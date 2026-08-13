@@ -241,6 +241,10 @@ const formatEventDates = (event) => {
                                     </th>
                                     <th scope="col"
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        Location
+                                    </th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                         Event Date(s)
                                     </th>
                                     <th scope="col"
@@ -278,6 +282,9 @@ const formatEventDates = (event) => {
                                         ]">
                                             {{ event.event_type === 'video-call' ? 'Video Call' : 'Meet & Greet' }}
                                         </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
+                                        {{ event.location }}
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
                                         {{ formatEventDates(event) }}
