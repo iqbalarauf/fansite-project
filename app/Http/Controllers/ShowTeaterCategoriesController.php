@@ -29,7 +29,7 @@ class ShowTeaterCategoriesController extends Controller
                 'c.id',
                 'c.name',
                 'c.jp_name',
-                'c.status as is_active',
+                'c.is_active as is_active',
                 'c.created_at',
                 DB::raw("CONCAT(c.name, IF(c.jp_name IS NOT NULL AND c.jp_name != '', CONCAT(' (', c.jp_name, ')'), '')) as display_name")
             );
@@ -52,7 +52,7 @@ class ShowTeaterCategoriesController extends Controller
                 'c.name',
                 'c.jp_name',
                 'c.setlist_id',
-                'c.status as is_active',
+                'c.is_active as is_active',
                 'c.created_at',
                 's.name as setlist_name',
                 's.jp_name as setlist_jp_name',
@@ -77,7 +77,7 @@ class ShowTeaterCategoriesController extends Controller
         // All active setlists for dropdowns
         $allSetlists = DB::table('show_teater_categories')
             ->where('type', 'setlist')
-            ->where('status', 1)
+            ->where('is_active', 1)
             ->orderBy('name')
             ->get(['id', 'name', 'jp_name']);
 
@@ -130,7 +130,7 @@ class ShowTeaterCategoriesController extends Controller
             'name' => $validated['name'],
             'jp_name' => $validated['jp_name'] ?? null,
             'setlist_id' => $validated['type'] === 'unit_song' ? ($validated['setlist_id'] ?? null) : null,
-            'status' => 1,
+            'is_active' => 1,
             'created_at' => now(),
         ]);
 
@@ -187,16 +187,16 @@ class ShowTeaterCategoriesController extends Controller
             return response()->json(['error' => 'Not found'], 404);
         }
 
-        $newStatus = $category->status ? 0 : 1;
+        $newStatus = $category->is_active ? 0 : 1;
 
-        DB::table('show_teater_categories')->where('id', $id)->update(['status' => $newStatus]);
+        DB::table('show_teater_categories')->where('id', $id)->update(['is_active' => $newStatus]);
 
         // If deactivating a setlist, also deactivate its unit songs
         if ($category->type === 'setlist' && $newStatus === 0) {
             DB::table('show_teater_categories')
                 ->where('type', 'unit_song')
                 ->where('setlist_id', $id)
-                ->update(['status' => 0]);
+                ->update(['is_active' => 0]);
         }
 
         return response()->json(['success' => true, 'is_active' => $newStatus]);

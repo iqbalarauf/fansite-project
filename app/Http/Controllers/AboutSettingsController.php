@@ -33,7 +33,7 @@ class AboutSettingsController extends Controller
             'idol_social_media_twitter' => AboutSetting::get('idol_social_media_twitter', ''),
         ];
 
-        return Inertia::render('About/Idol', [
+        return view('about.idol', [
             'settings' => $settings,
         ]);
     }
@@ -71,7 +71,7 @@ class AboutSettingsController extends Controller
             'fanbase_cta_button2_link' => AboutSetting::get('fanbase_cta_button2_link', ''),
         ];
 
-        return Inertia::render('About/Fanbase', [
+        return view('about.fanbase', [
             'settings' => $settings,
         ]);
     }

@@ -83,6 +83,7 @@ class ShowTeaterController extends Controller
         $shows->getCollection()->transform(function ($show) use ($unitSongJpMap) {
             if (empty($show->unit_song)) {
                 $show->display_unit_song = '';
+
                 return $show;
             }
 
@@ -98,6 +99,7 @@ class ShowTeaterController extends Controller
             }
 
             $show->display_unit_song = implode(', ', $formattedSongs);
+
             return $show;
         });
 
@@ -106,7 +108,7 @@ class ShowTeaterController extends Controller
         // Get all unique setlists from categories for filter dropdown
         $allSetlists = DB::table('show_teater_categories')
             ->where('type', 'setlist')
-            ->where('status', 1)
+            ->where('is_active', 1)
             ->orderBy('name')
             ->pluck('name');
 
@@ -114,14 +116,14 @@ class ShowTeaterController extends Controller
         $setlistsWithUnitSongs = DB::table('show_teater_categories as setlists')
             ->select('setlists.id', 'setlists.name', 'setlists.jp_name')
             ->where('setlists.type', 'setlist')
-            ->where('setlists.status', 1)
+            ->where('setlists.is_active', 1)
             ->orderBy('setlists.name')
             ->get()
             ->map(function ($setlist) {
                 $unitSongs = DB::table('show_teater_categories')
                     ->where('type', 'unit_song')
                     ->where('setlist_id', $setlist->id)
-                    ->where('status', 1)
+                    ->where('is_active', 1)
                     ->orderBy('name')
                     ->get(['id', 'name', 'jp_name']);
 
