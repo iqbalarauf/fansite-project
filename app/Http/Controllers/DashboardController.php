@@ -67,12 +67,8 @@ class DashboardController extends Controller
             $birthdayReminderActive = $birthdayCountdown <= 90;
         }
 
-        // --- Current period stats ---
-        $stats = Cache::remember(
-            "dashboard_stats_{$dateFrom->toDateString()}_{$dateTo->toDateString()}",
-            300,
-            fn () => $this->getStats($dateFrom, $dateTo)
-        );
+        // --- Overall stats (ignoring period) ---
+        $stats = $this->getTotalStats();
 
         // --- Previous period stats (for comparison) ---
         $prevStats = null;
