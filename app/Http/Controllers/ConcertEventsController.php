@@ -68,7 +68,7 @@ class ConcertEventsController extends Controller
             'event_name' => 'required|string|max:255',
             'event_date' => 'required|date',
             'location' => 'required|string|max:255',
-            'status' => 'required|in:off-air,on-air',
+            'status' => 'required|in:off-air,on-air,jkt48-event,media,ofc-event,brand',
             'purchase_link' => 'nullable|url|max:500',
         ]);
 
@@ -84,7 +84,7 @@ class ConcertEventsController extends Controller
             'event_name' => 'required|string|max:255',
             'event_date' => 'required|date',
             'location' => 'required|string|max:255',
-            'status' => 'required|in:off-air,on-air',
+            'status' => 'required|in:off-air,on-air,jkt48-event,media,ofc-event,brand',
             'purchase_link' => 'nullable|url|max:500',
         ]);
 

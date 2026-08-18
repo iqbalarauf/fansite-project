@@ -20,6 +20,7 @@ class MeetGreetEvents extends Model
         'event_date_2',
         'ticket_sale_datetime',
         'purchase_link',
+        'location',
     ];
 
     protected $casts = [

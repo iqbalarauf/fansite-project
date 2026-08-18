@@ -70,6 +70,7 @@ class MeetGreetEventsController extends Controller
             'event_date_2' => 'nullable|required_if:event_type,video-call|date|after_or_equal:event_date',
             'ticket_sale_datetime' => 'nullable|date',
             'purchase_link' => 'nullable|url|max:500',
+            'location' => 'required|string|max:255',
         ]);
 
         if ($validated['event_type'] !== 'video-call') {
@@ -91,6 +92,7 @@ class MeetGreetEventsController extends Controller
             'event_date_2' => 'nullable|required_if:event_type,video-call|date|after_or_equal:event_date',
             'ticket_sale_datetime' => 'nullable|date',
             'purchase_link' => 'nullable|url|max:500',
+            'location' => 'required|string|max:255',
         ]);
 
         if ($validated['event_type'] !== 'video-call') {

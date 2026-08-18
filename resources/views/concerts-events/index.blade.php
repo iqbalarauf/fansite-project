@@ -1,9 +1,9 @@
-<x-layouts::app :title="__('Concerts Events')">
+<x-layouts::app :title="__('Concert & Events')">
     <div class="flex flex-col gap-6">
         <div class="flex items-start justify-between">
             <div>
-                <flux:heading size="xl" class="font-bold">Concerts Events</flux:heading>
-                <flux:subheading>Kelola jadwal konser, status on-air/off-air, dan purchase link</flux:subheading>
+                <flux:heading size="xl" class="font-bold">Concert & Events</flux:heading>
+                <flux:subheading>Kelola jadwal konser dan event, serta purchase link</flux:subheading>
             </div>
             <flux:modal.trigger name="modal-create-concert-event">
                 <flux:button variant="primary" icon="plus">Tambah Event</flux:button>
@@ -55,9 +55,13 @@
                     onchange="this.form.submit()"
                     class="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 shadow-xs focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
                 >
-                    <option value="">Semua Status</option>
+                    <option value="" {{ $filters['status'] === '' ? 'selected' : '' }}>Semua Status</option>
                     <option value="on-air" {{ $filters['status'] === 'on-air' ? 'selected' : '' }}>On-Air</option>
                     <option value="off-air" {{ $filters['status'] === 'off-air' ? 'selected' : '' }}>Off-Air</option>
+                    <option value="jkt48-event" {{ $filters['status'] === 'jkt48-event' ? 'selected' : '' }}>JKT48 Event</option>
+                    <option value="media" {{ $filters['status'] === 'media' ? 'selected' : '' }}>Media</option>
+                    <option value="ofc-event" {{ $filters['status'] === 'ofc-event' ? 'selected' : '' }}>OFC Event</option>
+                    <option value="brand" {{ $filters['status'] === 'brand' ? 'selected' : '' }}>Brand</option>
                 </select>
 
                 <select
@@ -116,8 +120,18 @@
                                 <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">
                                     @if ($event->status === 'on-air')
                                         <flux:badge color="lime" size="sm">On-Air</flux:badge>
-                                    @else
+                                    @elseif ($event->status === 'off-air')
                                         <flux:badge color="zinc" size="sm">Off-Air</flux:badge>
+                                    @elseif ($event->status === 'jkt48-event')
+                                        <flux:badge color="purple" size="sm">JKT48 Event</flux:badge>
+                                    @elseif ($event->status === 'media')
+                                        <flux:badge color="blue" size="sm">Media</flux:badge>
+                                    @elseif ($event->status === 'ofc-event')
+                                        <flux:badge color="orange" size="sm">OFC Event</flux:badge>
+                                    @elseif ($event->status === 'brand')
+                                        <flux:badge color="pink" size="sm">Brand</flux:badge>
+                                    @else
+                                        <flux:badge color="gray" size="sm">{{ ucfirst($event->status) }}</flux:badge>
                                     @endif
                                 </td>
                                 <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">
@@ -152,7 +166,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-4 py-16 text-center text-zinc-500 dark:text-zinc-400">
+                                <td colspan="7" class="px-4 py-16 text-center text-zinc-500 dark:text-zinc-400">
                                     <div class="flex flex-col items-center gap-3">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="size-10 text-zinc-300 dark:text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h7.5M8.25 12h7.5m-7.5 5.25h7.5M3 4.5A2.25 2.25 0 015.25 2.25h13.5A2.25 2.25 0 0121 4.5v15A2.25 2.25 0 0118.75 21.75H5.25A2.25 2.25 0 013 19.5v-15z"/></svg>
                                         <p class="font-medium">Belum ada concert event</p>
@@ -194,16 +208,14 @@
 
                 <div>
                     <flux:label>Status</flux:label>
-                    <div class="mt-2 flex flex-wrap gap-4">
-                        <label class="inline-flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-200">
-                            <input type="radio" name="status" value="off-air" class="rounded border-zinc-300 text-blue-600" checked>
-                            <span>Off-Air</span>
-                        </label>
-                        <label class="inline-flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-200">
-                            <input type="radio" name="status" value="on-air" class="rounded border-zinc-300 text-blue-600">
-                            <span>On-Air</span>
-                        </label>
-                    </div>
+                    <select name="status" class="mt-2 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
+                        <option value="off-air" {{ old('status') === 'off-air' ? 'selected' : '' }}>Off-Air</option>
+                        <option value="on-air" {{ old('status') === 'on-air' ? 'selected' : '' }}>On-Air</option>
+                        <option value="jkt48-event" {{ old('status') === 'jkt48-event' ? 'selected' : '' }}>JKT48 Event</option>
+                        <option value="media" {{ old('status') === 'media' ? 'selected' : '' }}>Media</option>
+                        <option value="ofc-event" {{ old('status') === 'ofc-event' ? 'selected' : '' }}>OFC Event</option>
+                        <option value="brand" {{ old('status') === 'brand' ? 'selected' : '' }}>Brand</option>
+                    </select>
                 </div>
 
                 <div>
@@ -247,16 +259,14 @@
 
                 <div>
                     <flux:label>Status</flux:label>
-                    <div class="mt-2 flex flex-wrap gap-4">
-                        <label class="inline-flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-200">
-                            <input type="radio" name="status" value="off-air" class="rounded border-zinc-300 text-blue-600">
-                            <span>Off-Air</span>
-                        </label>
-                        <label class="inline-flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-200">
-                            <input type="radio" name="status" value="on-air" class="rounded border-zinc-300 text-blue-600">
-                            <span>On-Air</span>
-                        </label>
-                    </div>
+                    <select name="status" class="mt-2 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
+                        <option value="off-air">Off-Air</option>
+                        <option value="on-air">On-Air</option>
+                        <option value="jkt48-event">JKT48 Event</option>
+                        <option value="media">Media</option>
+                        <option value="ofc-event">OFC Event</option>
+                        <option value="brand">Brand</option>
+                    </select>
                 </div>
 
                 <div>

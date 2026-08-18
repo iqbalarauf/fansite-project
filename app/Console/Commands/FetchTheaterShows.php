@@ -6,8 +6,8 @@ use App\Models\AboutSetting;
 use App\Models\ShowTeater;
 use App\Models\TheaterReference;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Http;
 
 class FetchTheaterShows extends Command
 {
@@ -38,15 +38,17 @@ class FetchTheaterShows extends Command
 
         // Ambil idol_name dari about_settings
         $idolName = AboutSetting::get('idol_name');
-        if (!$idolName) {
+        if (! $idolName) {
             $this->error('Idol name not found in about_settings.');
+
             return;
         }
 
         // Ambil data dari API schedules
         $response = Http::get("https://jkt48.com/api/v1/schedules?lang=id&month={$currentMonth}&year={$currentYear}&type=SHOW");
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             $this->error('Failed to fetch schedules from API.');
+
             return;
         }
 
@@ -57,7 +59,7 @@ class FetchTheaterShows extends Command
         // Simpan atau perbarui semua reference_code dari jadwal saat ini
         foreach (collect($schedules['data'] ?? $schedules) as $schedule) {
             $referenceCode = $schedule['reference_code'] ?? null;
-            if (!$referenceCode) {
+            if (! $referenceCode) {
                 continue;
             }
 
@@ -85,15 +87,17 @@ class FetchTheaterShows extends Command
     private function processReference(string $referenceCode, string $idolName): void
     {
         $detailResponse = Http::get("https://jkt48.com/api/v1/theater-shows/{$referenceCode}?lang=id");
-        if (!$detailResponse->successful()) {
+        if (! $detailResponse->successful()) {
             $this->error("Failed to fetch details for reference_code: {$referenceCode}");
+
             return;
         }
 
         $details = $detailResponse->json();
         $data = $details['data'] ?? null;
-        if (!$data) {
+        if (! $data) {
             $this->error("No detail data for reference_code: {$referenceCode}");
+
             return;
         }
 
@@ -105,7 +109,7 @@ class FetchTheaterShows extends Command
                 ->where('setlist', $data['title'])
                 ->first();
 
-            if (!$existing) {
+            if (! $existing) {
                 $lastShowId = ShowTeater::max('show_id') ?? 0;
                 $newShowId = $lastShowId + 1;
                 $showDate = Carbon::parse($data['date'])->timezone('Asia/Jakarta')->format('Y-m-d');
@@ -121,7 +125,7 @@ class FetchTheaterShows extends Command
             }
         }
 
-        if (!empty($data['jkt48_member'])) {
+        if (! empty($data['jkt48_member'])) {
             TheaterReference::where('reference_code', $referenceCode)
                 ->update(['processed_at' => now()]);
         }

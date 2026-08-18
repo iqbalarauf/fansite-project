@@ -18,7 +18,7 @@ class ConcertEventsTest extends TestCase
         $response = $this->actingAs($user)->get(route('concert-events.index'));
 
         $response->assertOk();
-        $response->assertSee('Concerts Events', false);
+        $response->assertSee('Concert & Events', false);
     }
 
     public function test_user_can_create_concert_event(): void

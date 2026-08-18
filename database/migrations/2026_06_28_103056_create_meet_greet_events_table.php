@@ -19,6 +19,7 @@ return new class extends Migration
             $table->date('event_date_2')->nullable(); // For video call second date
             $table->datetime('ticket_sale_datetime')->nullable(); // Jadwal pembelian tiket
             $table->string('purchase_link')->nullable();
+            $table->string('location')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

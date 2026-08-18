@@ -100,6 +100,7 @@
                     <thead>
                         <tr class="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/50">
                             <th class="px-4 py-3 text-left font-medium text-zinc-500 dark:text-zinc-400">EVENT NAME</th>
+                            <th class="px-4 py-3 text-left font-medium text-zinc-500 dark:text-zinc-400">LOCATION</th>
                             <th class="px-4 py-3 text-left font-medium text-zinc-500 dark:text-zinc-400">TYPE</th>
                             <th class="px-4 py-3 text-left font-medium text-zinc-500 dark:text-zinc-400">EVENT DATE(S)</th>
                             <th class="px-4 py-3 text-left font-medium text-zinc-500 dark:text-zinc-400">TICKET SALE</th>
@@ -111,6 +112,7 @@
                         @forelse ($events as $event)
                             <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors">
                                 <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-200">{{ $event->event_name }}</td>
+                                <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $event->location ?? '–' }}</td>
                                 <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">
                                     @if ($event->event_type === 'video-call')
                                         <flux:badge color="sky" size="sm">Video Call</flux:badge>
@@ -143,6 +145,7 @@
                                             data-event-date-2="{{ $event->event_date_2?->format('Y-m-d') }}"
                                             data-ticket-sale-datetime="{{ $event->ticket_sale_datetime?->format('Y-m-d') }}"
                                             data-purchase-link="{{ $event->purchase_link }}"
+                                            data-location="{{ $event->location }}"
                                             onclick="openEditModal(this)"
                                         >
                                             Edit
@@ -157,7 +160,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-4 py-16 text-center text-zinc-500 dark:text-zinc-400">
+                                <td colspan="7" class="px-4 py-16 text-center text-zinc-500 dark:text-zinc-400">
                                     <div class="flex flex-col items-center gap-3">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="size-10 text-zinc-300 dark:text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h7.5M8.25 12h7.5m-7.5 5.25h7.5M3 4.5A2.25 2.25 0 015.25 2.25h13.5A2.25 2.25 0 0121 4.5v15A2.25 2.25 0 0118.75 21.75H5.25A2.25 2.25 0 013 19.5v-15z"/></svg>
                                         <p class="font-medium">Belum ada event</p>
@@ -211,6 +214,11 @@
                     </div>
                 </div>
 
+                <div>
+                    <flux:label for="create-location">Location</flux:label>
+                    <flux:input id="create-location" name="location" required class="mt-1" />
+                </div>
+
                 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div>
                         <flux:label for="create-ticket-sale">Jadwal Pembelian Tiket</flux:label>
@@ -257,6 +265,13 @@
                 <div>
                     <flux:label for="edit-event-name">Event Name</flux:label>
                     <flux:input id="edit-event-name" name="event_name" required class="mt-1" />
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div>
+                        <flux:label for="edit-location">Location</flux:label>
+                        <flux:input id="edit-location" name="location" required class="mt-1" />
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
