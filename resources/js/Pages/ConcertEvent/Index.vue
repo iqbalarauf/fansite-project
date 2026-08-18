@@ -272,9 +272,25 @@ watch([searchTerm, selectedStatus, selectedLocation, selectedDateRange, sortDire
                                             'px-2 inline-flex text-xs leading-5 font-semibold rounded-full',
                                             event.status === 'on-air'
                                                 ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                                                : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                                                : event.status === 'ofc-event'
+                                                    ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                                                    : event.status === 'brand'
+                                                        ? 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200'
+                                                        : event.status === 'media'
+                                                            ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                                                            : event.status === 'jkt48-event'
+                                                                ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                                                                : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                                         ]">
-                                            {{ event.status === 'on-air' ? 'On-Air' : 'Off-Air' }}
+                                            {{
+                                                event.status === 'on-air' ? 'On-Air' :
+                                                event.status === 'off-air' ? 'Off-Air' :
+                                                event.status === 'jkt48-event' ? 'JKT48 Concert' :
+                                                event.status === 'media' ? 'Media' :
+                                                event.status === 'ofc-event' ? 'OFC Event' :
+                                                event.status === 'brand' ? 'Brand' :
+                                                event.status
+                                            }}
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">

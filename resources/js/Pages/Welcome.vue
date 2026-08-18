@@ -130,15 +130,16 @@ const stopAutoplay = () => {
     }
 };
 
-// Fetch Showroom live status
+// Fetch combined live statuses from JKT48Connect API
 const fetchShowroomStatus = async () => {
     try {
-        const response = await fetch(`/api/showroom/live/${showroomRoomId.value}`);
+        const response = await fetch('/api/live-status');
         const data = await response.json();
-        console.log('Showroom API response:', data); // Debug log
+        console.log('JKT48Connect live API response:', data);
         showroomStatus.value = {
-            isLive: data.live_status === 2,
+            isLive: !!data.showroom_is_live,
             loading: false,
+            liveUrl: data.showroom_live_url || null,
         };
     } catch (error) {
         console.error('Error fetching Showroom status:', error);
@@ -149,13 +150,13 @@ const fetchShowroomStatus = async () => {
 // Fetch IDN Live status
 const fetchIdnStatus = async () => {
     try {
-        const response = await fetch('/api/idn-live');
+        const response = await fetch('/api/live-status');
         const data = await response.json();
-        console.log('IDN Live API response:', data); // Debug log
+        console.log('JKT48Connect live API response:', data);
         idnStatus.value = {
-            isLive: data.is_live || false,
+            isLive: !!data.idn_is_live,
             loading: false,
-            liveUrl: data.live_url || null,
+            liveUrl: data.idn_live_url || null,
         };
     } catch (error) {
         console.error('Error fetching IDN Live status:', error);

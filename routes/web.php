@@ -22,9 +22,20 @@ use Laravel\Fortify\Http\Controllers\RegisteredUserController;
 function parseShowDate($dateString)
 {
     try {
-        // Try yyyy-mm-dd format first
+        if (! is_string($dateString)) {
+            return null;
+        }
+
+        $dateString = trim($dateString);
+
+        // Try yyyy-mm-dd format
         if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateString)) {
             return \Carbon\Carbon::createFromFormat('Y-m-d', $dateString);
+        }
+
+        // Try yyyy/mm/dd format as used by scraped database records
+        if (preg_match('/^\d{4}\/\d{2}\/\d{2}$/', $dateString)) {
+            return \Carbon\Carbon::createFromFormat('Y/m/d', $dateString);
         }
 
         // Try dd.mm.yyyy format

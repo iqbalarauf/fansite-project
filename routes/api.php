@@ -8,9 +8,5 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-// Showroom Live status check
-Route::get('/showroom/live/{roomId}', [ShowroomProxyController::class, 'getLiveStatus']);
-
-// IDN Live status check
-Route::get('/idn-live/{username?}', [ShowroomProxyController::class, 'checkIdnLiveStatus']);
-Route::post('/idn-live/check-multiple', [ShowroomProxyController::class, 'checkMultipleIdnLiveStatus']);
+// JKT48Connect live status check
+Route::get('/live-status', [ShowroomProxyController::class, 'getJkt48ConnectLiveStatus']);
