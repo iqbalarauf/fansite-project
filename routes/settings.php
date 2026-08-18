@@ -11,6 +11,8 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('settings/about', 'pages::settings.about')->name('about.edit');
 
+    Route::livewire('settings/app-settings', 'pages::settings.app-settings')->name('app-settings.edit');
+
     Route::livewire('settings/appearance', 'pages::settings.appearance')->name('appearance.edit');
 
     Route::livewire('settings/security', 'pages::settings.security')
