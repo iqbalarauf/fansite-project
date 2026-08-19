@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ConcertEventsController;
+use App\Http\Controllers\CustomPageController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LiveStreamingController;
 use App\Http\Controllers\MeetGreetEventsController;
@@ -12,6 +13,10 @@ Route::view('/', 'welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('pages', [CustomPageController::class, 'index'])->name('pages.index');
+    Route::view('pages/create', 'custom-pages.admin')->name('pages.create');
+    Route::get('pages/{customPage}/edit', [CustomPageController::class, 'edit'])->name('pages.edit');
+    Route::delete('pages/{customPage}', [CustomPageController::class, 'destroy'])->name('pages.destroy');
 
     // Show Teater
     Route::get('show-teater', [ShowTeaterController::class, 'index'])->name('show-teater.index');
@@ -46,3 +51,5 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 require __DIR__.'/settings.php';
+
+Route::get('{customPage:slug}', [CustomPageController::class, 'show'])->name('custom-pages.show');

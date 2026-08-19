@@ -33,6 +33,11 @@
                         {{ __('Live Streaming') }}
                     </flux:sidebar.item>
                 </flux:sidebar.group>
+                <flux:sidebar.group :heading="__('Content Management')" class="grid">
+                    <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="rectangle-stack" :href="route('pages.index')" :current="request()->routeIs('pages.*')" wire:navigate>
+                        {{ __('Pages') }}
+                    </flux:sidebar.item>
+                </flux:sidebar.group>
             </flux:sidebar.nav>
 
             <flux:spacer />
