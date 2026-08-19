@@ -159,6 +159,84 @@ body[data-brand-palette='periwinkle'] {
     @apply !mb-0 !leading-tight;
 }
 
+@layer components {
+    .admin-page {
+        @apply flex flex-col gap-6;
+    }
+
+    .admin-page-header {
+        @apply flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between;
+    }
+
+    .admin-page-actions {
+        @apply flex flex-wrap items-center gap-2;
+    }
+
+    .admin-filter {
+        @apply flex flex-wrap items-end gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900;
+    }
+
+    .admin-filter-search {
+        @apply min-w-60 flex-1;
+    }
+
+    .admin-filter-select {
+        @apply h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-700 shadow-xs outline-hidden transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300;
+    }
+
+    .admin-filter-sort {
+        @apply inline-flex size-10 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 shadow-xs transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-blue-700 dark:hover:bg-blue-950/40 dark:hover:text-blue-300;
+    }
+
+    .admin-filter-reset {
+        @apply inline-flex h-10 items-center px-2 text-sm font-medium text-zinc-500 transition hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-300;
+    }
+
+    .admin-table-shell {
+        @apply overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900;
+    }
+
+    .admin-table {
+        @apply w-full text-sm;
+    }
+
+    .admin-table-head {
+        @apply border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/50;
+    }
+
+    .admin-table-head th {
+        @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400;
+    }
+
+    .admin-table-header {
+        @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400;
+    }
+
+    .admin-table-body {
+        @apply divide-y divide-zinc-100 dark:divide-zinc-800;
+    }
+
+    .admin-table-row {
+        @apply transition-colors hover:bg-blue-50/40 dark:hover:bg-blue-950/20;
+    }
+
+    .admin-table-cell {
+        @apply px-4 py-3 text-zinc-600 dark:text-zinc-300;
+    }
+
+    .admin-table-body td {
+        @apply px-4 py-3;
+    }
+
+    .admin-action-link {
+        @apply text-sm font-semibold text-blue-600 transition hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300;
+    }
+
+    .admin-action-danger {
+        @apply text-sm font-semibold text-red-500 transition hover:text-red-700 dark:text-red-400 dark:hover:text-red-300;
+    }
+}
+
 input:focus[data-flux-control],
 textarea:focus[data-flux-control],
 select:focus[data-flux-control] {

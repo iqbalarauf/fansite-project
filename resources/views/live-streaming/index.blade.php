@@ -1,6 +1,6 @@
 <x-layouts::app :title="__('Live Streaming')">
-    <div class="flex flex-col gap-6">
-        <div class="flex items-start justify-between">
+    <div class="admin-page">
+        <div class="admin-page-header">
             <div>
                 <flux:heading size="xl" class="font-bold">Live Streaming</flux:heading>
                 <flux:subheading>Kelola jadwal live streaming dan informasi tambahan</flux:subheading>
@@ -27,8 +27,8 @@
         @endif
 
         <form method="GET" action="{{ route('live-streaming.index') }}" id="filter-form">
-            <div class="flex flex-wrap items-center gap-3">
-                <div class="flex-1 min-w-60">
+            <div class="admin-filter">
+                <div class="admin-filter-search">
                     <flux:input
                         name="search"
                         value="{{ $filters['search'] }}"
@@ -53,7 +53,7 @@
                 <select
                     name="platform"
                     onchange="this.form.submit()"
-                    class="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 shadow-xs focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
+                    class="admin-filter-select"
                 >
                     <option value="">Semua Platform</option>
                     <option value="Showroom" {{ $filters['platform'] === 'Showroom' ? 'selected' : '' }}>Showroom</option>
@@ -63,7 +63,7 @@
                 <select
                     name="sort_by"
                     onchange="this.form.submit()"
-                    class="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 shadow-xs focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
+                    class="admin-filter-select"
                 >
                     <option value="live_date" {{ $filters['sort_by'] === 'live_date' ? 'selected' : '' }}>Live Date</option>
                     <option value="platform" {{ $filters['sort_by'] === 'platform' ? 'selected' : '' }}>Platform</option>
@@ -75,7 +75,7 @@
                     type="button"
                     title="{{ $filters['sort_dir'] === 'asc' ? 'Ascending' : 'Descending' }}"
                     onclick="document.getElementById('sort-dir-input').value = '{{ $filters['sort_dir'] === 'asc' ? 'desc' : 'asc' }}'; document.getElementById('filter-form').submit();"
-                    class="flex items-center justify-center rounded-lg border border-zinc-200 bg-white p-2 text-zinc-600 shadow-xs hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                    class="admin-filter-sort"
                 >
                     @if ($filters['sort_dir'] === 'asc')
                         <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
@@ -89,16 +89,16 @@
                 <flux:button type="submit" variant="outline">Cari</flux:button>
 
                 @if ($filters['search'] || $filters['platform'] || $filters['date_from'] || $filters['date_to'])
-                    <a href="{{ route('live-streaming.index') }}" class="text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300">Reset</a>
+                    <a href="{{ route('live-streaming.index') }}" class="admin-filter-reset">Reset</a>
                 @endif
             </div>
         </form>
 
-        <div class="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+        <div class="admin-table-shell">
             <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr class="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/50">
+                    <table class="admin-table">
+                    <thead class="admin-table-head">
+                        <tr>
                             <th class="px-4 py-3 text-left font-medium text-zinc-500 dark:text-zinc-400">PLATFORM</th>
                             <th class="px-4 py-3 text-left font-medium text-zinc-500 dark:text-zinc-400">LIVE DATE</th>
                             <th class="px-4 py-3 text-left font-medium text-zinc-500 dark:text-zinc-400">DURATION (HH:MM)</th>
@@ -106,9 +106,9 @@
                             <th class="px-4 py-3 text-right font-medium text-zinc-500 dark:text-zinc-400">ACTION</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                    <tbody class="admin-table-body">
                         @forelse ($liveStreams as $liveStream)
-                            <tr class="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/40">
+                            <tr class="admin-table-row">
                                 <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-200">{{ $liveStream->platform }}</td>
                                 <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $liveStream->live_date?->translatedFormat('d F Y') }}</td>
                                 <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">
@@ -118,7 +118,7 @@
                                 <td class="px-4 py-3 text-right">
                                     <button
                                         type="button"
-                                        class="text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                                        class="admin-action-link"
                                         data-id="{{ $liveStream->id }}"
                                         data-platform="{{ $liveStream->platform }}"
                                         data-live-date="{{ $liveStream->live_date?->format('Y-m-d') }}"

@@ -3,12 +3,12 @@
         $activeTab = $filters['tab'] ?? 'setlist';
     @endphp
 
-    <div class="flex flex-col gap-6">
+    <div class="admin-page">
 
         {{-- ================================================================
              Page Header
         ================================================================ --}}
-        <div class="flex items-start justify-between">
+        <div class="admin-page-header">
             <div>
                 <flux:heading size="xl" class="font-bold">Setlist &amp; Unit Song</flux:heading>
                 <flux:subheading>Kelola data setlist dan unit song pertunjukan teater</flux:subheading>
@@ -69,9 +69,9 @@
         ================================================================ --}}
         <form method="GET" action="{{ route('show-teater.categories.index') }}" id="filter-form">
             <input type="hidden" name="tab" value="{{ $activeTab }}" />
-            <div class="flex flex-wrap items-center gap-3">
+            <div class="admin-filter">
                 {{-- Search --}}
-                <div class="flex-1 min-w-60">
+                <div class="admin-filter-search">
                     <flux:input
                         name="search"
                         value="{{ $filters['search'] }}"
@@ -85,7 +85,7 @@
                     <select
                         name="setlist"
                         onchange="this.form.submit()"
-                        class="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 shadow-xs focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
+                        class="admin-filter-select"
                     >
                         <option value="">Semua Setlist</option>
                         @foreach ($allSetlistsForFilter as $sl)
@@ -100,7 +100,7 @@
                 <select
                     name="sort_by"
                     onchange="this.form.submit()"
-                    class="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 shadow-xs focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
+                    class="admin-filter-select"
                 >
                     <option value="id" {{ $filters['sort_by'] === 'id' ? 'selected' : '' }}>ID</option>
                     <option value="name" {{ $filters['sort_by'] === 'name' ? 'selected' : '' }}>Nama</option>
@@ -113,7 +113,7 @@
                     type="button"
                     title="{{ $filters['sort_dir'] === 'asc' ? 'Ascending' : 'Descending' }}"
                     onclick="document.getElementById('sort-dir-input').value = '{{ $filters['sort_dir'] === 'asc' ? 'desc' : 'asc' }}'; document.getElementById('filter-form').submit();"
-                    class="flex items-center justify-center rounded-lg border border-zinc-200 bg-white p-2 text-zinc-600 shadow-xs hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                    class="admin-filter-sort"
                 >
                     @if ($filters['sort_dir'] === 'asc')
                         <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
@@ -127,7 +127,7 @@
                 <flux:button type="submit" variant="outline">Cari</flux:button>
 
                 @if ($filters['search'] || $filters['setlist'])
-                    <a href="{{ route('show-teater.categories.index', ['tab' => $activeTab]) }}" class="text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300">Reset</a>
+                    <a href="{{ route('show-teater.categories.index', ['tab' => $activeTab]) }}" class="admin-filter-reset">Reset</a>
                 @endif
             </div>
         </form>
@@ -136,20 +136,20 @@
              SETLIST TABLE
         ================================================================ --}}
         @if ($activeTab === 'setlist')
-            <div class="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+            <div class="admin-table-shell">
                 <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/50">
+                    <table class="admin-table">
+                        <thead class="admin-table-head">
+                            <tr>
                                 <th class="px-4 py-3 text-left font-medium text-zinc-500 dark:text-zinc-400 w-16">NO</th>
                                 <th class="px-4 py-3 text-left font-medium text-zinc-500 dark:text-zinc-400">NAMA SETLIST</th>
                                 <th class="px-4 py-3 text-center font-medium text-zinc-500 dark:text-zinc-400 w-28">STATUS</th>
                                 <th class="px-4 py-3 text-right font-medium text-zinc-500 dark:text-zinc-400 w-32">ACTIONS</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                        <tbody class="admin-table-body">
                             @forelse ($setlists as $item)
-                                <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors" id="row-setlist-{{ $item->id }}">
+                                <tr class="admin-table-row" id="row-setlist-{{ $item->id }}">
                                     <td class="px-4 py-3 font-medium text-zinc-500 dark:text-zinc-400">{{ $loop->iteration + ($setlists->firstItem() - 1) }}</td>
                                     <td class="px-4 py-3">
                                         <div class="font-medium text-zinc-800 dark:text-zinc-200">{{ $item->name }}</div>
@@ -170,7 +170,7 @@
                                         <div class="flex items-center justify-end gap-3">
                                             <button
                                                 type="button"
-                                                class="text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                                                class="admin-action-link"
                                                 onclick="openEditSetlistModal({{ json_encode($item) }})"
                                             >Edit</button>
                                             <button
@@ -203,11 +203,11 @@
              UNIT SONG TABLE
         ================================================================ --}}
         @if ($activeTab === 'unit_song')
-            <div class="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+            <div class="admin-table-shell">
                 <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/50">
+                    <table class="admin-table">
+                        <thead class="admin-table-head">
+                            <tr>
                                 <th class="px-4 py-3 text-left font-medium text-zinc-500 dark:text-zinc-400 w-16">NO</th>
                                 <th class="px-4 py-3 text-left font-medium text-zinc-500 dark:text-zinc-400">SETLIST</th>
                                 <th class="px-4 py-3 text-left font-medium text-zinc-500 dark:text-zinc-400">NAMA UNIT SONG</th>
@@ -215,9 +215,9 @@
                                 <th class="px-4 py-3 text-right font-medium text-zinc-500 dark:text-zinc-400 w-32">ACTIONS</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                        <tbody class="admin-table-body">
                             @forelse ($unitSongs as $item)
-                                <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors" id="row-unit-{{ $item->id }}">
+                                <tr class="admin-table-row" id="row-unit-{{ $item->id }}">
                                     <td class="px-4 py-3 font-medium text-zinc-500 dark:text-zinc-400">{{ $loop->iteration + ($unitSongs->firstItem() - 1) }}</td>
                                     <td class="px-4 py-3">
                                         <div class="text-zinc-700 dark:text-zinc-300">
@@ -243,7 +243,7 @@
                                         <div class="flex items-center justify-end gap-3">
                                             <button
                                                 type="button"
-                                                class="text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                                                class="admin-action-link"
                                                 onclick="openEditUnitSongModal({{ json_encode($item) }}, {{ Js::from($allSetlists) }})"
                                             >Edit</button>
                                             <button
