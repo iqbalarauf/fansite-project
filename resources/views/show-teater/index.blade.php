@@ -429,7 +429,7 @@
                         name="is_the_show_has_event"
                         id="create-event"
                         class="mt-1"
-                        placeholder="Isi jika ada event"
+                        placeholder="STS Member, Milestone Show, Shonichi/Senshurakuu, Last Show"
                     />
                 </div>
 
@@ -440,7 +440,7 @@
                         name="additional_information"
                         id="create-additional"
                         class="mt-1"
-                        placeholder="Info tambahan jika ada"
+                        placeholder="Dapat diisi info tambahan: misal 'urutan blocking/warna seifuku', kageana, dll."
                     />
                 </div>
 
