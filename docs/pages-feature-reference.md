@@ -2,6 +2,53 @@
 
 Dokumen ini menjelaskan fungsionalitas page builder yang berjalan saat ini. Gunakan sebagai konteks ketika membuat prompt perbaikan, debugging, atau pengembangan lanjutan.
 
+## Referensi Desain
+
+Gunakan palet dan tipografi berikut sebagai sumber kebenaran visual ketika membuat atau memperbaiki UI. Pertahankan konsistensi token; jangan mengganti warna dengan nilai lain tanpa alasan desain yang jelas.
+
+### Palet Warna
+
+#### Primary
+
+| Token | Hex | Penggunaan |
+|---|---|---|
+| Primary | `#6C7CE8` | Warna utama logo, navbar, tombol utama, dan header |
+| Primary dark | `#4E5FD4` | Hover state dan teks penting di atas background terang |
+
+#### Secondary dan Accent
+
+| Token | Hex | Penggunaan |
+|---|---|---|
+| Accent gold | `#FFD166` | Efek sparkle pada tongkat, badge, notifikasi, dan CTA sekunder |
+| Accent gold alternative | `#F4C95D` | Alternatif accent gold dan warna warning |
+| Lavender light | `#A5B4FC` | Background section atau elemen dekoratif ringan |
+
+#### Netral
+
+| Token | Hex | Penggunaan |
+|---|---|---|
+| White | `#FFFFFF` | Background utama |
+| Soft blue gray | `#F5F6FA` | Background section alternatif |
+| Text primary | `#2E2F3E` | Teks utama |
+| Text secondary | `#8A8DA6` | Teks sekunder dan caption |
+
+#### Semantic UI States
+
+| State | Hex | Penggunaan |
+|---|---|---|
+| Success | `#4CAF7D` | Status berhasil atau konfirmasi positif |
+| Warning | `#F4C95D` | Peringatan yang membutuhkan perhatian |
+| Error | `#E5605C` | Error, validasi gagal, atau tindakan destruktif |
+
+### Tipografi
+
+| Peran | Font | Bobot |
+|---|---|---|
+| Heading dan judul | `Poppins` | SemiBold |
+| Body text | `Plus Jakarta Sans` | Medium |
+
+Gunakan Poppins SemiBold untuk heading, judul halaman, dan label utama. Gunakan Plus Jakarta Sans Medium untuk body text, navigasi, caption, dan label pendukung. Jika font belum tersedia pada implementasi, siapkan fallback sans-serif yang paling dekat tanpa mengubah hierarki tipografi.
+
 ## Ringkasan
 
 Fitur Pages adalah page builder berbasis Livewire untuk membuat halaman publik dengan blok konten yang dapat disusun ulang. Halaman disimpan di tabel `custom_pages` dan hanya halaman dengan status `published` yang dapat diakses publik.
