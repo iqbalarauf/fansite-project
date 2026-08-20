@@ -13,7 +13,20 @@
 
 @switch($block['type'])
     @case('container')
-        <div class="rounded-xl {{ $background }} {{ $padding }} text-center text-sm font-semibold">{{ __('Container') }}</div>
+        @php
+            $columns = $block['data']['columns'] ?? [['blocks' => []]];
+        @endphp
+        <div class="grid gap-4 {{ count($columns) === 2 ? 'md:grid-cols-2' : 'grid-cols-1' }} rounded-xl {{ $background }} {{ $padding }}">
+            @foreach ($columns as $column)
+                <div class="min-h-20 space-y-3 rounded-lg border border-dashed border-current/20 p-3">
+                    @forelse ($column['blocks'] ?? [] as $childBlock)
+                        @include('custom-pages.block-preview', ['block' => $childBlock])
+                    @empty
+                        <div class="flex min-h-12 items-center justify-center text-xs text-current/50">{{ __('Empty column') }}</div>
+                    @endforelse
+                </div>
+            @endforeach
+        </div>
         @break
     @case('text')
         <p class="whitespace-pre-line leading-7 text-zinc-600 dark:text-zinc-300">{{ $block['data']['text'] ?? '' }}</p>
@@ -26,13 +39,19 @@
         @endif
         @break
     @case('video')
-        @if (! empty($block['data']['url']))
-            <video controls class="w-full rounded-xl" aria-label="{{ $block['data']['title'] ?? '' }}"><source src="{{ $block['data']['url'] }}"></video>
+        @php
+            preg_match('~(?:youtu\.be/|youtube\.com/(?:watch\?v=|embed/|shorts/))([^?&/]+)~', $block['data']['url'] ?? '', $youtubeMatch);
+        @endphp
+        @if (! empty($youtubeMatch[1]))
+            <iframe src="https://www.youtube.com/embed/{{ $youtubeMatch[1] }}" title="{{ $block['data']['title'] ?? '' }}" class="aspect-video w-full rounded-xl" allowfullscreen></iframe>
         @else
-            <div class="flex h-32 items-center justify-center rounded-xl border border-dashed border-zinc-300 text-sm text-zinc-500">{{ __('Tambahkan URL video') }}</div>
+            <div class="flex h-32 items-center justify-center rounded-xl border border-dashed border-zinc-300 text-sm text-zinc-500">{{ __('Tambahkan link YouTube') }}</div>
         @endif
         @break
     @case('button')
         <span class="inline-flex rounded-full bg-indigo-600 px-5 py-2.5 font-bold text-white">{{ $block['data']['label'] ?? '' }}</span>
+        @break
+    @case('embed')
+        <div class="overflow-hidden rounded-xl border border-dashed border-zinc-300 p-3">{!! $block['data']['html'] ?? '' !!}</div>
         @break
 @endswitch

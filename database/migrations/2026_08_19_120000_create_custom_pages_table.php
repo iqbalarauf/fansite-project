@@ -8,12 +8,18 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasTable('custom_pages')) {
+            return;
+        }
+
         Schema::create('custom_pages', function (Blueprint $table): void {
             $table->id();
             $table->string('title');
             $table->string('slug')->unique();
             $table->string('status')->default('draft')->index();
             $table->json('blocks');
+            $table->string('display_mode')->default('full')->after('status');
+            $table->string('background_color')->default('slate')->after('display_mode');
             $table->softDeletes();
             $table->timestamps();
         });
