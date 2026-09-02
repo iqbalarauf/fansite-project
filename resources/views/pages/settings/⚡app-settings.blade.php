@@ -17,8 +17,6 @@ new #[Title('App settings')] class extends Component {
     public mixed $appLogoUpload = null;
     public ?string $heroImagePath = null;
     public mixed $heroImageUpload = null;
-    public ?string $loginImagePath = null;
-    public mixed $loginImageUpload = null;
 
     public function mount(): void
     {
@@ -29,7 +27,6 @@ new #[Title('App settings')] class extends Component {
         $this->descApp = (string) ($settings['desc_app'] ?? '');
         $this->appLogoPath = $settings['app_logo'] ?? null;
         $this->heroImagePath = $settings['hero_image'] ?? null;
-        $this->loginImagePath = $settings['login_image'] ?? null;
     }
 
     public function save(): void
@@ -40,7 +37,6 @@ new #[Title('App settings')] class extends Component {
             'descApp' => ['nullable', 'string'],
             'appLogoUpload' => ['nullable', 'image', 'max:3072'],
             'heroImageUpload' => ['nullable', 'image', 'max:3072'],
-            'loginImageUpload' => ['nullable', 'image', 'max:3072'],
         ]);
 
         if ($this->appLogoUpload) {
@@ -61,22 +57,12 @@ new #[Title('App settings')] class extends Component {
             $this->heroImageUpload = null;
         }
 
-        if ($this->loginImageUpload) {
-            if ($this->loginImagePath) {
-                Storage::disk('public')->delete($this->loginImagePath);
-            }
-
-            $this->loginImagePath = $this->loginImageUpload->store('app/login', 'public');
-            $this->loginImageUpload = null;
-        }
-
         foreach ([
             'app_name' => $this->appName,
             'sidebar_name' => $this->sidebarName,
             'desc_app' => $this->descApp,
             'app_logo' => $this->appLogoPath,
             'hero_image' => $this->heroImagePath,
-            'login_image' => $this->loginImagePath,
         ] as $key => $value) {
             DB::table('app_settings')->updateOrInsert(
                 ['key' => $key],
@@ -112,14 +98,6 @@ new #[Title('App settings')] class extends Component {
                 <input type="file" wire:model="heroImageUpload" accept="image/*" class="block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800">
                 @if ($heroImagePath)
                     <img src="{{ Storage::url($heroImagePath) }}" alt="Hero Image" class="mt-2 h-28 w-full rounded-lg border border-zinc-200 object-cover dark:border-zinc-700">
-                @endif
-            </div>
-
-            <div class="space-y-2">
-                <flux:label>{{ __('Login Image') }}</flux:label>
-                <input type="file" wire:model="loginImageUpload" accept="image/*" class="block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800">
-                @if ($loginImagePath)
-                    <img src="{{ Storage::url($loginImagePath) }}" alt="Login Image" class="mt-2 h-28 w-full rounded-lg border border-zinc-200 object-cover dark:border-zinc-700">
                 @endif
             </div>
 

@@ -31,7 +31,6 @@ class AppearanceSettingsTest extends TestCase
             ->assertSee('Sidebar Name')
             ->assertSee('Desc App')
             ->assertSee('App Logo')
-            ->assertSee('Hero Image')
-            ->assertSee('Login Image');
+            ->assertSee('Hero Image');
     }
 }

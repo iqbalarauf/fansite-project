@@ -18,8 +18,9 @@ return new class extends Migration
             $table->string('slug')->unique();
             $table->string('status')->default('draft')->index();
             $table->json('blocks');
-            $table->string('display_mode')->default('full')->after('status');
-            $table->string('background_color')->default('slate')->after('display_mode');
+            $table->string('display_mode')->default('full');
+            $table->string('background_color')->default('slate');
+            $table->string('title_alignment')->default('left');
             $table->softDeletes();
             $table->timestamps();
         });

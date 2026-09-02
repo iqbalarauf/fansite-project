@@ -2,6 +2,7 @@
 
 use App\Models\CustomPage;
 use Flux\Flux;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Title;
@@ -14,8 +15,11 @@ new #[Title('Custom Pages')] class extends Component {
     public string $status = 'draft';
     public string $displayMode = 'full';
     public string $backgroundColor = 'slate';
+    public string $titleAlignment = 'left';
     public array $blocks = [];
     public array $pages = [];
+    public array $setlistOptions = [];
+    public array $unitSongOptions = [];
     public int $selectedBlockIndex = 0;
     public ?int $selectedColumnIndex = null;
     public ?int $selectedNestedBlockIndex = null;
@@ -23,6 +27,7 @@ new #[Title('Custom Pages')] class extends Component {
     public function mount(?int $pageId = null): void
     {
         $this->refreshPages();
+        $this->loadStatisticOptions();
 
         if ($pageId) {
             $this->loadPage(CustomPage::query()->findOrFail($pageId));
@@ -39,6 +44,7 @@ new #[Title('Custom Pages')] class extends Component {
         $this->status = 'draft';
         $this->displayMode = 'full';
         $this->backgroundColor = 'slate';
+        $this->titleAlignment = 'left';
         $this->selectedBlockIndex = 0;
         $this->selectedColumnIndex = null;
         $this->selectedNestedBlockIndex = null;
@@ -52,7 +58,7 @@ new #[Title('Custom Pages')] class extends Component {
 
     public function addBlock(string $type): void
     {
-        if (! in_array($type, ['container', 'text', 'image', 'video', 'button', 'embed'], true)) {
+        if (! in_array($type, ['container', 'text', 'statistic', 'image', 'video', 'button', 'embed'], true)) {
             return;
         }
 
@@ -60,8 +66,9 @@ new #[Title('Custom Pages')] class extends Component {
             'id' => (string) Str::uuid(),
             'type' => $type,
             'data' => match ($type) {
-                'container' => ['background' => 'white', 'padding' => 'medium', 'columns' => [['id' => (string) Str::uuid(), 'blocks' => []]]],
-                'text' => ['text' => 'Tulis isi halaman di sini.'],
+                'container' => ['background' => 'white', 'padding' => 'medium', 'vertical_alignment' => 'top', 'columns' => [['id' => (string) Str::uuid(), 'blocks' => []]]],
+                'text' => ['text' => 'Tulis isi halaman di sini.', 'alignment' => 'left', 'color' => '#2E2F3E', 'bold' => false, 'italic' => false, 'underline' => false],
+                'statistic' => ['metric' => 'show_teater_all', 'label' => 'Total Show Teater'],
                 'image' => ['url' => '', 'alt' => ''],
                 'video' => ['url' => '', 'title' => ''],
                 'button' => ['label' => 'Buka tautan', 'url' => 'https://'],
@@ -76,7 +83,7 @@ new #[Title('Custom Pages')] class extends Component {
 
     public function addBlockToContainer(int $containerIndex, int $columnIndex, string $type): void
     {
-        if (($this->blocks[$containerIndex]['type'] ?? null) !== 'container' || ! in_array($type, ['text', 'image', 'video', 'button', 'embed'], true)) {
+        if (($this->blocks[$containerIndex]['type'] ?? null) !== 'container' || ! in_array($type, ['text', 'statistic', 'image', 'video', 'button', 'embed'], true)) {
             return;
         }
 
@@ -84,7 +91,8 @@ new #[Title('Custom Pages')] class extends Component {
             'id' => (string) Str::uuid(),
             'type' => $type,
             'data' => match ($type) {
-                'text' => ['text' => 'Tulis isi halaman di sini.'],
+                'text' => ['text' => 'Tulis isi halaman di sini.', 'alignment' => 'left', 'color' => '#2E2F3E', 'bold' => false, 'italic' => false, 'underline' => false],
+                'statistic' => ['metric' => 'show_teater_all', 'label' => 'Total Show Teater'],
                 'image' => ['url' => '', 'alt' => ''],
                 'video' => ['url' => '', 'title' => ''],
                 'button' => ['label' => 'Buka tautan', 'url' => 'https://'],
@@ -155,6 +163,41 @@ new #[Title('Custom Pages')] class extends Component {
         $this->selectedBlockIndex = $position;
     }
 
+    public function sortNestedBlock(int $containerIndex, int $columnIndex, string $item, int $position): void
+    {
+        $nestedBlocks = $this->blocks[$containerIndex]['data']['columns'][$columnIndex]['blocks'] ?? null;
+
+        if (! is_array($nestedBlocks)) {
+            return;
+        }
+
+        $from = collect($nestedBlocks)->search(fn (array $block): bool => $block['id'] === $item);
+
+        if ($from === false || $from === $position) {
+            return;
+        }
+
+        $block = $nestedBlocks[$from];
+        array_splice($nestedBlocks, $from, 1);
+        array_splice($nestedBlocks, $position, 0, [$block]);
+        $this->blocks[$containerIndex]['data']['columns'][$columnIndex]['blocks'] = $nestedBlocks;
+        $this->selectedBlockIndex = $containerIndex;
+        $this->selectedColumnIndex = $columnIndex;
+        $this->selectedNestedBlockIndex = $position;
+    }
+
+    public function removeNestedBlock(int $containerIndex, int $columnIndex, int $blockIndex): void
+    {
+        if (! isset($this->blocks[$containerIndex]['data']['columns'][$columnIndex]['blocks'][$blockIndex])) {
+            return;
+        }
+
+        array_splice($this->blocks[$containerIndex]['data']['columns'][$columnIndex]['blocks'], $blockIndex, 1);
+        $this->selectedBlockIndex = $containerIndex;
+        $this->selectedColumnIndex = null;
+        $this->selectedNestedBlockIndex = null;
+    }
+
     public function save(string $nextStatus = 'draft'): void
     {
         $this->validatePage($nextStatus);
@@ -171,6 +214,7 @@ new #[Title('Custom Pages')] class extends Component {
                 'status' => $nextStatus,
                 'display_mode' => $this->displayMode,
                 'background_color' => $this->backgroundColor,
+                'title_alignment' => $this->titleAlignment,
                 'blocks' => array_values($this->blocks),
             ],
         );
@@ -197,6 +241,24 @@ new #[Title('Custom Pages')] class extends Component {
         $this->pages = CustomPage::query()->latest('updated_at')->get()->toArray();
     }
 
+    private function loadStatisticOptions(): void
+    {
+        $this->setlistOptions = DB::table('show_teater')
+            ->whereNotNull('setlist')
+            ->where('setlist', '!=', '')
+            ->distinct()
+            ->orderBy('setlist')
+            ->pluck('setlist')
+            ->all();
+        $this->unitSongOptions = DB::table('show_teater')
+            ->whereNotNull('unit_song')
+            ->where('unit_song', '!=', '')
+            ->distinct()
+            ->orderBy('unit_song')
+            ->pluck('unit_song')
+            ->all();
+    }
+
     private function loadPage(CustomPage $page): void
     {
         $this->pageId = $page->id;
@@ -205,6 +267,7 @@ new #[Title('Custom Pages')] class extends Component {
         $this->status = $page->status;
         $this->displayMode = $page->display_mode ?? 'full';
         $this->backgroundColor = $page->background_color ?? 'slate';
+        $this->titleAlignment = $page->title_alignment ?? 'left';
         $this->blocks = array_values($page->blocks ?? []);
         $this->selectedBlockIndex = 0;
         $this->selectedColumnIndex = null;
@@ -231,10 +294,27 @@ new #[Title('Custom Pages')] class extends Component {
             'slug' => ['nullable', 'string', 'max:120', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/', Rule::unique('custom_pages', 'slug')->ignore($this->pageId)],
             'displayMode' => ['required', 'in:full,welcome'],
             'backgroundColor' => ['required', 'in:white,slate,indigo'],
+            'titleAlignment' => ['required', 'in:left,center,right'],
             'blocks' => ['array', 'min:1'],
             'blocks.*.id' => ['required', 'string', 'max:80'],
-            'blocks.*.type' => ['required', 'in:container,text,image,video,button,embed'],
+            'blocks.*.type' => ['required', 'in:container,text,statistic,image,video,button,embed'],
             'blocks.*.data' => ['array'],
+            'blocks.*.data.vertical_alignment' => ['nullable', 'in:top,middle,bottom'],
+            'blocks.*.data.alignment' => ['nullable', 'in:left,center,right,justify'],
+            'blocks.*.data.color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'blocks.*.data.bold' => ['nullable', 'boolean'],
+            'blocks.*.data.italic' => ['nullable', 'boolean'],
+            'blocks.*.data.underline' => ['nullable', 'boolean'],
+            'blocks.*.data.metric' => ['nullable', 'in:show_teater_all,show_teater_date_range,show_teater_setlist,unit_song_all,unit_song_date_range,unit_song_setlist,center_unit_song_all,center_unit_song_unit_song,center_unit_song_setlist,center_unit_song_date_range,global_center_date_range,global_center_setlist,live_streaming_time,live_streaming_row,live_streaming_platform'],
+            'blocks.*.data.columns.*.blocks.*.id' => ['required', 'string', 'max:80'],
+            'blocks.*.data.columns.*.blocks.*.type' => ['required', 'in:text,statistic,image,video,button,embed'],
+            'blocks.*.data.columns.*.blocks.*.data' => ['array'],
+            'blocks.*.data.columns.*.blocks.*.data.alignment' => ['nullable', 'in:left,center,right,justify'],
+            'blocks.*.data.columns.*.blocks.*.data.color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'blocks.*.data.columns.*.blocks.*.data.bold' => ['nullable', 'boolean'],
+            'blocks.*.data.columns.*.blocks.*.data.italic' => ['nullable', 'boolean'],
+            'blocks.*.data.columns.*.blocks.*.data.underline' => ['nullable', 'boolean'],
+            'blocks.*.data.columns.*.blocks.*.data.metric' => ['nullable', 'in:show_teater_all,show_teater_date_range,show_teater_setlist,unit_song_all,unit_song_date_range,unit_song_setlist,center_unit_song_all,center_unit_song_unit_song,center_unit_song_setlist,center_unit_song_date_range,global_center_date_range,global_center_setlist,live_streaming_time,live_streaming_row,live_streaming_platform'],
         ]);
 
         if (! in_array($nextStatus, ['draft', 'published'], true)) {
@@ -243,30 +323,46 @@ new #[Title('Custom Pages')] class extends Component {
         }
 
         foreach ($this->blocks as $index => $block) {
-            $data = $block['data'] ?? [];
-            $requiredField = match ($block['type']) {
+            $this->validateBlock($block, "blocks.{$index}");
+
+            if (($block['type'] ?? null) !== 'container') {
+                continue;
+            }
+
+            foreach (($block['data']['columns'] ?? []) as $columnIndex => $column) {
+                foreach (($column['blocks'] ?? []) as $nestedBlockIndex => $nestedBlock) {
+                    $this->validateBlock($nestedBlock, "blocks.{$index}.data.columns.{$columnIndex}.blocks.{$nestedBlockIndex}");
+                }
+            }
+        }
+
+        if ($nextStatus === 'published' && $this->getErrorBag()->isNotEmpty()) {
+            $this->addError('status', __('Fix the block errors before publishing.'));
+        }
+    }
+
+    private function validateBlock(array $block, string $path): void
+    {
+        $data = $block['data'] ?? [];
+        $requiredField = match ($block['type']) {
                 'text' => 'text',
+                'statistic' => 'metric',
                 'image', 'video' => 'url',
                 'button' => 'label',
                 'embed' => 'html',
                 'container' => null,
             };
 
-            if ($requiredField && blank($data[$requiredField] ?? null)) {
-                $this->addError("blocks.{$index}.data.{$requiredField}", __('This block field is required.'));
-            }
-
-            if (in_array($block['type'], ['image', 'video', 'button'], true) && ! filter_var($data['url'] ?? null, FILTER_VALIDATE_URL)) {
-                $this->addError("blocks.{$index}.data.url", __('Enter a valid URL.'));
-            }
-
-            if ($block['type'] === 'video' && ! preg_match('~(?:youtu\.be/|youtube\.com/)~i', $data['url'] ?? '')) {
-                $this->addError("blocks.{$index}.data.url", __('Enter a valid YouTube URL.'));
-            }
+        if ($requiredField && blank($data[$requiredField] ?? null)) {
+            $this->addError("{$path}.data.{$requiredField}", __('This block field is required.'));
         }
 
-        if ($nextStatus === 'published' && $this->getErrorBag()->isNotEmpty()) {
-            $this->addError('status', __('Fix the block errors before publishing.'));
+        if (in_array($block['type'], ['image', 'video', 'button'], true) && ! filter_var($data['url'] ?? null, FILTER_VALIDATE_URL)) {
+            $this->addError("{$path}.data.url", __('Enter a valid URL.'));
+        }
+
+        if ($block['type'] === 'video' && ! preg_match('~(?:youtu\.be/|youtube\.com/)~i', $data['url'] ?? '')) {
+            $this->addError("{$path}.data.url", __('Enter a valid YouTube URL.'));
         }
     }
 };
@@ -286,9 +382,14 @@ new #[Title('Custom Pages')] class extends Component {
 
         <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
             <section class="min-w-0 space-y-4">
-                <div class="grid gap-4 sm:grid-cols-2">
+                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <flux:input wire:model.live="title" :label="__('Page title')" placeholder="Contoh: Profil Oshimen" />
                     <flux:input wire:model.live="slug" :label="__('Custom slug (optional)')" placeholder="profil-oshimen" />
+                    <flux:select wire:model.live="titleAlignment" :label="__('Title alignment')">
+                        <flux:select.option value="left">{{ __('Left') }}</flux:select.option>
+                        <flux:select.option value="center">{{ __('Center') }}</flux:select.option>
+                        <flux:select.option value="right">{{ __('Right') }}</flux:select.option>
+                    </flux:select>
                 </div>
                 <flux:error name="title" />
                 <flux:error name="slug" />
@@ -324,7 +425,7 @@ new #[Title('Custom Pages')] class extends Component {
                 <div>
                     <flux:heading size="sm">{{ __('Add element') }}</flux:heading>
                     <div class="mt-3 grid gap-2">
-                        @foreach ([['container', 'squares-2x2', 'Container'], ['text', 'bars-3-bottom-left', 'Text'], ['image', 'photo', 'Image'], ['video', 'video-camera', 'YouTube video'], ['button', 'cursor-arrow-rays', 'Button'], ['embed', 'code-bracket', 'Embed HTML']] as [$type, $icon, $label])
+                        @foreach ([['container', 'squares-2x2', 'Container'], ['text', 'bars-3-bottom-left', 'Text'], ['statistic', 'chart-bar', 'Statistic'], ['image', 'photo', 'Image'], ['video', 'video-camera', 'YouTube video'], ['button', 'cursor-arrow-rays', 'Button'], ['embed', 'code-bracket', 'Embed HTML']] as [$type, $icon, $label])
                             <flux:button wire:click="addBlock('{{ $type }}')" variant="outline" icon="{{ $icon }}" class="justify-start">{{ __($label) }}</flux:button>
                         @endforeach
                     </div>
@@ -339,6 +440,19 @@ new #[Title('Custom Pages')] class extends Component {
                             <flux:text class="text-xs font-semibold uppercase tracking-wide text-zinc-500">{{ __('Editing nested :type', ['type' => $nestedType]) }}</flux:text>
                             @if ($nestedType === 'text')
                                 <flux:textarea wire:model.live="{{ $nestedPath }}.data.text" :label="__('Text')" rows="6" />
+                                <flux:select wire:model.live="{{ $nestedPath }}.data.alignment" :label="__('Text alignment')">
+                                    @foreach (['left' => 'Left', 'center' => 'Center', 'right' => 'Right', 'justify' => 'Justify'] as $value => $label)
+                                        <flux:select.option value="{{ $value }}">{{ __($label) }}</flux:select.option>
+                                    @endforeach
+                                </flux:select>
+                                <flux:input wire:model.live="{{ $nestedPath }}.data.color" :label="__('Text color')" type="color" />
+                                <div class="flex flex-wrap gap-3">
+                                    <flux:checkbox wire:model.live="{{ $nestedPath }}.data.bold" :label="__('Bold')" />
+                                    <flux:checkbox wire:model.live="{{ $nestedPath }}.data.italic" :label="__('Italic')" />
+                                    <flux:checkbox wire:model.live="{{ $nestedPath }}.data.underline" :label="__('Underline')" />
+                                </div>
+                            @elseif ($nestedType === 'statistic')
+                                @include('custom-pages.statistic-fields', ['path' => $nestedPath])
                             @elseif ($nestedType === 'image')
                                 <flux:input wire:model.live="{{ $nestedPath }}.data.url" :label="__('Image URL')" type="url" />
                                 <flux:input wire:model.live="{{ $nestedPath }}.data.alt" :label="__('Alt text')" />
@@ -353,6 +467,19 @@ new #[Title('Custom Pages')] class extends Component {
                             @endif
                         @elseif (in_array($blocks[$selectedBlockIndex]['type'], ['text'], true))
                             <flux:textarea wire:model.live="blocks.{{ $selectedBlockIndex }}.data.text" :label="__('Text')" rows="6" />
+                            <flux:select wire:model.live="blocks.{{ $selectedBlockIndex }}.data.alignment" :label="__('Text alignment')">
+                                @foreach (['left' => 'Left', 'center' => 'Center', 'right' => 'Right', 'justify' => 'Justify'] as $value => $label)
+                                    <flux:select.option value="{{ $value }}">{{ __($label) }}</flux:select.option>
+                                @endforeach
+                            </flux:select>
+                            <flux:input wire:model.live="blocks.{{ $selectedBlockIndex }}.data.color" :label="__('Text color')" type="color" />
+                            <div class="flex flex-wrap gap-3">
+                                <flux:checkbox wire:model.live="blocks.{{ $selectedBlockIndex }}.data.bold" :label="__('Bold')" />
+                                <flux:checkbox wire:model.live="blocks.{{ $selectedBlockIndex }}.data.italic" :label="__('Italic')" />
+                                <flux:checkbox wire:model.live="blocks.{{ $selectedBlockIndex }}.data.underline" :label="__('Underline')" />
+                            </div>
+                        @elseif ($blocks[$selectedBlockIndex]['type'] === 'statistic')
+                            @include('custom-pages.statistic-fields', ['path' => "blocks.{$selectedBlockIndex}"])
                         @elseif ($blocks[$selectedBlockIndex]['type'] === 'container')
                             <flux:select wire:model.live="blocks.{{ $selectedBlockIndex }}.data.background" :label="__('Background')">
                                 <flux:select.option value="white">{{ __('White') }}</flux:select.option>
@@ -364,6 +491,11 @@ new #[Title('Custom Pages')] class extends Component {
                                 <flux:select.option value="medium">{{ __('Medium') }}</flux:select.option>
                                 <flux:select.option value="large">{{ __('Large') }}</flux:select.option>
                             </flux:select>
+                            <flux:select wire:model.live="blocks.{{ $selectedBlockIndex }}.data.vertical_alignment" :label="__('Vertical alignment')">
+                                <flux:select.option value="top">{{ __('Top') }}</flux:select.option>
+                                <flux:select.option value="middle">{{ __('Middle') }}</flux:select.option>
+                                <flux:select.option value="bottom">{{ __('Bottom') }}</flux:select.option>
+                            </flux:select>
                             <flux:select wire:change="setContainerColumns({{ $selectedBlockIndex }}, $event.target.value)" :label="__('Columns')">
                                 <flux:select.option value="1">{{ __('1 column') }}</flux:select.option>
                                 <flux:select.option value="2">{{ __('2 columns') }}</flux:select.option>
@@ -371,11 +503,17 @@ new #[Title('Custom Pages')] class extends Component {
                             @foreach ($blocks[$selectedBlockIndex]['data']['columns'] ?? [] as $columnIndex => $column)
                                 <div class="space-y-2 rounded-xl border border-dashed border-zinc-300 p-3 dark:border-zinc-600">
                                     <flux:text class="font-semibold">{{ __('Column :number', ['number' => $columnIndex + 1]) }}</flux:text>
-                                    @foreach ($column['blocks'] ?? [] as $nestedIndex => $nestedBlock)
-                                        <flux:button wire:click="selectNestedBlock({{ $selectedBlockIndex }}, {{ $columnIndex }}, {{ $nestedIndex }})" size="sm" variant="ghost" class="w-full justify-start">{{ $nestedBlock['type'] }}</flux:button>
-                                    @endforeach
+                                    <div wire:sort="sortNestedBlock({{ $selectedBlockIndex }}, {{ $columnIndex }})" class="space-y-1">
+                                        @foreach ($column['blocks'] ?? [] as $nestedIndex => $nestedBlock)
+                                            <div wire:sort:item="{{ $nestedBlock['id'] }}" wire:key="nested-block-{{ $nestedBlock['id'] }}" class="flex items-center gap-1">
+                                                <flux:icon wire:sort:handle name="bars-3" class="size-4 cursor-grab text-zinc-400" />
+                                                <flux:button wire:click="selectNestedBlock({{ $selectedBlockIndex }}, {{ $columnIndex }}, {{ $nestedIndex }})" size="sm" variant="ghost" class="min-w-0 flex-1 justify-start">{{ $nestedBlock['type'] }}</flux:button>
+                                                <flux:button wire:click="removeNestedBlock({{ $selectedBlockIndex }}, {{ $columnIndex }}, {{ $nestedIndex }})" icon="trash" size="sm" square :aria-label="__('Remove nested block')" />
+                                            </div>
+                                        @endforeach
+                                    </div>
                                     <div class="grid gap-2">
-                                        @foreach ([['text', 'Text'], ['image', 'Image'], ['video', 'YouTube video'], ['button', 'Button'], ['embed', 'Embed HTML']] as [$type, $label])
+                                        @foreach ([['text', 'Text'], ['statistic', 'Statistic'], ['image', 'Image'], ['video', 'YouTube video'], ['button', 'Button'], ['embed', 'Embed HTML']] as [$type, $label])
                                             <flux:button wire:click="addBlockToContainer({{ $selectedBlockIndex }}, {{ $columnIndex }}, '{{ $type }}')" size="sm" variant="outline">{{ __('Add :element', ['element' => __($label)]) }}</flux:button>
                                         @endforeach
                                     </div>

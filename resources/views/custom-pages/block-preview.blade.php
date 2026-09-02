@@ -1,4 +1,5 @@
 @php
+    use App\Support\CustomPageStatistic;
     $background = match ($block['data']['background'] ?? 'white') {
         'soft' => 'bg-zinc-100',
         'accent' => 'bg-indigo-600 text-white',
@@ -9,6 +10,18 @@
         'large' => 'p-10',
         default => 'p-6',
     };
+    $verticalAlignment = match ($block['data']['vertical_alignment'] ?? 'top') {
+        'middle' => 'items-center',
+        'bottom' => 'items-end',
+        default => 'items-start',
+    };
+    $textAlignment = match ($block['data']['alignment'] ?? 'left') {
+        'center' => 'text-center',
+        'right' => 'text-right',
+        'justify' => 'text-justify',
+        default => 'text-left',
+    };
+    $textColor = preg_match('/^#[0-9A-Fa-f]{6}$/', $block['data']['color'] ?? '') ? $block['data']['color'] : '#2E2F3E';
 @endphp
 
 @switch($block['type'])
@@ -16,7 +29,7 @@
         @php
             $columns = $block['data']['columns'] ?? [['blocks' => []]];
         @endphp
-        <div class="grid gap-4 {{ count($columns) === 2 ? 'md:grid-cols-2' : 'grid-cols-1' }} rounded-xl {{ $background }} {{ $padding }}">
+        <div class="grid gap-4 {{ count($columns) === 2 ? 'md:grid-cols-2' : 'grid-cols-1' }} {{ $verticalAlignment }} rounded-xl {{ $background }} {{ $padding }}">
             @foreach ($columns as $column)
                 <div class="min-h-20 space-y-3 rounded-lg border border-dashed border-current/20 p-3">
                     @forelse ($column['blocks'] ?? [] as $childBlock)
@@ -29,7 +42,13 @@
         </div>
         @break
     @case('text')
-        <p class="whitespace-pre-line leading-7 text-zinc-600 dark:text-zinc-300">{{ $block['data']['text'] ?? '' }}</p>
+        <p class="whitespace-pre-line leading-7 {{ $textAlignment }} {{ ($block['data']['bold'] ?? false) ? 'font-bold' : '' }} {{ ($block['data']['italic'] ?? false) ? 'italic' : '' }} {{ ($block['data']['underline'] ?? false) ? 'underline' : '' }}" style="color: {{ $textColor }}">{{ $block['data']['text'] ?? '' }}</p>
+        @break
+    @case('statistic')
+        <div class="rounded-lg border border-indigo-200 bg-indigo-50 p-4 text-indigo-950">
+            <div class="text-sm font-semibold">{{ $block['data']['label'] ?? __('Statistic') }}</div>
+            <div class="mt-1 text-3xl font-bold">{{ number_format(CustomPageStatistic::value($block['data'] ?? [])) }}</div>
+        </div>
         @break
     @case('image')
         @if (! empty($block['data']['url']))

@@ -47,7 +47,7 @@
                     {{ __('Repository') }}
                 </flux:sidebar.item>
 
-                <flux:sidebar.item icon="book-open-text" href="https://fansite.labqitech.my.id/documentation" target="_blank">
+                <flux:sidebar.item icon="book-open-text" href="https://docs.google.com/document/d/1AIrr9cZ8VELNgVn832Lq155lxQPqReDTjJ9aOvZN5yI/edit?usp=sharing" target="_blank">
                     {{ __('Documentation') }}
                 </flux:sidebar.item>
             </flux:sidebar.nav>

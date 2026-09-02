@@ -15,6 +15,11 @@
         'indigo' => 'bg-indigo-50',
         default => 'bg-slate-100',
     };
+    $titleAlignment = match ($page->title_alignment ?? 'left') {
+        'center' => 'text-center',
+        'right' => 'text-right',
+        default => 'text-left',
+    };
 @endphp
 
 <!DOCTYPE html>
@@ -58,7 +63,7 @@
 
         <main class="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 px-4 py-10 sm:px-6 lg:py-16">
             <header class="border-b border-slate-200 pb-6">
-                <h1 class="text-4xl font-black tracking-tight sm:text-5xl">{{ $page->title }}</h1>
+                <h1 class="text-4xl font-black tracking-tight {{ $titleAlignment }} sm:text-5xl">{{ $page->title }}</h1>
             </header>
             <div class="space-y-5">
                 @foreach ($page->blocks ?? [] as $block)

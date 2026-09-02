@@ -24,7 +24,6 @@ class AppSettings extends Controller
             'desc_app' => 'Welcome to FANSIGHT - your ultimate destination for all things related to your favorite idol!',
             'app_logo' => null,
             'hero_image' => null,
-            'login_image' => null,
         ];
 
         return [
@@ -51,7 +50,6 @@ class AppSettings extends Controller
             'desc_app',
             'app_logo',
             'hero_image',
-            'login_image',
         ];
 
         foreach ($keys as $key) {

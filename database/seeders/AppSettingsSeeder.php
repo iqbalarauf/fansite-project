@@ -40,12 +40,6 @@ class AppSettingsSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            [
-                'key' => 'login_image',
-                'value' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
         ];
 
         // Use bulk insert for better performance
