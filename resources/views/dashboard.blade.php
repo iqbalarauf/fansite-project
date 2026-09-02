@@ -21,10 +21,10 @@
             <form method="GET" action="{{ route('dashboard') }}" id="period-form" class="flex flex-wrap items-center gap-2">
                 <input type="hidden" name="comparison" value="{{ $showComparison ? '1' : '0' }}" id="comparison-hidden" />
                 <input type="hidden" name="period" value="{{ $period }}" id="period-hidden" />
-                <input type="hidden" name="event_display_mode" value="{{ $eventDisplayMode }}" id="period-event-display-mode-hidden" />
                 <input type="hidden" name="event_display_limit" value="{{ $eventDisplayLimit }}" id="period-event-display-limit-hidden" />
                 <div class="flex items-center rounded-xl border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-700 dark:bg-zinc-800">
                     @foreach ([
+                        'all'    => 'All',
                         '7days'  => '7 Hari',
                         'monthly'=> 'Bulanan',
                         'quarter'=> 'Kuartal',
@@ -89,20 +89,6 @@
                     </button>
                 </div>
 
-                <div class="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900">
-                    <span class="text-sm font-medium text-zinc-600 dark:text-zinc-300">Mode Event</span>
-                    <button
-                        type="button"
-                        onclick="setEventDisplayMode('{{ $eventDisplayMode === 'period' ? 'count' : 'period' }}')"
-                        class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {{ $eventDisplayMode === 'period' ? 'bg-blue-600' : 'bg-zinc-300 dark:bg-zinc-600' }}"
-                    >
-                        <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform {{ $eventDisplayMode === 'period' ? 'translate-x-6' : 'translate-x-1' }}"></span>
-                    </button>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">
-                        {{ $eventDisplayMode === 'period' ? 'Ikuti periode dashboard' : 'Berdasarkan jumlah event' }}
-                    </span>
-                </div>
-
                 <div class="flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900">
                     <span class="text-sm font-medium text-zinc-600 dark:text-zinc-300">Jumlah event</span>
                     <div class="flex items-center gap-2">
@@ -119,7 +105,7 @@
                 {{-- Capture button --}}
                 <button
                     type="button"
-                    onclick="captureDashboard()"
+                    onclick="captureDashboard(this)"
                     class="flex items-center gap-2 rounded-xl bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 transition-colors"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -192,7 +178,7 @@
                 <div class="mb-4 flex items-center justify-between">
                     <flux:heading size="sm" class="font-semibold">Oshimen Activity</flux:heading>
                     <span class="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                        {{ match($period) { '7days' => '7 Hari', 'monthly' => 'Bulanan', 'quarter' => 'Kuartal', '6months' => '6 Bulan', 'yearly' => '1 Tahun', 'custom' => 'Custom' } }}
+                        {{ match($period) { 'all' => 'All', '7days' => '7 Hari', 'monthly' => 'Bulanan', 'quarter' => 'Kuartal', '6months' => '6 Bulan', 'yearly' => '1 Tahun', 'custom' => 'Custom' } }}
                     </span>
                 </div>
                 {{-- Legend --}}
@@ -266,12 +252,12 @@
                 </div>
             </div>
 
-            {{-- Live Streaming Last 7 Days --}}
+            {{-- Live Streaming --}}
             <div class="col-span-1 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">
                 <div class="mb-4 flex items-center justify-between">
                     <flux:heading size="sm" class="font-semibold">Live Streaming</flux:heading>
                     <span class="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                        {{ match($period) { '7days' => '7 Hari', 'monthly' => 'Bulanan', 'quarter' => 'Kuartal', '6months' => '6 Bulan', 'yearly' => '1 Tahun', 'custom' => 'Custom' } }}
+                        {{ match($period) { 'all' => 'All', '7days' => '7 Hari', 'monthly' => 'Bulanan', 'quarter' => 'Kuartal', '6months' => '6 Bulan', 'yearly' => '1 Tahun', 'custom' => 'Custom' } }}
                     </span>
                 </div>
                 @forelse ($liveStreamingEvents as $ls)
@@ -296,7 +282,7 @@
                         <svg xmlns="http://www.w3.org/2000/svg" class="mb-2 size-8 text-zinc-300 dark:text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z"/>
                         </svg>
-                        <p class="text-sm">Belum ada live streaming dalam 7 hari terakhir</p>
+                        <p class="text-sm">Belum ada live streaming dalam periode ini</p>
                     </div>
                 @endforelse
             </div>
@@ -384,7 +370,6 @@
             <input type="hidden" name="comparison" value="{{ $showComparison ? '1' : '0' }}" />
             <input type="hidden" name="date_from" value="{{ $customFrom }}" />
             <input type="hidden" name="date_to" value="{{ $customTo }}" />
-            <input type="hidden" name="event_display_mode" id="event-controls-display-mode-hidden" value="{{ $eventDisplayMode }}" />
             <input type="hidden" name="event_display_limit" id="event-controls-display-limit-hidden" value="{{ $eventDisplayLimit }}" />
         </form>
 
@@ -430,43 +415,39 @@
             document.getElementById('period-form').submit();
         }
 
-        function setEventDisplayMode(mode) {
-            document.getElementById('event-controls-display-mode-hidden').value = mode;
-            document.getElementById('event-controls-form').submit();
-        }
-
         function setEventDisplayLimit(limit) {
             document.getElementById('event-controls-display-limit-hidden').value = limit;
-            document.getElementById('event-controls-display-mode-hidden').value = 'count';
             document.getElementById('event-controls-form').submit();
         }
 
         // --- Capture ---
-        function captureDashboard() {
+        async function captureDashboard(button) {
             const el = document.getElementById('dashboard-capture-area');
-            const btn = event.currentTarget;
-            btn.disabled = true;
-            btn.textContent = 'Capturing...';
-
-            // Convert Chart.js canvas to image before html2canvas
-            const canvases = el.querySelectorAll('canvas');
+            const originalButtonContent = button.innerHTML;
+            button.disabled = true;
+            button.textContent = 'Capturing...';
             const originals = [];
-            canvases.forEach(canvas => {
-                const img = document.createElement('img');
-                img.src = canvas.toDataURL('image/png');
-                img.style.width = canvas.style.width || canvas.offsetWidth + 'px';
-                img.style.height = canvas.style.height || canvas.offsetHeight + 'px';
-                originals.push({ canvas, img, parent: canvas.parentNode });
-                canvas.parentNode.replaceChild(img, canvas);
-            });
 
-            html2canvas(el, {
-                scale: 2,
-                useCORS: true,
-                allowTaint: true,
-                backgroundColor: isDark ? '#18181b' : '#ffffff',
-                logging: false,
-            }).then(capturedCanvas => {
+            try {
+                if (typeof html2canvas !== 'function') {
+                    throw new Error('Capture library is unavailable.');
+                }
+
+                el.querySelectorAll('canvas').forEach(canvas => {
+                    const image = document.createElement('img');
+                    image.src = canvas.toDataURL('image/png');
+                    image.style.width = canvas.style.width || `${canvas.offsetWidth}px`;
+                    image.style.height = canvas.style.height || `${canvas.offsetHeight}px`;
+                    originals.push({ canvas, image, parent: canvas.parentNode });
+                    canvas.parentNode.replaceChild(image, canvas);
+                });
+
+                const capturedCanvas = await html2canvas(el, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: isDark ? '#18181b' : '#ffffff',
+                    logging: false,
+                });
                 const link = document.createElement('a');
                 const now = new Date();
                 const ts = now.getFullYear()
@@ -478,17 +459,16 @@
                 link.download = `dashboard-${ts}.png`;
                 link.href = capturedCanvas.toDataURL('image/png');
                 link.click();
-            }).catch(err => {
-                console.error('Capture failed:', err);
+            } catch (error) {
+                console.error('Capture failed:', error);
                 alert('Gagal meng-capture dashboard.');
-            }).finally(() => {
-                // Restore original canvases
-                originals.forEach(({ canvas, img, parent }) => {
-                    parent.replaceChild(canvas, img);
+            } finally {
+                originals.forEach(({ canvas, image, parent }) => {
+                    parent.replaceChild(canvas, image);
                 });
-                btn.disabled = false;
-                btn.textContent = 'Capture';
-            });
+                button.disabled = false;
+                button.innerHTML = originalButtonContent;
+            }
         }
     </script>
 </x-layouts::app>

@@ -13,31 +13,20 @@ class DashboardController extends Controller
 {
     public function index(Request $request)
     {
-        $period = $request->get('period', '7days');
+        $period = $request->get('period', 'all');
         if ($period === 'default') {
-            $period = '7days';
+            $period = 'all';
         }
 
-        $allowedPeriods = ['7days', 'monthly', 'quarter', '6months', 'yearly', 'custom'];
+        $allowedPeriods = ['all', '7days', 'monthly', 'quarter', '6months', 'yearly', 'custom'];
         if (! in_array($period, $allowedPeriods, true)) {
-            $period = '7days';
+            $period = 'all';
         }
 
         $showComparison = $request->boolean('comparison', false);
         $customFrom = $request->get('date_from');
         $customTo = $request->get('date_to');
-        $eventDisplayMode = $request->get('event_display_mode', 'period');
         $eventDisplayLimit = (int) $request->get('event_display_limit', 5);
-        $eventLimit = (int) $request->integer('event_limit', 5);
-        $eventLimit = in_array($eventLimit, [5, 10, 15], true) ? $eventLimit : 5;
-        $eventsFollowPeriod = $request->has('events_follow_period')
-            ? $request->boolean('events_follow_period')
-            : true;
-
-        if (! in_array($eventDisplayMode, ['period', 'count'], true)) {
-            $eventDisplayMode = 'period';
-        }
-
         if (! in_array($eventDisplayLimit, [5, 10, 15], true)) {
             $eventDisplayLimit = 5;
         }
@@ -48,6 +37,7 @@ class DashboardController extends Controller
         }
 
         [$dateFrom, $dateTo, $prevFrom, $prevTo] = $this->resolvePeriod($period, $customFrom, $customTo);
+        $isAllPeriod = $period === 'all';
 
         // --- About / Idol settings ---
         $about = Cache::remember('about_settings', 3600, fn () => DB::table('about_settings')->pluck('value', 'key')->all());
@@ -67,8 +57,8 @@ class DashboardController extends Controller
             $birthdayReminderActive = $birthdayCountdown <= 90;
         }
 
-        // --- Overall stats (ignoring period) ---
-        $stats = $this->getTotalStats();
+        // --- Statistics follow the selected dashboard period ---
+        $stats = $isAllPeriod ? $this->getTotalStats() : $this->getStats($dateFrom, $dateTo);
 
         // --- Previous period stats (for comparison) ---
         $prevStats = null;
@@ -94,9 +84,10 @@ class DashboardController extends Controller
         };
 
         // --- Show Teater activity per day/week/month in period (for chart) ---
-        $showColExpr = str_replace('{col}', 'show_date', $groupExpression);
+        $showDateExpression = "REPLACE(show_date, '/', '-')";
+        $showColExpr = str_replace('{col}', $showDateExpression, $groupExpression);
         $showActivity = DB::table('show_teater')
-            ->whereBetween('show_date', [$dateFrom->toDateString(), $dateTo->toDateString()])
+            ->whereBetween(DB::raw($showDateExpression), [$dateFrom->toDateString(), $dateTo->toDateString()])
             ->selectRaw("$showColExpr as group_key, COUNT(*) as count")
             ->groupBy('group_key')
             ->get()
@@ -185,28 +176,24 @@ class DashboardController extends Controller
 
         // --- Live streaming follows the selected dashboard period ---
         $liveStreamingEvents = collect(Cache::remember(
-            "recent_live_streaming_{$dateFrom->toDateString()}_{$dateTo->toDateString()}",
+            "recent_live_streaming_{$dateFrom->toDateString()}_{$dateTo->toDateString()}_{$eventDisplayLimit}",
             300,
             fn () => DB::table('live_streaming')
-                ->whereBetween('live_date', [$dateFrom->toDateString(), $dateTo->toDateString()])
+                ->when(! $isAllPeriod, fn ($query) => $query->whereBetween('live_date', [$dateFrom->toDateString(), $dateTo->toDateString()]))
                 ->orderByDesc('live_date')
+                ->limit($eventDisplayLimit)
                 ->get()
                 ->map(fn ($item) => (array) $item)
                 ->all()
         ))->map(fn ($item) => (object) $item);
 
         // --- Past / upcoming events ---
-        $today = now()->toDateString();
+        $today = now('Asia/Jakarta')->toDateString();
         $fromStr = $dateFrom->toDateString();
         $toStr = $dateTo->toDateString();
 
-        if ($eventsFollowPeriod) {
-            $pastEvents = $this->buildTimelineEvents('past', $fromStr, $toStr, $today, $eventDisplayMode, $eventDisplayLimit);
-            $upcomingEvents = $this->buildTimelineEvents('upcoming', $fromStr, $toStr, $today, $eventDisplayMode, $eventDisplayLimit);
-        } else {
-            $pastEvents = $this->buildTimelineEvents('past', null, null, $today, $eventDisplayMode, $eventDisplayLimit);
-            $upcomingEvents = $this->buildTimelineEvents('upcoming', null, null, $today, $eventDisplayMode, $eventDisplayLimit);
-        }
+        $pastEvents = $this->buildTimelineEvents('past', $isAllPeriod ? null : $fromStr, $isAllPeriod ? null : $toStr, $today, $eventDisplayLimit);
+        $upcomingEvents = $this->buildTimelineEvents('upcoming', $isAllPeriod ? null : $fromStr, $isAllPeriod ? null : $toStr, $today, $eventDisplayLimit);
 
         return view('dashboard', compact(
             'idolName',
@@ -219,7 +206,6 @@ class DashboardController extends Controller
             'showComparison',
             'customFrom',
             'customTo',
-            'eventDisplayMode',
             'eventDisplayLimit',
             'chartDates',
             'chartShowTeater',
@@ -244,6 +230,7 @@ class DashboardController extends Controller
     {
         $now = now();
         [$dateFrom, $dateTo] = match ($period) {
+            'all' => $this->resolveAllPeriod(),
             'custom' => [
                 Carbon::parse($customFrom)->startOfDay(),
                 Carbon::parse($customTo)->endOfDay(),
@@ -262,12 +249,35 @@ class DashboardController extends Controller
     }
 
     /**
+     * @return array{0: CarbonInterface, 1: CarbonInterface}
+     */
+    private function resolveAllPeriod(): array
+    {
+        $firstDate = collect([
+            DB::table('show_teater')->min('show_date'),
+            DB::table('concert_events')->whereNull('deleted_at')->min('event_date'),
+            DB::table('meet_greet_events')->whereNull('deleted_at')->min('event_date'),
+            DB::table('live_streaming')->min('live_date'),
+        ])->filter()->min();
+        $lastDate = collect([
+            DB::table('show_teater')->max('show_date'),
+            DB::table('concert_events')->whereNull('deleted_at')->max('event_date'),
+            DB::table('meet_greet_events')->whereNull('deleted_at')->max('event_date'),
+            DB::table('live_streaming')->max('live_date'),
+        ])->filter()->max();
+
+        return $firstDate && $lastDate
+            ? [Carbon::parse($firstDate)->startOfDay(), Carbon::parse($lastDate)->endOfDay()]
+            : [now()->startOfDay(), now()->endOfDay()];
+    }
+
+    /**
      * @return array<string, int>
      */
     private function getStats(CarbonInterface $from, CarbonInterface $to): array
     {
         $shows = DB::table('show_teater')
-            ->whereBetween('show_date', [$from->toDateString(), $to->toDateString()])
+            ->whereBetween(DB::raw("REPLACE(show_date, '/', '-')"), [$from->toDateString(), $to->toDateString()])
             ->selectRaw('COUNT(*) as total, COUNT(DISTINCT setlist) as setlists, COUNT(DISTINCT unit_song) as unit_songs, SUM(CASE WHEN is_us_center IS NOT NULL THEN 1 ELSE 0 END) as us_center, SUM(CASE WHEN is_global_center = 1 THEN 1 ELSE 0 END) as global_center')
             ->first();
 
@@ -301,68 +311,37 @@ class DashboardController extends Controller
     /**
      * @return Collection<int, array{type: string, name: string|null, date: string, badge_color: string}>
      */
-    private function buildTimelineEvents(string $direction, ?string $from, ?string $to, string $today, string $mode, int $limit): Collection
+    private function buildTimelineEvents(string $direction, ?string $from, ?string $to, string $today, int $limit): Collection
     {
         $past = $direction === 'past';
+        $showDateExpression = "REPLACE(show_date, '/', '-')";
 
         $showQuery = DB::table('show_teater')
-            ->whereNotNull('is_the_show_has_event')
-            ->where('is_the_show_has_event', '!=', '')
-            ->when($mode === 'period' && $from && $to, function ($query) use ($from, $to, $past, $today): void {
-                $query->whereBetween('show_date', [$from, $to]);
-
-                if ($past) {
-                    $query->where('show_date', '<', $today);
-                } else {
-                    $query->where('show_date', '>=', $today);
-                }
+            ->when($from && $to, fn ($query) => $query->whereBetween(DB::raw($showDateExpression), [$from, $to]))
+            ->when($past, function ($query) use ($today): void {
+                $query->whereRaw("REPLACE(show_date, '/', '-') < ?", [$today]);
+            }, function ($query) use ($today): void {
+                $query->whereRaw("REPLACE(show_date, '/', '-') > ?", [$today]);
             })
-            ->when($mode === 'count', function ($query) use ($past, $today): void {
-                if ($past) {
-                    $query->where('show_date', '<', $today);
-                } else {
-                    $query->where('show_date', '>=', $today);
-                }
-            })
-            ->orderBy($past ? 'show_date' : 'show_date', $past ? 'desc' : 'asc');
+            ->orderBy('show_date', $past ? 'desc' : 'asc');
 
         $concertQuery = DB::table('concert_events')
             ->whereNull('deleted_at')
-            ->when($mode === 'period' && $from && $to, function ($query) use ($from, $to, $past, $today): void {
-                $query->whereBetween('event_date', [$from, $to]);
-
-                if ($past) {
-                    $query->where('event_date', '<', $today);
-                } else {
-                    $query->where('event_date', '>=', $today);
-                }
-            })
-            ->when($mode === 'count', function ($query) use ($past, $today): void {
-                if ($past) {
-                    $query->where('event_date', '<', $today);
-                } else {
-                    $query->where('event_date', '>=', $today);
-                }
+            ->when($from && $to, fn ($query) => $query->whereBetween('event_date', [$from, $to]))
+            ->when($past, function ($query) use ($today): void {
+                $query->whereDate('event_date', '<', $today);
+            }, function ($query) use ($today): void {
+                $query->whereDate('event_date', '>', $today);
             })
             ->orderBy('event_date', $past ? 'desc' : 'asc');
 
         $meetGreetQuery = DB::table('meet_greet_events')
             ->whereNull('deleted_at')
-            ->when($mode === 'period' && $from && $to, function ($query) use ($from, $to, $past, $today): void {
-                $query->whereBetween('event_date', [$from, $to]);
-
-                if ($past) {
-                    $query->where('event_date', '<', $today);
-                } else {
-                    $query->where('event_date', '>=', $today);
-                }
-            })
-            ->when($mode === 'count', function ($query) use ($past, $today): void {
-                if ($past) {
-                    $query->where('event_date', '<', $today);
-                } else {
-                    $query->where('event_date', '>=', $today);
-                }
+            ->when($from && $to, fn ($query) => $query->whereBetween('event_date', [$from, $to]))
+            ->when($past, function ($query) use ($today): void {
+                $query->whereDate('event_date', '<', $today);
+            }, function ($query) use ($today): void {
+                $query->whereDate('event_date', '>', $today);
             })
             ->orderBy('event_date', $past ? 'desc' : 'asc');
 
@@ -397,10 +376,6 @@ class DashboardController extends Controller
 
         $events = $past ? $events->sortByDesc('date')->values() : $events->sortBy('date')->values();
 
-        if ($mode === 'count') {
-            $events = $events->take($limit)->values();
-        }
-
-        return $events;
+        return $events->take($limit)->values();
     }
 }
