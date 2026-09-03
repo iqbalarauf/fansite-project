@@ -129,6 +129,41 @@ class DashboardTest extends TestCase
         $this->assertSame(['Upcoming Show', 'Upcoming Concert', 'Upcoming Meet'], $response->viewData('upcomingEvents')->pluck('name')->all());
     }
 
+    public function test_meet_and_greet_video_call_with_two_dates_appears_twice_in_timelines(): void
+    {
+        DB::table('meet_greet_events')->insert([
+            'event_name' => 'Video Call Meet',
+            'event_type' => 'video-call',
+            'event_date' => now()->subDays(2)->toDateString(),
+            'event_date_2' => now()->addDays(2)->toDateString(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->actingAs(User::factory()->create())->get(route('dashboard'));
+
+        $response->assertOk();
+        $this->assertSame(['Video Call Meet'], $response->viewData('pastEvents')->pluck('name')->all());
+        $this->assertSame(['Video Call Meet'], $response->viewData('upcomingEvents')->pluck('name')->all());
+    }
+
+    public function test_meet_and_greet_video_call_with_two_dates_counts_twice_on_the_chart(): void
+    {
+        DB::table('meet_greet_events')->insert([
+            'event_name' => 'Video Call Meet',
+            'event_type' => 'video-call',
+            'event_date' => now()->subDay()->toDateString(),
+            'event_date_2' => now()->addDay()->toDateString(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->actingAs(User::factory()->create())->get(route('dashboard'));
+
+        $response->assertOk();
+        $this->assertSame(2, array_sum($response->viewData('chartMeetGreet')));
+    }
+
     public function test_live_streaming_uses_the_dashboard_period_and_event_display_limit(): void
     {
         foreach (range(1, 6) as $index) {

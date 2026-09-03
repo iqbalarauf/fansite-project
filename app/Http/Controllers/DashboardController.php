@@ -104,14 +104,33 @@ class DashboardController extends Controller
             ->keyBy('group_key');
 
         // --- Meet & Greet activity ---
-        $mgColExpr = str_replace('{col}', 'event_date', $groupExpression);
-        $mgActivity = DB::table('meet_greet_events')
-            ->whereBetween('event_date', [$dateFrom->toDateString(), $dateTo->toDateString()])
+        // Video Call events may carry a second date (event_date_2), so each
+        // filled date column is counted as its own occurrence on the chart.
+        $mgActivity = collect();
+        DB::table('meet_greet_events')
             ->whereNull('deleted_at')
-            ->selectRaw("$mgColExpr as group_key, COUNT(*) as count")
-            ->groupBy('group_key')
-            ->get()
-            ->keyBy('group_key');
+            ->where(function ($query) use ($dateFrom, $dateTo): void {
+                $query->whereBetween('event_date', [$dateFrom->toDateString(), $dateTo->toDateString()])
+                    ->orWhereBetween('event_date_2', [$dateFrom->toDateString(), $dateTo->toDateString()]);
+            })
+            ->get(['event_date', 'event_date_2'])
+            ->each(function ($row) use (&$mgActivity, $dateFrom, $dateTo, $groupType): void {
+                foreach (array_filter([$row->event_date, $row->event_date_2]) as $eventDate) {
+                    $date = Carbon::parse($eventDate);
+                    if ($date->lt($dateFrom) || $date->gt($dateTo)) {
+                        continue;
+                    }
+
+                    $key = match ($groupType) {
+                        'month' => $date->format('Y-m'),
+                        'week' => $date->copy()->startOfWeek(Carbon::MONDAY)->toDateString(),
+                        default => $date->toDateString(),
+                    };
+
+                    $count = ($mgActivity->get($key)?->count ?? 0) + 1;
+                    $mgActivity->put($key, (object) ['count' => $count]);
+                }
+            });
 
         // --- Live streaming activity ---
         $lsColExpr = str_replace('{col}', 'live_date', $groupExpression);
@@ -257,12 +276,14 @@ class DashboardController extends Controller
             DB::table('show_teater')->min('show_date'),
             DB::table('concert_events')->whereNull('deleted_at')->min('event_date'),
             DB::table('meet_greet_events')->whereNull('deleted_at')->min('event_date'),
+            DB::table('meet_greet_events')->whereNull('deleted_at')->min('event_date_2'),
             DB::table('live_streaming')->min('live_date'),
         ])->filter()->min();
         $lastDate = collect([
             DB::table('show_teater')->max('show_date'),
             DB::table('concert_events')->whereNull('deleted_at')->max('event_date'),
             DB::table('meet_greet_events')->whereNull('deleted_at')->max('event_date'),
+            DB::table('meet_greet_events')->whereNull('deleted_at')->max('event_date_2'),
             DB::table('live_streaming')->max('live_date'),
         ])->filter()->max();
 
@@ -335,15 +356,9 @@ class DashboardController extends Controller
             })
             ->orderBy('event_date', $past ? 'desc' : 'asc');
 
-        $meetGreetQuery = DB::table('meet_greet_events')
-            ->whereNull('deleted_at')
-            ->when($from && $to, fn ($query) => $query->whereBetween('event_date', [$from, $to]))
-            ->when($past, function ($query) use ($today): void {
-                $query->whereDate('event_date', '<', $today);
-            }, function ($query) use ($today): void {
-                $query->whereDate('event_date', '>', $today);
-            })
-            ->orderBy('event_date', $past ? 'desc' : 'asc');
+        // Meet & Greet (Video Call type) can have a second date, so each date is
+        // evaluated individually and may produce its own timeline entry.
+        $meetGreetQuery = DB::table('meet_greet_events')->whereNull('deleted_at');
 
         $events = collect();
 
@@ -366,12 +381,19 @@ class DashboardController extends Controller
         }
 
         foreach ($meetGreetQuery->get() as $meetGreet) {
-            $events->push([
-                'type' => 'Meet & Greet',
-                'name' => $meetGreet->event_name,
-                'date' => $meetGreet->event_date,
-                'badge_color' => 'orange',
-            ]);
+            foreach (array_filter([$meetGreet->event_date, $meetGreet->event_date_2]) as $eventDate) {
+                $withinRange = ! ($from && $to) || ($eventDate >= $from && $eventDate <= $to);
+                $matchesDirection = $past ? $eventDate < $today : $eventDate > $today;
+
+                if ($withinRange && $matchesDirection) {
+                    $events->push([
+                        'type' => 'Meet & Greet',
+                        'name' => $meetGreet->event_name,
+                        'date' => $eventDate,
+                        'badge_color' => 'orange',
+                    ]);
+                }
+            }
         }
 
         $events = $past ? $events->sortByDesc('date')->values() : $events->sortBy('date')->values();
