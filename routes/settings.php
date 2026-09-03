@@ -15,6 +15,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::livewire('settings/appearance', 'pages::settings.appearance')->name('appearance.edit');
 
+    Route::livewire('settings/add-account', 'pages::settings.add-account')
+        ->middleware(['role:super_admin'])
+        ->name('add-account.edit');
+
     Route::livewire('settings/security', 'pages::settings.security')
         ->middleware([
             'password.confirm',

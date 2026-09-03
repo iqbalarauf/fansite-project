@@ -1,4 +1,4 @@
-<x-layouts::app :title="__('Live Streaming')">
+﻿<x-layouts::app :title="__('Live Streaming')">
     <div class="admin-page">
         <div class="admin-page-header">
             <div>
@@ -189,7 +189,7 @@
                     <flux:modal.close>
                         <flux:button variant="ghost">Batal</flux:button>
                     </flux:modal.close>
-                    <flux:button type="submit" variant="primary">Simpan</flux:button>
+                    <flux:button type="submit" variant="primary" :disabled="auth()->user()?->isViewOnly()">Simpan</flux:button>
                 </div>
             </form>
         </div>
@@ -235,7 +235,7 @@
                     <flux:modal.close>
                         <flux:button variant="ghost">Batal</flux:button>
                     </flux:modal.close>
-                    <flux:button type="submit" variant="primary">Update</flux:button>
+                    <flux:button type="submit" variant="primary" :disabled="auth()->user()?->isViewOnly()">Update</flux:button>
                 </div>
             </form>
         </div>

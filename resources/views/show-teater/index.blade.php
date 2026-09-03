@@ -1,4 +1,4 @@
-<x-layouts::app :title="__('Show Teater')">
+﻿<x-layouts::app :title="__('Show Teater')">
     {{-- ================================================================
          Page Header
     ================================================================ --}}
@@ -17,6 +17,7 @@
                     class="bg-orange-500 hover:bg-orange-600 text-white border-0"
                     x-data
                     @click="fetchData()"
+                    :disabled="auth()->user()?->isViewOnly()"
                 >
                     Fetch Data
                 </flux:button>
@@ -189,6 +190,7 @@
                                                 title="Konfirmasi Member Tampil"
                                                 onclick="confirmMemberShow({{ $show->show_id }})"
                                                 class="rounded-lg p-1.5 text-green-600 hover:bg-green-50 hover:text-green-700 dark:hover:bg-green-950/40"
+                                                @disabled(auth()->user()?->isViewOnly())
                                             >
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
@@ -199,6 +201,7 @@
                                                 title="Member Tidak Tampil"
                                                 onclick="rejectMemberShow({{ $show->show_id }})"
                                                 class="rounded-lg p-1.5 text-red-500 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/40"
+                                                @disabled(auth()->user()?->isViewOnly())
                                             >
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
@@ -449,7 +452,7 @@
                     <flux:modal.close>
                         <flux:button variant="ghost">Batal</flux:button>
                     </flux:modal.close>
-                    <flux:button type="submit" variant="primary">Simpan</flux:button>
+                    <flux:button type="submit" variant="primary" :disabled="auth()->user()?->isViewOnly()">Simpan</flux:button>
                 </div>
             </form>
         </div>
@@ -593,7 +596,7 @@
                     <flux:modal.close>
                         <flux:button variant="ghost">Batal</flux:button>
                     </flux:modal.close>
-                    <flux:button type="submit" variant="primary">Simpan</flux:button>
+                    <flux:button type="submit" variant="primary" :disabled="auth()->user()?->isViewOnly()">Simpan</flux:button>
                 </div>
             </form>
         </div>

@@ -1,4 +1,4 @@
-<x-layouts::app :title="__('Meet & Greet Events')">
+﻿<x-layouts::app :title="__('Meet & Greet Events')">
     <div class="admin-page">
         <div class="admin-page-header">
             <div>
@@ -153,7 +153,7 @@
                                         <form method="POST" action="{{ route('meet-greet-events.destroy', $event) }}" onsubmit="return confirm('Hapus event ini?')">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="admin-action-danger">Delete</button>
+                                            <button type="submit" class="admin-action-danger" :disabled="auth()->user()?->isViewOnly()">Delete</button>
                                         </form>
                                     </div>
                                 </td>
@@ -234,7 +234,7 @@
                     <flux:modal.close>
                         <flux:button variant="ghost">Batal</flux:button>
                     </flux:modal.close>
-                    <flux:button type="submit" variant="primary">Simpan</flux:button>
+                    <flux:button type="submit" variant="primary" :disabled="auth()->user()?->isViewOnly()">Simpan</flux:button>
                 </div>
             </form>
         </div>
@@ -300,7 +300,7 @@
                     <flux:modal.close>
                         <flux:button variant="ghost">Batal</flux:button>
                     </flux:modal.close>
-                    <flux:button type="submit" variant="primary">Update</flux:button>
+                    <flux:button type="submit" variant="primary" :disabled="auth()->user()?->isViewOnly()">Update</flux:button>
                 </div>
             </form>
         </div>

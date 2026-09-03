@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 use App\Models\CustomPage;
 use Flux\Flux;
@@ -200,6 +200,8 @@ new #[Title('Custom Pages')] class extends Component {
 
     public function save(string $nextStatus = 'draft'): void
     {
+        abort_if(auth()->user()?->isViewOnly(), 403);
+
         $this->validatePage($nextStatus);
 
         if ($this->getErrorBag()->isNotEmpty()) {
@@ -226,6 +228,8 @@ new #[Title('Custom Pages')] class extends Component {
 
     public function deletePage(): void
     {
+        abort_if(auth()->user()?->isViewOnly(), 403);
+
         if ($this->pageId) {
             CustomPage::query()->findOrFail($this->pageId)->delete();
         }
@@ -375,8 +379,8 @@ new #[Title('Custom Pages')] class extends Component {
                 <flux:subheading>{{ __('Buat halaman publik dengan blok yang dapat dipindahkan.') }}</flux:subheading>
             </div>
             <div class="flex flex-wrap gap-2">
-                <flux:button wire:click="save" icon="archive-box">{{ __('Save draft') }}</flux:button>
-                <flux:button wire:click="save('published')" variant="primary" icon="globe-alt">{{ __('Publish') }}</flux:button>
+                <flux:button wire:click="save" icon="archive-box" :disabled="auth()->user()?->isViewOnly()">{{ __('Save draft') }}</flux:button>
+                <flux:button wire:click="save('published')" variant="primary" icon="globe-alt" :disabled="auth()->user()?->isViewOnly()">{{ __('Publish') }}</flux:button>
             </div>
         </div>
 
@@ -535,7 +539,7 @@ new #[Title('Custom Pages')] class extends Component {
                 @endif
 
                 @if ($pageId)
-                    <flux:button wire:click="deletePage" wire:confirm="{{ __('Delete this page?') }}" variant="danger" icon="trash">{{ __('Delete page') }}</flux:button>
+                    <flux:button wire:click="deletePage" wire:confirm="{{ __('Delete this page?') }}" variant="danger" icon="trash" :disabled="auth()->user()?->isViewOnly()">{{ __('Delete page') }}</flux:button>
                 @endif
             </aside>
         </div>

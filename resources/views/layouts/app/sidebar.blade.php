@@ -11,33 +11,37 @@
             </flux:sidebar.header>
 
             <flux:sidebar.nav>
-                <flux:sidebar.group :heading="__('Dashboard')" class="grid">
-                    <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
-                        {{ __('Statistik Oshimen') }}
-                    </flux:sidebar.item>
-                </flux:sidebar.group>
-                <flux:sidebar.group :heading="__('Master Data')" class="grid">
-                    <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="calendar-days" :href="route('show-teater.index')" :current="request()->routeIs('show-teater.index')" wire:navigate>
-                        {{ __('Show Teater') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="musical-note" :href="route('show-teater.categories.index')" :current="request()->routeIs('show-teater.categories.*')" wire:navigate>
-                        {{ __('Setlist & Unit Song') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="ticket" :href="route('meet-greet-events.index')" :current="request()->routeIs('meet-greet-events.*')" wire:navigate>
-                        {{ __('Meet & Greet Events') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="radio" :href="route('concert-events.index')" :current="request()->routeIs('concert-events.*')" wire:navigate>
-                        {{ __('Concert & Events') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="video-camera" :href="route('live-streaming.index')" :current="request()->routeIs('live-streaming.*')" wire:navigate>
-                        {{ __('Live Streaming') }}
-                    </flux:sidebar.item>
-                </flux:sidebar.group>
-                <flux:sidebar.group :heading="__('Content Management')" class="grid">
-                    <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="rectangle-stack" :href="route('pages.index')" :current="request()->routeIs('pages.*')" wire:navigate>
-                        {{ __('Pages') }}
-                    </flux:sidebar.item>
-                </flux:sidebar.group>
+                @if (auth()->user()->canAccessMasterData())
+                    <flux:sidebar.group :heading="__('Dashboard')" class="grid">
+                        <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
+                            {{ __('Statistik Oshimen') }}
+                        </flux:sidebar.item>
+                    </flux:sidebar.group>
+                    <flux:sidebar.group :heading="__('Master Data')" class="grid">
+                        <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="calendar-days" :href="route('show-teater.index')" :current="request()->routeIs('show-teater.index')" wire:navigate>
+                            {{ __('Show Teater') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="musical-note" :href="route('show-teater.categories.index')" :current="request()->routeIs('show-teater.categories.*')" wire:navigate>
+                            {{ __('Setlist & Unit Song') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="ticket" :href="route('meet-greet-events.index')" :current="request()->routeIs('meet-greet-events.*')" wire:navigate>
+                            {{ __('Meet & Greet Events') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="radio" :href="route('concert-events.index')" :current="request()->routeIs('concert-events.*')" wire:navigate>
+                            {{ __('Concert & Events') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="video-camera" :href="route('live-streaming.index')" :current="request()->routeIs('live-streaming.*')" wire:navigate>
+                            {{ __('Live Streaming') }}
+                        </flux:sidebar.item>
+                    </flux:sidebar.group>
+                @endif
+                @if (auth()->user()->canAccessPages())
+                    <flux:sidebar.group :heading="__('Content Management')" class="grid">
+                        <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="rectangle-stack" :href="route('pages.index')" :current="request()->routeIs('pages.*')" wire:navigate>
+                            {{ __('Pages') }}
+                        </flux:sidebar.item>
+                    </flux:sidebar.group>
+                @endif
             </flux:sidebar.nav>
 
             <flux:spacer />

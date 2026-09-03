@@ -1,4 +1,4 @@
-<x-layouts::app :title="__('Pages')">
+﻿<x-layouts::app :title="__('Pages')">
     <div class="admin-page mx-auto w-full max-w-7xl">
         <div class="admin-page-header">
             <div>
@@ -38,7 +38,7 @@
                                     <form method="POST" action="{{ route('pages.destroy', $page) }}" onsubmit="return confirm('{{ __('Delete this page?') }}')">
                                         @csrf
                                         @method('DELETE')
-                                        <flux:button type="submit" variant="danger" icon="trash" size="sm" square :aria-label="__('Delete page')" />
+                                        <flux:button type="submit" variant="danger" icon="trash" size="sm" square :aria-label="__('Delete page')" :disabled="auth()->user()?->isViewOnly()" />
                                     </form>
                                 </div>
                             </td>
