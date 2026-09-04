@@ -185,9 +185,12 @@ class ShowTeaterController extends Controller
             $unitSong = $validated['unit_song'].', '.$request->input('unit_song_2');
         }
 
+        // Convert date from YYYY-MM-DD (HTML input) to YYYY/MM/DD (DB format)
+        $showDate = str_replace('-', '/', $validated['show_date']);
+
         DB::table('show_teater')->insert([
             'show_id' => $validated['show_id'],
-            'show_date' => $validated['show_date'],
+            'show_date' => $showDate,
             'setlist' => $validated['setlist'],
             'unit_song' => substr($unitSong, 0, 100),
             'is_global_center' => $validated['is_global_center'] ?? 0,
@@ -220,10 +223,13 @@ class ShowTeaterController extends Controller
             $unitSong = $validated['unit_song'].', '.$request->input('unit_song_2');
         }
 
+        // Convert date from YYYY-MM-DD (HTML input) to YYYY/MM/DD (DB format)
+        $showDate = str_replace('-', '/', $validated['show_date']);
+
         DB::table('show_teater')
             ->where('show_id', $id)
             ->update([
-                'show_date' => $validated['show_date'],
+                'show_date' => $showDate,
                 'setlist' => $validated['setlist'],
                 'unit_song' => substr($unitSong, 0, 100),
                 'is_global_center' => $validated['is_global_center'] ?? 0,

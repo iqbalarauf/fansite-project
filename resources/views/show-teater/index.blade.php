@@ -1,4 +1,4 @@
-﻿<x-layouts::app :title="__('Show Teater')">
+<x-layouts::app :title="__('Show Teater')">
     {{-- ================================================================
          Page Header
     ================================================================ --}}
@@ -671,13 +671,13 @@
             // Populate fields
             document.getElementById('edit-show-id').value = show.show_id;
 
-            // Convert date from stored format to yyyy-mm-dd for input[type=date]
-            // show_date is stored as "Sabtu, 17 Agustus 2019" — try to parse or use raw
+            // Convert date from stored format (YYYY/MM/DD or YYYY-MM-DD) to yyyy-mm-dd for input[type=date]
             const rawDate = show.show_date;
-            // Try to interpret as a date; if it's already ISO-like use it directly
-            const parsed = new Date(rawDate);
-            if (!isNaN(parsed)) {
-                document.getElementById('edit-show-date').value = parsed.toISOString().split('T')[0];
+            // Normalize slashes to dashes (DB stores as YYYY/MM/DD)
+            const normalizedDate = rawDate ? rawDate.replace(/\//g, '-') : '';
+            const parsed = normalizedDate ? new Date(normalizedDate) : null;
+            if (parsed && !isNaN(parsed)) {
+                document.getElementById('edit-show-date').value = normalizedDate;
             } else {
                 document.getElementById('edit-show-date').value = '';
             }
