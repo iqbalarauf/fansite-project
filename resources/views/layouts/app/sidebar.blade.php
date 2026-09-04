@@ -42,6 +42,13 @@
                         </flux:sidebar.item>
                     </flux:sidebar.group>
                 @endif
+                @if (auth()->user()->isSuperAdmin())
+                    <flux:sidebar.group :heading="__('User Management')" class="grid">
+                        <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="users" :href="route('users.index')" :current="request()->routeIs('users.*')" wire:navigate>
+                            {{ __('Daftar User') }}
+                        </flux:sidebar.item>
+                    </flux:sidebar.group>
+                @endif
             </flux:sidebar.nav>
 
             <flux:spacer />
@@ -91,9 +98,11 @@
                     <flux:menu.separator />
 
                     <flux:menu.radio.group>
-                        <flux:menu.item :href="route('profile.edit')" icon="cog" wire:navigate>
-                            {{ __('Settings') }}
-                        </flux:menu.item>
+                        @unless (auth()->user()?->isViewOnly())
+                            <flux:menu.item :href="route('profile.edit')" icon="cog" wire:navigate>
+                                {{ __('Settings') }}
+                            </flux:menu.item>
+                        @endunless
                     </flux:menu.radio.group>
 
                     <flux:menu.separator />

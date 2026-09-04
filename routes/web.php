@@ -7,6 +7,7 @@ use App\Http\Controllers\LiveStreamingController;
 use App\Http\Controllers\MeetGreetEventsController;
 use App\Http\Controllers\ShowTeaterCategoriesController;
 use App\Http\Controllers\ShowTeaterController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
@@ -52,6 +53,12 @@ Route::middleware(['auth', 'verified', 'block-view-only-writes'])->group(functio
         Route::view('pages/create', 'custom-pages.admin')->name('pages.create');
         Route::get('pages/{customPage}/edit', [CustomPageController::class, 'edit'])->name('pages.edit');
         Route::delete('pages/{customPage}', [CustomPageController::class, 'destroy'])->name('pages.destroy');
+    });
+
+    Route::middleware('role:super_admin')->group(function () {
+        Route::get('users', [UserController::class, 'index'])->name('users.index');
+        Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
+        Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
     });
 });
 

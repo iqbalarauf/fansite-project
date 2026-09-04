@@ -73,4 +73,26 @@ class RoleAccessTest extends TestCase
             'location' => 'Jakarta',
         ])->assertForbidden();
     }
+
+    public function test_view_only_cannot_access_settings_pages(): void
+    {
+        $user = User::factory()->viewOnly()->create();
+
+        $this->actingAs($user)->get(route('profile.edit'))->assertForbidden();
+        $this->actingAs($user)->get(route('about.edit'))->assertForbidden();
+        $this->actingAs($user)->get(route('app-settings.edit'))->assertForbidden();
+        $this->actingAs($user)->get(route('appearance.edit'))->assertForbidden();
+        $this->actingAs($user)->get(route('add-account.edit'))->assertForbidden();
+    }
+
+    public function test_super_admin_can_access_settings_pages(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->get(route('profile.edit'))->assertOk();
+        $this->actingAs($user)->get(route('about.edit'))->assertOk();
+        $this->actingAs($user)->get(route('app-settings.edit'))->assertOk();
+        $this->actingAs($user)->get(route('appearance.edit'))->assertOk();
+        $this->actingAs($user)->get(route('add-account.edit'))->assertOk();
+    }
 }

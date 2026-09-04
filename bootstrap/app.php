@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureNotViewOnly;
 use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\PreventViewOnlyWrites;
 use Illuminate\Foundation\Application;
@@ -17,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => EnsureUserHasRole::class,
             'block-view-only-writes' => PreventViewOnlyWrites::class,
+            'block-view-only' => EnsureNotViewOnly::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
