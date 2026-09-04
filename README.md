@@ -1,4 +1,4 @@
-<p align="center"><a href="https://fansight-dev.labqitech.my.id" target="_blank"><img src="https://fansight-dev.labqitech.my.id/storage/logo.svg" width="200" alt="Fansight Logo"></a></p>
+<p align="center"><a href="https://fansight-dev.labqitech.my.id" target="_blank"><img src="https://fansight.labqitech.my.id/storage/logo.svg" width="200" alt="Fansight Logo"></a></p>
 
 ## Tentang FANSIGHT
 
