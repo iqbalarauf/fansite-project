@@ -183,7 +183,7 @@
                 </div>
                 {{-- Legend --}}
                 <div class="mb-3 flex flex-wrap gap-3 text-xs">
-                    @foreach([['Show Teater','#3b82f6'],['Konser','#ef4444'],['Meet & Greet','#f97316'],['Live Streaming','#22c55e']] as [$lbl,$clr])
+                    @foreach([['Show Teater','#3b82f6'],['Event','#ef4444'],['Meet & Greet','#f97316'],['Live Streaming','#22c55e']] as [$lbl,$clr])
                         <span class="flex items-center gap-1.5">
                             <span class="inline-block h-2.5 w-2.5 rounded-full" style="background:{{ $clr }}"></span>
                             {{ $lbl }}
@@ -390,7 +390,7 @@
                 labels: @json($chartDates),
                 datasets: [
                     { label: 'Show Teater', data: @json($chartShowTeater), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', tension: 0.4, fill: true, pointRadius: 3, pointHoverRadius: 5 },
-                    { label: 'Konser',      data: @json($chartKonser),     borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)',   tension: 0.4, fill: true, pointRadius: 3, pointHoverRadius: 5 },
+                    { label: 'Event',      data: @json($chartKonser),     borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)',   tension: 0.4, fill: true, pointRadius: 3, pointHoverRadius: 5 },
                     { label: 'Meet & Greet',data: @json($chartMeetGreet),  borderColor: '#f97316', backgroundColor: 'rgba(249,115,22,0.1)',  tension: 0.4, fill: true, pointRadius: 3, pointHoverRadius: 5 },
                     { label: 'Live Streaming', data: @json($chartLiveStreaming), borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', tension: 0.4, fill: true, pointRadius: 3, pointHoverRadius: 5 },
                 ]
