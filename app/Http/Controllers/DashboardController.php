@@ -72,12 +72,14 @@ class DashboardController extends Controller
 
         // Determine chart aggregation type based on period
         $groupType = match ($period) {
+            'all' => 'year',
             'yearly' => 'month',
             'quarter', '6months' => 'week',
             default => 'day',
         };
 
         $groupExpression = match ($groupType) {
+            'year' => 'LEFT({col}, 4)',
             'month' => 'LEFT({col}, 7)',
             'week' => 'DATE_SUB({col}, INTERVAL WEEKDAY({col}) DAY)',
             default => '{col}',
@@ -122,6 +124,7 @@ class DashboardController extends Controller
                     }
 
                     $key = match ($groupType) {
+                        'year' => $date->format('Y'),
                         'month' => $date->format('Y-m'),
                         'week' => $date->copy()->startOfWeek(Carbon::MONDAY)->toDateString(),
                         default => $date->toDateString(),
@@ -148,7 +151,18 @@ class DashboardController extends Controller
         $chartMeetGreet = [];
         $chartLiveStreaming = [];
 
-        if ($groupType === 'month') {
+        if ($groupType === 'year') {
+            $current = $dateFrom->copy()->startOfYear();
+            while ($current->lte($dateTo)) {
+                $key = $current->format('Y');
+                $chartDates[] = $key;
+                $chartShowTeater[] = $showActivity->get($key)?->count ?? 0;
+                $chartKonser[] = $concertActivity->get($key)?->count ?? 0;
+                $chartMeetGreet[] = $mgActivity->get($key)?->count ?? 0;
+                $chartLiveStreaming[] = $lsActivity->get($key)?->count ?? 0;
+                $current = $current->addYear();
+            }
+        } elseif ($groupType === 'month') {
             $current = $dateFrom->copy()->startOfMonth();
             while ($current->lte($dateTo)) {
                 $key = $current->format('Y-m');
@@ -373,7 +387,7 @@ class DashboardController extends Controller
 
         foreach ($concertQuery->get() as $concert) {
             $events->push([
-                'type' => 'Konser',
+                'type' => 'Event',
                 'name' => $concert->event_name,
                 'date' => $concert->event_date,
                 'badge_color' => 'red',
