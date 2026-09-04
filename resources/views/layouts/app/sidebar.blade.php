@@ -6,7 +6,7 @@
     <body class="min-h-screen bg-[#FFFFFF] text-[#2E2F3E] dark:bg-zinc-800 dark:text-zinc-200">
         <flux:sidebar sticky collapsible="mobile" class="border-e border-[#E7EBFF] bg-[#F5F6FA] dark:border-zinc-700 dark:bg-zinc-900">
             <flux:sidebar.header>
-                <x-app-logo :sidebar="true" href="{{ route('dashboard') }}" wire:navigate />
+                <x-app-logo :sidebar="true" href="{{ auth()->user()?->isContentCreator() ? route('pages.index') : route('dashboard') }}" wire:navigate />
                 <flux:sidebar.collapse class="lg:hidden text-[#4E5FD4]" />
             </flux:sidebar.header>
 

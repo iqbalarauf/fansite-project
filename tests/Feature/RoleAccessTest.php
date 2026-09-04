@@ -95,4 +95,18 @@ class RoleAccessTest extends TestCase
         $this->actingAs($user)->get(route('appearance.edit'))->assertOk();
         $this->actingAs($user)->get(route('add-account.edit'))->assertOk();
     }
+
+    public function test_non_super_admins_cannot_access_about_and_app_settings(): void
+    {
+        $bankDataAdmin = User::factory()->bankDataAdmin()->create();
+        $contentCreator = User::factory()->contentCreator()->create();
+
+        // Bank Data Admin
+        $this->actingAs($bankDataAdmin)->get(route('about.edit'))->assertForbidden();
+        $this->actingAs($bankDataAdmin)->get(route('app-settings.edit'))->assertForbidden();
+
+        // Content Creator
+        $this->actingAs($contentCreator)->get(route('about.edit'))->assertForbidden();
+        $this->actingAs($contentCreator)->get(route('app-settings.edit'))->assertForbidden();
+    }
 }

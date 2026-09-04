@@ -7,13 +7,15 @@
         <flux:header container class="border-b border-[#E7EBFF] bg-[#F5F6FA] shadow-[0_1px_0_0_rgba(108,124,232,0.08)] dark:border-zinc-700 dark:bg-zinc-900">
             <flux:sidebar.toggle class="lg:hidden mr-2 text-[#4E5FD4]" icon="bars-2" inset="left" />
 
-            <x-app-logo href="{{ route('dashboard') }}" wire:navigate />
+            <x-app-logo href="{{ auth()->user()?->isContentCreator() ? route('pages.index') : route('dashboard') }}" wire:navigate />
 
-            <flux:navbar class="-mb-px max-lg:hidden">
-                <flux:navbar.item class="!text-[#2E2F3E] hover:!text-[#4E5FD4]" icon="layout-grid" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
-                    {{ __('Dashboard') }}
-                </flux:navbar.item>
-            </flux:navbar>
+            @unless (auth()->user()?->isContentCreator())
+                <flux:navbar class="-mb-px max-lg:hidden">
+                    <flux:navbar.item class="!text-[#2E2F3E] hover:!text-[#4E5FD4]" icon="layout-grid" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
+                        {{ __('Dashboard') }}
+                    </flux:navbar.item>
+                </flux:navbar>
+            @endunless
 
             <flux:spacer />
 

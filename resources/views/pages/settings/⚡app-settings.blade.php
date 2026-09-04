@@ -20,6 +20,8 @@ new #[Title('App settings')] class extends Component {
 
     public function mount(): void
     {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+
         $settings = DB::table('app_settings')->pluck('value', 'key')->all();
 
         $this->appName = (string) ($settings['app_name'] ?? '');

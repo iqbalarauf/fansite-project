@@ -2,10 +2,10 @@
     <div class="me-10 w-full pb-4 md:w-[220px]">
         <flux:navlist aria-label="{{ __('Settings') }}">
             <flux:navlist.item :href="route('profile.edit')" wire:navigate>{{ __('Profile') }}</flux:navlist.item>
-            <flux:navlist.item :href="route('about.edit')" wire:navigate>{{ __('About') }}</flux:navlist.item>
-            <flux:navlist.item :href="route('app-settings.edit')" wire:navigate>{{ __('App Settings') }}</flux:navlist.item>
             <flux:navlist.item :href="route('appearance.edit')" wire:navigate>{{ __('Appearance') }}</flux:navlist.item>
             @if (auth()->user()?->isSuperAdmin())
+                <flux:navlist.item :href="route('about.edit')" wire:navigate>{{ __('About') }}</flux:navlist.item>
+                <flux:navlist.item :href="route('app-settings.edit')" wire:navigate>{{ __('App Settings') }}</flux:navlist.item>
                 <flux:navlist.item :href="route('users.index')" wire:navigate>{{ __('Daftar User') }}</flux:navlist.item>
                 <flux:navlist.item :href="route('add-account.edit')" wire:navigate>{{ __('Add New Account') }}</flux:navlist.item>
             @endif

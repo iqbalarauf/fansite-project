@@ -65,6 +65,8 @@ new #[Title('About settings')] class extends Component {
 
     public function mount(): void
     {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+
         $settings = DB::table('about_settings')->pluck('value', 'key')->all();
 
         $this->idolName = (string) ($settings['idol_name'] ?? '');
