@@ -284,7 +284,15 @@ class ShowTeaterController extends Controller
     public function fetchManually(Request $request)
     {
         try {
-            Artisan::call('app:fetch-theater-shows');
+            $exitCode = Artisan::call('app:fetch-theater-shows');
+            $output = Artisan::output();
+
+            if ($exitCode !== 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => trim($output) ?: 'Gagal mengambil data dari API JKT48.',
+                ], 500);
+            }
 
             // Update last_fetch_at for scraped data
             DB::table('show_teater')

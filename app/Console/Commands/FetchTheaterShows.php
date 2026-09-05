@@ -2,12 +2,13 @@
 
 namespace App\Console\Commands;
 
-use App\Models\AboutSetting;
+use App\Models\AboutSettings;
 use App\Models\ShowTeater;
 use App\Models\TheaterReference;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Process;
 
 class FetchTheaterShows extends Command
 {
@@ -37,24 +38,20 @@ class FetchTheaterShows extends Command
         TheaterReference::deleteOldReferences($currentMonth, $currentYear);
 
         // Ambil idol_name dari about_settings
-        $idolName = AboutSetting::get('idol_name');
+        $idolName = AboutSettings::where('key', 'idol_name')->value('value');
         if (! $idolName) {
             $this->error('Idol name not found in about_settings.');
 
-            return;
+            return self::FAILURE;
         }
 
         // Ambil data dari API schedules
-        $response = Http::get("https://jkt48.com/api/v1/schedules?lang=id&month={$currentMonth}&year={$currentYear}&type=SHOW");
-        if (! $response->successful()) {
+        $schedules = $this->fetchFromApi("https://jkt48.com/api/v1/schedules?lang=id&month={$currentMonth}&year={$currentYear}&type=SHOW");
+        if (! $schedules) {
             $this->error('Failed to fetch schedules from API.');
 
-            return;
+            return self::FAILURE;
         }
-
-        $schedules = $response->json();
-        // Asumsikan struktur API, misalnya array of objects with reference_code
-        // Saya perlu asumsikan struktur, mungkin 'data' array dengan 'reference_code'
 
         // Simpan atau perbarui semua reference_code dari jadwal saat ini
         foreach (collect($schedules['data'] ?? $schedules) as $schedule) {
@@ -79,21 +76,23 @@ class FetchTheaterShows extends Command
 
         foreach ($references as $referenceCode) {
             $this->processReference($referenceCode, $idolName);
+            usleep(300000); // Jeda 300ms antar request
         }
 
         $this->info('Fetch completed.');
+
+        return self::SUCCESS;
     }
 
     private function processReference(string $referenceCode, string $idolName): void
     {
-        $detailResponse = Http::get("https://jkt48.com/api/v1/theater-shows/{$referenceCode}?lang=id");
-        if (! $detailResponse->successful()) {
+        $details = $this->fetchFromApi("https://jkt48.com/api/v1/theater-shows/{$referenceCode}?lang=id");
+        if (! $details) {
             $this->error("Failed to fetch details for reference_code: {$referenceCode}");
 
             return;
         }
 
-        $details = $detailResponse->json();
         $data = $details['data'] ?? null;
         if (! $data) {
             $this->error("No detail data for reference_code: {$referenceCode}");
@@ -102,26 +101,34 @@ class FetchTheaterShows extends Command
         }
 
         $memberNames = array_column($data['jkt48_member'] ?? [], 'name');
-        $matched = in_array($idolName, $memberNames, true);
+        $matched = in_array(trim($idolName), array_map('trim', $memberNames), true);
 
         if ($matched) {
-            $existing = ShowTeater::where('show_date', $data['date'])
-                ->where('setlist', $data['title'])
+            $dateSlash = Carbon::parse($data['date'])->timezone('Asia/Jakarta')->format('Y/m/d');
+            $dateDash = Carbon::parse($data['date'])->timezone('Asia/Jakarta')->format('Y-m-d');
+            $title = trim($data['title']);
+
+            $existing = ShowTeater::where(function ($query) use ($dateSlash, $dateDash) {
+                $query->where('show_date', $dateSlash)
+                    ->orWhere('show_date', $dateDash);
+            })
+                ->where('setlist', $title)
                 ->first();
 
-            if (! $existing) {
+            if ($existing) {
+                $this->info("Show already exists: {$existing->show_id} - {$existing->show_date} - {$existing->setlist} (skipped)");
+            } else {
                 $lastShowId = ShowTeater::max('show_id') ?? 0;
                 $newShowId = $lastShowId + 1;
-                $showDate = Carbon::parse($data['date'])->timezone('Asia/Jakarta')->format('Y-m-d');
 
                 ShowTeater::create([
                     'show_id' => $newShowId,
-                    'show_date' => $showDate,
-                    'setlist' => $data['title'],
+                    'show_date' => $dateSlash,
+                    'setlist' => $title,
                     'is_scraped_data' => 1,
                 ]);
 
-                $this->info("Saved show: {$newShowId} - {$data['date']} - {$data['title']}");
+                $this->info("Saved show: {$newShowId} - {$dateSlash} - {$title}");
             }
         }
 
@@ -129,5 +136,45 @@ class FetchTheaterShows extends Command
             TheaterReference::where('reference_code', $referenceCode)
                 ->update(['processed_at' => now()]);
         }
+    }
+
+    private function fetchFromApi(string $url, int $retry = 2): ?array
+    {
+        $headers = [
+            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
+            'Accept' => 'application/json, text/plain, */*',
+            'Referer' => 'https://jkt48.com/schedule',
+        ];
+
+        for ($attempt = 1; $attempt <= $retry; $attempt++) {
+            $response = Http::withHeaders($headers)->get($url);
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            // Fallback to system curl (bypasses Cloudflare TLS fingerprinting on Windows)
+            $process = Process::run([
+                'curl.exe',
+                '-s',
+                '-H', 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
+                '-H', 'Accept: application/json, text/plain, */*',
+                '-H', 'Referer: https://jkt48.com/schedule',
+                $url,
+            ]);
+
+            if ($process->successful()) {
+                $data = json_decode($process->output(), true);
+                if (is_array($data) && ! empty($data)) {
+                    return $data;
+                }
+            }
+
+            if ($attempt < $retry) {
+                usleep(500000); // 500ms delay sebelum retry
+            }
+        }
+
+        return null;
     }
 }
