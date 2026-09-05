@@ -13,4 +13,12 @@ class AboutSettings extends Model
         'key',
         'value',
     ];
+
+    /**
+     * Get a setting value by key.
+     */
+    public static function get(string $key, mixed $default = null): mixed
+    {
+        return static::query()->where('key', $key)->value('value') ?? $default;
+    }
 }
