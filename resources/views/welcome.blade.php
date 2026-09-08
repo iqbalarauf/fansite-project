@@ -21,14 +21,58 @@
     $showCount = DB::table('show_teater')->count();
     $liveStreamingCount = DB::table('live_streaming')->count();
 
-    $upcomingEvents = collect()
-        ->concat(DB::table('show_teater')->select('show_date as event_date', DB::raw("'Show Teater' as event_type"), 'setlist as event_name')->get()->map(fn ($item) => (array) $item))
-        ->concat(DB::table('concert_events')->select('event_date', DB::raw("'Concert Event' as event_type"), 'event_name')->get()->map(fn ($item) => (array) $item))
-        ->concat(DB::table('meet_greet_events')->select('event_date', DB::raw("'Meet & Greet' as event_type"), 'event_name')->get()->map(fn ($item) => (array) $item))
-        ->filter(fn ($event) => ! empty($event['event_date']) && $event['event_date'] >= now()->toDateString())
-        ->sortBy('event_date')
-        ->take(5)
-        ->values();
+    $today = now()->toDateString();
+
+    $upcomingShowCount = DB::table('show_teater')->whereRaw("REPLACE(show_date, '/', '-') > ?", [$today])->count();
+
+    $showRows = DB::table('show_teater')
+        ->whereRaw("REPLACE(show_date, '/', '-') > ?", [$today])
+        ->orderBy('show_date', 'asc')
+        ->get();
+
+    $concertRows = DB::table('concert_events')
+        ->whereNull('deleted_at')
+        ->whereDate('event_date', '>', $today)
+        ->orderBy('event_date', 'asc')
+        ->get();
+
+    $meetGreetRows = DB::table('meet_greet_events')->whereNull('deleted_at')->get();
+
+    $upcomingEvents = collect();
+
+    foreach ($showRows as $show) {
+        $upcomingEvents->push([
+            'type' => 'Show Teater',
+            'name' => $show->setlist,
+            'date' => Carbon::parse(str_replace('/', '-', $show->show_date))->format('Y-m-d'),
+            'badge_color' => 'blue',
+        ]);
+    }
+
+    foreach ($concertRows as $concert) {
+        $upcomingEvents->push([
+            'type' => 'Event',
+            'name' => $concert->event_name,
+            'date' => Carbon::parse($concert->event_date)->format('Y-m-d'),
+            'badge_color' => 'red',
+        ]);
+    }
+
+    foreach ($meetGreetRows as $meetGreet) {
+        foreach (array_filter([$meetGreet->event_date, $meetGreet->event_date_2]) as $eventDate) {
+            $normalizedDate = Carbon::parse(str_replace('/', '-', $eventDate))->format('Y-m-d');
+            if ($normalizedDate > $today) {
+                $upcomingEvents->push([
+                    'type' => 'Meet & Greet',
+                    'name' => $meetGreet->event_name,
+                    'date' => $normalizedDate,
+                    'badge_color' => 'orange',
+                ]);
+            }
+        }
+    }
+
+    $upcomingEvents = $upcomingEvents->sortBy('date')->values()->take(5);
 @endphp
 
 <!DOCTYPE html>
@@ -37,6 +81,12 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{{ $appName }}</title>
+        @if ($appLogo)
+            <link rel="icon" href="{{ Storage::url($appLogo) }}">
+        @else
+            <link rel="icon" href="/favicon.ico" sizes="any">
+            <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+        @endif
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="bg-slate-100 text-slate-800 antialiased">
@@ -125,16 +175,16 @@
                 <div class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
                     <div class="flex items-center justify-between gap-4 border-b border-slate-200 pb-5">
                         <div>
-                            <p class="text-sm font-bold uppercase tracking-[0.22em] text-indigo-600">Data</p>
-                            <h3 class="mt-2 text-2xl font-black text-slate-900">Data Oniel</h3>
+                            <p class="text-sm font-bold uppercase tracking-[0.22em] text-indigo-600">Statistik</p>
+                            <h3 class="mt-2 text-2xl font-black text-slate-900">Penampilan Oniel</h3>
                         </div>
                         <div class="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-600">Live update</div>
                     </div>
 
                     <div class="mt-8 grid gap-4 sm:grid-cols-3">
                         <div class="rounded-2xl bg-slate-100 p-5">
-                            <p class="text-sm text-slate-500">Jumlah Show</p>
-                            <p class="mt-3 text-3xl font-black text-slate-900">{{ $showCount }}</p>
+                            <p class="text-sm text-slate-500">Show Teater</p>
+                            <p class="mt-3 text-3xl font-black text-slate-900">{{ max(0, $showCount - $upcomingShowCount) }}</p>
                         </div>
                         <div class="rounded-2xl bg-indigo-50 p-5">
                             <p class="text-sm text-slate-500">Live Streaming</p>
@@ -153,24 +203,30 @@
                     <div class="flex items-center justify-between gap-4 border-b border-slate-200 pb-5">
                         <div>
                             <p class="text-sm font-bold uppercase tracking-[0.22em] text-indigo-600">Schedule</p>
-                            <h3 class="mt-2 text-2xl font-black text-slate-900">Kegiatan Terbaru</h3>
+                            <h3 class="mt-2 text-2xl font-black text-slate-900">Event Mendatang</h3>
                         </div>
                     </div>
 
                     <div class="mt-6 space-y-4">
                         @forelse ($upcomingEvents as $event)
-                            <div class="flex gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                                <div class="flex min-w-[70px] flex-col items-center justify-center rounded-xl bg-indigo-100 px-2 py-3 text-center text-indigo-700">
-                                    <span class="text-[10px] font-bold uppercase tracking-[0.12em]">{{ \Illuminate\Support\Carbon::parse($event['event_date'])->translatedFormat('M') }}</span>
-                                    <span class="mt-1 text-2xl font-black">{{ \Illuminate\Support\Carbon::parse($event['event_date'])->format('d') }}</span>
-                                </div>
+                            @php
+                                $daysUntil = (int) now()->diffInDays(Carbon::parse($event['date']), false) + 1;
+                                $badgeColors = ['blue' => 'bg-blue-100 text-blue-700', 'red' => 'bg-red-100 text-red-700', 'orange' => 'bg-orange-100 text-orange-700'];
+                            @endphp
+                            <div class="flex items-center gap-4 rounded-2xl border border-green-100 bg-green-50 p-4">
+                                <span class="shrink-0 rounded-full px-2 py-0.5 text-xs font-medium {{ $badgeColors[$event['badge_color']] }}">
+                                    {{ $event['type'] }}
+                                </span>
                                 <div class="min-w-0 flex-1">
-                                    <p class="truncate text-base font-bold text-slate-900">{{ $event['event_name'] }}</p>
-                                    <p class="mt-1 text-sm text-slate-500">{{ $event['event_type'] }}</p>
+                                    <p class="truncate text-base font-bold text-slate-900">{{ $event['name'] }}</p>
+                                    <p class="mt-1 text-sm text-slate-500">{{ Carbon::parse($event['date'])->locale('id')->isoFormat('D MMMM YYYY') }}</p>
                                 </div>
+                                <span class="shrink-0 text-xs font-medium text-green-600">
+                                    H-{{ $daysUntil }}
+                                </span>
                             </div>
                         @empty
-                            <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">Belum ada jadwal kegiatan yang tersedia.</div>
+                            <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">Tidak ada event mendatang yang terjadwal.</div>
                         @endforelse
                     </div>
                 </div>

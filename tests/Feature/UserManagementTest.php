@@ -24,6 +24,8 @@ class UserManagementTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Daftar User');
+        $response->assertSee('Tambah User');
+        $response->assertSee('modal-create-user');
         $response->assertSee($targetUser->name);
         $response->assertSee($targetUser->email);
     }
@@ -156,6 +158,13 @@ class UserManagementTest extends TestCase
 
         // View-only user
         $this->actingAs($viewOnlyUser)->get(route('users.index'))->assertForbidden();
+        $this->actingAs($viewOnlyUser)->post(route('users.store'), [
+            'name' => 'Hacked Name',
+            'email' => 'hacked@example.com',
+            'role' => UserRole::SuperAdmin->value,
+            'password' => 'password123!',
+            'password_confirmation' => 'password123!',
+        ])->assertForbidden();
         $this->actingAs($viewOnlyUser)->put(route('users.update', $dummyUser), [
             'name' => 'Hacked Name',
             'email' => $dummyUser->email,
@@ -165,6 +174,13 @@ class UserManagementTest extends TestCase
 
         // Bank data admin user
         $this->actingAs($bankDataAdminUser)->get(route('users.index'))->assertForbidden();
+        $this->actingAs($bankDataAdminUser)->post(route('users.store'), [
+            'name' => 'Hacked Name',
+            'email' => 'hacked@example.com',
+            'role' => UserRole::SuperAdmin->value,
+            'password' => 'password123!',
+            'password_confirmation' => 'password123!',
+        ])->assertForbidden();
         $this->actingAs($bankDataAdminUser)->put(route('users.update', $dummyUser), [
             'name' => 'Hacked Name',
             'email' => $dummyUser->email,
@@ -174,6 +190,13 @@ class UserManagementTest extends TestCase
 
         // Content creator user
         $this->actingAs($contentCreatorUser)->get(route('users.index'))->assertForbidden();
+        $this->actingAs($contentCreatorUser)->post(route('users.store'), [
+            'name' => 'Hacked Name',
+            'email' => 'hacked@example.com',
+            'role' => UserRole::SuperAdmin->value,
+            'password' => 'password123!',
+            'password_confirmation' => 'password123!',
+        ])->assertForbidden();
         $this->actingAs($contentCreatorUser)->put(route('users.update', $dummyUser), [
             'name' => 'Hacked Name',
             'email' => $dummyUser->email,

@@ -19,8 +19,11 @@
         </div>
         <flux:menu.separator />
         <flux:menu.radio.group>
+            <flux:menu.item :href="route('profile.edit')" icon="user" wire:navigate>
+                {{ __('Profile') }}
+            </flux:menu.item>
             @unless (auth()->user()?->isViewOnly())
-                <flux:menu.item :href="route('profile.edit')" icon="cog" wire:navigate>
+                <flux:menu.item :href="route('appearance.edit')" icon="cog" wire:navigate>
                     {{ __('Settings') }}
                 </flux:menu.item>
             @endunless

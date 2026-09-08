@@ -225,6 +225,12 @@ class DashboardController extends Controller
         $fromStr = $dateFrom->toDateString();
         $toStr = $dateTo->toDateString();
 
+        // --- Upcoming show count (used to surface a realistic performed count) ---
+        $upcomingShows = DB::table('show_teater')
+            ->whereRaw("REPLACE(show_date, '/', '-') > ?", [$today])
+            ->when(! $isAllPeriod, fn ($query) => $query->whereRaw("REPLACE(show_date, '/', '-') <= ?", [$toStr]))
+            ->count();
+
         $pastEvents = $this->buildTimelineEvents('past', $isAllPeriod ? null : $fromStr, $isAllPeriod ? null : $toStr, $today, $eventDisplayLimit);
         $upcomingEvents = $this->buildTimelineEvents('upcoming', $isAllPeriod ? null : $fromStr, $isAllPeriod ? null : $toStr, $today, $eventDisplayLimit);
 
@@ -253,6 +259,7 @@ class DashboardController extends Controller
             'liveStreamingEvents',
             'pastEvents',
             'upcomingEvents',
+            'upcomingShows',
         ));
     }
 

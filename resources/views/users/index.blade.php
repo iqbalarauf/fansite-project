@@ -6,9 +6,11 @@
                 <flux:subheading>{{ __('Kelola akun pengguna, peran akses (role), dan pengaturan keamanan') }}</flux:subheading>
             </div>
             <div class="admin-page-actions">
-                <flux:button variant="primary" icon="plus" :href="route('add-account.edit')" wire:navigate>
-                    {{ __('Tambah User') }}
-                </flux:button>
+                <flux:modal.trigger name="modal-create-user">
+                    <flux:button variant="primary" icon="plus">
+                        {{ __('Tambah User') }}
+                    </flux:button>
+                </flux:modal.trigger>
             </div>
         </div>
 
@@ -285,6 +287,58 @@
                     <flux:button variant="outline">{{ __('Batal') }}</flux:button>
                 </flux:modal.close>
                 <flux:button type="submit" variant="danger">{{ __('Hapus User') }}</flux:button>
+            </form>
+        </div>
+    </flux:modal>
+
+    {{-- Modal Create User --}}
+    <flux:modal name="modal-create-user" class="md:w-[620px]" variant="flyout">
+        <div class="space-y-6">
+            <div>
+                <flux:heading size="lg">{{ __('Tambah User') }}</flux:heading>
+                <flux:subheading>{{ __('Registrasikan akun admin baru beserta role aksesnya') }}</flux:subheading>
+            </div>
+
+            <form method="POST" action="{{ route('users.store') }}" class="space-y-5">
+                @csrf
+
+                <div>
+                    <flux:label for="create-user-name">{{ __('Nama') }}</flux:label>
+                    <flux:input id="create-user-name" name="name" required class="mt-1" />
+                </div>
+
+                <div>
+                    <flux:label for="create-user-email">{{ __('Email') }}</flux:label>
+                    <flux:input id="create-user-email" name="email" type="email" required class="mt-1" />
+                </div>
+
+                <div>
+                    <flux:label for="create-user-role">{{ __('Role') }}</flux:label>
+                    <select id="create-user-role" name="role" required class="admin-filter-select w-full mt-1">
+                        <option value="">{{ __('Pilih role') }}</option>
+                        @foreach ($roles as $userRole)
+                            <option value="{{ $userRole->value }}">{{ $userRole->label() }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div>
+                        <flux:label for="create-user-password">{{ __('Password') }}</flux:label>
+                        <flux:input id="create-user-password" name="password" type="password" required class="mt-1" autocomplete="new-password" viewable />
+                    </div>
+                    <div>
+                        <flux:label for="create-user-password-confirmation">{{ __('Konfirmasi Password') }}</flux:label>
+                        <flux:input id="create-user-password-confirmation" name="password_confirmation" type="password" required class="mt-1" autocomplete="new-password" viewable />
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-4">
+                    <flux:modal.close>
+                        <flux:button variant="ghost">{{ __('Batal') }}</flux:button>
+                    </flux:modal.close>
+                    <flux:button type="submit" variant="primary">{{ __('Buat Akun') }}</flux:button>
+                </div>
             </form>
         </div>
     </flux:modal>

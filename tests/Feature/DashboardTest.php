@@ -55,6 +55,7 @@ class DashboardTest extends TestCase
             'liveStreamingEvents',
             'pastEvents',
             'upcomingEvents',
+            'upcomingShows',
         ]);
     }
 
@@ -190,6 +191,35 @@ class DashboardTest extends TestCase
         $liveStreamingEvents = $response->viewData('liveStreamingEvents');
         $this->assertCount(5, $liveStreamingEvents);
         $this->assertTrue($liveStreamingEvents->every(fn (object $event): bool => Carbon::parse($event->live_date)->greaterThanOrEqualTo(now()->subDays(6)->startOfDay())));
+    }
+
+    public function test_dashboard_exposes_upcoming_show_count(): void
+    {
+        DB::table('show_teater')->insert([
+            ['show_id' => 1, 'show_date' => now()->subDay()->toDateString(), 'setlist' => 'Past Show'],
+            ['show_id' => 2, 'show_date' => now()->addDay()->toDateString(), 'setlist' => 'Upcoming Show A'],
+            ['show_id' => 3, 'show_date' => now()->addDay()->toDateString(), 'setlist' => 'Upcoming Show B'],
+        ]);
+
+        $response = $this->actingAs(User::factory()->create())->get(route('dashboard'));
+
+        $response->assertOk();
+        $this->assertSame(2, $response->viewData('upcomingShows'));
+        $response->assertSee('Upcoming Show');
+    }
+
+    public function test_dashboard_hides_upcoming_show_count_when_there_are_no_future_shows(): void
+    {
+        DB::table('show_teater')->insert([
+            ['show_id' => 1, 'show_date' => now()->subDay()->toDateString(), 'setlist' => 'Past Show'],
+            ['show_id' => 2, 'show_date' => now()->toDateString(), 'setlist' => 'Today Show'],
+        ]);
+
+        $response = $this->actingAs(User::factory()->create())->get(route('dashboard'));
+
+        $response->assertOk();
+        $this->assertSame(0, $response->viewData('upcomingShows'));
+        $response->assertDontSee('Upcoming Show');
     }
 
     public function test_dashboard_classifies_events_using_the_jakarta_calendar_date(): void
