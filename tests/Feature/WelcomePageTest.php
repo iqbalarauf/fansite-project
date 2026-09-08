@@ -48,4 +48,48 @@ class WelcomePageTest extends TestCase
             ->assertSee('https://tiktok.com/@freya')
             ->assertSee('Data Oniel');
     }
+
+    public function test_homepage_displays_upcoming_events_section_matching_dashboard(): void
+    {
+        DB::table('show_teater')->insert([
+            'show_id' => 1,
+            'show_date' => now()->addDays(5)->format('Y-m-d'),
+            'setlist' => 'Setlist B',
+            'unit_song' => 'Unit B',
+            'is_global_center' => 0,
+            'is_us_center' => 1,
+        ]);
+
+        DB::table('concert_events')->insert([
+            'event_name' => 'Konser Akbar',
+            'event_date' => now()->addDays(10)->format('Y-m-d'),
+            'location' => 'Jakarta',
+        ]);
+
+        DB::table('meet_greet_events')->insert([
+            'event_name' => 'Meet & Greet Jakarta',
+            'event_date' => now()->addDays(20)->format('Y-m-d'),
+        ]);
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('Event Mendatang')
+            ->assertSee('Show Teater')
+            ->assertSee('Setlist B')
+            ->assertSee('Konser Akbar')
+            ->assertSee('Meet & Greet Jakarta')
+            ->assertDontSee('Upcoming Show');
+    }
+
+    public function test_homepage_uses_performed_show_count_even_when_future_shows_exist(): void
+    {
+        DB::table('show_teater')->insert([
+            ['show_id' => 1, 'show_date' => now()->subDay()->format('Y-m-d'), 'setlist' => 'Setlist A'],
+            ['show_id' => 2, 'show_date' => now()->addDays(3)->format('Y-m-d'), 'setlist' => 'Setlist B'],
+        ]);
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertDontSee('Upcoming Show');
+    }
 }

@@ -210,7 +210,7 @@
                     </div>
                     <div x-show="type === 'video-call'" x-cloak>
                         <flux:label for="create-event-date-2">Event Date 2</flux:label>
-                        <flux:input id="create-event-date-2" name="event_date_2" type="date" x-bind:required="type === 'video-call'" class="mt-1" />
+                        <flux:input id="create-event-date-2" name="event_date_2" type="date" class="mt-1" />
                     </div>
                 </div>
 
@@ -281,7 +281,7 @@
                     </div>
                     <div x-show="type === 'video-call'" x-cloak>
                         <flux:label for="edit-event-date-2">Event Date 2</flux:label>
-                        <flux:input id="edit-event-date-2" name="event_date_2" type="date" x-bind:required="type === 'video-call'" class="mt-1" />
+                        <flux:input id="edit-event-date-2" name="event_date_2" type="date" class="mt-1" />
                     </div>
                 </div>
 

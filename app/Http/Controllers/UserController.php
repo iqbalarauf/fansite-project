@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\Enum;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 
 class UserController extends Controller
@@ -55,6 +56,29 @@ class UserController extends Controller
             ],
             'roles' => UserRole::cases(),
         ]);
+    }
+
+    /**
+     * Store a newly created user in storage.
+     */
+    public function store(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users',
+            'role' => ['required', new Enum(UserRole::class)],
+            'password' => ['required', 'string', Password::default(), 'confirmed'],
+        ]);
+
+        User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => $validated['password'],
+            'role' => $validated['role'],
+        ]);
+
+        return redirect()->route('users.index')
+            ->with('success', 'User '.$validated['name'].' berhasil ditambahkan.');
     }
 
     /**

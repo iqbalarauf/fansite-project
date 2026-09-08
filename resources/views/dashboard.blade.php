@@ -123,7 +123,7 @@
         <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
             @php
                 $statCards = [
-                    ['label' => 'Jumlah Show', 'value' => $stats['total_shows'], 'prev' => $prevStats['total_shows'] ?? null, 'icon' => 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', 'color' => 'blue'],
+                    ['label' => 'Jumlah Show', 'value' => max(0, $stats['total_shows'] - $upcomingShows), 'prev' => $prevStats['total_shows'] ?? null, 'icon' => 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', 'color' => 'blue', 'badge' => $upcomingShows > 0 ? $upcomingShows : null],
                     ['label' => 'Jumlah Setlist', 'value' => $stats['setlists'], 'prev' => $prevStats['setlists'] ?? null, 'icon' => 'M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3', 'color' => 'purple'],
                     ['label' => 'Jumlah Unit Song', 'value' => $stats['unit_songs'], 'prev' => $prevStats['unit_songs'] ?? null, 'icon' => 'M9 9l10.5-3m0 6.553v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 11-.99-3.467l2.31-.661a2.25 2.25 0 001.632-2.163zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 01-.99-3.467l2.31-.661A2.25 2.25 0 009 15.553z', 'color' => 'pink'],
                     ['label' => 'Center Unit Song', 'value' => $stats['us_center'], 'prev' => $prevStats['us_center'] ?? null, 'icon' => 'M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z', 'color' => 'yellow'],
@@ -162,6 +162,11 @@
                         <div class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{{ $card['label'] }}</div>
                         @if ($showComparison && $card['prev'] !== null)
                             <div class="mt-1 text-xs text-zinc-400 dark:text-zinc-500">vs {{ number_format($card['prev']) }} periode lalu</div>
+                        @endif
+                        @if (! empty($card['badge']))
+                            <div class="mt-2 inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                {{ $card['badge'] }} Upcoming Show
+                            </div>
                         @endif
                     </div>
                 </div>

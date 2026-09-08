@@ -25,7 +25,7 @@ class ProfileUpdateTest extends TestCase
 
         $this->actingAs($user);
 
-        $response = Livewire::test('pages::settings.profile')
+        $response = Livewire::test('pages::profile')
             ->set('name', 'Test User')
             ->set('email', 'test@example.com')
             ->call('updateProfileInformation');
@@ -45,7 +45,7 @@ class ProfileUpdateTest extends TestCase
 
         $this->actingAs($user);
 
-        $response = Livewire::test('pages::settings.profile')
+        $response = Livewire::test('pages::profile')
             ->set('name', 'Test User')
             ->set('email', $user->email)
             ->call('updateProfileInformation');
@@ -96,7 +96,7 @@ class ProfileUpdateTest extends TestCase
 
         $this->actingAs($user);
 
-        $response = Livewire::test('pages::settings.profile')
+        $response = Livewire::test('pages::profile')
             ->set('current_password', 'password')
             ->set('password', 'new-password')
             ->set('password_confirmation', 'new-password')
@@ -115,7 +115,7 @@ class ProfileUpdateTest extends TestCase
 
         $this->actingAs($user);
 
-        $response = Livewire::test('pages::settings.profile')
+        $response = Livewire::test('pages::profile')
             ->set('current_password', 'wrong-password')
             ->set('password', 'new-password')
             ->set('password_confirmation', 'new-password')

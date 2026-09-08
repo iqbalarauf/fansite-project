@@ -55,6 +55,7 @@ class DashboardTest extends TestCase
             'liveStreamingEvents',
             'pastEvents',
             'upcomingEvents',
+            'upcomingShows',
         ]);
     }
 
@@ -192,6 +193,35 @@ class DashboardTest extends TestCase
         $this->assertTrue($liveStreamingEvents->every(fn (object $event): bool => Carbon::parse($event->live_date)->greaterThanOrEqualTo(now()->subDays(6)->startOfDay())));
     }
 
+    public function test_dashboard_exposes_upcoming_show_count(): void
+    {
+        DB::table('show_teater')->insert([
+            ['show_id' => 1, 'show_date' => now()->subDay()->toDateString(), 'setlist' => 'Past Show'],
+            ['show_id' => 2, 'show_date' => now()->addDay()->toDateString(), 'setlist' => 'Upcoming Show A'],
+            ['show_id' => 3, 'show_date' => now()->addDay()->toDateString(), 'setlist' => 'Upcoming Show B'],
+        ]);
+
+        $response = $this->actingAs(User::factory()->create())->get(route('dashboard'));
+
+        $response->assertOk();
+        $this->assertSame(2, $response->viewData('upcomingShows'));
+        $response->assertSee('Upcoming Show');
+    }
+
+    public function test_dashboard_hides_upcoming_show_count_when_there_are_no_future_shows(): void
+    {
+        DB::table('show_teater')->insert([
+            ['show_id' => 1, 'show_date' => now()->subDay()->toDateString(), 'setlist' => 'Past Show'],
+            ['show_id' => 2, 'show_date' => now()->toDateString(), 'setlist' => 'Today Show'],
+        ]);
+
+        $response = $this->actingAs(User::factory()->create())->get(route('dashboard'));
+
+        $response->assertOk();
+        $this->assertSame(0, $response->viewData('upcomingShows'));
+        $response->assertDontSee('Upcoming Show');
+    }
+
     public function test_dashboard_classifies_events_using_the_jakarta_calendar_date(): void
     {
         $this->travelTo(Carbon::parse('2026-09-02 18:00:00', 'UTC'));
@@ -227,5 +257,29 @@ class DashboardTest extends TestCase
         $this->assertSame(1, array_sum($response->viewData('chartShowTeater')));
         $this->assertSame(['Past In Range'], $response->viewData('pastEvents')->pluck('name')->all());
         $this->assertSame([], $response->viewData('upcomingEvents')->pluck('name')->all());
+    }
+
+    public function test_dashboard_sorts_past_events_by_date_across_slash_and_dash_formats(): void
+    {
+        $this->travelTo(Carbon::parse('2026-09-08 12:00:00', 'Asia/Jakarta'));
+
+        DB::table('show_teater')->insert([
+            ['show_id' => 1, 'show_date' => '2026/09/05', 'setlist' => 'Slash Show', 'unit_song' => null, 'is_us_center' => null, 'is_global_center' => null],
+            ['show_id' => 2, 'show_date' => '2026/08/01', 'setlist' => 'Older Slash Show', 'unit_song' => null, 'is_us_center' => null, 'is_global_center' => null],
+        ]);
+        DB::table('concert_events')->insert([
+            ['event_name' => 'Recent Concert', 'event_date' => '2026-09-07', 'location' => 'Jakarta', 'status' => 'on-air', 'created_at' => now(), 'updated_at' => now()],
+        ]);
+        DB::table('meet_greet_events')->insert([
+            ['event_name' => 'Recent Meet', 'event_date' => '2026-09-06', 'event_type' => 'meet-greet', 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $response = $this->actingAs(User::factory()->create())->get(route('dashboard'));
+
+        $response->assertOk();
+        $this->assertSame(
+            ['Recent Concert', 'Recent Meet', 'Slash Show', 'Older Slash Show'],
+            $response->viewData('pastEvents')->pluck('name')->all()
+        );
     }
 }

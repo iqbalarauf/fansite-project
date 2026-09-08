@@ -82,7 +82,6 @@ class RoleAccessTest extends TestCase
         $this->actingAs($user)->get(route('about.edit'))->assertForbidden();
         $this->actingAs($user)->get(route('app-settings.edit'))->assertForbidden();
         $this->actingAs($user)->get(route('appearance.edit'))->assertForbidden();
-        $this->actingAs($user)->get(route('add-account.edit'))->assertForbidden();
     }
 
     public function test_super_admin_can_access_settings_pages(): void
@@ -93,7 +92,6 @@ class RoleAccessTest extends TestCase
         $this->actingAs($user)->get(route('about.edit'))->assertOk();
         $this->actingAs($user)->get(route('app-settings.edit'))->assertOk();
         $this->actingAs($user)->get(route('appearance.edit'))->assertOk();
-        $this->actingAs($user)->get(route('add-account.edit'))->assertOk();
     }
 
     public function test_non_super_admins_cannot_access_about_and_app_settings(): void

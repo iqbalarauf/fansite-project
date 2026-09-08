@@ -13,7 +13,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Title('Profile settings')] class extends Component {
+new #[Title('Profile')] class extends Component {
     use PasswordValidationRules, ProfileValidationRules;
 
     public string $name = '';
@@ -111,12 +111,14 @@ new #[Title('Profile settings')] class extends Component {
 }; ?>
 
 <section class="w-full">
-    @include('partials.settings-heading')
+    <div class="relative mb-6 w-full">
+        <flux:heading size="xl" level="1">{{ __('Profile') }}</flux:heading>
+        <flux:subheading size="lg" class="mb-6">{{ __('Update your name and email address') }}</flux:subheading>
+        <flux:separator variant="subtle" />
+    </div>
 
-    <flux:heading class="sr-only">{{ __('Profile settings') }}</flux:heading>
-
-    <x-pages::settings.layout :heading="__('Profile')" :subheading="__('Update your name and email address')">
-        <form wire:submit="updateProfileInformation" class="my-6 w-full space-y-6">
+    <div class="w-full max-w-2xl">
+        <form wire:submit="updateProfileInformation" class="space-y-6">
             <flux:input wire:model="name" :label="__('Name')" type="text" required autofocus autocomplete="name" />
 
             <div>
@@ -203,5 +205,5 @@ new #[Title('Profile settings')] class extends Component {
         {{-- @chisel-email-verification --}}
         @endif
         {{-- @end-chisel-email-verification --}}
-    </x-pages::settings.layout>
+    </div>
 </section>

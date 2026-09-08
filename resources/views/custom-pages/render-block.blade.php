@@ -5,8 +5,10 @@
 @switch($block['type'] ?? '')
     @case('container')
         @php
-            $background = match ($block['data']['background'] ?? 'white') {
-                'soft' => 'bg-zinc-200',
+            $backgroundValue = $block['data']['background'] ?? 'white';
+            $hasInlineBackground = (bool) preg_match('/^#[0-9A-Fa-f]{6}$/', (string) $backgroundValue);
+            $background = $hasInlineBackground ? '' : match ($backgroundValue) {
+                'soft' => 'bg-zinc-100',
                 'accent' => 'bg-indigo-600 text-white',
                 default => 'bg-white',
             };
@@ -22,7 +24,7 @@
                 default => 'items-start',
             };
         @endphp
-        <section class="grid gap-5 {{ count($columns) === 2 ? 'md:grid-cols-2' : 'grid-cols-1' }} {{ $verticalAlignment }} rounded-2xl {{ $background }} {{ $padding }}">
+        <section class="grid gap-5 {{ count($columns) === 2 ? 'md:grid-cols-2' : 'grid-cols-1' }} {{ $verticalAlignment }} rounded-2xl {{ $background }} {{ $padding }}" @if ($hasInlineBackground) style="background-color: {{ $backgroundValue }}" @endif>
             @foreach ($columns as $column)
                 <div class="space-y-5">
                     @foreach ($column['blocks'] ?? [] as $block)
@@ -51,7 +53,12 @@
         </section>
         @break
     @case('image')
-        <img src="{{ $block['data']['url'] ?? '' }}" alt="{{ $block['data']['alt'] ?? '' }}" class="max-h-[560px] w-full rounded-2xl object-cover shadow-sm">
+        @php
+            $imageSrc = ! empty($block['data']['storage_path'] ?? null)
+                ? Storage::url($block['data']['storage_path'])
+                : ($block['data']['url'] ?? '');
+        @endphp
+        <img src="{{ $imageSrc }}" alt="{{ $block['data']['alt'] ?? '' }}" class="max-h-[560px] w-full rounded-2xl object-cover shadow-sm">
         @break
     @case('video')
         @php
