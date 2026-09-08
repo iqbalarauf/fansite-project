@@ -21,7 +21,7 @@ class MeetGreetEventsTest extends TestCase
         $response->assertSee('Meet &amp; Greet Events', false);
     }
 
-    public function test_video_call_requires_second_event_date(): void
+    public function test_video_call_event_can_be_created_without_a_second_event_date(): void
     {
         $user = User::factory()->create();
 
@@ -30,9 +30,18 @@ class MeetGreetEventsTest extends TestCase
             'event_type' => 'video-call',
             'event_date' => '2026-07-01',
             'event_date_2' => '',
+            'location' => 'Jakarta',
         ]);
 
-        $response->assertSessionHasErrors('event_date_2');
+        $response->assertRedirect(route('meet-greet-events.index'));
+        $response->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('meet_greet_events', [
+            'event_name' => 'Video Call Batch 1',
+            'event_type' => 'video-call',
+            'event_date' => '2026-07-01',
+            'event_date_2' => null,
+        ]);
     }
 
     public function test_user_can_create_event_with_purchase_link(): void
@@ -43,6 +52,7 @@ class MeetGreetEventsTest extends TestCase
             'event_name' => 'Meet & Greet Summer Fest',
             'event_type' => 'meet-greet',
             'event_date' => '2026-07-10',
+            'location' => 'Jakarta',
             'ticket_sale_datetime' => '2026-07-01',
             'purchase_link' => 'https://example.com/tickets',
         ]);

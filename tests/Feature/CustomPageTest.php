@@ -6,7 +6,9 @@ use App\Models\CustomPage;
 use App\Models\User;
 use App\Support\CustomPageStatistic;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -23,6 +25,29 @@ class CustomPageTest extends TestCase
             ->assertSee('Pages')
             ->assertSee('Tambah Halaman Baru')
             ->assertSee(route('pages.create'));
+    }
+
+    public function test_page_editor_groups_information_in_the_aside_and_collapsible_sections(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->assertSee('Page Information')
+            ->assertSee('Add element')
+            ->assertSee('Edit element')
+            ->assertSee('Custom slug (optional)')
+            ->assertSee('Title alignment')
+            ->assertSee('Page display')
+            ->assertSee('Page background')
+            ->call('toggleAside', 'pageInfo')
+            ->assertSet('pageInfoOpen', false)
+            ->assertDontSee('Custom slug (optional)')
+            ->call('toggleAside', 'addElement')
+            ->assertSet('addElementOpen', false)
+            ->assertDontSee("addBlock('container')", escape: false)
+            ->call('toggleAside', 'addElement')
+            ->assertSet('addElementOpen', true)
+            ->assertSee("addBlock('container')", escape: false);
     }
 
     public function test_authenticated_user_can_save_and_publish_a_custom_page_with_a_generated_slug(): void
@@ -87,6 +112,68 @@ class CustomPageTest extends TestCase
         $this->get(route('custom-pages.show', $page))->assertNotFound();
     }
 
+    public function test_user_can_set_a_hexadecimal_page_background_and_it_renders_publicly(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Hex')
+            ->call('applyPageBackground', '#AABBCC')
+            ->call('save', 'published')
+            ->assertHasNoErrors();
+
+        $page = CustomPage::query()->firstOrFail();
+
+        $this->assertSame('#aabbcc', $page->background_color);
+        $this->get(route('custom-pages.show', $page))
+            ->assertOk()
+            ->assertSee('background-color: #aabbcc', false);
+    }
+
+    public function test_user_can_set_a_hexadecimal_container_background_and_it_renders_publicly(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Container Hex')
+            ->call('applyBlockBackground', '#123456')
+            ->call('save', 'published')
+            ->assertHasNoErrors();
+
+        $page = CustomPage::query()->firstOrFail();
+
+        $this->assertSame('#123456', $page->blocks[0]['data']['background']);
+        $this->get(route('custom-pages.show', $page))
+            ->assertOk()
+            ->assertSee('background-color: #123456', false);
+    }
+
+    public function test_invalid_page_background_is_rejected(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Salah')
+            ->set('backgroundColor', 'neon')
+            ->call('save', 'published')
+            ->assertHasErrors(['backgroundColor']);
+
+        $this->assertDatabaseCount('custom_pages', 0);
+    }
+
+    public function test_invalid_container_background_is_rejected(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Container Salah')
+            ->set('blocks.0.data.background', 'mint')
+            ->call('save', 'published')
+            ->assertHasErrors(['blocks.0.data.background']);
+
+        $this->assertDatabaseCount('custom_pages', 0);
+    }
+
     public function test_nested_blocks_are_validated_before_a_page_is_published(): void
     {
         $this->actingAs(User::factory()->create());
@@ -123,6 +210,328 @@ class CustomPageTest extends TestCase
         $page = CustomPage::query()->firstOrFail();
 
         $this->assertSame('nested-second', $page->blocks[0]['data']['columns'][0]['blocks'][0]['id']);
+    }
+
+    public function test_top_level_image_with_an_invalid_url_fails_publishing(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Galeri Gambar')
+            ->call('addBlock', 'image')
+            ->set('blocks.1.data.url', 'not-a-valid-url')
+            ->call('save', 'published')
+            ->assertHasErrors(['blocks.1.data.url']);
+
+        $this->assertDatabaseCount('custom_pages', 0);
+    }
+
+    public function test_user_can_upload_an_image_to_a_top_level_image_block(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->create());
+
+        $component = Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Upload')
+            ->call('addBlock', 'image')
+            ->set('imageUpload', UploadedFile::fake()->image('foto.jpg', 100, 100))
+            ->call('uploadImage')
+            ->assertHasNoErrors('imageUpload');
+
+        $path = $component->get('blocks.1.data.storage_path');
+
+        $this->assertNotEmpty($path);
+        Storage::disk('public')->assertExists($path);
+    }
+
+    public function test_uploaded_image_is_stored_and_saved_with_the_page(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Upload')
+            ->call('addBlock', 'image')
+            ->set('imageUpload', UploadedFile::fake()->image('foto.jpg', 100, 100))
+            ->call('uploadImage')
+            ->set('blocks.1.data.alt', 'Foto oshimen')
+            ->call('save', 'published')
+            ->assertHasNoErrors();
+
+        $page = CustomPage::query()->firstOrFail();
+        $imageData = $page->blocks[1]['data'];
+
+        $this->assertNotEmpty($imageData['storage_path']);
+        $this->assertStringStartsWith('pages/', $imageData['storage_path']);
+        Storage::disk('public')->assertExists($imageData['storage_path']);
+
+        $this->get(route('custom-pages.show', $page))
+            ->assertOk()
+            ->assertSee('/storage/pages/', false)
+            ->assertSee('Foto oshimen');
+    }
+
+    public function test_uploading_over_an_existing_image_deletes_the_previous_file(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->create());
+
+        $component = Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Ganti Foto')
+            ->call('addBlock', 'image')
+            ->set('imageUpload', UploadedFile::fake()->image('lama.jpg', 100, 100))
+            ->call('uploadImage')
+            ->assertHasNoErrors('imageUpload');
+
+        $firstPath = $component->get('blocks.1.data.storage_path');
+        Storage::disk('public')->assertExists($firstPath);
+
+        $component
+            ->set('imageUpload', UploadedFile::fake()->image('baru.jpg', 100, 100))
+            ->call('uploadImage')
+            ->assertHasNoErrors('imageUpload');
+
+        $secondPath = $component->get('blocks.1.data.storage_path');
+
+        $this->assertNotSame($firstPath, $secondPath);
+        Storage::disk('public')->assertMissing($firstPath);
+        Storage::disk('public')->assertExists($secondPath);
+    }
+
+    public function test_user_can_upload_an_image_to_a_nested_image_block(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Nested')
+            ->call('addBlockToContainer', 0, 0, 'image')
+            ->set('imageUpload', UploadedFile::fake()->image('nested.jpg', 100, 100))
+            ->call('uploadImage')
+            ->call('save', 'published')
+            ->assertHasNoErrors();
+
+        $page = CustomPage::query()->firstOrFail();
+        $nestedImage = $page->blocks[0]['data']['columns'][0]['blocks'][0]['data'];
+
+        $this->assertNotEmpty($nestedImage['storage_path']);
+        Storage::disk('public')->assertExists($nestedImage['storage_path']);
+
+        $this->get(route('custom-pages.show', $page))
+            ->assertOk()
+            ->assertSee('/storage/pages/', false);
+    }
+
+    public function test_removing_an_uploaded_image_deletes_the_stored_file(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->create());
+
+        $component = Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Hapus Foto')
+            ->call('addBlock', 'image')
+            ->set('imageUpload', UploadedFile::fake()->image('hapus.jpg', 100, 100))
+            ->call('uploadImage');
+
+        $path = $component->get('blocks.1.data.storage_path');
+        Storage::disk('public')->assertExists($path);
+
+        $component->call('removeImage');
+
+        Storage::disk('public')->assertMissing($path);
+        $this->assertSame('', $component->get('blocks.1.data.url'));
+        $this->assertNull($component->get('blocks.1.data.storage_path'));
+    }
+
+    public function test_upload_rejects_non_image_files(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->call('addBlock', 'image')
+            ->set('imageUpload', UploadedFile::fake()->create('dokumen.txt', 100))
+            ->call('uploadImage')
+            ->assertHasErrors(['imageUpload']);
+    }
+
+    public function test_deleting_a_page_removes_its_uploaded_images(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->create());
+
+        $component = Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Hapus')
+            ->call('addBlock', 'image')
+            ->set('imageUpload', UploadedFile::fake()->image('saya.jpg', 100, 100))
+            ->call('uploadImage')
+            ->call('save', 'published')
+            ->assertHasNoErrors();
+
+        $page = CustomPage::query()->firstOrFail();
+        $path = $page->blocks[1]['data']['storage_path'];
+        Storage::disk('public')->assertExists($path);
+
+        $component->call('deletePage');
+
+        Storage::disk('public')->assertMissing($path);
+        $this->assertSoftDeleted($page);
+    }
+
+    public function test_deleting_a_page_removes_uploaded_images_inside_containers(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->create());
+
+        $component = Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Container')
+            ->call('addBlockToContainer', 0, 0, 'image')
+            ->set('imageUpload', UploadedFile::fake()->image('nested.png', 100, 100))
+            ->call('uploadImage')
+            ->call('save', 'published')
+            ->assertHasNoErrors();
+
+        $page = CustomPage::query()->firstOrFail();
+        $path = $page->blocks[0]['data']['columns'][0]['blocks'][0]['data']['storage_path'];
+        Storage::disk('public')->assertExists($path);
+
+        $component->call('deletePage');
+
+        Storage::disk('public')->assertMissing($path);
+        $this->assertSoftDeleted($page);
+    }
+
+    public function test_top_level_video_requires_a_youtube_url(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Video Sesi')
+            ->call('addBlock', 'video')
+            ->set('blocks.1.data.url', 'https://example.com/video.mp4')
+            ->call('save', 'published')
+            ->assertHasErrors(['blocks.1.data.url']);
+
+        $this->assertDatabaseCount('custom_pages', 0);
+    }
+
+    public function test_nested_button_requires_a_label_and_a_valid_url(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Tombol')
+            ->call('addBlockToContainer', 0, 0, 'button')
+            ->set('blocks.0.data.columns.0.blocks.0.data.label', '')
+            ->set('blocks.0.data.columns.0.blocks.0.data.url', 'invalid-url')
+            ->call('save', 'published')
+            ->assertHasErrors([
+                'blocks.0.data.columns.0.blocks.0.data.label',
+                'blocks.0.data.columns.0.blocks.0.data.url',
+            ]);
+
+        $this->assertDatabaseCount('custom_pages', 0);
+    }
+
+    public function test_nested_embed_requires_html(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Embed')
+            ->call('addBlockToContainer', 0, 0, 'embed')
+            ->set('blocks.0.data.columns.0.blocks.0.data.html', '')
+            ->call('save', 'published')
+            ->assertHasErrors(['blocks.0.data.columns.0.blocks.0.data.html']);
+
+        $this->assertDatabaseCount('custom_pages', 0);
+    }
+
+    public function test_nested_youtube_video_rejects_a_non_youtube_url(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Video Nested')
+            ->call('addBlockToContainer', 0, 0, 'video')
+            ->set('blocks.0.data.columns.0.blocks.0.data.url', 'https://vimeo.com/12345')
+            ->call('save', 'published')
+            ->assertHasErrors(['blocks.0.data.columns.0.blocks.0.data.url']);
+
+        $this->assertDatabaseCount('custom_pages', 0);
+    }
+
+    public function test_nested_blocks_in_a_second_column_can_be_reordered(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Dua Kolom')
+            ->call('setContainerColumns', 0, 2)
+            ->call('addBlockToContainer', 0, 1, 'text')
+            ->set('blocks.0.data.columns.1.blocks.0.id', 'col2-first')
+            ->set('blocks.0.data.columns.1.blocks.0.data.text', 'Kolom kedua')
+            ->call('addBlockToContainer', 0, 1, 'text')
+            ->set('blocks.0.data.columns.1.blocks.1.id', 'col2-second')
+            ->set('blocks.0.data.columns.1.blocks.1.data.text', 'Kedua')
+            ->call('sortNestedBlock', 0, 1, 'col2-second', 0)
+            ->call('save', 'published')
+            ->assertHasNoErrors();
+
+        $page = CustomPage::query()->firstOrFail();
+        $blocks = $page->blocks[0]['data']['columns'][1]['blocks'];
+
+        $this->assertSame('col2-second', $blocks[0]['id']);
+        $this->assertSame('col2-first', $blocks[1]['id']);
+    }
+
+    public function test_nested_block_can_be_moved_downward_within_a_column(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Urutan Turun')
+            ->call('addBlockToContainer', 0, 0, 'text')
+            ->set('blocks.0.data.columns.0.blocks.0.id', 'first')
+            ->set('blocks.0.data.columns.0.blocks.0.data.text', 'Pertama')
+            ->call('addBlockToContainer', 0, 0, 'text')
+            ->set('blocks.0.data.columns.0.blocks.0.id', 'first')
+            ->set('blocks.0.data.columns.0.blocks.1.id', 'second')
+            ->set('blocks.0.data.columns.0.blocks.1.data.text', 'Kedua')
+            ->call('addBlockToContainer', 0, 0, 'text')
+            ->set('blocks.0.data.columns.0.blocks.0.id', 'first')
+            ->set('blocks.0.data.columns.0.blocks.1.id', 'second')
+            ->set('blocks.0.data.columns.0.blocks.2.id', 'third')
+            ->set('blocks.0.data.columns.0.blocks.2.data.text', 'Ketiga')
+            ->call('sortNestedBlock', 0, 0, 'first', 1)
+            ->call('save', 'published')
+            ->assertHasNoErrors();
+
+        $page = CustomPage::query()->firstOrFail();
+        $blocks = array_column($page->blocks[0]['data']['columns'][0]['blocks'], 'id');
+
+        $this->assertSame(['second', 'first', 'third'], $blocks);
+    }
+
+    public function test_nested_text_block_requires_content_but_draft_container_body_is_allowed(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        $component = Livewire::test('pages::page-builder.index')
+            ->set('title', 'Konten Kosong')
+            ->call('addBlockToContainer', 0, 0, 'text')
+            ->set('blocks.0.data.columns.0.blocks.0.data.text', '');
+
+        $component->call('save', 'published')
+            ->assertHasErrors(['blocks.0.data.columns.0.blocks.0.data.text']);
     }
 
     public function test_page_title_and_text_block_presentation_settings_are_rendered(): void

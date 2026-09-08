@@ -1,6 +1,8 @@
 @php
     use App\Support\CustomPageStatistic;
-    $background = match ($block['data']['background'] ?? 'white') {
+    $backgroundValue = $block['data']['background'] ?? 'white';
+    $hasInlineBackground = (bool) preg_match('/^#[0-9A-Fa-f]{6}$/', (string) $backgroundValue);
+    $background = $hasInlineBackground ? '' : match ($backgroundValue) {
         'soft' => 'bg-zinc-100',
         'accent' => 'bg-indigo-600 text-white',
         default => 'bg-white',
@@ -29,7 +31,7 @@
         @php
             $columns = $block['data']['columns'] ?? [['blocks' => []]];
         @endphp
-        <div class="grid gap-4 {{ count($columns) === 2 ? 'md:grid-cols-2' : 'grid-cols-1' }} {{ $verticalAlignment }} rounded-xl {{ $background }} {{ $padding }}">
+        <div class="grid gap-4 {{ count($columns) === 2 ? 'md:grid-cols-2' : 'grid-cols-1' }} {{ $verticalAlignment }} rounded-xl {{ $background }} {{ $padding }}" @if ($hasInlineBackground) style="background-color: {{ $backgroundValue }}" @endif>
             @foreach ($columns as $column)
                 <div class="min-h-20 space-y-3 rounded-lg border border-dashed border-current/20 p-3">
                     @forelse ($column['blocks'] ?? [] as $childBlock)
@@ -51,10 +53,15 @@
         </div>
         @break
     @case('image')
-        @if (! empty($block['data']['url']))
-            <img src="{{ $block['data']['url'] }}" alt="{{ $block['data']['alt'] ?? '' }}" class="max-h-64 w-full rounded-xl object-cover">
+        @php
+            $imageSrc = ! empty($block['data']['storage_path'] ?? null)
+                ? Storage::url($block['data']['storage_path'])
+                : ($block['data']['url'] ?? '');
+        @endphp
+        @if (! empty($imageSrc))
+            <img src="{{ $imageSrc }}" alt="{{ $block['data']['alt'] ?? '' }}" class="max-h-64 w-full rounded-xl object-cover">
         @else
-            <div class="flex h-32 items-center justify-center rounded-xl border border-dashed border-zinc-300 text-sm text-zinc-500">{{ __('Tambahkan URL gambar') }}</div>
+            <div class="flex h-32 items-center justify-center rounded-xl border border-dashed border-zinc-300 text-sm text-zinc-500">{{ __('Tambahkan URL gambar atau upload') }}</div>
         @endif
         @break
     @case('video')

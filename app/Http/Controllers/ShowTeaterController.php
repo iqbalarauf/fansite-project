@@ -210,7 +210,7 @@ class ShowTeaterController extends Controller
         $validated = $request->validate([
             'show_date' => 'required|string|max:25',
             'setlist' => 'required|string|max:32',
-            'unit_song' => 'required|string|max:100',
+            'unit_song' => 'nullable|string|max:100',
             'unit_song_2' => 'nullable|string|max:100',
             'is_global_center' => 'nullable|boolean',
             'is_us_center' => 'nullable|boolean',

@@ -10,7 +10,9 @@
     $instagramUrl = $about['instagram_url'] ?? $about['idol_social_media_instagram'] ?? null;
     $twitterUrl = $about['twitter_url'] ?? $about['idol_social_media_twitter'] ?? null;
     $tiktokUrl = $about['tiktok_url'] ?? $about['idol_social_media_tiktok'] ?? null;
-    $background = match ($page->background_color ?? 'slate') {
+    $backgroundValue = $page->background_color ?? 'slate';
+    $hasInlineBackground = (bool) preg_match('/^#[0-9A-Fa-f]{6}$/', (string) $backgroundValue);
+    $background = $hasInlineBackground ? '' : match ($backgroundValue) {
         'white' => 'bg-white',
         'indigo' => 'bg-indigo-50',
         default => 'bg-slate-100',
@@ -30,7 +32,7 @@
         <title>{{ $page->title }}</title>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="min-h-screen {{ $background }} text-slate-800 antialiased">
+    <body class="min-h-screen {{ $background }} text-slate-800 antialiased" @if ($hasInlineBackground) style="background-color: {{ $backgroundValue }}" @endif>
         @if (($page->display_mode ?? 'full') === 'welcome')
             <header class="bg-white shadow-sm">
                 <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">

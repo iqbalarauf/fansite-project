@@ -257,6 +257,16 @@ class DashboardController extends Controller
     }
 
     /**
+     * Normalize a date string to the Y-m-d format, supporting both the "/"
+     * (e.g. "2026/08/24") and "-" (e.g. "2026-08-24") separators so events can
+     * be compared and sorted chronologically regardless of the stored format.
+     */
+    private function normalizeDate(string $date): string
+    {
+        return Carbon::parse(str_replace('/', '-', $date))->format('Y-m-d');
+    }
+
+    /**
      * @return array{0: CarbonInterface, 1: CarbonInterface, 2: CarbonInterface, 3: CarbonInterface}
      */
     private function resolvePeriod(string $period, ?string $customFrom = null, ?string $customTo = null): array
@@ -292,14 +302,14 @@ class DashboardController extends Controller
             DB::table('meet_greet_events')->whereNull('deleted_at')->min('event_date'),
             DB::table('meet_greet_events')->whereNull('deleted_at')->min('event_date_2'),
             DB::table('live_streaming')->min('live_date'),
-        ])->filter()->min();
+        ])->filter()->map(fn (string $date): string => $this->normalizeDate($date))->min();
         $lastDate = collect([
             DB::table('show_teater')->max('show_date'),
             DB::table('concert_events')->whereNull('deleted_at')->max('event_date'),
             DB::table('meet_greet_events')->whereNull('deleted_at')->max('event_date'),
             DB::table('meet_greet_events')->whereNull('deleted_at')->max('event_date_2'),
             DB::table('live_streaming')->max('live_date'),
-        ])->filter()->max();
+        ])->filter()->map(fn (string $date): string => $this->normalizeDate($date))->max();
 
         return $firstDate && $lastDate
             ? [Carbon::parse($firstDate)->startOfDay(), Carbon::parse($lastDate)->endOfDay()]
@@ -380,7 +390,7 @@ class DashboardController extends Controller
             $events->push([
                 'type' => 'Show Teater',
                 'name' => $show->setlist,
-                'date' => $show->show_date,
+                'date' => $this->normalizeDate($show->show_date),
                 'badge_color' => 'blue',
             ]);
         }
@@ -389,21 +399,22 @@ class DashboardController extends Controller
             $events->push([
                 'type' => 'Event',
                 'name' => $concert->event_name,
-                'date' => $concert->event_date,
+                'date' => $this->normalizeDate($concert->event_date),
                 'badge_color' => 'red',
             ]);
         }
 
         foreach ($meetGreetQuery->get() as $meetGreet) {
             foreach (array_filter([$meetGreet->event_date, $meetGreet->event_date_2]) as $eventDate) {
-                $withinRange = ! ($from && $to) || ($eventDate >= $from && $eventDate <= $to);
-                $matchesDirection = $past ? $eventDate < $today : $eventDate > $today;
+                $normalizedDate = $this->normalizeDate($eventDate);
+                $withinRange = ! ($from && $to) || ($normalizedDate >= $from && $normalizedDate <= $to);
+                $matchesDirection = $past ? $normalizedDate < $today : $normalizedDate > $today;
 
                 if ($withinRange && $matchesDirection) {
                     $events->push([
                         'type' => 'Meet & Greet',
                         'name' => $meetGreet->event_name,
-                        'date' => $eventDate,
+                        'date' => $normalizedDate,
                         'badge_color' => 'orange',
                     ]);
                 }

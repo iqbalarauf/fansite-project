@@ -100,7 +100,7 @@ Setiap page memiliki properti berikut:
 | `slug` | string | Slug URL. Jika kosong, dibuat dari title |
 | `status` | `draft` atau `published` | Status visibilitas halaman |
 | `display_mode` | `full` atau `welcome` | Mode shell halaman publik |
-| `background_color` | `white`, `slate`, atau `indigo` | Warna background halaman |
+| `background_color` | preset (`white`, `slate`, `indigo`) **atau** `#RRGGBB` (hex) | Warna background halaman |
 | `blocks` | JSON array | Daftar blok konten halaman |
 
 ### Slug
@@ -143,15 +143,18 @@ Data header/footer diambil dari tabel:
 
 ## Background Halaman
 
-Nilai `background_color` diterjemahkan menjadi class berikut:
+Nilai `background_color` dapat berupa preset **atau warna hex**:
 
 | Nilai | Tampilan |
 |---|---|
-| `white` | Background putih |
-| `slate` | Background abu-abu lembut |
-| `indigo` | Background indigo sangat lembut |
+| `white` | Background putih (`#FFFFFF`) |
+| `slate` | Background abu-abu lembut (`#F1F5F9`) |
+| `indigo` | Background indigo sangat lembut (`#EEF2FF`) |
+| `#RRGGBB` | Warna kustom, dirender sebagai inline `background-color` |
 
 Nilai default untuk page baru adalah `slate`.
+
+Di editor, Page Background dikontrol melalui color picker dan input hex; preset tersedia sebagai swatch warna.
 
 ## Struktur Blok
 
@@ -200,7 +203,7 @@ Properti container:
 
 | Properti | Nilai | Keterangan |
 |---|---|---|
-| `background` | `white`, `soft`, `accent` | Background container |
+| `background` | preset (`white`, `soft`, `accent`) **atau** `#RRGGBB` (hex) | Background container; hex dirender inline |
 | `padding` | `small`, `medium`, `large` | Spacing internal container |
 | `columns` | array berisi 1 atau 2 column | Area untuk elemen nested |
 
@@ -230,18 +233,32 @@ Text ditampilkan sebagai teks escaped dan mendukung line break.
 
 ### Image
 
+Image dapat diisi dari dua sumber:
+
+1. **URL eksternal** — dimasukkan manual.
+2. **Upload file** — gambar disimpan pada disk `public` (folder `pages/`) dan dilacak melalui `data.storage_path`.
+
 ```json
 {
   "id": "image-id",
   "type": "image",
   "data": {
     "url": "https://example.com/image.jpg",
-    "alt": "Deskripsi gambar"
+    "alt": "Deskripsi gambar",
+    "storage_path": "pages/xxxx.jpg"
   }
 }
 ```
 
-URL image wajib valid ketika page disimpan. Image dirender dengan `img`, object cover, rounded corner, dan batas tinggi maksimum pada halaman publik.
+Aturan:
+
+- `url` (URL eksternal) **atau** `storage_path` (upload) wajib diisi ketika page disimpan.
+- URL eksternal wajib lolos `FILTER_VALIDATE_URL`.
+- Upload divalidasi `image, max:3072` (maks 3 MB, `accept="image/*"`).
+- Saat render, `storage_path` diprioritaskan: jika ada, `src` diambil dari `Storage::url($storage_path)`; jika tidak, memakai `url`.
+- Mengganti upload atau menghapus blok/page akan menghapus file lama dari disk `public` secara otomatis (`removeImage()`, `removeBlock()`, `removeNestedBlock()`, `deletePage()`).
+
+Image dirender dengan `img`, object cover, rounded corner, dan batas tinggi maksimum pada halaman publik.
 
 ### Video YouTube
 
@@ -323,8 +340,20 @@ Fungsi utama component:
 | `selectNestedBlock()` | Memilih blok nested untuk diedit |
 | `removeBlock()` | Menghapus blok top-level |
 | `sortBlock()` | Mengubah urutan blok top-level melalui drag and drop |
+| `sortNestedBlock()` | Mengubah urutan blok anak dalam container column melalui drag and drop |
+| `removeNestedBlock()` | Menghapus blok anak dari container column |
+| `uploadImage()` | Menyimpan file upload ke disk `public` dan menautkannya ke blok image yang terpilih |
+| `removeImage()` | Menghapus file upload dari blok image terpilih dan membersihkan `storage_path`/`url` |
 | `save()` | Menyimpan draft atau publish |
-| `deletePage()` | Soft delete page |
+| `deletePage()` | Soft delete page (termasuk file image upload) |
+
+Validasi internal:
+
+| Method | Fungsi |
+|---|---|
+| `validatePage()` | Validasi struktural halaman lalu memanggil validasi blok recursive |
+| `validateBlockRecursive()` | Menelusuri container dan memvalidasi setiap blok anak secara recursive |
+| `validateBlock()` | Validasi field wajib dan URL untuk satu blok (top-level maupun nested) |
 
 ### Save Draft
 
@@ -359,11 +388,27 @@ Validasi umum:
 Validasi per elemen top-level:
 
 - Text: `data.text` wajib diisi.
-- Image: `data.url` wajib berupa URL valid.
+- Image: `data.url` (URL valid) **atau** `data.storage_path` (upload) wajib diisi.
 - Video: `data.url` wajib berupa URL valid dan mengandung domain YouTube.
 - Button: `data.label` wajib diisi dan `data.url` harus URL valid.
 - Embed HTML: `data.html` wajib diisi.
 - Container: tidak memiliki field wajib khusus.
+
+### Validasi Recursive
+
+Penjelasan di atas juga berlaku untuk blok di dalam container. `validateBlockRecursive()` menelusuri setiap container dan menerapkan `validateBlock()` yang sama untuk setiap blok anak di dalam kolom, sehingga aturan field wajib (`text`, `metric`, `url`, `label`, `html`) dan validasi URL (termasuk syarat domain YouTube untuk video) konsisten antara blok top-level dan blok nested.
+
+Error pada blok nested direport dengan path lengkap, contoh:
+
+```text
+blocks.0.data.columns.0.blocks.1.data.url
+```
+
+Saat publish gagal karena ada error di mana pun (top-level maupun nested), sistem menambahkan error `status` dengan pesan "Fix the block errors before publishing."
+
+### Pengurutan Nested (Drag and Drop)
+
+Blok anak di dalam container column dapat diurutkan secara drag-and-drop memakai `wire:sort` + `wire:sort:item`, dengan handler `sortNestedBlock(int $containerIndex, int $columnIndex, string $item, int $position)`. Posisi baru mengikuti indeks DOM terkini (konsisten dengan konvensi Livewire/Alpine sortable), sehingga pemindahan ke atas maupun ke bawah dalam kolom berjalan benar.
 
 ## Rendering
 
@@ -438,18 +483,23 @@ php artisan test --compact tests/Feature/CustomPageTest.php
 
 Bagian ini penting untuk prompt pengembangan berikutnya.
 
-1. Sorting drag and drop hanya tersedia untuk blok top-level. Nested block belum memiliki sorting drag and drop.
-2. Nested block belum memiliki tombol hapus individual. Saat ini nested block hanya dapat dipilih dan diedit.
-3. Validasi detail terutama berjalan pada blok top-level. Struktur nested perlu validasi recursive agar URL dan field child tervalidasi konsisten.
-4. Embed HTML dirender raw tanpa sanitizer. Tambahkan sanitasi atau pembatasan tag/attribute jika editor dapat digunakan oleh user yang tidak sepenuhnya dipercaya.
-5. Renderer preview dan renderer publik memiliki markup yang berbeda. Perubahan tipe blok perlu diterapkan pada dua file renderer.
-6. Preview editor untuk image/video kosong menampilkan placeholder, sedangkan renderer publik tidak selalu menampilkan fallback yang sama.
-7. Opsi background saat ini berupa preset class, belum mendukung custom color picker atau nilai hex.
-8. Container mendukung maksimal dua kolom. Nested container tidak disediakan sebagai elemen di dalam column.
-9. Saat jumlah kolom dikurangi dari dua menjadi satu, data blok pada kolom kedua ikut dihapus dari state editor.
-10. Belum ada test khusus untuk nested block, dua kolom, YouTube URL, Embed HTML, display mode, dan background color.
-11. Header Welcome pada custom page meniru markup Welcome, tetapi bukan partial bersama. Perubahan header Welcome perlu disinkronkan manual.
-12. Page title pada mode `full` dan `welcome` masih ditampilkan oleh custom page sendiri; mode `welcome` hanya menyediakan shell header/footer, bukan seluruh isi Welcome.
+Status perbaikan terbaru (September 2026):
+
+- [x] **Drag-and-drop nested sorting** — blok anak di dalam container column dapat diurutkan dengan `wire:sort` / `sortNestedBlock()`, termasuk pemindahan ke atas maupun ke bawah dalam satu kolom.
+- [x] **Tombol hapus nested block** — tersedia via `removeNestedBlock()` dengan ikon trash di setiap baris blok anak.
+- [x] **Validasi recursive** — `validateBlockRecursive()` menerapkan aturan field wajib dan URL (termasuk YouTube) yang sama untuk blok top-level dan blok di dalam container.
+- [x] **Test untuk nested block dan URL** — ditambahkan cakupan untuk nested button, nested embed, YouTube URL invalid, image URL invalid, serta pengurutan nested di kolom kedua dan pergerakan ke bawah.
+- [x] **Background Color Picker & Hex input** — Page Background dan Element Background (container) menerima preset token **atau** warna hex (`#RRGGBB`) via color picker + input hex; dirender sebagai inline `background-color`. Termasuk validasi dan test rendering publik.
+
+Sisa keterbatasan yang belum dikerjakan:
+
+1. Embed HTML dirender raw tanpa sanitizer. Tambahkan sanitasi atau pembatasan tag/attribute jika editor dapat digunakan oleh user yang tidak sepenuhnya dipercaya.
+2. Renderer preview dan renderer publik memiliki markup yang berbeda. Perubahan tipe blok perlu diterapkan pada dua file renderer.
+3. Preview editor untuk image/video kosong menampilkan placeholder, sedangkan renderer publik tidak selalu menampilkan fallback yang sama.
+4. Container mendukung maksimal dua kolom. Nested container tidak disediakan sebagai elemen di dalam column.
+5. Saat jumlah kolom dikurangi dari dua menjadi satu, data blok pada kolom kedua ikut dihapus dari state editor.
+6. Header Welcome pada custom page meniru markup Welcome, tetapi bukan partial bersama. Perubahan header Welcome perlu disinkronkan manual.
+7. Page title pada mode `full` dan `welcome` masih ditampilkan oleh custom page sendiri; mode `welcome` hanya menyediakan shell header/footer, bukan seluruh isi Welcome.
 
 ## Contoh Prompt Perbaikan
 
