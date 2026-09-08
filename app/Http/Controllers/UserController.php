@@ -3,72 +3,46 @@
 namespace App\Http\Controllers;
 
 use App\Enums\UserRole;
+use App\Http\Requests\StoreUserRequest;
+use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
+use App\Support\ListingQuery;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rules\Enum;
-use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 
 class UserController extends Controller
 {
-    /**
-     * Display a listing of the users.
-     */
     public function index(Request $request): View
     {
-        $search = $request->string('search')->toString();
-        $role = $request->string('role')->toString();
-        $sortBy = $request->string('sort_by', 'created_at')->toString();
-        $sortDir = $request->string('sort_dir', 'desc')->toString();
-        $perPage = (int) $request->integer('per_page', 10);
-
-        $allowedSorts = ['name', 'email', 'role', 'created_at'];
-        if (! in_array($sortBy, $allowedSorts, true)) {
-            $sortBy = 'created_at';
-        }
-
-        $sortDir = $sortDir === 'asc' ? 'asc' : 'desc';
-        $perPage = in_array($perPage, [10, 25, 50, 100], true) ? $perPage : 10;
+        $filters = ListingQuery::from($request, ['name', 'email', 'role', 'created_at'], 'created_at', [
+            'role' => '',
+        ]);
 
         $users = User::query()
-            ->when($search !== '', function ($query) use ($search): void {
-                $query->where(function ($nestedQuery) use ($search): void {
-                    $nestedQuery->where('name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%");
+            ->when($filters['search'] !== '', function ($query) use ($filters): void {
+                $query->where(function ($nestedQuery) use ($filters): void {
+                    $nestedQuery->where('name', 'like', "%{$filters['search']}%")
+                        ->orWhere('email', 'like', "%{$filters['search']}%");
                 });
             })
-            ->when($role !== '', function ($query) use ($role): void {
-                $query->where('role', $role);
+            ->when($filters['role'] !== '', function ($query) use ($filters): void {
+                $query->where('role', $filters['role']);
             })
-            ->orderBy($sortBy, $sortDir)
-            ->paginate($perPage)
+            ->orderBy($filters['sort_by'], $filters['sort_dir'])
+            ->paginate($filters['per_page'])
             ->withQueryString();
 
         return view('users.index', [
             'users' => $users,
-            'filters' => [
-                'search' => $search,
-                'role' => $role,
-                'sort_by' => $sortBy,
-                'sort_dir' => $sortDir,
-                'per_page' => $perPage,
-            ],
+            'filters' => $filters,
             'roles' => UserRole::cases(),
         ]);
     }
 
-    /**
-     * Store a newly created user in storage.
-     */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreUserRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:users',
-            'role' => ['required', new Enum(UserRole::class)],
-            'password' => ['required', 'string', Password::default(), 'confirmed'],
-        ]);
+        $validated = $request->validated();
 
         User::create([
             'name' => $validated['name'],
@@ -81,17 +55,9 @@ class UserController extends Controller
             ->with('success', 'User '.$validated['name'].' berhasil ditambahkan.');
     }
 
-    /**
-     * Update the specified user in storage.
-     */
-    public function update(Request $request, User $user): RedirectResponse
+    public function update(UpdateUserRequest $request, User $user): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,'.$user->id,
-            'role' => ['required', new Enum(UserRole::class)],
-            'password' => 'nullable|string|min:8|confirmed',
-        ]);
+        $validated = $request->validated();
 
         if ($user->id === auth()->id() && $validated['role'] !== UserRole::SuperAdmin->value) {
             return back()->withErrors(['role' => 'Anda tidak dapat mengubah role akun Anda sendiri.']);
@@ -111,10 +77,7 @@ class UserController extends Controller
             ->with('success', 'User '.$user->name.' berhasil diperbarui.');
     }
 
-    /**
-     * Remove the specified user from storage.
-     */
-    public function destroy(Request $request, User $user): RedirectResponse
+    public function destroy(User $user): RedirectResponse
     {
         if ($user->id === auth()->id()) {
             return back()->withErrors(['error' => 'Anda tidak dapat menghapus akun Anda sendiri.']);

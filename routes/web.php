@@ -8,9 +8,10 @@ use App\Http\Controllers\MeetGreetEventsController;
 use App\Http\Controllers\ShowTeaterCategoriesController;
 use App\Http\Controllers\ShowTeaterController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\WelcomeController;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'welcome')->name('home');
+Route::get('/', WelcomeController::class)->name('home');
 
 Route::middleware(['auth', 'verified', 'block-view-only-writes'])->group(function () {
     Route::middleware('role:super_admin,view_only,bank_data_admin')->group(function () {
