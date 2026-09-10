@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -40,7 +41,8 @@ class WelcomePageTest extends TestCase
 
         $this->get(route('home'))
             ->assertOk()
-            ->assertSee('Selamat Datang di Fansite Freya')
+            ->assertSee('Selamat Datang di Fansite')
+            ->assertSee('Freya')
             ->assertSee('Tentang Freya')
             ->assertSee('Deskripsi freya')
             ->assertSee('https://instagram.com/freya')
@@ -78,7 +80,7 @@ class WelcomePageTest extends TestCase
             ->assertSee('Setlist B')
             ->assertSee('Konser Akbar')
             ->assertSee('Meet & Greet Jakarta')
-            ->assertDontSee('Upcoming Show');
+            ->assertSee('Upcoming Show');
     }
 
     public function test_homepage_uses_performed_show_count_even_when_future_shows_exist(): void
@@ -90,6 +92,63 @@ class WelcomePageTest extends TestCase
 
         $this->get(route('home'))
             ->assertOk()
-            ->assertDontSee('Upcoming Show');
+            ->assertSee('Upcoming Show');
+    }
+
+    public function test_homepage_links_upcoming_events_with_purchase_link(): void
+    {
+        DB::table('concert_events')->insert([
+            'event_name' => 'Konser Bertiket',
+            'event_date' => now()->addDays(10)->format('Y-m-d'),
+            'location' => 'Jakarta',
+            'purchase_link' => 'https://tiket.example/konser',
+        ]);
+
+        DB::table('meet_greet_events')->insert([
+            'event_name' => 'Meet & Greet Bertiket',
+            'event_date' => now()->addDays(15)->format('Y-m-d'),
+            'purchase_link' => 'https://tiket.example/mg',
+        ]);
+
+        DB::table('meet_greet_events')->insert([
+            'event_name' => 'Meet & Greet Gratis',
+            'event_date' => now()->addDays(20)->format('Y-m-d'),
+        ]);
+
+        DB::table('show_teater')->insert([
+            ['show_id' => 1, 'show_date' => now()->addDays(5)->format('Y-m-d'), 'setlist' => 'Setlist Biasa'],
+        ]);
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('href="https://tiket.example/konser"', false)
+            ->assertSee('href="https://tiket.example/mg"', false)
+            ->assertSee('target="_blank"', false)
+            ->assertSee('Konser Bertiket</a>', false)
+            ->assertSee('Meet &amp; Greet Bertiket</a>', false)
+            ->assertDontSee('Meet & Greet Gratis</a>', false)
+            ->assertDontSee('Setlist Biasa</a>', false);
+    }
+
+    public function test_homepage_shows_last_event_date_and_upcoming_show_badge(): void
+    {
+        DB::table('show_teater')->insert([
+            ['show_id' => 1, 'show_date' => now()->subDays(2)->format('Y-m-d'), 'setlist' => 'Setlist Lalu'],
+            ['show_id' => 2, 'show_date' => now()->addDays(7)->format('Y-m-d'), 'setlist' => 'Setlist Depan'],
+        ]);
+
+        DB::table('concert_events')->insert([
+            'event_name' => 'Konser Lalu',
+            'event_date' => now()->subDays(1)->format('Y-m-d'),
+            'location' => 'Bandung',
+        ]);
+
+        $expectedLastEvent = Carbon::parse(now()->subDays(1))->locale('id')->isoFormat('D MMMM YYYY');
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('Last Event: '.$expectedLastEvent, false)
+            ->assertSee('1 Upcoming Show', false)
+            ->assertDontSee('Live update', false);
     }
 }

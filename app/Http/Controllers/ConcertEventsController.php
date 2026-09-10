@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ConcertEventRequest;
 use App\Models\ConcertEvents;
+use App\Support\ListingQuery;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -11,84 +13,50 @@ class ConcertEventsController extends Controller
 {
     public function index(Request $request): View
     {
-        $search = $request->string('search')->toString();
-        $status = $request->string('status')->toString();
-        $dateFrom = $request->string('date_from')->toString();
-        $dateTo = $request->string('date_to')->toString();
-        $sortBy = $request->string('sort_by', 'event_date')->toString();
-        $sortDir = $request->string('sort_dir', 'desc')->toString();
-        $perPage = (int) $request->integer('per_page', 10);
-
-        $allowedSorts = ['event_date', 'event_name', 'purchase_link'];
-        if (! in_array($sortBy, $allowedSorts, true)) {
-            $sortBy = 'event_date';
-        }
-
-        $sortDir = $sortDir === 'asc' ? 'asc' : 'desc';
-        $perPage = in_array($perPage, [10, 25, 50, 100], true) ? $perPage : 10;
+        $filters = ListingQuery::from($request, ['event_date', 'event_name', 'purchase_link'], 'event_date', [
+            'status' => '',
+            'date_from' => '',
+            'date_to' => '',
+        ]);
 
         $events = ConcertEvents::query()
-            ->when($search !== '', function ($query) use ($search): void {
-                $query->where(function ($nestedQuery) use ($search): void {
-                    $nestedQuery->where('event_name', 'like', "%{$search}%")
-                        ->orWhere('location', 'like', "%{$search}%")
-                        ->orWhere('purchase_link', 'like', "%{$search}%");
+            ->when($filters['search'] !== '', function ($query) use ($filters): void {
+                $query->where(function ($nestedQuery) use ($filters): void {
+                    $nestedQuery->where('event_name', 'like', "%{$filters['search']}%")
+                        ->orWhere('location', 'like', "%{$filters['search']}%")
+                        ->orWhere('purchase_link', 'like', "%{$filters['search']}%");
                 });
             })
-            ->when($status !== '', function ($query) use ($status): void {
-                $query->where('status', $status);
+            ->when($filters['status'] !== '', function ($query) use ($filters): void {
+                $query->where('status', $filters['status']);
             })
-            ->when($dateFrom !== '', function ($query) use ($dateFrom): void {
-                $query->whereDate('event_date', '>=', $dateFrom);
+            ->when($filters['date_from'] !== '', function ($query) use ($filters): void {
+                $query->whereDate('event_date', '>=', $filters['date_from']);
             })
-            ->when($dateTo !== '', function ($query) use ($dateTo): void {
-                $query->whereDate('event_date', '<=', $dateTo);
+            ->when($filters['date_to'] !== '', function ($query) use ($filters): void {
+                $query->whereDate('event_date', '<=', $filters['date_to']);
             })
-            ->orderBy($sortBy, $sortDir)
-            ->paginate($perPage)
+            ->orderBy($filters['sort_by'], $filters['sort_dir'])
+            ->paginate($filters['per_page'])
             ->withQueryString();
 
         return view('concerts-events.index', [
             'events' => $events,
-            'filters' => [
-                'search' => $search,
-                'status' => $status,
-                'date_from' => $dateFrom,
-                'date_to' => $dateTo,
-                'sort_by' => $sortBy,
-                'sort_dir' => $sortDir,
-                'per_page' => $perPage,
-            ],
+            'filters' => $filters,
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(ConcertEventRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'event_name' => 'required|string|max:255',
-            'event_date' => 'required|date',
-            'location' => 'required|string|max:255',
-            'status' => 'required|in:off-air,on-air,jkt48-event,media,ofc-event,brand',
-            'purchase_link' => 'nullable|url|max:500',
-        ]);
-
-        ConcertEvents::create($validated);
+        ConcertEvents::create($request->validated());
 
         return redirect()->route('concert-events.index')
             ->with('success', 'Concert event berhasil ditambahkan.');
     }
 
-    public function update(Request $request, ConcertEvents $concertEvent): RedirectResponse
+    public function update(ConcertEventRequest $request, ConcertEvents $concertEvent): RedirectResponse
     {
-        $validated = $request->validate([
-            'event_name' => 'required|string|max:255',
-            'event_date' => 'required|date',
-            'location' => 'required|string|max:255',
-            'status' => 'required|in:off-air,on-air,jkt48-event,media,ofc-event,brand',
-            'purchase_link' => 'nullable|url|max:500',
-        ]);
-
-        $concertEvent->update($validated);
+        $concertEvent->update($request->validated());
 
         return redirect()->route('concert-events.index')
             ->with('success', 'Concert event berhasil diupdate.');

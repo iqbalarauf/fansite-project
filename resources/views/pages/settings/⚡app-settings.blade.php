@@ -1,6 +1,7 @@
 <?php
 
 use Flux\Flux;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Title;
@@ -71,6 +72,8 @@ new #[Title('App settings')] class extends Component {
                 ['value' => $value, 'updated_at' => now()],
             );
         }
+
+        Cache::forget('app_settings');
 
         Flux::toast(variant: 'success', text: __('App settings updated.'));
     }
