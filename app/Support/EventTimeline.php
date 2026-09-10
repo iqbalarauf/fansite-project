@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 final class EventTimeline
 {
     /**
-     * @return Collection<int, array{type: string, name: string|null, date: string, badge_color: string}>
+     * @return Collection<int, array{type: string, name: string|null, date: string, badge_color: string, purchase_link: ?string}>
      */
     public function events(string $direction, ?string $from, ?string $to, string $today, int $limit): Collection
     {
@@ -52,6 +52,7 @@ final class EventTimeline
                 'name' => $concert->event_name,
                 'date' => ShowDate::normalize((string) $concert->event_date),
                 'badge_color' => 'red',
+                'purchase_link' => $concert->purchase_link,
             ]);
         }
 
@@ -67,6 +68,7 @@ final class EventTimeline
                         'name' => $meetGreet->event_name,
                         'date' => $normalizedDate,
                         'badge_color' => 'orange',
+                        'purchase_link' => $meetGreet->purchase_link,
                     ]);
                 }
             }
