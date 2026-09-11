@@ -11,9 +11,9 @@
 
     <section id="home" class="relative flex min-h-svh items-center overflow-hidden bg-slate-950 bg-cover bg-center"
              style="{{ $heroStyle }}">
-        <div class="absolute inset-0 bg-gradient-to-br from-indigo-950/85 via-slate-950/70 to-violet-950/80"></div>
+        <div class="absolute inset-0"></div>
 
-        <div class="relative z-10 mx-auto flex w-full max-w-3xl flex-col items-center px-4 py-24 text-center sm:px-6 lg:py-28">
+        <div class="relative z-10 mx-auto flex w-full max-w-7xl flex-col items-start px-4 py-24 text-left sm:px-6 lg:px-8 lg:py-28">
             <span class="mb-4 inline-flex w-fit rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-indigo-50">Official Fansite</span>
             <h1 class="text-4xl font-black leading-tight sm:text-5xl lg:text-6xl">
                 <span class="inline-block">Selamat Datang di Fansite</span>
@@ -21,7 +21,7 @@
             </h1>
             <p class="mt-5 max-w-xl text-base text-indigo-100 sm:text-lg">Temukan aktivitas terbaru, jadwal, dan momen favorit dari {{ $idolName }} dalam satu halaman yang selalu diperbarui.</p>
 
-            <div class="mt-8 flex flex-wrap justify-center gap-4">
+            <div class="mt-8 flex flex-wrap justify-start gap-4">
                 <a href="#about" class="rounded-full bg-yellow-300 px-6 py-3 text-sm font-bold text-slate-900 shadow-lg shadow-yellow-200/50 transition hover:bg-yellow-200">Lihat Profil</a>
                 <a href="#schedule" class="rounded-full border border-white/40 bg-white/10 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/15">Jadwal Terbaru</a>
             </div>

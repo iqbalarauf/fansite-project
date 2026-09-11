@@ -40,6 +40,9 @@
                         <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="rectangle-stack" :href="route('pages.index')" :current="request()->routeIs('pages.*')" wire:navigate>
                             {{ __('Pages') }}
                         </flux:sidebar.item>
+                        <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="book-open" :href="route('magazines.index')" :current="request()->routeIs('magazines.*')" wire:navigate>
+                            {{ __('Majalah') }}
+                        </flux:sidebar.item>
                     </flux:sidebar.group>
                 @endif
                 @if (auth()->user()->isSuperAdmin())
