@@ -108,17 +108,26 @@ class FetchTheaterShows extends Command
             $dateDash = Carbon::parse($data['date'])->timezone('Asia/Jakarta')->format('Y-m-d');
             $title = trim($data['title']);
 
-            $existing = ShowTeater::where(function ($query) use ($dateSlash, $dateDash) {
-                $query->where('show_date', $dateSlash)
-                    ->orWhere('show_date', $dateDash);
-            })
+            $existing = ShowTeater::withTrashed()
+                ->where(function ($query) use ($dateSlash, $dateDash) {
+                    $query->where('show_date', $dateSlash)
+                        ->orWhere('show_date', $dateDash);
+                })
                 ->where('setlist', $title)
                 ->first();
 
             if ($existing) {
-                $this->info("Show already exists: {$existing->show_id} - {$existing->show_date} - {$existing->setlist} (skipped)");
+                if ($existing->trashed()) {
+                    $existing->restore();
+                    $existing->update(['is_scraped_data' => 1]);
+
+                    $this->info("Restored show: {$existing->show_id} - {$existing->show_date} - {$existing->setlist}");
+                } else {
+                    $this->info("Show already exists: {$existing->show_id} - {$existing->show_date} - {$existing->setlist} (skipped)");
+                }
             } else {
-                $lastShowId = ShowTeater::max('show_id') ?? 0;
+                // Hitung dari seluruh baris (termasuk yang ter-soft delete) agar show_id tidak menimpa PK.
+                $lastShowId = ShowTeater::withTrashed()->max('show_id') ?? 0;
                 $newShowId = $lastShowId + 1;
 
                 ShowTeater::create([

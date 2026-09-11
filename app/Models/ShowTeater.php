@@ -5,11 +5,14 @@ namespace App\Models;
 use Database\Factories\ShowTeaterFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ShowTeater extends Model
 {
     /** @use HasFactory<ShowTeaterFactory> */
     use HasFactory;
+
+    use SoftDeletes;
 
     protected $table = 'show_teater';
 

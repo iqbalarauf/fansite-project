@@ -2,7 +2,9 @@
 
 namespace App\Support;
 
+use App\Models\NewsPost;
 use App\Models\ShowTeater;
+use Illuminate\Support\Collection;
 
 final class WelcomePageData
 {
@@ -18,6 +20,7 @@ final class WelcomePageData
         $today = now()->toDateString();
         $showCount = ShowTeater::query()->count();
         $upcomingShowCount = $this->timeline->upcomingShowCount($today);
+        $newsEnabled = SettingBag::featureEnabled('news');
 
         return [
             'idolName' => $about['idol_name'] ?? 'Oshimen',
@@ -39,7 +42,26 @@ final class WelcomePageData
             'upcomingShowCount' => $upcomingShowCount,
             'lastEventDate' => $this->lastEventDate($today),
             'upcomingEvents' => $this->timeline->events('upcoming', null, null, $today, 5),
+            'newsEnabled' => $newsEnabled,
+            'latestNews' => $this->latestNews($newsEnabled),
         ];
+    }
+
+    /**
+     * @return Collection<int, NewsPost>
+     */
+    private function latestNews(bool $newsEnabled): Collection
+    {
+        if (! $newsEnabled) {
+            return collect();
+        }
+
+        return NewsPost::query()
+            ->published()
+            ->with('category')
+            ->latest('published_at')
+            ->take(4)
+            ->get();
     }
 
     private function lastEventDate(string $today): ?string

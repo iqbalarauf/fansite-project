@@ -649,7 +649,7 @@
 
         // ------ Reject Member Show ------
         function rejectMemberShow(showId) {
-            if (!confirm('Hapus / tolak show #' + showId + '? Tindakan ini tidak bisa dibatalkan.')) return;
+            if (!confirm('Hapus show #' + showId + '? Show akan dipindahkan ke arsip (soft delete) dan tidak ditampilkan lagi.')) return;
 
             fetch(`{{ url('show-teater') }}/${showId}/reject`, {
                 method: 'POST',

@@ -23,6 +23,7 @@ return new class extends Migration
             $table->integer('is_scraped_data')->nullable();
             $table->integer('is_member_show')->nullable();
             $table->timestamp('last_fetch_at')->nullable();
+            $table->timestamp('deleted_at')->nullable();
         });
     }
 

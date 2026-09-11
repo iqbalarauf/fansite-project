@@ -30,29 +30,61 @@
 
     <section class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <div class="grid gap-8 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-        @if ($showOnWelcome)
-                <aside id="about" class="contents self-start lg:block">
-                    <div class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8 lg:sticky lg:top-24">
-                        <p class="text-sm font-bold uppercase tracking-[0.22em] text-indigo-600 dark:text-indigo-400">About</p>
-                        <h3 class="mt-2 text-3xl font-black text-slate-900 dark:text-white">Tentang {{ $idolName }}</h3>
+        @if ($showOnWelcome || $newsEnabled)
+                <aside id="about" class="flex flex-col gap-8">
+                    @if ($showOnWelcome)
+                        <div class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+                            <p class="text-sm font-bold uppercase tracking-[0.22em] text-indigo-600 dark:text-indigo-400">About</p>
+                            <h3 class="mt-2 text-3xl font-black text-slate-900 dark:text-white">Tentang {{ $idolName }}</h3>
 
-                        <div class="mt-6">
-                            @if ($idolPhoto)
-                                <img src="{{ Storage::url($idolPhoto) }}" alt="{{ $idolName }}" class="h-[380px] w-full rounded-[1.5rem] object-cover shadow-lg shadow-indigo-200/50 dark:shadow-none" />
-                            @else
-                                <div class="flex h-[380px] w-full items-center justify-center rounded-[1.5rem] border border-slate-200 bg-slate-100 text-xl font-bold text-indigo-600 dark:border-slate-700 dark:bg-slate-800 dark:text-indigo-400">{{ $idolName }}</div>
-                            @endif
+                            <div class="mt-6">
+                                @if ($idolPhoto)
+                                    <img src="{{ Storage::url($idolPhoto) }}" alt="{{ $idolName }}" class="h-[380px] w-full rounded-[1.5rem] object-cover shadow-lg shadow-indigo-200/50 dark:shadow-none" />
+                                @else
+                                    <div class="flex h-[380px] w-full items-center justify-center rounded-[1.5rem] border border-slate-200 bg-slate-100 text-xl font-bold text-indigo-600 dark:border-slate-700 dark:bg-slate-800 dark:text-indigo-400">{{ $idolName }}</div>
+                                @endif
+                            </div>
+
+                            <x-social-media-icons :instagram="$idolInstagramUrl" :twitter="$idolTwitterUrl" :tiktok="$idolTiktokUrl" class="mt-6 justify-center" />
+
+                            <p class="mt-6 text-base leading-8 text-slate-600 dark:text-slate-300">{{ $idolDescription }}</p>
+
+                            <a href="{{ $instagramUrl ?? '#' }}" target="{{ $instagramUrl ? '_blank' : '_self' }}" rel="noopener"
+                               class="mt-6 flex w-full items-center justify-center rounded-full bg-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500">
+                                Berkenalan dengan Oniel
+                            </a>
                         </div>
+                    @endif
 
-                        <x-social-media-icons :instagram="$idolInstagramUrl" :twitter="$idolTwitterUrl" :tiktok="$idolTiktokUrl" class="mt-6 justify-center" />
+                    @if ($newsEnabled)
+                        <div class="flex flex-1 flex-col rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+                            <div class="flex items-center justify-between gap-4 border-b border-slate-200 pb-5 dark:border-slate-800">
+                                <div>
+                                    <p class="text-sm font-bold uppercase tracking-[0.22em] text-indigo-600 dark:text-indigo-400">News</p>
+                                    <h3 class="mt-2 text-2xl font-black text-slate-900 dark:text-white">Berita Terbaru</h3>
+                                </div>
+                                <a href="{{ route('news.index') }}" class="shrink-0 text-sm font-semibold text-indigo-600 transition hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">Lihat Semua</a>
+                            </div>
 
-                        <p class="mt-6 text-base leading-8 text-slate-600 dark:text-slate-300">{{ $idolDescription }}</p>
-
-                        <a href="{{ $instagramUrl ?? '#' }}" target="{{ $instagramUrl ? '_blank' : '_self' }}" rel="noopener"
-                           class="mt-6 flex w-full items-center justify-center rounded-full bg-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500">
-                            Berkenalan dengan Oniel
-                        </a>
-                    </div>
+                            <div class="mt-6 flex-1 space-y-4">
+                                @forelse ($latestNews as $news)
+                                    <a href="{{ $news->publicUrl() }}" class="group flex items-start gap-4">
+                                        @if ($news->cover)
+                                            <div class="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800">
+                                                <img src="{{ Storage::url($news->cover) }}" alt="{{ $news->title }}" class="h-full w-full object-cover" loading="lazy" />
+                                            </div>
+                                        @endif
+                                        <div class="min-w-0">
+                                            <p class="line-clamp-2 text-sm font-bold text-slate-900 transition group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400">{{ $news->title }}</p>
+                                            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ $news->published_at?->locale('id')->isoFormat('D MMMM YYYY') ?? $news->created_at?->locale('id')->isoFormat('D MMMM YYYY') }}</p>
+                                        </div>
+                                    </a>
+                                @empty
+                                    <p class="text-sm text-slate-500 dark:text-slate-400">Belum ada berita terbaru.</p>
+                                @endforelse
+                            </div>
+                        </div>
+                    @endif
                 </aside>
             @endif
 
@@ -130,7 +162,7 @@
                     </div>
                 </section>
 
-                <section id="live" class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+                <section id="live" class="flex flex-1 flex-col rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
                     <div class="border-b border-slate-200 pb-5 dark:border-slate-800">
                         <p class="text-sm font-bold uppercase tracking-[0.22em] text-indigo-600 dark:text-indigo-400">Live</p>
                         <h3 class="mt-2 text-2xl font-black text-slate-900 dark:text-white">Status Live</h3>

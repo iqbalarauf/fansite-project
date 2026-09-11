@@ -27,6 +27,7 @@ class ShowTeaterController extends Controller
         $sortDir = $sortDir === 'asc' ? 'asc' : 'desc';
 
         $query = DB::table('show_teater')
+            ->whereNull('show_teater.deleted_at')
             ->leftJoin('show_teater_categories as setlist_cat', function ($join) {
                 $join->on('show_teater.setlist', '=', 'setlist_cat.name')
                     ->where('setlist_cat.type', '=', 'setlist');
@@ -146,6 +147,7 @@ class ShowTeaterController extends Controller
         // Get last fetch timestamp
         $lastFetchAt = DB::table('show_teater')
             ->where('is_scraped_data', 1)
+            ->whereNull('deleted_at')
             ->max('last_fetch_at');
 
         return view('show-teater.index', [
@@ -169,7 +171,7 @@ class ShowTeaterController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'show_id' => 'required|integer|unique:show_teater,show_id',
+            'show_id' => 'required|integer',
             'show_date' => 'required|string|max:25',
             'setlist' => 'required|string|max:32',
             'unit_song' => 'nullable|string|max:100',
@@ -180,16 +182,21 @@ class ShowTeaterController extends Controller
             'additional_information' => 'nullable|string|max:56',
         ]);
 
-        $unitSong = $validated['unit_song'];
+        $unitSong = $validated['unit_song'] ?? '';
         if ($request->has('double_us') && $request->filled('unit_song_2')) {
-            $unitSong = $validated['unit_song'].', '.$request->input('unit_song_2');
+            $unitSong = ($validated['unit_song'] ?? '').', '.$request->input('unit_song_2');
         }
 
         // Convert date from YYYY-MM-DD (HTML input) to YYYY/MM/DD (DB format)
         $showDate = str_replace('-', '/', $validated['show_date']);
 
-        DB::table('show_teater')->insert([
-            'show_id' => $validated['show_id'],
+        $existing = DB::table('show_teater')->where('show_id', $validated['show_id'])->first();
+
+        if ($existing && $existing->deleted_at === null) {
+            return back()->withErrors(['show_id' => 'Show ID sudah digunakan.'])->withInput();
+        }
+
+        $payload = [
             'show_date' => $showDate,
             'setlist' => $validated['setlist'],
             'unit_song' => substr($unitSong, 0, 100),
@@ -198,7 +205,16 @@ class ShowTeaterController extends Controller
             'is_the_show_has_event' => $validated['is_the_show_has_event'] ?? null,
             'additional_information' => $validated['additional_information'] ?? null,
             'is_member_show' => 1,
-        ]);
+        ];
+
+        if ($existing) {
+            // Baris yang sudah ter-soft delete: pulihkan dengan show_id yang sama.
+            DB::table('show_teater')
+                ->where('show_id', $validated['show_id'])
+                ->update($payload + ['deleted_at' => null]);
+        } else {
+            DB::table('show_teater')->insert(['show_id' => $validated['show_id']] + $payload);
+        }
 
         Cache::flush();
 
@@ -218,9 +234,9 @@ class ShowTeaterController extends Controller
             'additional_information' => 'nullable|string|max:56',
         ]);
 
-        $unitSong = $validated['unit_song'];
+        $unitSong = $validated['unit_song'] ?? '';
         if ($request->has('double_us') && $request->filled('unit_song_2')) {
-            $unitSong = $validated['unit_song'].', '.$request->input('unit_song_2');
+            $unitSong = ($validated['unit_song'] ?? '').', '.$request->input('unit_song_2');
         }
 
         // Convert date from YYYY-MM-DD (HTML input) to YYYY/MM/DD (DB format)
@@ -228,6 +244,7 @@ class ShowTeaterController extends Controller
 
         DB::table('show_teater')
             ->where('show_id', $id)
+            ->whereNull('deleted_at')
             ->update([
                 'show_date' => $showDate,
                 'setlist' => $validated['setlist'],
@@ -247,6 +264,7 @@ class ShowTeaterController extends Controller
     {
         $show = DB::table('show_teater')
             ->where('show_id', $id)
+            ->whereNull('deleted_at')
             ->first();
 
         if (! $show) {
@@ -255,6 +273,7 @@ class ShowTeaterController extends Controller
 
         DB::table('show_teater')
             ->where('show_id', $id)
+            ->whereNull('deleted_at')
             ->update(['is_member_show' => 1]);
 
         Cache::flush();
@@ -266,6 +285,7 @@ class ShowTeaterController extends Controller
     {
         $show = DB::table('show_teater')
             ->where('show_id', $id)
+            ->whereNull('deleted_at')
             ->first();
 
         if (! $show) {
@@ -274,7 +294,7 @@ class ShowTeaterController extends Controller
 
         DB::table('show_teater')
             ->where('show_id', $id)
-            ->delete();
+            ->update(['deleted_at' => now()]);
 
         Cache::flush();
 
@@ -297,6 +317,7 @@ class ShowTeaterController extends Controller
             // Update last_fetch_at for scraped data
             DB::table('show_teater')
                 ->where('is_scraped_data', 1)
+                ->whereNull('deleted_at')
                 ->update(['last_fetch_at' => now()]);
 
             Cache::flush();
