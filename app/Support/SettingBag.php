@@ -23,4 +23,13 @@ final class SettingBag
     {
         return Cache::remember('app_settings', 3600, fn (): array => AppSettings::query()->pluck('value', 'key')->all());
     }
+
+    /**
+     * Determine whether a content feature (e.g. "news", "blog") is enabled.
+     * Defaults to enabled when the setting has never been saved.
+     */
+    public static function featureEnabled(string $feature): bool
+    {
+        return filter_var(self::app()[$feature.'_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
+    }
 }

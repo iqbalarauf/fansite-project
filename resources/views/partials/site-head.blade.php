@@ -8,6 +8,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{ filled($title ?? null) ? $title.' — '.$__appName : $__appName }}</title>
+@if (filled($metaDescription ?? null))
+    <meta name="description" content="{{ $metaDescription }}">
+@endif
+<meta property="og:site_name" content="{{ $__appName }}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{ filled($title ?? null) ? $title.' — '.$__appName : $__appName }}">
+@if (filled($metaDescription ?? null))
+    <meta property="og:description" content="{{ $metaDescription }}">
+@endif
+@if (filled($ogImage ?? null))
+    <meta property="og:image" content="{{ $ogImage }}">
+    <meta name="twitter:card" content="summary_large_image">
+@endif
 @if ($__appLogo)
     <link rel="icon" href="{{ Storage::url($__appLogo) }}">
 @else
