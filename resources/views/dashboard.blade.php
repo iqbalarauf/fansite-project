@@ -174,6 +174,59 @@
         </div>
 
         {{-- ================================================================
+             ROW 3b: Event Concert Stats
+        ================================================================ --}}
+        <div class="flex flex-col gap-3">
+            <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+                @php
+                    $eventCards = [
+                        ['label' => 'Off-Air Event', 'value' => $eventCategoryStats['off_air'], 'prev' => $prevEventCategoryStats['off_air'] ?? null, 'icon' => 'M5.636 5.636a9 9 0 1012.728 0M12 3v9', 'color' => 'zinc'],
+                        ['label' => 'On-Air (TV/Radio)', 'value' => $eventCategoryStats['on_air'], 'prev' => $prevEventCategoryStats['on_air'] ?? null, 'icon' => 'M9.348 14.652a3.75 3.75 0 010-5.304m5.304 0a3.75 3.75 0 010 5.304m-7.425 2.121a6.75 6.75 0 010-9.546m9.546 0a6.75 6.75 0 010 9.546M12 9.75v.008H12v-.008z', 'color' => 'green'],
+                        ['label' => 'Brand Collaboration', 'value' => $eventCategoryStats['brand'], 'prev' => $prevEventCategoryStats['brand'] ?? null, 'icon' => 'M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3zM6 6h.008v.008H6V6z', 'color' => 'indigo'],
+                        ['label' => 'Media (IDN App/Goplay/TV Show)', 'value' => $eventCategoryStats['media'], 'prev' => $prevEventCategoryStats['media'] ?? null, 'icon' => 'M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M16.5 7.5h-3.75', 'color' => 'sky'],
+                        ['label' => 'OFC/JKT48 Concert', 'value' => $eventCategoryStats['concert'], 'prev' => $prevEventCategoryStats['concert'] ?? null, 'icon' => 'M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 010 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 010-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375z', 'color' => 'red'],
+                    ];
+                    $eventColorMap = [
+                        'zinc'   => 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300',
+                        'green'  => 'bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400',
+                        'indigo' => 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400',
+                        'sky'    => 'bg-sky-50 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400',
+                        'red'    => 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400',
+                    ];
+                @endphp
+
+                @foreach ($eventCards as $card)
+                    @php
+                        $diff = ($card['prev'] !== null) ? ($card['value'] - $card['prev']) : null;
+                        $pct = ($card['prev'] > 0 && $diff !== null) ? round(abs($diff) / $card['prev'] * 100) : null;
+                    @endphp
+                    <div class="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">
+                        <div class="flex items-center justify-between">
+                            <div class="rounded-lg p-2 {{ $eventColorMap[$card['color']] }}">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ $card['icon'] }}"/>
+                                </svg>
+                            </div>
+                            @if ($showComparison && $diff !== null)
+                                <span class="text-xs font-medium px-2 py-0.5 rounded-full
+                                    {{ $diff > 0 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : ($diff < 0 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400') }}">
+                                    {{ $diff > 0 ? '+' : '' }}{{ $diff }}{{ $pct !== null ? " (" . $pct . "%)" : '' }}
+                                </span>
+                            @endif
+                        </div>
+                        <div>
+                            <div class="text-3xl font-bold text-zinc-900 dark:text-white">{{ number_format($card['value']) }}</div>
+                            <div class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{{ $card['label'] }}</div>
+                            @if ($showComparison && $card['prev'] !== null)
+                                <div class="mt-1 text-xs text-zinc-400 dark:text-zinc-500">vs {{ number_format($card['prev']) }} periode lalu</div>
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+
+        {{-- ================================================================
              ROW 4: Activity Chart + Countdown + Live Streaming
         ================================================================ --}}
         <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">

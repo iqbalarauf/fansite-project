@@ -64,6 +64,14 @@ final class DashboardAssembler
             );
         }
 
+        $eventCategoryStats = $isAllPeriod
+            ? $this->eventCategoryTotals()
+            : $this->eventCategoryStatsFor($dateFrom, $dateTo);
+
+        $prevEventCategoryStats = $showComparison
+            ? $this->eventCategoryStatsFor($prevFrom, $prevTo)
+            : null;
+
         $groupType = match ($period) {
             'all' => 'year',
             'yearly' => 'month',
@@ -104,6 +112,8 @@ final class DashboardAssembler
             'birthdayReminderActive' => $birthdayReminderActive,
             'stats' => $stats,
             'prevStats' => $prevStats,
+            'eventCategoryStats' => $eventCategoryStats,
+            'prevEventCategoryStats' => $prevEventCategoryStats,
             'period' => $period,
             'showComparison' => $showComparison,
             'customFrom' => $customFrom,
@@ -234,6 +244,67 @@ final class DashboardAssembler
             'unit_songs' => (int) ($shows?->unit_songs ?? 0),
             'us_center' => (int) ($shows?->us_center ?? 0),
             'global_center' => (int) ($shows?->global_center ?? 0),
+        ];
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function eventCategoryTotals(): array
+    {
+        return $this->mapEventCategoryStats(
+            DB::table('concert_events')
+                ->whereNull('deleted_at')
+                ->selectRaw($this->eventCategorySelect())
+                ->first()
+        );
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function eventCategoryStatsFor(CarbonInterface $from, CarbonInterface $to): array
+    {
+        return $this->mapEventCategoryStats(
+            DB::table('concert_events')
+                ->whereNull('deleted_at')
+                ->whereBetween('event_date', [$from->toDateString(), $to->toDateString()])
+                ->selectRaw($this->eventCategorySelect())
+                ->first()
+        );
+    }
+
+    private function eventCategorySelect(): string
+    {
+        $aliases = [
+            'off-air' => 'off_air',
+            'on-air' => 'on_air',
+            'brand' => 'brand',
+            'media' => 'media',
+            'ofc-event' => 'ofc_event',
+            'jkt48-event' => 'jkt48_event',
+        ];
+
+        $sums = [];
+        foreach ($aliases as $status => $alias) {
+            $sums[] = "SUM(CASE WHEN status = '{$status}' THEN 1 ELSE 0 END) as {$alias}";
+        }
+
+        return implode(', ', $sums);
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function mapEventCategoryStats(?object $events): array
+    {
+        return [
+            'off_air' => (int) ($events?->off_air ?? 0),
+            'on_air' => (int) ($events?->on_air ?? 0),
+            'brand' => (int) ($events?->brand ?? 0),
+            'media' => (int) ($events?->media ?? 0),
+            // OFC Event + JKT48 Event digabung.
+            'concert' => (int) ($events?->ofc_event ?? 0) + (int) ($events?->jkt48_event ?? 0),
         ];
     }
 
