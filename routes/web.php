@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AboutController;
 use App\Http\Controllers\ConcertEventsController;
 use App\Http\Controllers\CustomPageController;
 use App\Http\Controllers\DashboardController;
@@ -12,6 +13,9 @@ use App\Http\Controllers\WelcomeController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', WelcomeController::class)->name('home');
+
+Route::get('about/idol', [AboutController::class, 'idol'])->name('about.idol');
+Route::get('about/fansite', [AboutController::class, 'fansite'])->name('about.fansite');
 
 Route::middleware(['auth', 'verified', 'block-view-only-writes'])->group(function () {
     Route::middleware('role:super_admin,view_only,bank_data_admin')->group(function () {

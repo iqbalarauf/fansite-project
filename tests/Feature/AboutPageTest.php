@@ -1,0 +1,103 @@
+<?php
+
+namespace Tests\Feature;
+
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Tests\TestCase;
+
+class AboutPageTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_about_idol_page_displays_idol_information(): void
+    {
+        DB::table('about_settings')->upsert([
+            ['key' => 'idol_name', 'value' => 'Freya'],
+            ['key' => 'idol_description', 'value' => 'Deskripsi Freya JKT48'],
+            ['key' => 'idol_achievements', 'value' => "Pemenang Gaya Terfavorit\nJuara 1 Senbatsu Sousenkyo"],
+            ['key' => 'idol_discography', 'value' => "Jacket Doki Doki Syndrome\nShekina"],
+            ['key' => 'idol_jikoshoukai', 'value' => 'Perkenalan singkat dari Freya'],
+            ['key' => 'idol_birth_date', 'value' => '2004-02-13'],
+            ['key' => 'idol_birth_place', 'value' => 'Tangerang'],
+            ['key' => 'idol_blood_type', 'value' => 'O'],
+            ['key' => 'idol_horoscope', 'value' => 'Aquarius'],
+            ['key' => 'idol_social_media_instagram', 'value' => 'https://instagram.com/freya'],
+            ['key' => 'idol_social_media_twitter', 'value' => 'https://x.com/freya'],
+            ['key' => 'idol_social_media_tiktok', 'value' => 'https://tiktok.com/@freya'],
+        ], ['key'], ['value', 'updated_at']);
+
+        $expectedBirthDate = Carbon::parse('2004-02-13')->locale('id')->isoFormat('D MMMM YYYY');
+
+        $this->get(route('about.idol'))
+            ->assertOk()
+            ->assertSee('About Idol', false)
+            ->assertSee('Freya')
+            ->assertSee('Deskripsi Freya JKT48')
+            ->assertSee('Pemenang Gaya Terfavorit')
+            ->assertSee('Juara 1 Senbatsu Sousenkyo')
+            ->assertSee('Jacket Doki Doki Syndrome')
+            ->assertSee('Perkenalan singkat dari Freya')
+            ->assertSee($expectedBirthDate, false)
+            ->assertSee('Tangerang')
+            ->assertSee('O')
+            ->assertSee('Aquarius')
+            ->assertSee('https://instagram.com/freya');
+    }
+
+    public function test_about_fansite_page_displays_fansite_information(): void
+    {
+        DB::table('about_settings')->upsert([
+            ['key' => 'fanbase_name', 'value' => 'Wota Nusantara'],
+            ['key' => 'fanbase_description', 'value' => 'Komunitas fanbase terbesar di Indonesia'],
+            ['key' => 'fanbase_activities', 'value' => "Nobar Konser\nFangirling Bareng"],
+            ['key' => 'fanbase_gallery', 'value' => json_encode(['about/fansite/gallery/g1.jpg', 'about/fansite/gallery/g2.jpg'])],
+            ['key' => 'fanbase_cta_enabled', 'value' => 'true'],
+            ['key' => 'fanbase_cta_title', 'value' => 'Gabung Menjadi Bagian dari Keluarga'],
+            ['key' => 'fanbase_cta_button1_text', 'value' => 'Join Discord'],
+            ['key' => 'fanbase_cta_button1_link', 'value' => 'https://discord.gg/example'],
+            ['key' => 'fanbase_cta_button2_text', 'value' => 'Follow X'],
+            ['key' => 'fanbase_cta_button2_link', 'value' => 'https://x.com/example'],
+            ['key' => 'idol_name', 'value' => 'Freya'],
+        ], ['key'], ['value', 'updated_at']);
+
+        $this->get(route('about.fansite'))
+            ->assertOk()
+            ->assertSee('About Fansite', false)
+            ->assertSee('Wota Nusantara')
+            ->assertSee('Komunitas fanbase terbesar di Indonesia')
+            ->assertSee('Nobar Konser')
+            ->assertSee('Fangirling Bareng')
+            ->assertSee('/storage/about/fansite/gallery/g1.jpg', false)
+            ->assertSee('/storage/about/fansite/gallery/g2.jpg', false)
+            ->assertSee('Gabung Menjadi Bagian dari Keluarga')
+            ->assertSee('Join Discord')
+            ->assertSee('Follow X')
+            ->assertSee('Tentang Freya', false);
+    }
+
+    public function test_public_header_about_dropdown_lists_idol_and_fanbase_names(): void
+    {
+        DB::table('about_settings')->upsert([
+            ['key' => 'idol_name', 'value' => 'Freya'],
+            ['key' => 'fanbase_name', 'value' => 'Wota Nusantara'],
+        ], ['key'], ['value', 'updated_at']);
+
+        $idolHref = route('about.idol');
+        $fansiteHref = route('about.fansite');
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('About')
+            ->assertSee('Freya')
+            ->assertSee('Wota Nusantara')
+            ->assertSee('href="'.$idolHref.'"', false)
+            ->assertSee('href="'.$fansiteHref.'"', false);
+
+        $this->get(route('about.idol'))
+            ->assertOk()
+            ->assertSee('href="'.$idolHref.'"', false)
+            ->assertSee('href="'.$fansiteHref.'"', false);
+    }
+}
