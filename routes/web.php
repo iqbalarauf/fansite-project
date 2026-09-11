@@ -5,7 +5,9 @@ use App\Http\Controllers\ConcertEventsController;
 use App\Http\Controllers\CustomPageController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LiveStreamingController;
+use App\Http\Controllers\MagazineController;
 use App\Http\Controllers\MeetGreetEventsController;
+use App\Http\Controllers\PublicMagazineController;
 use App\Http\Controllers\ShowTeaterCategoriesController;
 use App\Http\Controllers\ShowTeaterController;
 use App\Http\Controllers\UserController;
@@ -16,6 +18,10 @@ Route::get('/', WelcomeController::class)->name('home');
 
 Route::get('about/idol', [AboutController::class, 'idol'])->name('about.idol');
 Route::get('about/fansite', [AboutController::class, 'fansite'])->name('about.fansite');
+
+Route::get('majalah', [PublicMagazineController::class, 'index'])->name('magazine.index');
+Route::get('majalah/{magazine:slug}', [PublicMagazineController::class, 'show'])->name('magazine.show');
+Route::get('majalah/{magazine:slug}/download', [PublicMagazineController::class, 'download'])->name('magazine.download');
 
 Route::middleware(['auth', 'verified', 'block-view-only-writes'])->group(function () {
     Route::middleware('role:super_admin,view_only,bank_data_admin')->group(function () {
@@ -58,6 +64,13 @@ Route::middleware(['auth', 'verified', 'block-view-only-writes'])->group(functio
         Route::view('pages/create', 'custom-pages.admin')->name('pages.create');
         Route::get('pages/{customPage}/edit', [CustomPageController::class, 'edit'])->name('pages.edit');
         Route::delete('pages/{customPage}', [CustomPageController::class, 'destroy'])->name('pages.destroy');
+
+        // Majalah
+        Route::get('magazines', [MagazineController::class, 'index'])->name('magazines.index');
+        Route::post('magazines', [MagazineController::class, 'store'])->name('magazines.store');
+        Route::put('magazines/{magazine}', [MagazineController::class, 'update'])->name('magazines.update');
+        Route::post('magazines/{magazine}/main', [MagazineController::class, 'setMain'])->name('magazines.set-main');
+        Route::delete('magazines/{magazine}', [MagazineController::class, 'destroy'])->name('magazines.destroy');
     });
 
     Route::middleware('role:super_admin')->group(function () {

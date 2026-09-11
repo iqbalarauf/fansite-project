@@ -57,6 +57,9 @@
                 </div>
             </details>
 
+            <a href="{{ route('magazine.index') }}"
+               class="rounded-full px-4 py-2 transition {{ $__navItem($__active === 'magazine') }}">Majalah</a>
+
             <a href="{{ route('home') }}#data"
                class="rounded-full px-4 py-2 transition {{ $__navItem(false) }}">Data</a>
             <a href="{{ route('home') }}#schedule"
