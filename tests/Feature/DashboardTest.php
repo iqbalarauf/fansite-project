@@ -42,6 +42,7 @@ class DashboardTest extends TestCase
             'stats',
             'period',
             'showComparison',
+            'eventCategoryStats',
             'eventDisplayLimit',
             'chartDates',
             'chartShowTeater',
@@ -281,5 +282,51 @@ class DashboardTest extends TestCase
             ['Recent Concert', 'Recent Meet', 'Slash Show', 'Older Slash Show'],
             $response->viewData('pastEvents')->pluck('name')->all()
         );
+    }
+
+    public function test_dashboard_shows_event_category_counts_combining_ofc_and_jkt48(): void
+    {
+        $today = now()->toDateString();
+
+        DB::table('concert_events')->insert([
+            ['event_name' => 'Off A', 'event_date' => $today, 'location' => 'Jakarta', 'status' => 'off-air', 'created_at' => now(), 'updated_at' => now()],
+            ['event_name' => 'Off B', 'event_date' => $today, 'location' => 'Jakarta', 'status' => 'off-air', 'created_at' => now(), 'updated_at' => now()],
+            ['event_name' => 'On', 'event_date' => $today, 'location' => 'Jakarta', 'status' => 'on-air', 'created_at' => now(), 'updated_at' => now()],
+            ['event_name' => 'Brand', 'event_date' => $today, 'location' => 'Jakarta', 'status' => 'brand', 'created_at' => now(), 'updated_at' => now()],
+            ['event_name' => 'Media', 'event_date' => $today, 'location' => 'Jakarta', 'status' => 'media', 'created_at' => now(), 'updated_at' => now()],
+            ['event_name' => 'OFC', 'event_date' => $today, 'location' => 'Jakarta', 'status' => 'ofc-event', 'created_at' => now(), 'updated_at' => now()],
+            ['event_name' => 'JKT48', 'event_date' => $today, 'location' => 'Jakarta', 'status' => 'jkt48-event', 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        DB::table('concert_events')->insert([
+            'event_name' => 'Deleted Off', 'event_date' => $today, 'location' => 'Jakarta', 'status' => 'off-air',
+            'created_at' => now(), 'updated_at' => now(), 'deleted_at' => now(),
+        ]);
+
+        $response = $this->actingAs(User::factory()->create())->get(route('dashboard'));
+
+        $response->assertOk();
+        $response->assertViewHas('eventCategoryStats', [
+            'off_air' => 2,
+            'on_air' => 1,
+            'brand' => 1,
+            'media' => 1,
+            'concert' => 2,
+        ]);
+        $response->assertSee('OFC/JKT48 Concert');
+        $response->assertSee('Statistik Event Concert');
+    }
+
+    public function test_event_category_counts_follow_the_selected_period(): void
+    {
+        DB::table('concert_events')->insert([
+            ['event_name' => 'Recent', 'event_date' => now()->subDay()->toDateString(), 'location' => 'Jakarta', 'status' => 'on-air', 'created_at' => now(), 'updated_at' => now()],
+            ['event_name' => 'Old', 'event_date' => now()->subMonths(2)->toDateString(), 'location' => 'Jakarta', 'status' => 'on-air', 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $response = $this->actingAs(User::factory()->create())->get(route('dashboard', ['period' => '7days']));
+
+        $response->assertOk();
+        $this->assertSame(1, $response->viewData('eventCategoryStats')['on_air']);
     }
 }
