@@ -16,7 +16,7 @@
     </section>
 
     @if ($featured)
-        <section class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <section class="mx-auto max-w-7xl px-4 pt-16 pb-10 sm:px-6 lg:px-8">
             <span class="inline-flex w-fit rounded-full bg-yellow-300 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-slate-900">Sorotan</span>
 
             <a href="{{ $featured->publicUrl() }}" class="group mt-6 grid overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm transition hover:shadow-md dark:border-slate-800 dark:bg-slate-900 lg:grid-cols-2">
@@ -41,7 +41,7 @@
         </section>
     @endif
 
-    <section class="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
+    <section class="mx-auto max-w-7xl px-4 pt-8 pb-20 sm:px-6 lg:px-8">
         @if ($posts->isEmpty() && $featured === null)
             <div class="rounded-[2rem] border border-dashed border-slate-300 bg-white p-12 text-center dark:border-slate-700 dark:bg-slate-900">
                 <p class="text-base font-semibold text-slate-700 dark:text-slate-200">Belum ada artikel {{ $section->label() }}.</p>

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -150,5 +151,45 @@ class WelcomePageTest extends TestCase
             ->assertSee('Last Event: '.$expectedLastEvent, false)
             ->assertSee('1 Upcoming Show', false)
             ->assertDontSee('Live update', false);
+    }
+
+    public function test_homepage_lists_latest_news_when_enabled(): void
+    {
+        DB::table('news_posts')->insert([
+            'title' => 'Berita Terkini',
+            'slug' => 'berita-terkini',
+            'status' => 'published',
+            'published_at' => now()->subDay(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('news_posts')->insert([
+            'title' => 'Berita Draft',
+            'slug' => 'berita-draft',
+            'status' => 'draft',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('Berita Terbaru')
+            ->assertSee('Berita Terkini')
+            ->assertDontSee('Berita Draft')
+            ->assertSee(route('news.index'), false);
+    }
+
+    public function test_homepage_hides_news_when_disabled(): void
+    {
+        DB::table('app_settings')->upsert([
+            ['key' => 'news_enabled', 'value' => 'false', 'created_at' => now(), 'updated_at' => now()],
+        ], ['key'], ['value', 'updated_at']);
+
+        Cache::forget('app_settings');
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertDontSee('Berita Terbaru');
     }
 }

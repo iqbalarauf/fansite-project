@@ -96,4 +96,12 @@ class PublicPostTest extends TestCase
             ->assertOk()
             ->assertSee('Isi blog');
     }
+
+    public function test_public_layout_keeps_footer_at_bottom_for_short_pages(): void
+    {
+        $this->get(route('news.index'))
+            ->assertOk()
+            ->assertSee('min-h-dvh', false)
+            ->assertSee('<main class="flex-1">', false);
+    }
 }
