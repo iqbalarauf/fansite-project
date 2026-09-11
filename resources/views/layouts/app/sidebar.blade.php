@@ -40,9 +40,30 @@
                         <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="rectangle-stack" :href="route('pages.index')" :current="request()->routeIs('pages.*')" wire:navigate>
                             {{ __('Pages') }}
                         </flux:sidebar.item>
-                        <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="book-open" :href="route('magazines.index')" :current="request()->routeIs('magazines.*')" wire:navigate>
-                            {{ __('Majalah') }}
-                        </flux:sidebar.item>
+                        @if (\App\Support\SettingBag::featureEnabled('magazines'))
+                            <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="book-open" :href="route('magazines.index')" :current="request()->routeIs('magazines.*')" wire:navigate>
+                                {{ __('Majalah') }}
+                            </flux:sidebar.item>
+                        @endif
+                        @php
+                            $__newsEnabled = \App\Support\SettingBag::featureEnabled('news');
+                            $__blogEnabled = \App\Support\SettingBag::featureEnabled('blog');
+                        @endphp
+                        @if ($__newsEnabled)
+                            <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="newspaper" :href="route('content.news.index')" :current="request()->routeIs('content.news.*')" wire:navigate>
+                                {{ __('News') }}
+                            </flux:sidebar.item>
+                        @endif
+                        @if ($__blogEnabled)
+                            <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="pencil-square" :href="route('content.blog.index')" :current="request()->routeIs('content.blog.*')" wire:navigate>
+                                {{ __('Blog') }}
+                            </flux:sidebar.item>
+                        @endif
+                        @if ($__newsEnabled || $__blogEnabled)
+                            <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="tag" :href="route('content.categories.index')" :current="request()->routeIs('content.categories.*')" wire:navigate>
+                                {{ __('Kategori') }}
+                            </flux:sidebar.item>
+                        @endif
                     </flux:sidebar.group>
                 @endif
                 @if (auth()->user()->isSuperAdmin())

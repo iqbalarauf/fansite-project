@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureFeatureEnabled;
 use App\Http\Middleware\EnsureNotViewOnly;
 use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\PreventViewOnlyWrites;
@@ -19,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => EnsureUserHasRole::class,
             'block-view-only-writes' => PreventViewOnlyWrites::class,
             'block-view-only' => EnsureNotViewOnly::class,
+            'feature' => EnsureFeatureEnabled::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

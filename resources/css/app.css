@@ -246,3 +246,66 @@ select:focus[data-flux-control] {
 /* \[:where(&)\]:size-4 {
     @apply size-4;
 } */
+
+@layer components {
+    .rich-text-toolbar-btn {
+        @apply rounded-md px-2.5 py-1 text-xs font-semibold text-zinc-600 transition hover:bg-zinc-200 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-700 dark:hover:text-white;
+    }
+
+    .rich-text-toolbar-btn.is-active {
+        @apply bg-indigo-600 text-white hover:bg-indigo-600 hover:text-white;
+    }
+
+    .rich-content .ProseMirror {
+        @apply min-h-64 outline-hidden;
+    }
+
+    .rich-content .ProseMirror p.is-editor-empty:first-child::before {
+        content: attr(data-placeholder);
+        @apply pointer-events-none float-left h-0 text-zinc-400;
+    }
+
+    .rich-content h2 {
+        @apply mt-6 mb-2 text-2xl font-black text-zinc-900 dark:text-white;
+    }
+
+    .rich-content h3 {
+        @apply mt-5 mb-2 text-xl font-bold text-zinc-900 dark:text-white;
+    }
+
+    .rich-content p {
+        @apply my-3 text-base leading-8 text-zinc-700 dark:text-zinc-200;
+    }
+
+    .rich-content ul {
+        @apply my-3 list-disc space-y-1 pl-6;
+    }
+
+    .rich-content ol {
+        @apply my-3 list-decimal space-y-1 pl-6;
+    }
+
+    .rich-content blockquote {
+        @apply my-4 border-l-4 border-indigo-300 pl-4 italic text-zinc-600 dark:border-indigo-700 dark:text-zinc-300;
+    }
+
+    .rich-content pre {
+        @apply my-4 overflow-x-auto rounded-lg bg-zinc-900 p-4 text-sm text-zinc-100;
+    }
+
+    .rich-content code {
+        @apply rounded bg-zinc-100 px-1.5 py-0.5 text-sm text-indigo-700 dark:bg-zinc-800 dark:text-indigo-300;
+    }
+
+    .rich-content a {
+        @apply font-semibold text-indigo-600 underline dark:text-indigo-400;
+    }
+
+    .rich-content img {
+        @apply my-4 max-w-full rounded-xl;
+    }
+
+    .rich-content hr {
+        @apply my-6 border-zinc-200 dark:border-zinc-700;
+    }
+}

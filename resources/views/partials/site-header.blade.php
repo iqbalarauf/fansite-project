@@ -17,6 +17,10 @@
 
     $__active = $active ?? 'home';
     $__isAboutPage = in_array($__active, ['idol', 'fansite'], true);
+    $__isArticlePage = in_array($__active, ['news', 'blog'], true);
+    $__newsEnabled = SettingBag::featureEnabled('news');
+    $__blogEnabled = SettingBag::featureEnabled('blog');
+    $__magazineEnabled = SettingBag::featureEnabled('magazines');
     $__navItem = fn (string $item): string => $item
         ? 'text-indigo-600 dark:text-indigo-400'
         : 'text-slate-600 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400';
@@ -57,8 +61,35 @@
                 </div>
             </details>
 
-            <a href="{{ route('magazine.index') }}"
-               class="rounded-full px-4 py-2 transition {{ $__navItem($__active === 'magazine') }}">Majalah</a>
+            @if ($__newsEnabled || $__blogEnabled)
+                <details class="relative">
+                    <summary class="flex cursor-pointer list-none items-center gap-1 rounded-full px-4 py-2 transition [&::-webkit-details-marker]:hidden {{ $__navItem($__isArticlePage) }}">
+                        <span>Artikel</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 0 1 1.414 0L10 10.586l3.293-3.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 0-1.414Z" clip-rule="evenodd" />
+                        </svg>
+                    </summary>
+                    <div class="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-700 dark:bg-slate-900">
+                        @if ($__newsEnabled)
+                            <a href="{{ route('news.index') }}"
+                               class="flex items-center gap-2 rounded-xl px-3 py-2.5 transition {{ $__active === 'news' ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-400' : 'text-slate-600 hover:bg-slate-50 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-indigo-400' }}">
+                                News
+                            </a>
+                        @endif
+                        @if ($__blogEnabled)
+                            <a href="{{ route('blog.index') }}"
+                               class="flex items-center gap-2 rounded-xl px-3 py-2.5 transition {{ $__active === 'blog' ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-400' : 'text-slate-600 hover:bg-slate-50 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-indigo-400' }}">
+                                Blog
+                            </a>
+                        @endif
+                    </div>
+                </details>
+            @endif
+
+            @if ($__magazineEnabled)
+                <a href="{{ route('magazine.index') }}"
+                   class="rounded-full px-4 py-2 transition {{ $__navItem($__active === 'magazine') }}">Majalah</a>
+            @endif
 
             <a href="{{ route('home') }}#data"
                class="rounded-full px-4 py-2 transition {{ $__navItem(false) }}">Data</a>
