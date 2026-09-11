@@ -452,6 +452,7 @@ new #[Title('Custom Pages')] class extends Component {
     private function loadStatisticOptions(): void
     {
         $this->setlistOptions = DB::table('show_teater')
+            ->whereNull('deleted_at')
             ->whereNotNull('setlist')
             ->where('setlist', '!=', '')
             ->distinct()
@@ -459,6 +460,7 @@ new #[Title('Custom Pages')] class extends Component {
             ->pluck('setlist')
             ->all();
         $this->unitSongOptions = DB::table('show_teater')
+            ->whereNull('deleted_at')
             ->whereNotNull('unit_song')
             ->where('unit_song', '!=', '')
             ->distinct()

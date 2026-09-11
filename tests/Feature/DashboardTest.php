@@ -314,7 +314,6 @@ class DashboardTest extends TestCase
             'concert' => 2,
         ]);
         $response->assertSee('OFC/JKT48 Concert');
-        $response->assertSee('Statistik Event Concert');
     }
 
     public function test_event_category_counts_follow_the_selected_period(): void

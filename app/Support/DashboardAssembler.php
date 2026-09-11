@@ -81,7 +81,7 @@ final class DashboardAssembler
 
         $charts = $this->chartSeries($dateFrom, $dateTo, $groupType);
 
-        $totalShows = Cache::remember('total_shows_count', self::STATS_CACHE_SECONDS, fn (): int => (int) DB::table('show_teater')->count());
+        $totalShows = Cache::remember('total_shows_count', self::STATS_CACHE_SECONDS, fn (): int => (int) DB::table('show_teater')->whereNull('deleted_at')->count());
         $nextMilestone = (int) (ceil($totalShows / self::MILESTONE_STEP) * self::MILESTONE_STEP);
         if ($nextMilestone === $totalShows) {
             $nextMilestone += self::MILESTONE_STEP;
@@ -186,14 +186,14 @@ final class DashboardAssembler
     private function resolveAllPeriod(): array
     {
         $firstDate = collect([
-            DB::table('show_teater')->min('show_date'),
+            DB::table('show_teater')->whereNull('deleted_at')->min('show_date'),
             DB::table('concert_events')->whereNull('deleted_at')->min('event_date'),
             DB::table('meet_greet_events')->whereNull('deleted_at')->min('event_date'),
             DB::table('meet_greet_events')->whereNull('deleted_at')->min('event_date_2'),
             DB::table('live_streaming')->min('live_date'),
         ])->filter()->map(fn (string $date): string => ShowDate::normalize($date))->min();
         $lastDate = collect([
-            DB::table('show_teater')->max('show_date'),
+            DB::table('show_teater')->whereNull('deleted_at')->max('show_date'),
             DB::table('concert_events')->whereNull('deleted_at')->max('event_date'),
             DB::table('meet_greet_events')->whereNull('deleted_at')->max('event_date'),
             DB::table('meet_greet_events')->whereNull('deleted_at')->max('event_date_2'),
@@ -212,6 +212,7 @@ final class DashboardAssembler
     {
         return $this->mapShowStats(
             DB::table('show_teater')
+                ->whereNull('deleted_at')
                 ->whereBetween(DB::raw(ShowDate::sqlExpression()), [$from->toDateString(), $to->toDateString()])
                 ->selectRaw($this->showStatsSelect())
                 ->first()
@@ -224,7 +225,7 @@ final class DashboardAssembler
     private function totalStats(): array
     {
         return $this->mapShowStats(
-            DB::table('show_teater')->selectRaw($this->showStatsSelect())->first()
+            DB::table('show_teater')->whereNull('deleted_at')->selectRaw($this->showStatsSelect())->first()
         );
     }
 
@@ -323,6 +324,7 @@ final class DashboardAssembler
         $showDateExpression = ShowDate::sqlExpression();
         $showColExpr = str_replace('{col}', $showDateExpression, $groupExpression);
         $showActivity = DB::table('show_teater')
+            ->whereNull('deleted_at')
             ->whereBetween(DB::raw($showDateExpression), [$dateFrom->toDateString(), $dateTo->toDateString()])
             ->selectRaw("{$showColExpr} as group_key, COUNT(*) as count")
             ->groupBy('group_key')

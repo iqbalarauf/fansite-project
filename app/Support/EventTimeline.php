@@ -18,6 +18,7 @@ final class EventTimeline
         $showDateExpression = ShowDate::sqlExpression();
 
         $showQuery = DB::table('show_teater')
+            ->whereNull('deleted_at')
             ->when($from && $to, fn ($query) => $query->whereBetween(DB::raw($showDateExpression), [$from, $to]))
             ->when($past, function ($query) use ($today, $showDateExpression): void {
                 $query->whereRaw("{$showDateExpression} < ?", [$today]);
@@ -84,6 +85,7 @@ final class EventTimeline
         $expression = ShowDate::sqlExpression();
 
         return DB::table('show_teater')
+            ->whereNull('deleted_at')
             ->whereRaw("{$expression} > ?", [$today])
             ->when($until !== null, fn ($query) => $query->whereRaw("{$expression} <= ?", [$until]))
             ->count();

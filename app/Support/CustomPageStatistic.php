@@ -12,10 +12,10 @@ class CustomPageStatistic
         $metric = $data['metric'] ?? '';
 
         return match ($metric) {
-            'show_teater_all' => DB::table('show_teater')->count(),
+            'show_teater_all' => DB::table('show_teater')->whereNull('deleted_at')->count(),
             'show_teater_date_range' => self::showTeaterDateRange($data)->count(),
             'show_teater_setlist' => self::showTeaterSetlist($data)->count(),
-            'unit_song_all' => DB::table('show_teater')->whereNotNull('unit_song')->where('unit_song', '!=', '')->count(),
+            'unit_song_all' => DB::table('show_teater')->whereNull('deleted_at')->whereNotNull('unit_song')->where('unit_song', '!=', '')->count(),
             'unit_song_date_range' => self::showTeaterDateRange($data)->whereNotNull('unit_song')->where('unit_song', '!=', '')->count(),
             'unit_song_setlist' => self::showTeaterSetlist($data)->whereNotNull('unit_song')->where('unit_song', '!=', '')->count(),
             'center_unit_song_all' => self::unitSongCenters()->count(),
@@ -34,6 +34,7 @@ class CustomPageStatistic
     private static function showTeaterDateRange(array $data): Builder
     {
         return DB::table('show_teater')
+            ->whereNull('deleted_at')
             ->when($data['date_from'] ?? null, fn (Builder $query, string $dateFrom): Builder => $query->whereDate('show_date', '>=', $dateFrom))
             ->when($data['date_to'] ?? null, fn (Builder $query, string $dateTo): Builder => $query->whereDate('show_date', '<=', $dateTo));
     }
@@ -41,12 +42,13 @@ class CustomPageStatistic
     private static function showTeaterSetlist(array $data): Builder
     {
         return DB::table('show_teater')
+            ->whereNull('deleted_at')
             ->when($data['setlist'] ?? null, fn (Builder $query, string $setlist): Builder => $query->where('setlist', $setlist));
     }
 
     private static function unitSongCenters(): Builder
     {
-        return DB::table('show_teater')->whereNotNull('is_us_center');
+        return DB::table('show_teater')->whereNull('deleted_at')->whereNotNull('is_us_center');
     }
 
     private static function liveStreamingDateRange(array $data): Builder
