@@ -12,6 +12,7 @@ use App\Http\Controllers\MagazineController;
 use App\Http\Controllers\MeetGreetEventsController;
 use App\Http\Controllers\PublicMagazineController;
 use App\Http\Controllers\PublicPostController;
+use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\ShowTeaterCategoriesController;
 use App\Http\Controllers\ShowTeaterController;
 use App\Http\Controllers\UserController;
@@ -31,6 +32,8 @@ Route::get('news', [PublicPostController::class, 'index'])->defaults('section', 
 Route::get('news/{post}', [PublicPostController::class, 'show'])->defaults('section', 'news')->middleware('feature:news')->name('news.show');
 Route::get('blog', [PublicPostController::class, 'index'])->defaults('section', 'blog')->middleware('feature:blog')->name('blog.index');
 Route::get('blog/{post}', [PublicPostController::class, 'show'])->defaults('section', 'blog')->middleware('feature:blog')->name('blog.show');
+
+Route::get('schedule', ScheduleController::class)->name('schedule.index');
 
 Route::middleware(['auth', 'verified', 'block-view-only-writes'])->group(function () {
     Route::middleware('role:super_admin,view_only,bank_data_admin')->group(function () {

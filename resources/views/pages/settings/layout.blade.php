@@ -6,6 +6,7 @@
                 <flux:navlist.item :href="route('about.edit')" wire:navigate>{{ __('About') }}</flux:navlist.item>
                 <flux:navlist.item :href="route('app-settings.edit')" wire:navigate>{{ __('App Settings') }}</flux:navlist.item>
                 <flux:navlist.item :href="route('features.edit')" wire:navigate>{{ __('Features Activation') }}</flux:navlist.item>
+                <flux:navlist.item :href="route('header-menu.edit')" wire:navigate>{{ __('Header Menu') }}</flux:navlist.item>
             @endif
         </flux:navlist>
     </div>
