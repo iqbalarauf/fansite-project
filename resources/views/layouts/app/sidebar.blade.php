@@ -64,6 +64,9 @@
                                 {{ __('Kategori') }}
                             </flux:sidebar.item>
                         @endif
+                        <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="photo" :href="route('content.gallery.index')" :current="request()->routeIs('content.gallery.*')" wire:navigate>
+                            {{ __('Galeri') }}
+                        </flux:sidebar.item>
                     </flux:sidebar.group>
                 @endif
                 @if (auth()->user()->isSuperAdmin())

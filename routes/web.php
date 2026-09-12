@@ -4,12 +4,14 @@ use App\Enums\ContentSection;
 use App\Http\Controllers\AboutController;
 use App\Http\Controllers\ConcertEventsController;
 use App\Http\Controllers\Content\CategoryController;
+use App\Http\Controllers\Content\GalleryController;
 use App\Http\Controllers\Content\PostController;
 use App\Http\Controllers\CustomPageController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LiveStreamingController;
 use App\Http\Controllers\MagazineController;
 use App\Http\Controllers\MeetGreetEventsController;
+use App\Http\Controllers\PublicGalleryController;
 use App\Http\Controllers\PublicMagazineController;
 use App\Http\Controllers\PublicPostController;
 use App\Http\Controllers\ScheduleController;
@@ -34,6 +36,8 @@ Route::get('blog', [PublicPostController::class, 'index'])->defaults('section', 
 Route::get('blog/{post}', [PublicPostController::class, 'show'])->defaults('section', 'blog')->middleware('feature:blog')->name('blog.show');
 
 Route::get('schedule', ScheduleController::class)->name('schedule.index');
+
+Route::get('galeri', [PublicGalleryController::class, 'index'])->name('gallery.index');
 
 Route::middleware(['auth', 'verified', 'block-view-only-writes'])->group(function () {
     Route::middleware('role:super_admin,view_only,bank_data_admin')->group(function () {
@@ -106,6 +110,15 @@ Route::middleware(['auth', 'verified', 'block-view-only-writes'])->group(functio
             Route::put('{id}', [CategoryController::class, 'update'])->name('update');
             Route::delete('{id}', [CategoryController::class, 'destroy'])->name('destroy');
         });
+
+        // Galeri (Foto & Video)
+        Route::get('content/gallery', [GalleryController::class, 'index'])->name('content.gallery.index');
+        Route::post('content/gallery/photos', [GalleryController::class, 'storePhoto'])->name('content.gallery.photos.store');
+        Route::put('content/gallery/photos/{galleryPhoto}', [GalleryController::class, 'updatePhoto'])->name('content.gallery.photos.update');
+        Route::delete('content/gallery/photos/{galleryPhoto}', [GalleryController::class, 'destroyPhoto'])->name('content.gallery.photos.destroy');
+        Route::post('content/gallery/videos', [GalleryController::class, 'storeVideo'])->name('content.gallery.videos.store');
+        Route::put('content/gallery/videos/{galleryVideo}', [GalleryController::class, 'updateVideo'])->name('content.gallery.videos.update');
+        Route::delete('content/gallery/videos/{galleryVideo}', [GalleryController::class, 'destroyVideo'])->name('content.gallery.videos.destroy');
     });
 
     Route::middleware('role:super_admin')->group(function () {

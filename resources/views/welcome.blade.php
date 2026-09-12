@@ -30,7 +30,7 @@
 
     <section class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <div class="grid gap-8 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-        @if ($showOnWelcome || $newsEnabled)
+        @if ($showOnWelcome || $feedEnabled)
                 <aside id="about" class="flex flex-col gap-8">
                     @if ($showOnWelcome)
                         <div class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
@@ -56,31 +56,33 @@
                         </div>
                     @endif
 
-                    @if ($newsEnabled)
+                    @if ($feedEnabled)
                         <div class="flex flex-1 flex-col rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
                             <div class="flex items-center justify-between gap-4 border-b border-slate-200 pb-5 dark:border-slate-800">
                                 <div>
-                                    <p class="text-sm font-bold uppercase tracking-[0.22em] text-indigo-600 dark:text-indigo-400">News</p>
-                                    <h3 class="mt-2 text-2xl font-black text-slate-900 dark:text-white">Berita Terbaru</h3>
+                                    <p class="text-sm font-bold uppercase tracking-[0.22em] text-indigo-600 dark:text-indigo-400">{{ $feed['label'] }}</p>
+                                    <h3 class="mt-2 text-2xl font-black text-slate-900 dark:text-white">{{ $feed['heading'] }}</h3>
                                 </div>
-                                <a href="{{ route('news.index') }}" class="shrink-0 text-sm font-semibold text-indigo-600 transition hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">Lihat Semua</a>
+                                <a href="{{ $feed['indexRoute'] }}" class="shrink-0 text-sm font-semibold text-indigo-600 transition hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">Lihat Semua</a>
                             </div>
 
                             <div class="mt-6 flex-1 space-y-4">
-                                @forelse ($latestNews as $news)
-                                    <a href="{{ $news->publicUrl() }}" class="group flex items-start gap-4">
-                                        @if ($news->cover)
+                                @forelse ($feed['items'] as $item)
+                                    <a href="{{ $item['url'] }}" class="group flex items-start gap-4">
+                                        @if ($item['cover'])
                                             <div class="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800">
-                                                <img src="{{ Storage::url($news->cover) }}" alt="{{ $news->title }}" class="h-full w-full object-cover" loading="lazy" />
+                                                <img src="{{ Storage::url($item['cover']) }}" alt="{{ $item['title'] }}" class="h-full w-full object-cover" loading="lazy" />
                                             </div>
                                         @endif
                                         <div class="min-w-0">
-                                            <p class="line-clamp-2 text-sm font-bold text-slate-900 transition group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400">{{ $news->title }}</p>
-                                            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ $news->published_at?->locale('id')->isoFormat('D MMMM YYYY') ?? $news->created_at?->locale('id')->isoFormat('D MMMM YYYY') }}</p>
+                                            <p class="line-clamp-2 text-sm font-bold text-slate-900 transition group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400">{{ $item['title'] }}</p>
+                                            @if ($item['date'])
+                                                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ Carbon::parse($item['date'])->locale('id')->isoFormat('D MMMM YYYY') }}</p>
+                                            @endif
                                         </div>
                                     </a>
                                 @empty
-                                    <p class="text-sm text-slate-500 dark:text-slate-400">Belum ada berita terbaru.</p>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400">Belum ada konten terbaru.</p>
                                 @endforelse
                             </div>
                         </div>
@@ -209,5 +211,81 @@
 
 
         </div>
+
+        @if ($galleryPhotos->isNotEmpty())
+        <section class="mx-auto max-w-7xl px-4 pt-16 sm:px-6 lg:px-8">
+            <div class="flex items-end justify-between gap-4">
+                <div>
+                    <p class="text-sm font-bold uppercase tracking-[0.22em] text-indigo-600 dark:text-indigo-400">Galeri</p>
+                    <h2 class="mt-2 text-2xl font-black text-slate-900 dark:text-white sm:text-3xl">Foto Terbaru</h2>
+                </div>
+                <a href="{{ route('gallery.index') }}" class="shrink-0 text-sm font-semibold text-indigo-600 transition hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">Lihat Semua</a>
+            </div>
+
+            <div class="relative mt-6 px-1" data-gallery-carousel>
+                <div class="overflow-hidden">
+                    <div class="flex gap-4 transition-transform duration-500 ease-out" data-gallery-track>
+                        @foreach ($galleryPhotos as $photo)
+                            <a href="{{ route('gallery.index') }}" data-gallery-item class="group w-[calc((100%-2rem)/3)] shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                                <img src="{{ Storage::url($photo->photo) }}" alt="{{ $photo->description ?: 'Gallery photo' }}" class="aspect-square w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" />
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+
+                <button type="button" data-gallery-nav data-gallery-prev aria-label="Foto sebelumnya"
+                        class="absolute -left-2 top-1/2 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-600 shadow-md backdrop-blur transition hover:text-indigo-600 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900/90 dark:text-slate-300 dark:hover:text-indigo-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4"><path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 0 1-.02 1.06L8.832 10l3.938 3.71a.75.75 0 1 1-1.04 1.08l-4.5-4.25a.75.75 0 0 1 0-1.08l4.5-4.25a.75.75 0 0 1 1.06.02Z" clip-rule="evenodd"/></svg>
+                </button>
+                <button type="button" data-gallery-nav data-gallery-next aria-label="Foto berikutnya"
+                        class="absolute -right-2 top-1/2 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-600 shadow-md backdrop-blur transition hover:text-indigo-600 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900/90 dark:text-slate-300 dark:hover:text-indigo-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 0 1 .02-1.06L11.168 10 7.23 6.29a.75.75 0 1 1 1.04-1.08l4.5 4.25a.75.75 0 0 1 0 1.08l-4.5 4.25a.75.75 0 0 1-1.06-.02Z" clip-rule="evenodd"/></svg>
+                </button>
+            </div>
+        </section>
+    @endif
     </section>
+
+    <script>
+        (function () {
+            document.querySelectorAll('[data-gallery-carousel]').forEach(function (root) {
+                var track = root.querySelector('[data-gallery-track]');
+                var items = Array.prototype.slice.call(root.querySelectorAll('[data-gallery-item]'));
+                var prev = root.querySelector('[data-gallery-prev]');
+                var next = root.querySelector('[data-gallery-next]');
+                var navs = Array.prototype.slice.call(root.querySelectorAll('[data-gallery-nav]'));
+                var visible = 3;
+                var index = 0;
+                var maxIndex = Math.max(0, items.length - visible);
+
+                if (!track || items.length === 0) {
+                    return;
+                }
+
+                if (items.length <= visible) {
+                    navs.forEach(function (nav) { nav.classList.add('hidden'); });
+                    return;
+                }
+
+                function step() {
+                    var styles = window.getComputedStyle(track);
+                    var gap = parseFloat(styles.columnGap || styles.gap) || 0;
+
+                    return items[0].getBoundingClientRect().width + gap;
+                }
+
+                function update() {
+                    track.style.transform = 'translateX(' + (-index * step()) + 'px)';
+
+                    if (prev) prev.disabled = index <= 0;
+                    if (next) next.disabled = index >= maxIndex;
+                }
+
+                if (prev) prev.addEventListener('click', function () { if (index > 0) { index--; update(); } });
+                if (next) next.addEventListener('click', function () { if (index < maxIndex) { index++; update(); } });
+                window.addEventListener('resize', update);
+                update();
+            });
+        })();
+    </script>
 @endsection

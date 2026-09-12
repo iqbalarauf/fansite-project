@@ -2,7 +2,11 @@
 
 namespace App\Support;
 
+use App\Models\BlogPost;
+use App\Models\GalleryPhoto;
+use App\Models\Magazine;
 use App\Models\NewsPost;
+use App\Models\Post;
 use App\Models\ShowTeater;
 use Illuminate\Support\Collection;
 
@@ -23,7 +27,8 @@ final class WelcomePageData
         $today = now()->toDateString();
         $showCount = ShowTeater::query()->count();
         $upcomingShowCount = $this->timeline->upcomingShowCount($today);
-        $newsEnabled = SettingBag::featureEnabled('news');
+        $feedSource = SettingBag::welcomeFeedSource();
+        $feedEnabled = SettingBag::featureEnabled($feedSource);
 
         $idolMemberName = (string) ($about['idol_shortname'] ?? '');
         $liveStatus = $this->memberLive->status($idolMemberName);
@@ -48,28 +53,81 @@ final class WelcomePageData
             'upcomingShowCount' => $upcomingShowCount,
             'lastEventDate' => $this->lastEventDate($today),
             'upcomingEvents' => $this->timeline->events('upcoming', null, null, $today, 5),
-            'newsEnabled' => $newsEnabled,
-            'latestNews' => $this->latestNews($newsEnabled),
+            'feedEnabled' => $feedEnabled,
+            'feed' => $feedEnabled ? $this->feed($feedSource) : ['label' => '', 'heading' => '', 'indexRoute' => '#', 'items' => []],
+            'galleryPhotos' => $this->galleryPhotos(),
             'showroomLive' => $liveStatus['showroom'],
             'idnLive' => $liveStatus['idn'],
         ];
     }
 
     /**
-     * @return Collection<int, NewsPost>
+     * @return Collection<int, GalleryPhoto>
      */
-    private function latestNews(bool $newsEnabled): Collection
+    private function galleryPhotos(): Collection
     {
-        if (! $newsEnabled) {
+        if (! in_array(SettingBag::galleryMode(), ['photos', 'both'], true)) {
             return collect();
         }
 
-        return NewsPost::query()
+        return GalleryPhoto::query()->latest()->take(6)->get();
+    }
+
+    /**
+     * @return array{label: string, heading: string, indexRoute: string, items: array<int, array<string, mixed>>}
+     */
+    private function feed(string $source): array
+    {
+        return match ($source) {
+            'blog' => [
+                'label' => 'Blog',
+                'heading' => 'Blog Terbaru',
+                'indexRoute' => route('blog.index'),
+                'items' => $this->postFeed(BlogPost::class),
+            ],
+            'magazines' => [
+                'label' => 'Majalah',
+                'heading' => 'Majalah Terbaru',
+                'indexRoute' => route('magazine.index'),
+                'items' => Magazine::query()
+                    ->latest('created_at')
+                    ->take(4)
+                    ->get()
+                    ->map(fn (Magazine $magazine): array => [
+                        'title' => $magazine->title,
+                        'cover' => $magazine->cover,
+                        'date' => $magazine->created_at,
+                        'url' => route('magazine.show', $magazine->slug),
+                    ])
+                    ->all(),
+            ],
+            default => [
+                'label' => 'News',
+                'heading' => 'Berita Terbaru',
+                'indexRoute' => route('news.index'),
+                'items' => $this->postFeed(NewsPost::class),
+            ],
+        };
+    }
+
+    /**
+     * @param  class-string<Post>  $model
+     * @return array<int, array<string, mixed>>
+     */
+    private function postFeed(string $model): array
+    {
+        return $model::query()
             ->published()
-            ->with('category')
             ->latest('published_at')
             ->take(4)
-            ->get();
+            ->get()
+            ->map(fn ($post): array => [
+                'title' => $post->title,
+                'cover' => $post->cover,
+                'date' => $post->published_at ?? $post->created_at,
+                'url' => $post->publicUrl(),
+            ])
+            ->all();
     }
 
     private function lastEventDate(string $today): ?string

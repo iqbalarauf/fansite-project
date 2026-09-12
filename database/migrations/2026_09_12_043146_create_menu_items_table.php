@@ -14,6 +14,7 @@ return new class extends Migration
             $table->string('label');
             $table->string('type', 20)->default('link');
             $table->string('url')->nullable();
+            $table->string('target')->nullable();
             $table->foreignId('page_id')->nullable()->constrained('custom_pages')->nullOnDelete();
             $table->unsignedInteger('sort_order')->default(0);
             $table->timestamps();
