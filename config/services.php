@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'jkt48connect' => [
+        'url' => env('JKT48CONNECT_LIVE_URL'),
+        'key' => env('JKT48CONNECT_API_KEY'),
+    ],
+
 ];
