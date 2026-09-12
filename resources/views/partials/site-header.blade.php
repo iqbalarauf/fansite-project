@@ -1,4 +1,5 @@
 @php
+    use App\Support\HeaderMenu;
     use App\Support\SettingBag;
 
     $__app = SettingBag::app();
@@ -21,11 +22,13 @@
     $__newsEnabled = SettingBag::featureEnabled('news');
     $__blogEnabled = SettingBag::featureEnabled('blog');
     $__magazineEnabled = SettingBag::featureEnabled('magazines');
+    $__customMenu = HeaderMenu::isCustom();
+    $__customMenuItems = $__customMenu ? HeaderMenu::tree() : [];
     $__navItem = fn (string $item): string => $item
         ? 'text-indigo-600 dark:text-indigo-400'
         : 'text-slate-600 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400';
 @endphp
-<header class="sticky top-0 z-50 border-b border-slate-200/60 bg-white/50 shadow-sm backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/50">
+<header class="sticky top-0 z-50 border-b border-slate-200/60 bg-white/50 shadow-sm backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/50" data-site-header>
     <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         <a href="{{ route('home') }}" class="flex items-center gap-3">
             <div class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl text-lg font-bold text-white shadow-sm">
@@ -39,6 +42,9 @@
         </a>
 
         <nav class="hidden items-center gap-1 text-sm font-medium md:flex">
+            @if ($__customMenu)
+                @include('partials.header-menu', ['items' => $__customMenuItems, 'level' => 0])
+            @else
             <a href="{{ route('home') }}"
                class="rounded-full px-4 py-2 transition {{ $__navItem($__active === 'home') }}">Home</a>
 
@@ -93,8 +99,9 @@
 
             <a href="{{ route('home') }}#data"
                class="rounded-full px-4 py-2 transition {{ $__navItem(false) }}">Data</a>
-            <a href="{{ route('home') }}#schedule"
-               class="rounded-full px-4 py-2 transition {{ $__navItem(false) }}">Schedule</a>
+            <a href="{{ route('schedule.index') }}"
+               class="rounded-full px-4 py-2 transition {{ $__navItem($__active === 'schedule') }}">Schedule</a>
+            @endif
         </nav>
 
         <div class="flex items-center gap-2">
@@ -113,3 +120,43 @@
         </div>
     </div>
 </header>
+
+<script>
+    (function () {
+        var header = document.querySelector('[data-site-header]');
+
+        if (!header) {
+            return;
+        }
+
+        function allDetails() {
+            return header.querySelectorAll('details');
+        }
+
+        // The `toggle` event does not bubble, so listen during the capture phase.
+        header.addEventListener('toggle', function (event) {
+            var target = event.target;
+
+            if (target.tagName !== 'DETAILS' || !target.open) {
+                return;
+            }
+
+            allDetails().forEach(function (details) {
+                if (details !== target && details.open && !details.contains(target)) {
+                    details.open = false;
+                }
+            });
+        }, true);
+
+        // Close any open dropdown when clicking outside the header.
+        document.addEventListener('click', function (event) {
+            if (header.contains(event.target)) {
+                return;
+            }
+
+            allDetails().forEach(function (details) {
+                details.open = false;
+            });
+        });
+    })();
+</script>

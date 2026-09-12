@@ -14,6 +14,7 @@ Route::middleware(['auth', 'block-view-only'])->group(function () {
             Route::livewire('settings/about', 'pages::settings.about')->name('about.edit');
             Route::livewire('settings/app-settings', 'pages::settings.app-settings')->name('app-settings.edit');
             Route::livewire('settings/features', 'pages::settings.features')->name('features.edit');
+            Route::livewire('settings/header-menu', 'pages::settings.header-menu')->name('header-menu.edit');
         });
 
         Route::livewire('settings/security', 'pages::settings.security')
