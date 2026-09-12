@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('live_streaming', function (Blueprint $table) {
             $table->id();
+            $table->string('live_id')->nullable()->unique();
             $table->enum('platform', ['IDN App', 'Showroom']);
             $table->date('live_date');
             $table->integer('duration')->nullable()->comment('Duration in minutes');

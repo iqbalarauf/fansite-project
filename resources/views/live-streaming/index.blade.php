@@ -5,9 +5,20 @@
                 <flux:heading size="xl" class="font-bold">Live Streaming</flux:heading>
                 <flux:subheading>Kelola jadwal live streaming dan informasi tambahan</flux:subheading>
             </div>
-            <flux:modal.trigger name="modal-create-live-stream">
-                <flux:button variant="primary" icon="plus">Tambah Live Streaming</flux:button>
-            </flux:modal.trigger>
+            <div class="admin-page-actions">
+                @unless (auth()->user()?->isViewOnly())
+                    <button type="button" id="btn-fetch-live" onclick="fetchLiveData()"
+                            class="flex items-center gap-2 rounded-xl bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-green-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/>
+                        </svg>
+                        Fetch Data
+                    </button>
+                @endunless
+                <flux:modal.trigger name="modal-create-live-stream">
+                    <flux:button variant="primary" icon="plus">Tambah Live Streaming</flux:button>
+                </flux:modal.trigger>
+            </div>
         </div>
 
         @if (session('success'))
@@ -242,6 +253,29 @@
     </flux:modal>
 
     <script>
+        const CSRF_TOKEN = '{{ csrf_token() }}';
+
+        function fetchLiveData() {
+            const btn = document.getElementById('btn-fetch-live');
+            if (!btn) return;
+
+            const originalContent = btn.innerHTML;
+            btn.disabled = true;
+            btn.textContent = 'Fetching...';
+
+            fetch('{{ route('live-streaming.fetch-manually') }}', {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': CSRF_TOKEN, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            })
+            .then(r => r.json())
+            .then(data => {
+                alert(data.message || (data.success ? 'Data berhasil di-fetch!' : 'Terjadi kesalahan saat fetch data.'));
+                if (data.success) location.reload();
+            })
+            .catch(() => alert('Terjadi kesalahan saat fetch data.'))
+            .finally(() => { btn.disabled = false; btn.innerHTML = originalContent; });
+        }
+
         function openEditLiveStreamModal(target) {
             const streamData = {
                 id: target.dataset.id,

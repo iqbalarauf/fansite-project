@@ -12,6 +12,7 @@ class LiveStreaming extends Model
     protected $table = 'live_streaming';
 
     protected $fillable = [
+        'live_id',
         'platform',
         'live_date',
         'duration',
