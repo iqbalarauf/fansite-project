@@ -322,9 +322,15 @@ class ShowTeaterController extends Controller
 
             Cache::flush();
 
+            $message = trim($output);
+
+            if ($message === '') {
+                $message = 'Data berhasil di-fetch!';
+            }
+
             return response()->json([
                 'success' => true,
-                'message' => 'Data fetched successfully',
+                'message' => $message,
                 'timestamp' => now(),
             ]);
         } catch (\Exception $e) {

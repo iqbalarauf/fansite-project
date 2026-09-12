@@ -621,7 +621,7 @@
             .then(r => r.json())
             .then(data => {
                 if (data.success) {
-                    alert('Data berhasil di-fetch!');
+                    alert(data.message || 'Data berhasil di-fetch!');
                     location.reload();
                 } else {
                     alert('Error: ' + data.message);

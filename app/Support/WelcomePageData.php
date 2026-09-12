@@ -8,7 +8,10 @@ use Illuminate\Support\Collection;
 
 final class WelcomePageData
 {
-    public function __construct(private EventTimeline $timeline) {}
+    public function __construct(
+        private EventTimeline $timeline,
+        private CheckMemberLive $memberLive,
+    ) {}
 
     /**
      * @return array<string, mixed>
@@ -21,6 +24,9 @@ final class WelcomePageData
         $showCount = ShowTeater::query()->count();
         $upcomingShowCount = $this->timeline->upcomingShowCount($today);
         $newsEnabled = SettingBag::featureEnabled('news');
+
+        $idolMemberName = (string) ($about['idol_shortname'] ?? '');
+        $liveStatus = $this->memberLive->status($idolMemberName);
 
         return [
             'idolName' => $about['idol_name'] ?? 'Oshimen',
@@ -44,6 +50,8 @@ final class WelcomePageData
             'upcomingEvents' => $this->timeline->events('upcoming', null, null, $today, 5),
             'newsEnabled' => $newsEnabled,
             'latestNews' => $this->latestNews($newsEnabled),
+            'showroomLive' => $liveStatus['showroom'],
+            'idnLive' => $liveStatus['idn'],
         ];
     }
 
