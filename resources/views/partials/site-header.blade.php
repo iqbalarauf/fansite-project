@@ -97,6 +97,9 @@
                    class="rounded-full px-4 py-2 transition {{ $__navItem($__active === 'magazine') }}">Majalah</a>
             @endif
 
+            <a href="{{ route('gallery.index') }}"
+               class="rounded-full px-4 py-2 transition {{ $__navItem($__active === 'gallery') }}">Galeri</a>
+
             <a href="{{ route('home') }}#data"
                class="rounded-full px-4 py-2 transition {{ $__navItem(false) }}">Data</a>
             <a href="{{ route('schedule.index') }}"

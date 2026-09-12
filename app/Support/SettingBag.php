@@ -32,4 +32,24 @@ final class SettingBag
     {
         return filter_var(self::app()[$feature.'_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
     }
+
+    /**
+     * Gallery display mode for the public page: photos, videos, or both.
+     */
+    public static function galleryMode(): string
+    {
+        $mode = (string) (self::app()['gallery_mode'] ?? 'photos');
+
+        return in_array($mode, ['photos', 'videos', 'both'], true) ? $mode : 'photos';
+    }
+
+    /**
+     * Content source for the welcome "Berita Terbaru" card: news, blog, or magazines.
+     */
+    public static function welcomeFeedSource(): string
+    {
+        $source = (string) (self::app()['welcome_feed_source'] ?? 'news');
+
+        return in_array($source, ['news', 'blog', 'magazines'], true) ? $source : 'news';
+    }
 }

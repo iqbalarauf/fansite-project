@@ -10,6 +10,8 @@ new #[Title('Features Activation')] class extends Component {
     public bool $newsEnabled = true;
     public bool $blogEnabled = true;
     public bool $magazineEnabled = true;
+    public string $galleryMode = 'photos';
+    public string $welcomeFeedSource = 'news';
 
     public function mount(): void
     {
@@ -20,10 +22,21 @@ new #[Title('Features Activation')] class extends Component {
         $this->newsEnabled = filter_var($settings['news_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
         $this->blogEnabled = filter_var($settings['blog_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
         $this->magazineEnabled = filter_var($settings['magazines_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
+
+        $galleryMode = (string) ($settings['gallery_mode'] ?? 'photos');
+        $this->galleryMode = in_array($galleryMode, ['photos', 'videos', 'both'], true) ? $galleryMode : 'photos';
+
+        $feedSource = (string) ($settings['welcome_feed_source'] ?? 'news');
+        $this->welcomeFeedSource = in_array($feedSource, ['news', 'blog', 'magazines'], true) ? $feedSource : 'news';
     }
 
     public function save(): void
     {
+        $this->validate([
+            'galleryMode' => ['required', 'in:photos,videos,both'],
+            'welcomeFeedSource' => ['required', 'in:news,blog,magazines'],
+        ]);
+
         foreach ([
             'news_enabled' => $this->newsEnabled,
             'blog_enabled' => $this->blogEnabled,
@@ -34,6 +47,16 @@ new #[Title('Features Activation')] class extends Component {
                 ['value' => $enabled ? 'true' : 'false', 'updated_at' => now()],
             );
         }
+
+        DB::table('app_settings')->updateOrInsert(
+            ['key' => 'gallery_mode'],
+            ['value' => $this->galleryMode, 'updated_at' => now()],
+        );
+
+        DB::table('app_settings')->updateOrInsert(
+            ['key' => 'welcome_feed_source'],
+            ['value' => $this->welcomeFeedSource, 'updated_at' => now()],
+        );
 
         Cache::forget('app_settings');
 
@@ -72,6 +95,38 @@ new #[Title('Features Activation')] class extends Component {
                         <span class="block text-xs text-zinc-500 dark:text-zinc-400">{{ __('Tampilkan menu dan halaman publik Majalah.') }}</span>
                     </span>
                 </label>
+            </div>
+
+            <div class="space-y-4 rounded-xl border border-zinc-200 p-4 dark:border-zinc-700">
+                <div>
+                    <p class="text-sm font-semibold text-zinc-700 dark:text-zinc-200">{{ __('Galeri — Tampilan Publik') }}</p>
+                    <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Pilih konten yang ditampilkan di halaman Galeri publik.') }}</p>
+                </div>
+
+                @foreach (['photos' => 'Foto', 'videos' => 'Video', 'both' => 'Keduanya'] as $value => $label)
+                    <label class="flex items-start gap-3">
+                        <input type="radio" wire:model="galleryMode" value="{{ $value }}" class="mt-0.5 rounded border-zinc-300 text-blue-600">
+                        <span class="text-sm text-zinc-700 dark:text-zinc-200">{{ __($label) }}</span>
+                    </label>
+                @endforeach
+
+                @error('galleryMode') <p class="text-xs text-red-500">{{ $message }}</p> @enderror
+            </div>
+
+            <div class="space-y-4 rounded-xl border border-zinc-200 p-4 dark:border-zinc-700">
+                <div>
+                    <p class="text-sm font-semibold text-zinc-700 dark:text-zinc-200">{{ __('Kartu "Berita Terbaru" (Welcome)') }}</p>
+                    <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Pilih sumber konten untuk kartu di halaman Welcome.') }}</p>
+                </div>
+
+                @foreach (['news' => 'News', 'blog' => 'Blog', 'magazines' => 'Majalah'] as $value => $label)
+                    <label class="flex items-start gap-3">
+                        <input type="radio" wire:model="welcomeFeedSource" value="{{ $value }}" class="mt-0.5 rounded border-zinc-300 text-blue-600">
+                        <span class="text-sm text-zinc-700 dark:text-zinc-200">{{ __($label) }}</span>
+                    </label>
+                @endforeach
+
+                @error('welcomeFeedSource') <p class="text-xs text-red-500">{{ $message }}</p> @enderror
             </div>
 
             <div class="flex items-center justify-end">
