@@ -174,20 +174,34 @@
                                 SR
                             </div>
                             <p class="text-base font-bold text-slate-900 dark:text-white">Showroom Live</p>
-                            <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-200/70 px-3 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-700 dark:text-slate-300">
-                                <span class="size-1.5 rounded-full bg-slate-400 dark:bg-slate-500"></span>
-                                Offline
-                            </span>
+                            @if ($showroomLive)
+                                <span class="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900 dark:text-green-300">
+                                    <span class="size-1.5 rounded-full bg-green-500 dark:bg-green-400"></span>
+                                    Online
+                                </span>
+                            @else
+                                <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-200/70 px-3 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-700 dark:text-slate-300">
+                                    <span class="size-1.5 rounded-full bg-slate-400 dark:bg-slate-500"></span>
+                                    Offline
+                                </span>
+                            @endif
                         </div>
                         <div class="flex flex-col items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-800/40">
                             <div class="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-400 to-emerald-500 text-base font-black text-white shadow-md">
                                 IDN
                             </div>
                             <p class="text-base font-bold text-slate-900 dark:text-white">IDN App</p>
-                            <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-200/70 px-3 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-700 dark:text-slate-300">
-                                <span class="size-1.5 rounded-full bg-slate-400 dark:bg-slate-500"></span>
-                                Offline
-                            </span>
+                            @if ($idnLive)
+                                <span class="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900 dark:text-green-300">
+                                    <span class="size-1.5 rounded-full bg-green-500 dark:bg-green-400"></span>
+                                    Online
+                                </span>
+                            @else
+                                <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-200/70 px-3 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-700 dark:text-slate-300">
+                                    <span class="size-1.5 rounded-full bg-slate-400 dark:bg-slate-500"></span>
+                                    Offline
+                                </span>
+                            @endif
                         </div>
                     </div>
                 </section>

@@ -68,6 +68,7 @@ Route::middleware(['auth', 'verified', 'block-view-only-writes'])->group(functio
         // Live Streaming
         Route::get('live-streaming', [LiveStreamingController::class, 'index'])->name('live-streaming.index');
         Route::post('live-streaming', [LiveStreamingController::class, 'store'])->name('live-streaming.store');
+        Route::post('live-streaming/fetch', [LiveStreamingController::class, 'fetchManually'])->name('live-streaming.fetch-manually');
         Route::put('live-streaming/{liveStreaming}', [LiveStreamingController::class, 'update'])->name('live-streaming.update');
     });
 

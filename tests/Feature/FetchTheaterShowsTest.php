@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\AboutSettings;
 use App\Models\TheaterReference;
+use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -13,41 +14,39 @@ class FetchTheaterShowsTest extends TestCase
 {
     use DatabaseTransactions;
 
-    public function test_it_outputs_error_if_idol_name_is_missing(): void
+    protected function setUp(): void
     {
-        DB::table('about_settings')->where('key', 'idol_name')->delete();
+        parent::setUp();
+
+        config([
+            'services.jkt48connect.url' => 'https://jkt48connect.test',
+            'services.jkt48connect.key' => 'test-key',
+        ]);
+    }
+
+    public function test_it_outputs_error_if_idol_shortname_is_missing(): void
+    {
+        DB::table('about_settings')->where('key', 'idol_shortname')->delete();
 
         $this->artisan('app:fetch-theater-shows')
-            ->expectsOutput('Idol name not found in about_settings.')
+            ->expectsOutput('Idol shortname not found in about_settings.')
             ->assertFailed();
     }
 
-    public function test_it_fetches_and_saves_theater_shows_when_idol_name_matches(): void
+    public function test_it_fails_when_the_api_is_not_configured(): void
     {
-        DB::table('about_settings')->updateOrInsert(
-            ['key' => 'idol_name'],
-            ['value' => 'Freya Jayawardana', 'updated_at' => now()]
-        );
+        config(['services.jkt48connect.url' => '', 'services.jkt48connect.key' => '']);
 
-        $currentMonth = now()->month;
-        $currentYear = now()->year;
+        $this->artisan('app:fetch-theater-shows')
+            ->expectsOutput('JKT48Connect API is not configured (JKT48CONNECT_LIVE_URL / JKT48CONNECT_API_KEY).')
+            ->assertFailed();
+    }
 
-        Http::fake([
-            "https://jkt48.com/api/v1/schedules?lang=id&month={$currentMonth}&year={$currentYear}&type=SHOW" => Http::response([
-                'data' => [
-                    ['reference_code' => 'test-show-ref-001'],
-                ],
-            ], 200),
-            'https://jkt48.com/api/v1/theater-shows/test-show-ref-001?lang=id' => Http::response([
-                'data' => [
-                    'date' => '2026-09-10 12:00:00',
-                    'title' => 'Cara Meminum Ramune',
-                    'jkt48_member' => [
-                        ['name' => 'Freya Jayawardana'],
-                        ['name' => 'Member Lain'],
-                    ],
-                ],
-            ], 200),
+    public function test_it_fetches_and_saves_theater_shows_when_lineup_matches(): void
+    {
+        $this->setShortname('Oniel');
+        $this->fakeTheater([
+            $this->show(['reference_code' => 'SHD44C', 'title' => 'Cara Meminum Ramune', 'date' => '2026-09-13']),
         ]);
 
         $this->artisan('app:fetch-theater-shows')
@@ -57,63 +56,150 @@ class FetchTheaterShowsTest extends TestCase
 
         $this->assertDatabaseHas('show_teater', [
             'setlist' => 'Cara Meminum Ramune',
-            'show_date' => '2026/09/10',
+            'show_date' => '2026-09-13',
             'is_scraped_data' => 1,
         ]);
 
-        $this->assertDatabaseHas('theater_references', [
-            'reference_code' => 'test-show-ref-001',
-            'month' => $currentMonth,
-            'year' => $currentYear,
-        ]);
-
-        $ref = TheaterReference::where('reference_code', 'test-show-ref-001')->first();
-        $this->assertNotNull($ref->processed_at);
+        $this->assertDatabaseHas('theater_references', ['reference_code' => 'SHD44C']);
+        $this->assertNotNull(TheaterReference::query()->where('reference_code', 'SHD44C')->value('processed_at'));
     }
 
-    public function test_it_skips_inserting_show_when_date_and_setlist_already_exist(): void
+    public function test_it_skips_shows_whose_reference_was_already_recorded(): void
     {
-        DB::table('about_settings')->updateOrInsert(
-            ['key' => 'idol_name'],
-            ['value' => 'Freya Jayawardana', 'updated_at' => now()]
-        );
+        $this->setShortname('Oniel');
+
+        TheaterReference::query()->create([
+            'reference_code' => 'SHD44C',
+            'month' => now()->month,
+            'year' => now()->year,
+            'processed_at' => now(),
+        ]);
+
+        $this->fakeTheater([
+            $this->show(['reference_code' => 'SHD44C', 'title' => 'Cara Meminum Ramune']),
+        ]);
+
+        $countBefore = DB::table('show_teater')->count();
+
+        $this->artisan('app:fetch-theater-shows')->assertExitCode(0);
+
+        $this->assertSame($countBefore, DB::table('show_teater')->count());
+    }
+
+    public function test_it_skips_shows_when_the_idol_is_not_in_the_lineup(): void
+    {
+        $this->setShortname('Oniel');
+
+        $this->fakeTheater([
+            $this->show(['reference_code' => 'REF-LINEUP', 'lineup' => [['name' => 'Aralie'], ['name' => 'Christy']]]),
+        ]);
+
+        $this->artisan('app:fetch-theater-shows')->assertExitCode(0);
+
+        $this->assertDatabaseMissing('show_teater', ['setlist' => 'Cara Meminum Ramune']);
+        $this->assertDatabaseMissing('theater_references', ['reference_code' => 'REF-LINEUP']);
+    }
+
+    public function test_it_skips_non_show_types(): void
+    {
+        $this->setShortname('Oniel');
+
+        $this->fakeTheater([
+            $this->show(['reference_code' => 'REF-EVENT', 'type' => 'EVENT']),
+        ]);
+
+        $this->artisan('app:fetch-theater-shows')->assertExitCode(0);
+
+        $this->assertDatabaseMissing('show_teater', ['setlist' => 'Cara Meminum Ramune']);
+        $this->assertDatabaseMissing('theater_references', ['reference_code' => 'REF-EVENT']);
+    }
+
+    public function test_it_reports_when_the_show_is_already_synced(): void
+    {
+        $this->setShortname('Oniel');
 
         $nextShowId = (int) (DB::table('show_teater')->max('show_id') ?? 0) + 1;
         DB::table('show_teater')->insert([
             'show_id' => $nextShowId,
-            'show_date' => '2026/09/10',
+            'show_date' => '2026/09/13',
             'setlist' => 'Cara Meminum Ramune',
             'is_member_show' => 1,
         ]);
 
-        $currentMonth = now()->month;
-        $currentYear = now()->year;
-
-        Http::fake([
-            "https://jkt48.com/api/v1/schedules?lang=id&month={$currentMonth}&year={$currentYear}&type=SHOW" => Http::response([
-                'data' => [
-                    ['reference_code' => 'test-show-ref-002'],
-                ],
-            ], 200),
-            'https://jkt48.com/api/v1/theater-shows/test-show-ref-002?lang=id' => Http::response([
-                'data' => [
-                    'date' => '2026-09-10 12:00:00',
-                    'title' => 'Cara Meminum Ramune',
-                    'jkt48_member' => [
-                        ['name' => 'Freya Jayawardana'],
-                    ],
-                ],
-            ], 200),
+        $this->fakeTheater([
+            $this->show(['reference_code' => 'REF-SYNCED', 'title' => 'Cara Meminum Ramune', 'date' => '2026-09-13']),
         ]);
 
         $countBefore = DB::table('show_teater')->count();
 
         $this->artisan('app:fetch-theater-shows')
-            ->expectsOutputToContain('Show already exists')
-            ->expectsOutput('Fetch completed.')
+            ->expectsOutputToContain('Show terbaru sudah tersinkronisasi')
             ->assertExitCode(0);
 
         $this->assertSame($countBefore, DB::table('show_teater')->count());
+        $this->assertDatabaseHas('theater_references', ['reference_code' => 'REF-SYNCED']);
+    }
+
+    public function test_it_reports_already_synced_when_reference_and_show_already_exist(): void
+    {
+        $this->setShortname('Oniel');
+
+        TheaterReference::query()->create([
+            'reference_code' => 'SHD44C',
+            'month' => now()->month,
+            'year' => now()->year,
+            'processed_at' => now(),
+        ]);
+
+        $nextShowId = (int) (DB::table('show_teater')->max('show_id') ?? 0) + 1;
+        DB::table('show_teater')->insert([
+            'show_id' => $nextShowId,
+            'show_date' => '2026/09/13',
+            'setlist' => 'Cara Meminum Ramune',
+            'is_member_show' => 1,
+        ]);
+
+        $this->fakeTheater([
+            $this->show(['reference_code' => 'SHD44C', 'title' => 'Cara Meminum Ramune', 'date' => '2026-09-13']),
+        ]);
+
+        $countBefore = DB::table('show_teater')->count();
+
+        $this->artisan('app:fetch-theater-shows')
+            ->expectsOutputToContain('Show terbaru sudah tersinkronisasi')
+            ->assertExitCode(0);
+
+        $this->assertSame($countBefore, DB::table('show_teater')->count());
+    }
+
+    public function test_fetch_manually_endpoint_returns_already_synced_message(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $this->setShortname('Oniel');
+
+        TheaterReference::query()->create([
+            'reference_code' => 'SHD44C',
+            'month' => now()->month,
+            'year' => now()->year,
+            'processed_at' => now(),
+        ]);
+
+        $nextShowId = (int) (DB::table('show_teater')->max('show_id') ?? 0) + 1;
+        DB::table('show_teater')->insert([
+            'show_id' => $nextShowId,
+            'show_date' => '2026/09/13',
+            'setlist' => 'Cara Meminum Ramune',
+            'is_member_show' => 1,
+        ]);
+
+        $this->fakeTheater([
+            $this->show(['reference_code' => 'SHD44C', 'title' => 'Cara Meminum Ramune', 'date' => '2026-09-13']),
+        ]);
+
+        $response = $this->post(route('show-teater.fetch-manually'));
+
+        $response->assertOk()->assertJsonPath('success', true);
+        $this->assertStringContainsString('Show terbaru sudah tersinkronisasi', (string) $response->json('message'));
     }
 
     public function test_about_settings_get_helper_fetches_value_by_key(): void
@@ -125,5 +211,44 @@ class FetchTheaterShowsTest extends TestCase
 
         $this->assertSame('Freya Jayawardana', AboutSettings::get('idol_name'));
         $this->assertSame('Default Value', AboutSettings::get('non_existent_key', 'Default Value'));
+    }
+
+    private function setShortname(string $value): void
+    {
+        DB::table('about_settings')->updateOrInsert(
+            ['key' => 'idol_shortname'],
+            ['value' => $value, 'updated_at' => now()]
+        );
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $shows
+     */
+    private function fakeTheater(array $shows): void
+    {
+        Http::fake([
+            'https://jkt48connect.test/api/v1/theater*' => Http::response([
+                'ok' => true,
+                'data' => $shows,
+            ], 200),
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $overrides
+     * @return array<string, mixed>
+     */
+    private function show(array $overrides = []): array
+    {
+        return array_merge([
+            'date' => '2026-09-13',
+            'type' => 'SHOW',
+            'title' => 'Cara Meminum Ramune',
+            'reference_code' => 'REF-001',
+            'lineup' => [
+                ['name' => 'Aralie'],
+                ['name' => 'Oniel'],
+            ],
+        ], $overrides);
     }
 }

@@ -6,9 +6,7 @@ use App\Models\AboutSettings;
 use App\Models\ShowTeater;
 use App\Models\TheaterReference;
 use Illuminate\Console\Command;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Process;
 
 class FetchTheaterShows extends Command
 {
@@ -24,59 +22,47 @@ class FetchTheaterShows extends Command
      *
      * @var string
      */
-    protected $description = 'Fetch theater shows data from JKT48 API';
+    protected $description = 'Fetch theater shows data from JKT48Connect API';
 
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(): int
     {
-        $currentMonth = now()->month;
-        $currentYear = now()->year;
+        $baseUrl = rtrim((string) config('services.jkt48connect.url'), '/');
+        $apiKey = (string) config('services.jkt48connect.key');
 
-        // Hapus reference_code dari bulan sebelumnya
-        TheaterReference::deleteOldReferences($currentMonth, $currentYear);
-
-        // Ambil idol_name dari about_settings
-        $idolName = AboutSettings::where('key', 'idol_name')->value('value');
-        if (! $idolName) {
-            $this->error('Idol name not found in about_settings.');
+        if ($baseUrl === '' || $apiKey === '') {
+            $this->error('JKT48Connect API is not configured (JKT48CONNECT_LIVE_URL / JKT48CONNECT_API_KEY).');
 
             return self::FAILURE;
         }
 
-        // Ambil data dari API schedules
-        $schedules = $this->fetchFromApi("https://jkt48.com/api/v1/schedules?lang=id&month={$currentMonth}&year={$currentYear}&type=SHOW");
-        if (! $schedules) {
-            $this->error('Failed to fetch schedules from API.');
+        $idolShortname = AboutSettings::query()->where('key', 'idol_shortname')->value('value');
+        if (! $idolShortname) {
+            $this->error('Idol shortname not found in about_settings.');
 
             return self::FAILURE;
         }
 
-        // Simpan atau perbarui semua reference_code dari jadwal saat ini
-        foreach (collect($schedules['data'] ?? $schedules) as $schedule) {
-            $referenceCode = $schedule['reference_code'] ?? null;
-            if (! $referenceCode) {
-                continue;
+        $payload = $this->fetchFromApi("{$baseUrl}/api/v1/theater?page=1", $apiKey);
+        if ($payload === null) {
+            $this->error('Failed to fetch theater data from JKT48Connect API.');
+
+            return self::FAILURE;
+        }
+
+        $shows = $payload['data'] ?? [];
+        if (! is_array($shows) || $shows === []) {
+            $this->error('No theater data found.');
+
+            return self::FAILURE;
+        }
+
+        foreach ($shows as $show) {
+            if (is_array($show)) {
+                $this->processShow($show, trim((string) $idolShortname));
             }
-
-            TheaterReference::firstOrCreate([
-                'reference_code' => $referenceCode,
-            ], [
-                'month' => $currentMonth,
-                'year' => $currentYear,
-            ]);
-        }
-
-        // Proses semua reference yang belum diproses untuk bulan ini
-        $references = TheaterReference::where('month', $currentMonth)
-            ->where('year', $currentYear)
-            ->whereNull('processed_at')
-            ->pluck('reference_code');
-
-        foreach ($references as $referenceCode) {
-            $this->processReference($referenceCode, $idolName);
-            usleep(300000); // Jeda 300ms antar request
         }
 
         $this->info('Fetch completed.');
@@ -84,103 +70,131 @@ class FetchTheaterShows extends Command
         return self::SUCCESS;
     }
 
-    private function processReference(string $referenceCode, string $idolName): void
+    /**
+     * @param  array<string, mixed>  $show
+     */
+    private function processShow(array $show, string $idolShortname): void
     {
-        $details = $this->fetchFromApi("https://jkt48.com/api/v1/theater-shows/{$referenceCode}?lang=id");
-        if (! $details) {
-            $this->error("Failed to fetch details for reference_code: {$referenceCode}");
-
+        $referenceCode = $show['reference_code'] ?? null;
+        if (! $referenceCode) {
             return;
         }
 
-        $data = $details['data'] ?? null;
-        if (! $data) {
-            $this->error("No detail data for reference_code: {$referenceCode}");
+        $date = $show['date'] ?? null;
+        $title = isset($show['title']) ? trim((string) $show['title']) : '';
 
-            return;
-        }
+        $alreadySynced = $date && $title !== '' && $this->showExists((string) $date, $title);
 
-        $memberNames = array_column($data['jkt48_member'] ?? [], 'name');
-        $matched = in_array(trim($idolName), array_map('trim', $memberNames), true);
-
-        if ($matched) {
-            $dateSlash = Carbon::parse($data['date'])->timezone('Asia/Jakarta')->format('Y/m/d');
-            $dateDash = Carbon::parse($data['date'])->timezone('Asia/Jakarta')->format('Y-m-d');
-            $title = trim($data['title']);
-
-            $existing = ShowTeater::withTrashed()
-                ->where(function ($query) use ($dateSlash, $dateDash) {
-                    $query->where('show_date', $dateSlash)
-                        ->orWhere('show_date', $dateDash);
-                })
-                ->where('setlist', $title)
-                ->first();
-
-            if ($existing) {
-                if ($existing->trashed()) {
-                    $existing->restore();
-                    $existing->update(['is_scraped_data' => 1]);
-
-                    $this->info("Restored show: {$existing->show_id} - {$existing->show_date} - {$existing->setlist}");
-                } else {
-                    $this->info("Show already exists: {$existing->show_id} - {$existing->show_date} - {$existing->setlist} (skipped)");
-                }
-            } else {
-                // Hitung dari seluruh baris (termasuk yang ter-soft delete) agar show_id tidak menimpa PK.
-                $lastShowId = ShowTeater::withTrashed()->max('show_id') ?? 0;
-                $newShowId = $lastShowId + 1;
-
-                ShowTeater::create([
-                    'show_id' => $newShowId,
-                    'show_date' => $dateSlash,
-                    'setlist' => $title,
-                    'is_scraped_data' => 1,
-                ]);
-
-                $this->info("Saved show: {$newShowId} - {$dateSlash} - {$title}");
+        // Reference sudah pernah diproses: bila show-nya juga sudah ada, beri tahu sudah tersinkronisasi.
+        if (TheaterReference::query()->where('reference_code', $referenceCode)->exists()) {
+            if ($alreadySynced) {
+                $this->error('Show terbaru sudah tersinkronisasi');
             }
+
+            return;
         }
 
-        if (! empty($data['jkt48_member'])) {
-            TheaterReference::where('reference_code', $referenceCode)
-                ->update(['processed_at' => now()]);
+        if (! $this->lineupIncludesIdol($show['lineup'] ?? [], $idolShortname)) {
+            return;
         }
+
+        if (($show['type'] ?? null) !== 'SHOW') {
+            return;
+        }
+
+        if (! $date || $title === '') {
+            return;
+        }
+
+        $this->recordReference((string) $referenceCode);
+
+        if ($alreadySynced) {
+            $this->error('Show terbaru sudah tersinkronisasi');
+
+            return;
+        }
+
+        // Hitung dari seluruh baris (termasuk yang ter-soft delete) agar show_id tidak menimpa PK.
+        $newShowId = (int) (ShowTeater::withTrashed()->max('show_id') ?? 0) + 1;
+
+        ShowTeater::query()->create([
+            'show_id' => $newShowId,
+            'show_date' => (string) $date,
+            'setlist' => $title,
+            'is_scraped_data' => 1,
+        ]);
+
+        $this->info("Saved show: {$newShowId} - {$date} - {$title}");
     }
 
-    private function fetchFromApi(string $url, int $retry = 2): ?array
+    private function showExists(string $date, string $title): bool
     {
-        $headers = [
-            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
-            'Accept' => 'application/json, text/plain, */*',
-            'Referer' => 'https://jkt48.com/schedule',
-        ];
+        $dateSlash = str_replace('-', '/', $date);
 
-        for ($attempt = 1; $attempt <= $retry; $attempt++) {
-            $response = Http::withHeaders($headers)->get($url);
+        return ShowTeater::withTrashed()
+            ->where(function ($query) use ($date, $dateSlash): void {
+                $query->where('show_date', $date)->orWhere('show_date', $dateSlash);
+            })
+            ->where('setlist', $title)
+            ->exists();
+    }
 
-            if ($response->successful()) {
-                return $response->json();
+    /**
+     * @param  mixed  $lineup
+     */
+    private function lineupIncludesIdol($lineup, string $idolShortname): bool
+    {
+        if (! is_array($lineup) || $idolShortname === '') {
+            return false;
+        }
+
+        foreach ($lineup as $member) {
+            if (! is_array($member) || ! isset($member['name'])) {
+                continue;
             }
 
-            // Fallback to system curl (bypasses Cloudflare TLS fingerprinting on Windows)
-            $process = Process::run([
-                'curl.exe',
-                '-s',
-                '-H', 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
-                '-H', 'Accept: application/json, text/plain, */*',
-                '-H', 'Referer: https://jkt48.com/schedule',
-                $url,
-            ]);
+            if (strcasecmp(trim((string) $member['name']), $idolShortname) === 0) {
+                return true;
+            }
+        }
 
-            if ($process->successful()) {
-                $data = json_decode($process->output(), true);
-                if (is_array($data) && ! empty($data)) {
-                    return $data;
+        return false;
+    }
+
+    private function recordReference(string $referenceCode): void
+    {
+        TheaterReference::query()->firstOrCreate(
+            ['reference_code' => $referenceCode],
+            [
+                'month' => now()->month,
+                'year' => now()->year,
+                'processed_at' => now(),
+            ],
+        );
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function fetchFromApi(string $url, string $apiKey, int $retry = 2): ?array
+    {
+        for ($attempt = 1; $attempt <= $retry; $attempt++) {
+            $response = Http::withHeaders([
+                'Accept' => 'application/json',
+                'Authorization' => 'Bearer '.$apiKey,
+                'X-API-KEY' => $apiKey,
+            ])->get($url);
+
+            if ($response->successful()) {
+                $json = $response->json();
+
+                if (is_array($json)) {
+                    return $json;
                 }
             }
 
             if ($attempt < $retry) {
-                usleep(500000); // 500ms delay sebelum retry
+                usleep(500000);
             }
         }
 

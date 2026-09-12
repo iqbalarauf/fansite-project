@@ -15,6 +15,7 @@ new #[Title('About settings')] class extends Component {
     public string $activeTab = 'idol';
 
     public string $idolName = '';
+    public string $idolShortname = '';
     public ?string $idolPhotoPath = null;
     public mixed $idolPhotoUpload = null;
     public string $idolDescription = '';
@@ -70,6 +71,7 @@ new #[Title('About settings')] class extends Component {
         $settings = DB::table('about_settings')->pluck('value', 'key')->all();
 
         $this->idolName = (string) ($settings['idol_name'] ?? '');
+        $this->idolShortname = (string) ($settings['idol_shortname'] ?? '');
         $this->idolPhotoPath = $settings['idol_photo'] ?? null;
         $this->idolDescription = (string) ($settings['idol_description'] ?? '');
         $this->idolAchievements = (string) ($settings['idol_achievements'] ?? '');
@@ -114,6 +116,7 @@ new #[Title('About settings')] class extends Component {
     {
         $this->validate([
             'idolName' => ['required', 'string', 'max:255'],
+            'idolShortname' => ['nullable', 'string', 'max:100'],
             'idolPhotoUpload' => ['nullable', 'image', 'max:3072'],
             'idolDescription' => ['nullable', 'string'],
             'idolAchievements' => ['nullable', 'string'],
@@ -140,6 +143,7 @@ new #[Title('About settings')] class extends Component {
 
         $this->upsertSettings([
             'idol_name' => $this->idolName,
+            'idol_shortname' => $this->idolShortname,
             'idol_slug' => Str::slug($this->idolName),
             'idol_photo' => $this->idolPhotoPath,
             'idol_description' => $this->idolDescription,
@@ -330,6 +334,9 @@ new #[Title('About settings')] class extends Component {
                         <flux:heading size="lg">Basic Information</flux:heading>
 
                         <flux:input wire:model="idolName" :label="__('Nama Oshimen (Idol Name)')" type="text" required />
+
+                        <flux:input wire:model="idolShortname" :label="__('Nama Panggilan (Idol Shortname)')" type="text" placeholder="Contoh: Oniel" />
+                        <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Digunakan untuk mencocokkan lineup jadwal teater dari JKT48Connect.') }}</flux:text>
 
                         <div class="space-y-2">
                             <label class="text-sm font-medium">Upload Idol Photo</label>

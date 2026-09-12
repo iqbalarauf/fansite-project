@@ -5,8 +5,11 @@ namespace App\Http\Controllers;
 use App\Http\Requests\LiveStreamingRequest;
 use App\Models\LiveStreaming;
 use App\Support\ListingQuery;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 
 class LiveStreamingController extends Controller
@@ -60,5 +63,33 @@ class LiveStreamingController extends Controller
 
         return redirect()->route('live-streaming.index')
             ->with('success', 'Live streaming berhasil diupdate.');
+    }
+
+    public function fetchManually(Request $request): JsonResponse
+    {
+        try {
+            $exitCode = Artisan::call('app:fetch-streaming-info');
+            $output = trim(Artisan::output());
+
+            if ($exitCode !== 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $output !== '' ? $output : 'Gagal mengambil data live streaming.',
+                ], 500);
+            }
+
+            Cache::flush();
+
+            return response()->json([
+                'success' => true,
+                'message' => $output !== '' ? $output : 'Data berhasil di-fetch!',
+                'timestamp' => now(),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching data: '.$e->getMessage(),
+            ], 500);
+        }
     }
 }
