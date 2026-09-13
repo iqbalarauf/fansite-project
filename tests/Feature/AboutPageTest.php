@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Support\IdolTheaterStats;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -84,7 +85,7 @@ class AboutPageTest extends TestCase
             ['key' => 'fanbase_name', 'value' => 'Wota Nusantara'],
         ], ['key'], ['value', 'updated_at']);
 
-        $idolHref = route('about.idol');
+        $idolHref = route('about.idol', 'freya');
         $fansiteHref = route('about.fansite');
 
         $this->get(route('home'))
@@ -95,9 +96,67 @@ class AboutPageTest extends TestCase
             ->assertSee('href="'.$idolHref.'"', false)
             ->assertSee('href="'.$fansiteHref.'"', false);
 
-        $this->get(route('about.idol'))
+        $this->get(route('about.idol', 'freya'))
             ->assertOk()
             ->assertSee('href="'.$idolHref.'"', false)
             ->assertSee('href="'.$fansiteHref.'"', false);
+    }
+
+    public function test_about_idol_page_displays_theater_statistics(): void
+    {
+        DB::table('about_settings')->upsert([
+            ['key' => 'idol_name', 'value' => 'Freya'],
+            ['key' => 'idol_slug', 'value' => 'freya'],
+        ], ['key'], ['value', 'updated_at']);
+
+        DB::table('show_teater_categories')->insert([
+            'name' => 'Pajama Drive',
+            'jp_name' => 'パジャマドライブ',
+            'type' => 'setlist',
+            'is_active' => 1,
+        ]);
+
+        DB::table('show_teater_categories')->insert([
+            'name' => 'Tenshi no Shippo',
+            'jp_name' => '天使のしっぽ',
+            'type' => 'unit_song',
+        ]);
+
+        DB::table('show_teater')->insert([
+            ['show_id' => 1, 'show_date' => '2026/09/10', 'setlist' => 'Pajama Drive', 'unit_song' => 'Tenshi no Shippo', 'is_member_show' => 1, 'is_global_center' => 1, 'is_us_center' => 1],
+            ['show_id' => 2, 'show_date' => '2025/01/01', 'setlist' => 'Pajama Drive', 'unit_song' => 'Tenshi no Shippo, Higurashi no Koi', 'is_member_show' => 1, 'is_global_center' => 0, 'is_us_center' => 0],
+        ]);
+
+        $this->get(route('about.idol', 'freya'))
+            ->assertOk()
+            ->assertSee('Show Teater')
+            ->assertSee('Pajama Drive')
+            ->assertSee('Setlist Aktif')
+            ->assertSee('Unit Song')
+            ->assertSee('Tenshi no Shippo')
+            ->assertSee('天使のしっぽ')
+            ->assertSee('On Going')
+            ->assertSee('Global Center')
+            ->assertSee('Center Unit Song')
+            ->assertSee('Tahun Ini');
+    }
+
+    public function test_on_going_falls_back_to_previous_show_when_latest_is_member_show_is_null(): void
+    {
+        DB::table('show_teater_categories')->insert([
+            ['name' => 'Pajama Drive', 'jp_name' => 'パジャマドライブ', 'type' => 'setlist', 'is_active' => 1],
+            ['name' => 'Tenshi no Shippo', 'jp_name' => '天使のしっぽ', 'type' => 'unit_song', 'is_active' => 1],
+            ['name' => 'Higurashi no Koi', 'jp_name' => 'ひぐらしの恋', 'type' => 'unit_song', 'is_active' => 1],
+        ]);
+
+        DB::table('show_teater')->insert([
+            ['show_id' => 3, 'show_date' => '2026/09/10', 'setlist' => 'Pajama Drive', 'unit_song' => 'Higurashi no Koi', 'is_member_show' => null],
+            ['show_id' => 2, 'show_date' => '2026/09/05', 'setlist' => 'Pajama Drive', 'unit_song' => 'Tenshi no Shippo', 'is_member_show' => 1],
+        ]);
+
+        $songs = collect(app(IdolTheaterStats::class)->build()['unit_songs'])->keyBy('name');
+
+        $this->assertTrue($songs['Tenshi no Shippo']['on_going']);
+        $this->assertFalse($songs['Higurashi no Koi']['on_going']);
     }
 }

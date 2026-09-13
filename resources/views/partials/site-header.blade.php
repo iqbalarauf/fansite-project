@@ -16,6 +16,11 @@
     $__idolName = $__about['idol_name'] ?? 'Oshimen';
     $__fanbaseName = $__about['fanbase_name'] ?? 'Fansite';
 
+    $__idolSlug = trim((string) ($__about['idol_slug'] ?? ''));
+    if ($__idolSlug === '') {
+        $__idolSlug = \Illuminate\Support\Str::slug($__idolName);
+    }
+
     $__active = $active ?? 'home';
     $__isAboutPage = in_array($__active, ['idol', 'fansite'], true);
     $__isArticlePage = in_array($__active, ['news', 'blog'], true);
@@ -56,7 +61,7 @@
                     </svg>
                 </summary>
                 <div class="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-700 dark:bg-slate-900">
-                    <a href="{{ route('about.idol') }}"
+                    <a href="{{ route('about.idol', $__idolSlug) }}"
                        class="flex items-center gap-2 rounded-xl px-3 py-2.5 transition {{ $__active === 'idol' ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-400' : 'text-slate-600 hover:bg-slate-50 hover:text-indigo-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-indigo-400' }}">
                         {{ $__idolName }}
                     </a>

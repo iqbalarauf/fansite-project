@@ -12,6 +12,28 @@ class ShowTeaterTest extends TestCase
 {
     use DatabaseTransactions;
 
+    public function test_storing_double_unit_songs_uses_semicolon_separator(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $nextShowId = (int) DB::table('show_teater')->max('show_id') + 1;
+
+        $this->post(route('show-teater.store'), [
+            'show_id' => $nextShowId,
+            'show_date' => '2026-06-22',
+            'setlist' => 'Pajama Drive',
+            'double_us' => '1',
+            'unit_song' => 'Tenshi no Shippo',
+            'unit_song_2' => 'Higurashi no Koi',
+        ])->assertRedirect(route('show-teater.index'));
+
+        $this->assertDatabaseHas('show_teater', [
+            'show_id' => $nextShowId,
+            'unit_song' => 'Tenshi no Shippo; Higurashi no Koi',
+        ]);
+    }
+
     public function test_storing_show_flushes_cache(): void
     {
         $user = User::factory()->create();
@@ -84,13 +106,13 @@ class ShowTeaterTest extends TestCase
         // Check if database contains the formatted double unit song
         $this->assertDatabaseHas('show_teater', [
             'show_id' => $nextShowId,
-            'unit_song' => 'Tenshi no Shippo, Higurashi no Koi',
+            'unit_song' => 'Tenshi no Shippo; Higurashi no Koi',
         ]);
 
         // Get index page and verify correct formatting (Japanese title mapping works for both)
         $response = $this->get(route('show-teater.index'));
         $response->assertStatus(200);
-        $response->assertSee('Tenshi no Shippo (天使のしっぽ), Higurashi no Koi (ひぐらしの恋)', false);
+        $response->assertSee('Tenshi no Shippo (天使のしっぽ); Higurashi no Koi (ひぐらしの恋)', false);
     }
 
     public function test_updating_show_with_double_unit_songs(): void
@@ -149,7 +171,7 @@ class ShowTeaterTest extends TestCase
         // Check if database contains updated double unit song
         $this->assertDatabaseHas('show_teater', [
             'show_id' => $nextShowId,
-            'unit_song' => 'Tenshi no Shippo, Higurashi no Koi',
+            'unit_song' => 'Tenshi no Shippo; Higurashi no Koi',
         ]);
     }
 }

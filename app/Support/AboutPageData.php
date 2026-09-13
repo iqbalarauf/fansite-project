@@ -2,8 +2,12 @@
 
 namespace App\Support;
 
+use Illuminate\Support\Str;
+
 final class AboutPageData
 {
+    public function __construct(private IdolTheaterStats $stats) {}
+
     /**
      * @return array<string, mixed>
      */
@@ -13,6 +17,7 @@ final class AboutPageData
 
         return [
             'idolName' => $about['idol_name'] ?? 'Oshimen',
+            'idolSlug' => $this->slug($about),
             'idolPhoto' => $about['idol_photo'] ?? null,
             'idolDescription' => $about['idol_about'] ?? $about['idol_description'] ?? '',
             'idolAchievements' => $this->lines($about['idol_achievements'] ?? ''),
@@ -25,6 +30,7 @@ final class AboutPageData
             'idolInstagramUrl' => $about['idol_social_media_instagram'] ?? null,
             'idolTwitterUrl' => $about['idol_social_media_twitter'] ?? null,
             'idolTiktokUrl' => $about['idol_social_media_tiktok'] ?? null,
+            'theater' => $this->stats->build(),
         ];
     }
 
@@ -39,6 +45,7 @@ final class AboutPageData
         return [
             'fanbaseName' => $about['fanbase_name'] ?? 'Fanbase',
             'idolName' => $about['idol_name'] ?? 'Idol',
+            'idolSlug' => $this->slug($about),
             'fanbaseLogo' => $about['fanbase_logo'] ?? null,
             'fanbaseDescription' => (string) ($about['fanbase_description'] ?? ''),
             'fanbaseActivities' => $this->lines($about['fanbase_activities'] ?? ''),
@@ -51,6 +58,16 @@ final class AboutPageData
             'fanbaseCtaButton2Text' => (string) ($about['fanbase_cta_button2_text'] ?? ''),
             'fanbaseCtaButton2Link' => (string) ($about['fanbase_cta_button2_link'] ?? ''),
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $about
+     */
+    private function slug(array $about): string
+    {
+        $slug = trim((string) ($about['idol_slug'] ?? ''));
+
+        return $slug !== '' ? $slug : Str::slug((string) ($about['idol_name'] ?? ''));
     }
 
     /**
