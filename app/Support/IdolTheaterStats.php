@@ -188,7 +188,7 @@ final class IdolTheaterStats
      */
     private function splitUnitSongs(?string $value): array
     {
-        return collect(preg_split('/\s*;\s*|\s*,\s*/', (string) $value) ?: [])
+        return collect(preg_split('/\s*;\s*/', (string) $value) ?: [])
             ->map(fn (string $song): string => trim($song))
             ->filter(fn (string $song): bool => $song !== '')
             ->values()
