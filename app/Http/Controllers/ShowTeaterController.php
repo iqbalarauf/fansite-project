@@ -88,7 +88,7 @@ class ShowTeaterController extends Controller
                 return $show;
             }
 
-            $songs = preg_split('/\s*;\s*|\s*,\s*/', $show->unit_song) ?: [];
+            $songs = preg_split('/\s*;\s*/', $show->unit_song) ?: [];
             $formattedSongs = [];
             foreach ($songs as $song) {
                 if ($song === '') {

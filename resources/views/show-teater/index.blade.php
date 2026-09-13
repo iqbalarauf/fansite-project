@@ -695,7 +695,7 @@
             const alpineRoot = document.getElementById('edit-modal-root');
             if (alpineRoot && alpineRoot._x_dataStack) {
                 const alpineData = Alpine.$data(alpineRoot);
-                const songs = (show.unit_song || '').split(/\s*[;,]\s*/);
+                const songs = (show.unit_song || '').split(/\s*;\s*/);
                 const isDouble = songs.length > 1;
 
                 alpineData.selectedSetlist = show.setlist || '';
@@ -711,7 +711,7 @@
                 }, 50);
             } else {
                 // Fallback: populate unit songs manually
-                const songs = (show.unit_song || '').split(/\s*[;,]\s*/);
+                const songs = (show.unit_song || '').split(/\s*;\s*/);
                 const isDouble = songs.length > 1;
 
                 const editDoubleUs = document.getElementById('edit-double-us');

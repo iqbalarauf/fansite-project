@@ -141,6 +141,21 @@ class AboutPageTest extends TestCase
             ->assertSee('Tahun Ini');
     }
 
+    public function test_unit_song_separator_is_semicolon_only(): void
+    {
+        DB::table('show_teater')->insert([
+            ['show_id' => 1, 'show_date' => '2026/09/10', 'setlist' => 'Set A', 'unit_song' => 'Title, With Comma', 'is_member_show' => 1],
+            ['show_id' => 2, 'show_date' => '2026/09/11', 'setlist' => 'Set A', 'unit_song' => 'Song A; Song B', 'is_member_show' => 1],
+        ]);
+
+        $names = collect(app(IdolTheaterStats::class)->build()['unit_songs'])->pluck('name')->all();
+
+        $this->assertContains('Title, With Comma', $names);
+        $this->assertContains('Song A', $names);
+        $this->assertContains('Song B', $names);
+        $this->assertCount(3, $names);
+    }
+
     public function test_on_going_falls_back_to_previous_show_when_latest_is_member_show_is_null(): void
     {
         DB::table('show_teater_categories')->insert([
