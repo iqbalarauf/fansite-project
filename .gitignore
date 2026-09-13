@@ -23,4 +23,9 @@ yarn-error.log
 /.vscode
 /.zed
 /vuexy-bootstrap-html-admin-template
-prd.md
+
+# Ignore all markdown files
+*.md
+
+# Do not ignore README.md
+!README.md
