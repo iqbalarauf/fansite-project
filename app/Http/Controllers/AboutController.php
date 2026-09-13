@@ -7,9 +7,16 @@ use Illuminate\View\View;
 
 class AboutController extends Controller
 {
-    public function idol(AboutPageData $page): View
+    public function idol(AboutPageData $page, ?string $idol = null): View
     {
-        return view('about.idol', $page->idol());
+        $data = $page->idol();
+        $slug = (string) ($data['idolSlug'] ?? '');
+
+        if ($idol !== null && $slug !== '' && strcasecmp($slug, $idol) !== 0) {
+            abort(404);
+        }
+
+        return view('about.idol', $data);
     }
 
     public function fansite(AboutPageData $page): View

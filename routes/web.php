@@ -23,8 +23,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', WelcomeController::class)->name('home');
 
-Route::get('about/idol', [AboutController::class, 'idol'])->name('about.idol');
 Route::get('about/fansite', [AboutController::class, 'fansite'])->name('about.fansite');
+Route::get('about/{idol?}', [AboutController::class, 'idol'])->name('about.idol');
 
 Route::get('majalah', [PublicMagazineController::class, 'index'])->middleware('feature:magazines')->name('magazine.index');
 Route::get('majalah/{magazine:slug}', [PublicMagazineController::class, 'show'])->middleware('feature:magazines')->name('magazine.show');

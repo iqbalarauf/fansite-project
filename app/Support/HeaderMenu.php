@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\MenuItem;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 final class HeaderMenu
 {
@@ -32,7 +33,7 @@ final class HeaderMenu
     {
         return [
             'home' => ['label' => 'Home', 'url' => route('home')],
-            'about_idol' => ['label' => 'About Idol', 'url' => route('about.idol')],
+            'about_idol' => ['label' => 'About Idol', 'url' => self::aboutIdolUrl()],
             'about_fansite' => ['label' => 'About Fansite', 'url' => route('about.fansite')],
             'magazines' => ['label' => 'Majalah', 'url' => route('magazine.index')],
             'news' => ['label' => 'News', 'url' => route('news.index')],
@@ -46,6 +47,18 @@ final class HeaderMenu
         $pages = self::builtInPages();
 
         return $key !== null && isset($pages[$key]) ? $pages[$key]['url'] : null;
+    }
+
+    private static function aboutIdolUrl(): string
+    {
+        $about = SettingBag::about();
+        $slug = trim((string) ($about['idol_slug'] ?? ''));
+
+        if ($slug === '') {
+            $slug = Str::slug((string) ($about['idol_name'] ?? ''));
+        }
+
+        return $slug !== '' ? route('about.idol', $slug) : route('about.idol');
     }
 
     public static function builtInLabel(?string $key): ?string

@@ -71,7 +71,7 @@
 
     <section class="mx-auto max-w-7xl px-4 py-4 pb-16 sm:px-6 lg:px-8">
         <div class="flex flex-wrap gap-4">
-            <a href="{{ route('about.idol') }}" class="rounded-full bg-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500">Tentang {{ $idolName ?? 'Idol' }}</a>
+            <a href="{{ route('about.idol', $idolSlug ?? '') }}" class="rounded-full bg-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500">Tentang {{ $idolName ?? 'Idol' }}</a>
             <a href="{{ route('home') }}" class="rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-900 transition hover:border-indigo-300 hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:hover:text-indigo-400">Kembali ke Beranda</a>
         </div>
     </section>

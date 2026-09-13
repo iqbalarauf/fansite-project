@@ -88,9 +88,13 @@ class ShowTeaterController extends Controller
                 return $show;
             }
 
-            $songs = explode(', ', $show->unit_song);
+            $songs = preg_split('/\s*;\s*|\s*,\s*/', $show->unit_song) ?: [];
             $formattedSongs = [];
             foreach ($songs as $song) {
+                if ($song === '') {
+                    continue;
+                }
+
                 $jpName = $unitSongJpMap[$show->setlist][$song] ?? null;
                 if ($jpName) {
                     $formattedSongs[] = "{$song} ({$jpName})";
@@ -99,7 +103,7 @@ class ShowTeaterController extends Controller
                 }
             }
 
-            $show->display_unit_song = implode(', ', $formattedSongs);
+            $show->display_unit_song = implode('; ', $formattedSongs);
 
             return $show;
         });
@@ -184,7 +188,7 @@ class ShowTeaterController extends Controller
 
         $unitSong = $validated['unit_song'] ?? '';
         if ($request->has('double_us') && $request->filled('unit_song_2')) {
-            $unitSong = ($validated['unit_song'] ?? '').', '.$request->input('unit_song_2');
+            $unitSong = ($validated['unit_song'] ?? '').'; '.$request->input('unit_song_2');
         }
 
         // Convert date from YYYY-MM-DD (HTML input) to YYYY/MM/DD (DB format)
@@ -236,7 +240,7 @@ class ShowTeaterController extends Controller
 
         $unitSong = $validated['unit_song'] ?? '';
         if ($request->has('double_us') && $request->filled('unit_song_2')) {
-            $unitSong = ($validated['unit_song'] ?? '').', '.$request->input('unit_song_2');
+            $unitSong = ($validated['unit_song'] ?? '').'; '.$request->input('unit_song_2');
         }
 
         // Convert date from YYYY-MM-DD (HTML input) to YYYY/MM/DD (DB format)
