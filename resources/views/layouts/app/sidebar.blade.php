@@ -36,6 +36,11 @@
                     </flux:sidebar.group>
                 @endif
                 @if (auth()->user()->canAccessPages())
+                    @php
+                        $__newsEnabled = \App\Support\SettingBag::featureEnabled('news');
+                        $__blogEnabled = \App\Support\SettingBag::featureEnabled('blog');
+                        $__triviaEnabled = \App\Support\SettingBag::featureEnabled('trivia');
+                    @endphp
                     <flux:sidebar.group :heading="__('Content Management')" class="grid">
                         <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="rectangle-stack" :href="route('pages.index')" :current="request()->routeIs('pages.*')" wire:navigate>
                             {{ __('Pages') }}
@@ -45,10 +50,12 @@
                                 {{ __('Majalah') }}
                             </flux:sidebar.item>
                         @endif
-                        @php
-                            $__newsEnabled = \App\Support\SettingBag::featureEnabled('news');
-                            $__blogEnabled = \App\Support\SettingBag::featureEnabled('blog');
-                        @endphp
+                        <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="photo" :href="route('content.gallery.index')" :current="request()->routeIs('content.gallery.*')" wire:navigate>
+                            {{ __('Galeri') }}
+                        </flux:sidebar.item>
+                    </flux:sidebar.group>
+
+                    <flux:sidebar.group :heading="__('Additional Content')" class="grid">
                         @if ($__newsEnabled)
                             <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="newspaper" :href="route('content.news.index')" :current="request()->routeIs('content.news.*')" wire:navigate>
                                 {{ __('News') }}
@@ -59,17 +66,14 @@
                                 {{ __('Blog') }}
                             </flux:sidebar.item>
                         @endif
-                        @if ($__newsEnabled || $__blogEnabled)
-                            <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="tag" :href="route('content.categories.index')" :current="request()->routeIs('content.categories.*')" wire:navigate>
-                                {{ __('Kategori') }}
-                            </flux:sidebar.item>
-                        @endif
-                        <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="photo" :href="route('content.gallery.index')" :current="request()->routeIs('content.gallery.*')" wire:navigate>
-                            {{ __('Galeri') }}
-                        </flux:sidebar.item>
                         <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="clock" :href="route('content.timeline.index')" :current="request()->routeIs('content.timeline.*')" wire:navigate>
                             {{ __('Timeline') }}
                         </flux:sidebar.item>
+                        @if ($__triviaEnabled)
+                            <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="question-mark-circle" :href="route('content.trivia.index')" :current="request()->routeIs('content.trivia.*')" wire:navigate>
+                                {{ __('Trivia') }}
+                            </flux:sidebar.item>
+                        @endif
                     </flux:sidebar.group>
                 @endif
                 @if (auth()->user()->isSuperAdmin())

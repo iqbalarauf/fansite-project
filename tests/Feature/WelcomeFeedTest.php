@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\BlogPost;
 use App\Models\Magazine;
 use App\Models\NewsPost;
+use App\Models\Trivia;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -67,6 +68,21 @@ class WelcomeFeedTest extends TestCase
             ->assertOk()
             ->assertSee('Majalah Terbaru')
             ->assertSee('Majalah Edisi Satu');
+    }
+
+    public function test_feed_source_can_be_set_to_trivia(): void
+    {
+        $this->setFeedSource('trivia');
+
+        Trivia::query()->create([
+            'title' => 'Fakta Trivia',
+            'description' => 'Deskripsi trivia',
+        ]);
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('Trivia Terbaru')
+            ->assertSee('Fakta Trivia');
     }
 
     public function test_feed_card_is_hidden_when_the_source_feature_is_disabled(): void

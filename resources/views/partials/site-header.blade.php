@@ -27,6 +27,7 @@
     $__newsEnabled = SettingBag::featureEnabled('news');
     $__blogEnabled = SettingBag::featureEnabled('blog');
     $__magazineEnabled = SettingBag::featureEnabled('magazines');
+    $__triviaEnabled = SettingBag::featureEnabled('trivia');
     $__customMenu = HeaderMenu::isCustom();
     $__customMenuItems = $__customMenu ? HeaderMenu::tree() : [];
     $__navItem = fn (string $item): string => $item
@@ -104,6 +105,11 @@
 
             <a href="{{ route('gallery.index') }}"
                class="rounded-full px-4 py-2 transition {{ $__navItem($__active === 'gallery') }}">Galeri</a>
+
+            @if ($__triviaEnabled)
+                <a href="{{ route('trivia.index') }}"
+                   class="rounded-full px-4 py-2 transition {{ $__navItem($__active === 'trivia') }}">Trivia</a>
+            @endif
 
             <a href="{{ route('home') }}#data"
                class="rounded-full px-4 py-2 transition {{ $__navItem(false) }}">Data</a>

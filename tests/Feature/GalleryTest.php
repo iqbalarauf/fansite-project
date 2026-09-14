@@ -88,7 +88,9 @@ class GalleryTest extends TestCase
         $this->get(route('gallery.index'))
             ->assertOk()
             ->assertSee('Foto A')
-            ->assertDontSee('Video A');
+            ->assertDontSee('Video A')
+            ->assertSee('id="media-lightbox"', false)
+            ->assertSee('data-lightbox-image', false);
     }
 
     public function test_public_gallery_mode_videos_shows_only_videos(): void

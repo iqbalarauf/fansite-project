@@ -25,7 +25,12 @@
                 <div class="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     @foreach ($photos as $photo)
                         <figure class="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                            <img src="{{ Storage::url($photo->photo) }}" alt="{{ $photo->description ?: 'Gallery photo' }}" class="aspect-[4/3] w-full object-cover" loading="lazy" />
+                            <button type="button" onclick="openMediaLightbox(this)" class="block w-full cursor-zoom-in"
+                                    data-lightbox-image="{{ Storage::url($photo->photo) }}"
+                                    data-lightbox-description="{{ $photo->description }}"
+                                    data-lightbox-credit="{{ $photo->credit_photographer ? 'Credit: '.$photo->credit_photographer : '' }}">
+                                <img src="{{ Storage::url($photo->photo) }}" alt="{{ $photo->description ?: 'Gallery photo' }}" class="aspect-[4/3] w-full object-cover transition duration-500 hover:opacity-95" loading="lazy" />
+                            </button>
                             @if ($photo->description || $photo->credit_photographer)
                                 <figcaption class="p-5">
                                     @if ($photo->description)

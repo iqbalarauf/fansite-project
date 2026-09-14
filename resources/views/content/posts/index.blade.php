@@ -10,6 +10,20 @@
             </flux:button>
         </div>
 
+        @if ($section->value === 'blog')
+            <div class="flex gap-1 border-b border-zinc-200 dark:border-zinc-700">
+                <a href="{{ route('content.blog.index') }}"
+                   class="border-b-2 border-blue-500 px-4 py-2.5 text-sm font-medium text-blue-600 dark:text-blue-400">
+                    Artikel
+                </a>
+                <a href="{{ route('content.categories.index', ['type' => 'blog']) }}"
+                   class="border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-zinc-500 transition-colors hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                   wire:navigate>
+                    Kategori
+                </a>
+            </div>
+        @endif
+
         @if (session('success'))
             <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300">
                 {{ session('success') }}

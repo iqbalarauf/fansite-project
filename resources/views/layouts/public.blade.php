@@ -11,5 +11,7 @@
         </main>
 
         @include('partials.site-footer')
+
+        @include('partials.media-lightbox')
     </body>
 </html>
