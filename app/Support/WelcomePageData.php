@@ -8,6 +8,7 @@ use App\Models\Magazine;
 use App\Models\NewsPost;
 use App\Models\Post;
 use App\Models\ShowTeater;
+use App\Models\Trivia;
 use Illuminate\Support\Collection;
 
 final class WelcomePageData
@@ -98,6 +99,22 @@ final class WelcomePageData
                         'cover' => $magazine->cover,
                         'date' => $magazine->created_at,
                         'url' => route('magazine.show', $magazine->slug),
+                    ])
+                    ->all(),
+            ],
+            'trivia' => [
+                'label' => 'Trivia',
+                'heading' => 'Trivia Terbaru',
+                'indexRoute' => route('trivia.index'),
+                'items' => Trivia::query()
+                    ->latest('created_at')
+                    ->take(4)
+                    ->get()
+                    ->map(fn (Trivia $trivia): array => [
+                        'title' => $trivia->title,
+                        'cover' => $trivia->image,
+                        'date' => $trivia->created_at,
+                        'url' => route('trivia.index'),
                     ])
                     ->all(),
             ],

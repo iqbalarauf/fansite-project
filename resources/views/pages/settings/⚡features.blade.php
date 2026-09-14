@@ -10,6 +10,7 @@ new #[Title('Features Activation')] class extends Component {
     public bool $newsEnabled = true;
     public bool $blogEnabled = true;
     public bool $magazineEnabled = true;
+    public bool $triviaEnabled = true;
     public string $galleryMode = 'photos';
     public string $welcomeFeedSource = 'news';
 
@@ -22,25 +23,27 @@ new #[Title('Features Activation')] class extends Component {
         $this->newsEnabled = filter_var($settings['news_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
         $this->blogEnabled = filter_var($settings['blog_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
         $this->magazineEnabled = filter_var($settings['magazines_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
+        $this->triviaEnabled = filter_var($settings['trivia_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
 
         $galleryMode = (string) ($settings['gallery_mode'] ?? 'photos');
         $this->galleryMode = in_array($galleryMode, ['photos', 'videos', 'both'], true) ? $galleryMode : 'photos';
 
         $feedSource = (string) ($settings['welcome_feed_source'] ?? 'news');
-        $this->welcomeFeedSource = in_array($feedSource, ['news', 'blog', 'magazines'], true) ? $feedSource : 'news';
+        $this->welcomeFeedSource = in_array($feedSource, ['news', 'blog', 'magazines', 'trivia'], true) ? $feedSource : 'news';
     }
 
     public function save(): void
     {
         $this->validate([
             'galleryMode' => ['required', 'in:photos,videos,both'],
-            'welcomeFeedSource' => ['required', 'in:news,blog,magazines'],
+            'welcomeFeedSource' => ['required', 'in:news,blog,magazines,trivia'],
         ]);
 
         foreach ([
             'news_enabled' => $this->newsEnabled,
             'blog_enabled' => $this->blogEnabled,
             'magazines_enabled' => $this->magazineEnabled,
+            'trivia_enabled' => $this->triviaEnabled,
         ] as $key => $enabled) {
             DB::table('app_settings')->updateOrInsert(
                 ['key' => $key],
@@ -95,6 +98,14 @@ new #[Title('Features Activation')] class extends Component {
                         <span class="block text-xs text-zinc-500 dark:text-zinc-400">{{ __('Tampilkan menu dan halaman publik Majalah.') }}</span>
                     </span>
                 </label>
+
+                <label class="flex items-start gap-3">
+                    <input type="checkbox" wire:model="triviaEnabled" value="1" class="mt-0.5 rounded border-zinc-300 text-blue-600">
+                    <span class="text-sm text-zinc-700 dark:text-zinc-200">
+                        <span class="font-medium">{{ __('Trivia') }}</span>
+                        <span class="block text-xs text-zinc-500 dark:text-zinc-400">{{ __('Tampilkan menu dan halaman publik Trivia.') }}</span>
+                    </span>
+                </label>
             </div>
 
             <div class="space-y-4 rounded-xl border border-zinc-200 p-4 dark:border-zinc-700">
@@ -119,7 +130,7 @@ new #[Title('Features Activation')] class extends Component {
                     <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Pilih sumber konten untuk kartu di halaman Welcome.') }}</p>
                 </div>
 
-                @foreach (['news' => 'News', 'blog' => 'Blog', 'magazines' => 'Majalah'] as $value => $label)
+                @foreach (['news' => 'News', 'blog' => 'Blog', 'magazines' => 'Majalah', 'trivia' => 'Trivia'] as $value => $label)
                     <label class="flex items-start gap-3">
                         <input type="radio" wire:model="welcomeFeedSource" value="{{ $value }}" class="mt-0.5 rounded border-zinc-300 text-blue-600">
                         <span class="text-sm text-zinc-700 dark:text-zinc-200">{{ __($label) }}</span>

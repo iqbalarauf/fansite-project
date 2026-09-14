@@ -44,12 +44,12 @@ final class SettingBag
     }
 
     /**
-     * Content source for the welcome "Berita Terbaru" card: news, blog, or magazines.
+     * Content source for the welcome "Berita Terbaru" card: news, blog, magazines, or trivia.
      */
     public static function welcomeFeedSource(): string
     {
         $source = (string) (self::app()['welcome_feed_source'] ?? 'news');
 
-        return in_array($source, ['news', 'blog', 'magazines'], true) ? $source : 'news';
+        return in_array($source, ['news', 'blog', 'magazines', 'trivia'], true) ? $source : 'news';
     }
 }

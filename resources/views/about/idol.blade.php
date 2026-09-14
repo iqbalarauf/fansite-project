@@ -30,6 +30,14 @@
             <p class="mt-4 max-w-3xl text-lg leading-9 text-slate-600 dark:text-slate-300">{{ $idolDescription }}</p>
         @endif
 
+        <a href="{{ route('timeline.index') }}"
+           class="mt-6 inline-flex items-center gap-2 rounded-full bg-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="size-4">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Lihat Timeline
+        </a>
+
         <div class="mt-10 grid gap-10 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
             <div class="flex flex-col gap-6">
                 @if ($idolPhoto)

@@ -158,3 +158,60 @@ document.addEventListener('DOMContentLoaded', initAllRichText);
 document.addEventListener('livewire:navigated', initAllRichText);
 
 window.initRichText = initAllRichText;
+
+window.openMediaLightbox = function (trigger) {
+    const root = document.getElementById('media-lightbox');
+
+    if (!root) {
+        return;
+    }
+
+    const image = document.getElementById('media-lightbox-image');
+    const title = document.getElementById('media-lightbox-title');
+    const description = document.getElementById('media-lightbox-description');
+    const credit = document.getElementById('media-lightbox-credit');
+    const closeButton = document.getElementById('media-lightbox-close');
+    const backdrop = document.getElementById('media-lightbox-backdrop');
+
+    const imageSrc = trigger.dataset.lightboxImage || '';
+    if (imageSrc) {
+        image.src = imageSrc;
+        image.classList.remove('hidden');
+    } else {
+        image.removeAttribute('src');
+        image.classList.add('hidden');
+    }
+
+    const titleText = trigger.dataset.lightboxTitle || '';
+    title.textContent = titleText;
+    title.classList.toggle('hidden', titleText === '');
+
+    const descriptionText = trigger.dataset.lightboxDescription || '';
+    description.textContent = descriptionText;
+    description.classList.toggle('hidden', descriptionText === '');
+
+    const creditText = trigger.dataset.lightboxCredit || '';
+    credit.textContent = creditText;
+    credit.classList.toggle('hidden', creditText === '');
+
+    function close() {
+        root.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+        document.removeEventListener('keydown', onKey);
+        closeButton.removeEventListener('click', close);
+        backdrop.removeEventListener('click', close);
+    }
+
+    function onKey(event) {
+        if (event.key === 'Escape') {
+            close();
+        }
+    }
+
+    root.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+    closeButton.addEventListener('click', close);
+    backdrop.addEventListener('click', close);
+    document.addEventListener('keydown', onKey);
+    closeButton.focus();
+};
