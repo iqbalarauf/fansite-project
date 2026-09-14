@@ -6,6 +6,7 @@ use App\Http\Controllers\ConcertEventsController;
 use App\Http\Controllers\Content\CategoryController;
 use App\Http\Controllers\Content\GalleryController;
 use App\Http\Controllers\Content\PostController;
+use App\Http\Controllers\Content\TimelineController;
 use App\Http\Controllers\CustomPageController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LiveStreamingController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\MeetGreetEventsController;
 use App\Http\Controllers\PublicGalleryController;
 use App\Http\Controllers\PublicMagazineController;
 use App\Http\Controllers\PublicPostController;
+use App\Http\Controllers\PublicTimelineController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\ShowTeaterCategoriesController;
 use App\Http\Controllers\ShowTeaterController;
@@ -38,6 +40,8 @@ Route::get('blog/{post}', [PublicPostController::class, 'show'])->defaults('sect
 Route::get('schedule', ScheduleController::class)->name('schedule.index');
 
 Route::get('galeri', [PublicGalleryController::class, 'index'])->name('gallery.index');
+
+Route::get('timeline', [PublicTimelineController::class, 'index'])->name('timeline.index');
 
 Route::middleware(['auth', 'verified', 'block-view-only-writes'])->group(function () {
     Route::middleware('role:super_admin,view_only,bank_data_admin')->group(function () {
@@ -119,6 +123,12 @@ Route::middleware(['auth', 'verified', 'block-view-only-writes'])->group(functio
         Route::post('content/gallery/videos', [GalleryController::class, 'storeVideo'])->name('content.gallery.videos.store');
         Route::put('content/gallery/videos/{galleryVideo}', [GalleryController::class, 'updateVideo'])->name('content.gallery.videos.update');
         Route::delete('content/gallery/videos/{galleryVideo}', [GalleryController::class, 'destroyVideo'])->name('content.gallery.videos.destroy');
+
+        // Timeline
+        Route::get('content/timeline', [TimelineController::class, 'index'])->name('content.timeline.index');
+        Route::post('content/timeline', [TimelineController::class, 'store'])->name('content.timeline.store');
+        Route::put('content/timeline/{timeline}', [TimelineController::class, 'update'])->name('content.timeline.update');
+        Route::delete('content/timeline/{timeline}', [TimelineController::class, 'destroy'])->name('content.timeline.destroy');
     });
 
     Route::middleware('role:super_admin')->group(function () {
