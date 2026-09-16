@@ -23,6 +23,7 @@ yarn-error.log
 /.vscode
 /.zed
 /vuexy-bootstrap-html-admin-template
+/stsphotoapp
 
 # Ignore all markdown files
 *.md

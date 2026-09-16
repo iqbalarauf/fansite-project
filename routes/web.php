@@ -15,6 +15,7 @@ use App\Http\Controllers\MagazineController;
 use App\Http\Controllers\MeetGreetEventsController;
 use App\Http\Controllers\PublicGalleryController;
 use App\Http\Controllers\PublicMagazineController;
+use App\Http\Controllers\PublicPhotoboothController;
 use App\Http\Controllers\PublicPostController;
 use App\Http\Controllers\PublicTimelineController;
 use App\Http\Controllers\PublicTriviaController;
@@ -46,6 +47,10 @@ Route::get('galeri', [PublicGalleryController::class, 'index'])->name('gallery.i
 Route::get('timeline', [PublicTimelineController::class, 'index'])->name('timeline.index');
 
 Route::get('trivia', [PublicTriviaController::class, 'index'])->middleware('feature:trivia')->name('trivia.index');
+
+Route::get('photobooth/{slug?}', [PublicPhotoboothController::class, 'show'])
+    ->middleware(['feature:photobooth', 'throttle:30,1'])
+    ->name('photobooth.show');
 
 Route::middleware(['auth', 'verified', 'block-view-only-writes'])->group(function () {
     Route::middleware('role:super_admin,view_only,bank_data_admin')->group(function () {

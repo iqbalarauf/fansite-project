@@ -74,6 +74,11 @@
                                 {{ __('Trivia') }}
                             </flux:sidebar.item>
                         @endif
+                        @if (auth()->user()?->isSuperAdmin())
+                            <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="camera" :href="route('photobooth.edit')" :current="request()->routeIs('photobooth.edit')" wire:navigate>
+                                {{ __('Photobooth') }}
+                            </flux:sidebar.item>
+                        @endif
                     </flux:sidebar.group>
                 @endif
                 @if (auth()->user()->isSuperAdmin())
