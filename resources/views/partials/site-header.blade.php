@@ -28,6 +28,8 @@
     $__blogEnabled = SettingBag::featureEnabled('blog');
     $__magazineEnabled = SettingBag::featureEnabled('magazines');
     $__triviaEnabled = SettingBag::featureEnabled('trivia');
+    $__photoboothEnabled = SettingBag::featureEnabled('photobooth');
+    $__photoboothSlug = $__photoboothEnabled ? \App\Models\Photobooth::current()?->slug : null;
     $__customMenu = HeaderMenu::isCustom();
     $__customMenuItems = $__customMenu ? HeaderMenu::tree() : [];
     $__navItem = fn (string $item): string => $item
@@ -109,6 +111,11 @@
             @if ($__triviaEnabled)
                 <a href="{{ route('trivia.index') }}"
                    class="rounded-full px-4 py-2 transition {{ $__navItem($__active === 'trivia') }}">Trivia</a>
+            @endif
+
+            @if ($__photoboothEnabled && $__photoboothSlug)
+                <a href="{{ $__photoboothSlug === 'photobooth' ? route('photobooth.show') : route('photobooth.show', $__photoboothSlug) }}"
+                   class="rounded-full px-4 py-2 transition {{ $__navItem($__active === 'photobooth') }}">Photobooth</a>
             @endif
 
             <a href="{{ route('home') }}#data"

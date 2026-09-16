@@ -11,6 +11,7 @@ new #[Title('Features Activation')] class extends Component {
     public bool $blogEnabled = true;
     public bool $magazineEnabled = true;
     public bool $triviaEnabled = true;
+    public bool $photoboothEnabled = true;
     public string $galleryMode = 'photos';
     public string $welcomeFeedSource = 'news';
 
@@ -24,6 +25,7 @@ new #[Title('Features Activation')] class extends Component {
         $this->blogEnabled = filter_var($settings['blog_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
         $this->magazineEnabled = filter_var($settings['magazines_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
         $this->triviaEnabled = filter_var($settings['trivia_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
+        $this->photoboothEnabled = filter_var($settings['photobooth_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
 
         $galleryMode = (string) ($settings['gallery_mode'] ?? 'photos');
         $this->galleryMode = in_array($galleryMode, ['photos', 'videos', 'both'], true) ? $galleryMode : 'photos';
@@ -44,6 +46,7 @@ new #[Title('Features Activation')] class extends Component {
             'blog_enabled' => $this->blogEnabled,
             'magazines_enabled' => $this->magazineEnabled,
             'trivia_enabled' => $this->triviaEnabled,
+            'photobooth_enabled' => $this->photoboothEnabled,
         ] as $key => $enabled) {
             DB::table('app_settings')->updateOrInsert(
                 ['key' => $key],
@@ -104,6 +107,14 @@ new #[Title('Features Activation')] class extends Component {
                     <span class="text-sm text-zinc-700 dark:text-zinc-200">
                         <span class="font-medium">{{ __('Trivia') }}</span>
                         <span class="block text-xs text-zinc-500 dark:text-zinc-400">{{ __('Tampilkan menu dan halaman publik Trivia.') }}</span>
+                    </span>
+                </label>
+
+                <label class="flex items-start gap-3">
+                    <input type="checkbox" wire:model="photoboothEnabled" value="1" class="mt-0.5 rounded border-zinc-300 text-blue-600">
+                    <span class="text-sm text-zinc-700 dark:text-zinc-200">
+                        <span class="font-medium">{{ __('Photobooth') }}</span>
+                        <span class="block text-xs text-zinc-500 dark:text-zinc-400">{{ __('Tampilkan menu dan halaman publik Photobooth.') }}</span>
                     </span>
                 </label>
             </div>
