@@ -82,6 +82,11 @@
                     </flux:sidebar.group>
                 @endif
                 @if (auth()->user()->isSuperAdmin())
+                    <flux:sidebar.group :heading="__('Data Integration')" class="grid">
+                        <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="table-cells" :href="route('sheet-integration.comparison')" :current="request()->routeIs('sheet-integration.*')" wire:navigate>
+                            {{ __('Sheet Integration') }}
+                        </flux:sidebar.item>
+                    </flux:sidebar.group>
                     <flux:sidebar.group :heading="__('User Management')" class="grid">
                         <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="users" :href="route('users.index')" :current="request()->routeIs('users.*')" wire:navigate>
                             {{ __('Daftar User') }}

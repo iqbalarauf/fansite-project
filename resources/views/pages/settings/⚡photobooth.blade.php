@@ -176,14 +176,12 @@ new #[Title('Photobooth')] class extends Component {
 }; ?>
 
 <section class="w-full">
-    @include('partials.settings-heading')
-
-    <flux:heading class="sr-only">{{ __('Photobooth') }}</flux:heading>
+    <div>
+        <flux:heading level="1" size="xl">{{ __('Photobooth') }}</flux:heading>
+        <flux:subheading>{{ __('Atur photobooth online: slug, jadwal, layout, frame, dan posisi foto.') }}</flux:subheading>
+    </div>
 
     <div class="w-full max-w-7xl">
-        <flux:heading>{{ __('Photobooth') }}</flux:heading>
-        <flux:subheading>{{ __('Atur photobooth online: slug, jadwal, layout, frame, dan posisi foto.') }}</flux:subheading>
-
         <form wire:submit="save" class="mt-5 space-y-6">
             <div class="grid items-stretch gap-6 lg:grid-cols-3">
                 <div class="space-y-6">

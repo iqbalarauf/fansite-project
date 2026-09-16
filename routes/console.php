@@ -9,3 +9,5 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('app:fetch-streaming-info')->everyTenMinutes()->withoutOverlapping();
+
+Schedule::command('app:sync-google-sheets')->hourly()->withoutOverlapping();
