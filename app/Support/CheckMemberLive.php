@@ -61,24 +61,56 @@ final class CheckMemberLive
         $status = $this->offline();
 
         foreach ($items as $item) {
-            if (! is_array($item) || ! isset($item['name'])) {
+            if (! is_array($item)) {
                 continue;
             }
 
-            if (strcasecmp(trim((string) $item['name']), $memberName) !== 0) {
+            if (! $this->matchesMember($item, $memberName)) {
                 continue;
             }
 
-            $platform = strtolower(trim((string) ($item['platform'] ?? '')));
+            $platform = strtolower(trim((string) ($item['platform'] ?? $item['type'] ?? '')));
 
             if ($platform === 'showroom') {
                 $status['showroom'] = true;
-            } elseif ($platform === 'idn') {
+            } elseif (in_array($platform, ['idn', 'idn app'], true)) {
                 $status['idn'] = true;
             }
         }
 
         return $status;
+    }
+
+    /**
+     * The live API returns member names with a "JKT48" suffix (e.g. "Oniel JKT48")
+     * and a url_key like "jkt48_oniel", so matching must be normalized and suffix-aware.
+     *
+     * @param  array<string, mixed>  $item
+     */
+    private function matchesMember(array $item, string $memberName): bool
+    {
+        $target = $this->normalize($memberName);
+
+        if ($target === '') {
+            return false;
+        }
+
+        $candidates = array_unique([$target, $this->normalize($memberName.' JKT48')]);
+        $keys = array_map(fn (string $candidate): string => 'jkt48'.$candidate, $candidates);
+
+        $name = $this->normalize((string) ($item['name'] ?? ''));
+        if ($name !== '' && in_array($name, $candidates, true)) {
+            return true;
+        }
+
+        $urlKey = $this->normalize((string) ($item['url_key'] ?? ''));
+
+        return $urlKey !== '' && in_array($urlKey, $keys, true);
+    }
+
+    private function normalize(string $value): string
+    {
+        return preg_replace('/[^a-z0-9]/', '', strtolower(trim($value))) ?? '';
     }
 
     /**

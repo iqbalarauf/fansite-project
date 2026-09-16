@@ -114,6 +114,55 @@ class CheckMemberLiveTest extends TestCase
             ->assertDontSee('Online');
     }
 
+    public function test_it_matches_names_with_the_jkt48_suffix(): void
+    {
+        $this->fakeLive([
+            ['name' => 'Oniel JKT48', 'platform' => 'idn', 'type' => 'idn', 'url_key' => 'jkt48_oniel'],
+        ]);
+
+        $status = app(CheckMemberLive::class)->status('Oniel');
+
+        $this->assertFalse($status['showroom']);
+        $this->assertTrue($status['idn']);
+    }
+
+    public function test_it_matches_by_url_key_when_available(): void
+    {
+        $this->fakeLive([
+            ['name' => 'Cornelia Vanisa JKT48', 'url_key' => 'jkt48_oniel', 'type' => 'idn'],
+        ]);
+
+        $status = app(CheckMemberLive::class)->status('Oniel');
+
+        $this->assertFalse($status['showroom']);
+        $this->assertTrue($status['idn']);
+    }
+
+    public function test_it_falls_back_to_the_type_field_when_platform_is_missing(): void
+    {
+        $this->fakeLive([
+            ['name' => 'Oniel JKT48', 'type' => 'showroom'],
+        ]);
+
+        $status = app(CheckMemberLive::class)->status('Oniel');
+
+        $this->assertTrue($status['showroom']);
+        $this->assertFalse($status['idn']);
+    }
+
+    public function test_welcome_page_shows_online_badge_with_the_real_api_name_format(): void
+    {
+        $this->setShortname('Oniel');
+        $this->fakeLive([
+            ['name' => 'Oniel JKT48', 'platform' => 'idn', 'type' => 'idn', 'url_key' => 'jkt48_oniel'],
+        ]);
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('IDN App')
+            ->assertSee('Online');
+    }
+
     private function setShortname(string $value): void
     {
         DB::table('about_settings')->updateOrInsert(
