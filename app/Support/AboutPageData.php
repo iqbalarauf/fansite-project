@@ -20,8 +20,8 @@ final class AboutPageData
             'idolSlug' => $this->slug($about),
             'idolPhoto' => $about['idol_photo'] ?? null,
             'idolDescription' => $about['idol_about'] ?? $about['idol_description'] ?? '',
-            'idolAchievements' => $this->lines($about['idol_achievements'] ?? ''),
-            'idolDiscography' => $this->lines($about['idol_discography'] ?? ''),
+            'idolAchievements' => TextLines::parse($about['idol_achievements'] ?? ''),
+            'idolDiscography' => TextLines::parse($about['idol_discography'] ?? ''),
             'idolJikoshoukai' => (string) ($about['idol_jikoshoukai'] ?? ''),
             'idolBirthDate' => ($about['idol_birth_date'] ?? null) ?: null,
             'idolBirthPlace' => (string) ($about['idol_birth_place'] ?? ''),
@@ -48,7 +48,7 @@ final class AboutPageData
             'idolSlug' => $this->slug($about),
             'fanbaseLogo' => $about['fanbase_logo'] ?? null,
             'fanbaseDescription' => (string) ($about['fanbase_description'] ?? ''),
-            'fanbaseActivities' => $this->lines($about['fanbase_activities'] ?? ''),
+            'fanbaseActivities' => TextLines::parse($about['fanbase_activities'] ?? ''),
             'fanbaseGallery' => array_values(array_filter(is_array($gallery) ? $gallery : [])),
             'fanbaseCtaEnabled' => filter_var($about['fanbase_cta_enabled'] ?? 'false', FILTER_VALIDATE_BOOLEAN),
             'fanbaseCtaBackground' => $about['fanbase_cta_background'] ?? null,
@@ -68,19 +68,5 @@ final class AboutPageData
         $slug = trim((string) ($about['idol_slug'] ?? ''));
 
         return $slug !== '' ? $slug : Str::slug((string) ($about['idol_name'] ?? ''));
-    }
-
-    /**
-     * Split a multi-line textarea value into trimmed non-empty lines.
-     *
-     * @return list<string>
-     */
-    private function lines(mixed $value): array
-    {
-        return collect(preg_split('/\r\n|\r|\n/', (string) $value) ?: [])
-            ->map(fn (string $line): string => trim($line))
-            ->filter(fn (string $line): bool => $line !== '')
-            ->values()
-            ->all();
     }
 }

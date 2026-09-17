@@ -21,18 +21,33 @@ final class CheckMemberLive
      */
     public function status(string $memberName): array
     {
+        $details = $this->details($memberName);
+
+        return [
+            'showroom' => $details['showroom']['live'],
+            'idn' => $details['idn']['live'],
+        ];
+    }
+
+    /**
+     * Per-platform live state and stream URL for the given member.
+     *
+     * @return array{showroom: array{live: bool, url: string|null}, idn: array{live: bool, url: string|null}}
+     */
+    public function details(string $memberName): array
+    {
         $memberName = trim($memberName);
         $baseUrl = rtrim((string) config('services.jkt48connect.url'), '/');
         $apiKey = (string) config('services.jkt48connect.key');
 
         if ($memberName === '' || $baseUrl === '' || $apiKey === '') {
-            return $this->offline();
+            return $this->offlineDetails();
         }
 
         return Cache::remember(
             'member_live_'.md5(strtolower($memberName)),
             self::CACHE_SECONDS,
-            fn (): array => $this->statusFromItems($this->items($baseUrl, $apiKey), $memberName),
+            fn (): array => $this->detailsFromItems($this->items($baseUrl, $apiKey), $memberName),
         );
     }
 
@@ -89,27 +104,41 @@ final class CheckMemberLive
 
     /**
      * @param  array<int, array<string, mixed>>  $items
-     * @return array{showroom: bool, idn: bool}
+     * @return array{showroom: array{live: bool, url: string|null}, idn: array{live: bool, url: string|null}}
      */
-    private function statusFromItems(array $items, string $memberName): array
+    private function detailsFromItems(array $items, string $memberName): array
     {
-        $status = $this->offline();
+        $details = $this->offlineDetails();
 
         foreach ($items as $item) {
-            if (! is_array($item) || ! $this->matchesMember($item, $memberName)) {
+            if (! $this->matchesMember($item, $memberName)) {
                 continue;
             }
 
             $platform = strtolower(trim((string) ($item['platform'] ?? $item['type'] ?? '')));
 
-            if ($platform === 'showroom') {
-                $status['showroom'] = true;
-            } elseif (in_array($platform, ['idn', 'idn app'], true)) {
-                $status['idn'] = true;
+            $key = match (true) {
+                $platform === 'showroom' => 'showroom',
+                in_array($platform, ['idn', 'idn app'], true) => 'idn',
+                default => null,
+            };
+
+            if ($key === null) {
+                continue;
+            }
+
+            $details[$key]['live'] = true;
+
+            if ($details[$key]['url'] === null) {
+                $url = $item['stream_url'] ?? ($item['streaming'][0]['url'] ?? null);
+
+                if (is_string($url) && $url !== '') {
+                    $details[$key]['url'] = $url;
+                }
             }
         }
 
-        return $status;
+        return $details;
     }
 
     /**
@@ -145,10 +174,13 @@ final class CheckMemberLive
     }
 
     /**
-     * @return array{showroom: bool, idn: bool}
+     * @return array{showroom: array{live: bool, url: string|null}, idn: array{live: bool, url: string|null}}
      */
-    private function offline(): array
+    private function offlineDetails(): array
     {
-        return ['showroom' => false, 'idn' => false];
+        return [
+            'showroom' => ['live' => false, 'url' => null],
+            'idn' => ['live' => false, 'url' => null],
+        ];
     }
 }

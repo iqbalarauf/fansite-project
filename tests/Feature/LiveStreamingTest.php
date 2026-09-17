@@ -174,12 +174,12 @@ class LiveStreamingTest extends TestCase
         $this->assertSame(0, LiveStreaming::query()->whereNull('live_id')->count());
     }
 
-    public function test_index_displays_the_live_id(): void
+    public function test_index_hides_the_live_id_column(): void
     {
         $user = User::factory()->create();
 
         LiveStreaming::create([
-            'live_id' => 'visible-live-id-123',
+            'live_id' => 'hidden-live-id-123',
             'platform' => 'Showroom',
             'live_date' => '2026-07-10',
         ]);
@@ -187,6 +187,7 @@ class LiveStreamingTest extends TestCase
         $this->actingAs($user)
             ->get(route('live-streaming.index'))
             ->assertOk()
-            ->assertSee('visible-live-id-123');
+            ->assertDontSee('LIVE ID')
+            ->assertDontSee('hidden-live-id-123');
     }
 }

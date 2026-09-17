@@ -32,7 +32,7 @@ final class WelcomePageData
         $feedEnabled = SettingBag::featureEnabled($feedSource);
 
         $idolMemberName = (string) ($about['idol_shortname'] ?? '');
-        $liveStatus = $this->memberLive->status($idolMemberName);
+        $liveStatus = $this->memberLive->details($idolMemberName);
 
         return [
             'idolName' => $about['idol_name'] ?? 'Oshimen',
@@ -51,14 +51,17 @@ final class WelcomePageData
             'showOnWelcome' => filter_var($about['idol_show_on_welcome'] ?? 'false', FILTER_VALIDATE_BOOLEAN),
             'showCount' => $showCount,
             'setlistCount' => ShowTeater::query()->distinct()->count('setlist'),
+            'discographyCount' => count(TextLines::parse($about['idol_discography'] ?? '')),
             'upcomingShowCount' => $upcomingShowCount,
             'lastEventDate' => $this->lastEventDate($today),
             'upcomingEvents' => $this->timeline->events('upcoming', null, null, $today, 5),
             'feedEnabled' => $feedEnabled,
             'feed' => $feedEnabled ? $this->feed($feedSource) : ['label' => '', 'heading' => '', 'indexRoute' => '#', 'items' => []],
             'galleryPhotos' => $this->galleryPhotos(),
-            'showroomLive' => $liveStatus['showroom'],
-            'idnLive' => $liveStatus['idn'],
+            'showroomLive' => $liveStatus['showroom']['live'],
+            'idnLive' => $liveStatus['idn']['live'],
+            'showroomStreamUrl' => $liveStatus['showroom']['url'],
+            'idnStreamUrl' => $liveStatus['idn']['url'],
         ];
     }
 

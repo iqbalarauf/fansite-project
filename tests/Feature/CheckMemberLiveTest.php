@@ -163,6 +163,59 @@ class CheckMemberLiveTest extends TestCase
             ->assertSee('Online');
     }
 
+    public function test_details_returns_live_state_and_stream_url_per_platform(): void
+    {
+        $this->fakeLive([
+            ['name' => 'Oniel JKT48', 'platform' => 'idn', 'url_key' => 'jkt48_oniel', 'stream_url' => 'https://stream.example/oniel.m3u8'],
+        ]);
+
+        $details = app(CheckMemberLive::class)->details('Oniel');
+
+        $this->assertTrue($details['idn']['live']);
+        $this->assertSame('https://stream.example/oniel.m3u8', $details['idn']['url']);
+        $this->assertFalse($details['showroom']['live']);
+        $this->assertNull($details['showroom']['url']);
+    }
+
+    public function test_details_falls_back_to_streaming_url(): void
+    {
+        $this->fakeLive([
+            ['name' => 'Oniel JKT48', 'platform' => 'showroom', 'streaming' => [['url' => 'https://stream.example/showroom.m3u8']]],
+        ]);
+
+        $details = app(CheckMemberLive::class)->details('Oniel');
+
+        $this->assertTrue($details['showroom']['live']);
+        $this->assertSame('https://stream.example/showroom.m3u8', $details['showroom']['url']);
+    }
+
+    public function test_welcome_page_links_to_stream_url_and_shows_the_platform_icon(): void
+    {
+        $this->setShortname('Oniel');
+        $this->fakeLive([
+            ['name' => 'Oniel JKT48', 'platform' => 'idn', 'url_key' => 'jkt48_oniel', 'stream_url' => 'https://stream.example/live-oniel'],
+        ]);
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('IDN App')
+            ->assertSee('Online')
+            ->assertSee('href="https://stream.example/live-oniel"', false)
+            ->assertSee('icon-app/idn.webp', false)
+            ->assertSee('Tonton sekarang');
+    }
+
+    public function test_welcome_page_does_not_link_when_offline(): void
+    {
+        $this->setShortname('Oniel');
+        $this->fakeLive([]);
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('Offline')
+            ->assertDontSee('Tonton sekarang');
+    }
+
     private function setShortname(string $value): void
     {
         DB::table('about_settings')->updateOrInsert(
