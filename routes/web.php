@@ -156,6 +156,8 @@ Route::middleware(['auth', 'verified', 'block-view-only-writes'])->group(functio
         Route::post('users', [UserController::class, 'store'])->name('users.store');
         Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
         Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+
+        Route::livewire('content/about', 'pages::settings.about')->name('about.edit');
     });
 });
 

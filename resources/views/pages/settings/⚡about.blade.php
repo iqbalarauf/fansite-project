@@ -31,12 +31,18 @@ new #[Title('About settings')] class extends Component {
     public string $idolTwitter = '';
     public bool $idolShowOnWelcome = false;
 
+    /** @var array<int, array{photo: string|null, title: string, duration_from: string|null, duration_to: string|null}> */
+    public array $kabeshaItems = [];
+    public array $kabeshaPhotoUploads = [];
+
     public string $fanbaseName = '';
     public ?string $fanbaseLogoPath = null;
     public mixed $fanbaseLogoUpload = null;
     public string $fanbaseDescription = '';
+    public string $fanbaseStructure = '';
     public string $fanbaseActivities = '';
-    public array $fanbaseGalleryPaths = [];
+    /** @var array<int, array{photo: string|null, caption: string}> */
+    public array $fanbaseGalleryItems = [];
     public array $fanbaseGalleryUploads = [];
     public bool $fanbaseCtaEnabled = false;
     public ?string $fanbaseCtaBackgroundPath = null;
@@ -86,13 +92,15 @@ new #[Title('About settings')] class extends Component {
         $this->idolTwitter = (string) ($settings['idol_social_media_twitter'] ?? '');
         $this->idolShowOnWelcome = filter_var($settings['idol_show_on_welcome'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
+        $this->kabeshaItems = $this->decodeKabeshaItems($settings);
+
         $this->fanbaseName = (string) ($settings['fanbase_name'] ?? '');
         $this->fanbaseLogoPath = $settings['fanbase_logo'] ?? null;
         $this->fanbaseDescription = (string) ($settings['fanbase_description'] ?? '');
+        $this->fanbaseStructure = (string) ($settings['fanbase_structure'] ?? '');
         $this->fanbaseActivities = (string) ($settings['fanbase_activities'] ?? '');
 
-        $gallery = json_decode((string) ($settings['fanbase_gallery'] ?? '[]'), true);
-        $this->fanbaseGalleryPaths = is_array($gallery) ? array_values(array_filter($gallery)) : [];
+        $this->fanbaseGalleryItems = $this->decodeFanbaseGalleryItems($settings);
 
         $this->fanbaseCtaEnabled = filter_var($settings['fanbase_cta_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
         $this->fanbaseCtaBackgroundPath = $settings['fanbase_cta_background'] ?? null;
@@ -130,6 +138,12 @@ new #[Title('About settings')] class extends Component {
             'idolTiktok' => ['nullable', 'url', 'max:255'],
             'idolTwitter' => ['nullable', 'url', 'max:255'],
             'idolShowOnWelcome' => ['boolean'],
+            'kabeshaItems' => ['nullable', 'array'],
+            'kabeshaItems.*.title' => ['nullable', 'string', 'max:255'],
+            'kabeshaItems.*.duration_from' => ['nullable', 'date'],
+            'kabeshaItems.*.duration_to' => ['nullable', 'date', 'after_or_equal:kabeshaItems.*.duration_from'],
+            'kabeshaPhotoUploads' => ['nullable', 'array'],
+            'kabeshaPhotoUploads.*' => ['image', 'max:3072'],
         ]);
 
         if ($this->idolPhotoUpload) {
@@ -140,6 +154,18 @@ new #[Title('About settings')] class extends Component {
             $this->idolPhotoPath = $this->idolPhotoUpload->store('about/idol', 'public');
             $this->idolPhotoUpload = null;
         }
+
+        foreach ($this->kabeshaPhotoUploads as $kabeshaUpload) {
+            $this->kabeshaItems[] = [
+                'photo' => $kabeshaUpload->store('about/kabesha', 'public'),
+                'title' => '',
+                'duration_from' => null,
+                'duration_to' => null,
+            ];
+        }
+
+        $this->kabeshaPhotoUploads = [];
+        $this->kabeshaItems = array_values($this->kabeshaItems);
 
         $this->upsertSettings([
             'idol_name' => $this->idolName,
@@ -158,6 +184,7 @@ new #[Title('About settings')] class extends Component {
             'idol_social_media_tiktok' => $this->idolTiktok,
             'idol_social_media_twitter' => $this->idolTwitter,
             'idol_show_on_welcome' => $this->idolShowOnWelcome ? 'true' : 'false',
+            'kabesha_items' => json_encode(array_values($this->kabeshaItems)),
         ]);
 
         Flux::toast(variant: 'success', text: __('Idol information updated.'));
@@ -169,8 +196,11 @@ new #[Title('About settings')] class extends Component {
             'fanbaseName' => ['required', 'string', 'max:255'],
             'fanbaseLogoUpload' => ['nullable', 'image', 'max:3072'],
             'fanbaseDescription' => ['nullable', 'string'],
+            'fanbaseStructure' => ['nullable', 'string'],
             'fanbaseActivities' => ['nullable', 'string'],
-            'fanbaseGalleryUploads' => ['nullable', 'array', 'max:5'],
+            'fanbaseGalleryItems' => ['nullable', 'array', 'max:20'],
+            'fanbaseGalleryItems.*.caption' => ['nullable', 'string', 'max:255'],
+            'fanbaseGalleryUploads' => ['nullable', 'array', 'max:20'],
             'fanbaseGalleryUploads.*' => ['image', 'max:3072'],
             'fanbaseCtaEnabled' => ['boolean'],
             'fanbaseCtaBackgroundUpload' => ['nullable', 'image', 'max:3072'],
@@ -190,19 +220,17 @@ new #[Title('About settings')] class extends Component {
             $this->fanbaseLogoUpload = null;
         }
 
-        if (! empty($this->fanbaseGalleryUploads)) {
-            foreach ($this->fanbaseGalleryPaths as $path) {
-                Storage::disk('public')->delete($path);
-            }
+        $remaining = max(0, 20 - count($this->fanbaseGalleryItems));
 
-            $this->fanbaseGalleryPaths = collect($this->fanbaseGalleryUploads)
-                ->take(5)
-                ->map(fn ($file) => $file->store('about/fansite/gallery', 'public'))
-                ->values()
-                ->all();
-
-            $this->fanbaseGalleryUploads = [];
+        foreach (collect($this->fanbaseGalleryUploads)->take($remaining) as $upload) {
+            $this->fanbaseGalleryItems[] = [
+                'photo' => $upload->store('about/fansite/gallery', 'public'),
+                'caption' => '',
+            ];
         }
+
+        $this->fanbaseGalleryUploads = [];
+        $this->fanbaseGalleryItems = array_values($this->fanbaseGalleryItems);
 
         if ($this->fanbaseCtaBackgroundUpload) {
             if ($this->fanbaseCtaBackgroundPath) {
@@ -218,8 +246,10 @@ new #[Title('About settings')] class extends Component {
             'fanbase_slug' => Str::slug($this->fanbaseName),
             'fanbase_logo' => $this->fanbaseLogoPath,
             'fanbase_description' => $this->fanbaseDescription,
+            'fanbase_structure' => $this->fanbaseStructure,
             'fanbase_activities' => $this->fanbaseActivities,
-            'fanbase_gallery' => json_encode($this->fanbaseGalleryPaths),
+            'fanbase_gallery_items' => json_encode(array_values($this->fanbaseGalleryItems)),
+            'fanbase_gallery' => json_encode(array_values(array_filter(array_column($this->fanbaseGalleryItems, 'photo')))),
             'fanbase_cta_enabled' => $this->fanbaseCtaEnabled ? 'true' : 'false',
             'fanbase_cta_background' => $this->fanbaseCtaEnabled ? $this->fanbaseCtaBackgroundPath : null,
             'fanbase_cta_title' => $this->fanbaseCtaEnabled ? $this->fanbaseCtaTitle : null,
@@ -243,6 +273,114 @@ new #[Title('About settings')] class extends Component {
         }
 
         return null;
+    }
+
+    /**
+     * @return array<int, array{photo: string|null, title: string, duration_from: string|null, duration_to: string|null}>
+     */
+    public function kabeshaItemsWithPreview(): array
+    {
+        return array_map(fn (array $item): array => [
+            'photo' => $item['photo'],
+            'preview' => filled($item['photo']) ? Storage::disk('public')->url($item['photo']) : null,
+            'title' => $item['title'],
+            'duration_from' => $item['duration_from'],
+            'duration_to' => $item['duration_to'],
+        ], $this->kabeshaItems);
+    }
+
+    public function removeKabeshaItem(int $index): void
+    {
+        if (! isset($this->kabeshaItems[$index])) {
+            return;
+        }
+
+        $photo = $this->kabeshaItems[$index]['photo'] ?? null;
+
+        if (filled($photo)) {
+            Storage::disk('public')->delete($photo);
+        }
+
+        unset($this->kabeshaItems[$index]);
+        $this->kabeshaItems = array_values($this->kabeshaItems);
+
+        $this->persistKabeshaItems();
+
+        Flux::toast(variant: 'success', text: __('Foto Kabesha dihapus.'));
+    }
+
+    /**
+     * Reorder Kabesha photos from a drag-and-drop payload (list of previous indexes).
+     *
+     * @param  array<int, int|string>  $order
+     */
+    public function reorderKabeshaItems(array $order): void
+    {
+        $items = array_values($this->kabeshaItems);
+        $order = array_map('intval', array_values($order));
+        $reordered = [];
+
+        foreach ($order as $index) {
+            if (isset($items[$index])) {
+                $reordered[] = $items[$index];
+            }
+        }
+
+        foreach (array_keys($items) as $index) {
+            if (! in_array($index, $order, true)) {
+                $reordered[] = $items[$index];
+            }
+        }
+
+        if ($reordered === [] || count($reordered) !== count($items)) {
+            return;
+        }
+
+        $this->kabeshaItems = array_values($reordered);
+
+        $this->persistKabeshaItems();
+    }
+
+    private function persistKabeshaItems(): void
+    {
+        $this->upsertSettings([
+            'kabesha_items' => json_encode(array_values($this->kabeshaItems)),
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $settings
+     * @return array<int, array{photo: string|null, title: string, duration_from: string|null, duration_to: string|null}>
+     */
+    private function decodeKabeshaItems(array $settings): array
+    {
+        $items = json_decode((string) ($settings['kabesha_items'] ?? ''), true);
+
+        if (is_array($items) && $items !== []) {
+            return array_values(array_map(fn (array $item): array => [
+                'photo' => filled($item['photo'] ?? null) ? (string) $item['photo'] : null,
+                'title' => (string) ($item['title'] ?? ''),
+                'duration_from' => ($item['duration_from'] ?? null) ?: null,
+                'duration_to' => ($item['duration_to'] ?? null) ?: null,
+            ], array_filter($items, 'is_array')));
+        }
+
+        $legacyPhotos = json_decode((string) ($settings['kabesha_photos'] ?? ''), true);
+
+        if (! is_array($legacyPhotos) || $legacyPhotos === []) {
+            $legacyPhotos = filled($settings['kabesha_photo'] ?? null) ? [(string) $settings['kabesha_photo']] : [];
+        }
+
+        $legacyTitle = (string) ($settings['kabesha_title'] ?? '');
+        $legacyFrom = ($settings['kabesha_duration_from'] ?? null) ?: null;
+        $legacyTo = ($settings['kabesha_duration_to'] ?? null) ?: null;
+
+        return array_values(array_map(fn (string $path): array => [
+            'photo' => $path,
+            'title' => $legacyTitle,
+            'duration_from' => $legacyFrom,
+            'duration_to' => $legacyTo,
+        ], array_values(array_filter(array_map('strval', is_array($legacyPhotos) ? $legacyPhotos : [])))));
     }
 
     public function fanbaseLogoPreviewUrl(): ?string
@@ -271,15 +409,67 @@ new #[Title('About settings')] class extends Component {
         return null;
     }
 
-    public function galleryPreviewUrls(): array
+    /**
+     * @return array<int, array{photo: string|null, preview: string|null, caption: string}>
+     */
+    public function fanbaseGalleryItemsWithPreview(): array
     {
-        $existing = collect($this->fanbaseGalleryPaths)
-            ->map(fn ($path) => Storage::disk('public')->url($path));
+        return array_map(fn (array $item): array => [
+            'photo' => $item['photo'],
+            'preview' => filled($item['photo']) ? Storage::disk('public')->url($item['photo']) : null,
+            'caption' => $item['caption'],
+        ], $this->fanbaseGalleryItems);
+    }
 
-        $uploads = collect($this->fanbaseGalleryUploads)
-            ->map(fn ($file) => $file->temporaryUrl());
+    public function removeFanbaseGalleryItem(int $index): void
+    {
+        if (! isset($this->fanbaseGalleryItems[$index])) {
+            return;
+        }
 
-        return $existing->merge($uploads)->take(5)->values()->all();
+        $photo = $this->fanbaseGalleryItems[$index]['photo'] ?? null;
+
+        if (filled($photo)) {
+            Storage::disk('public')->delete($photo);
+        }
+
+        unset($this->fanbaseGalleryItems[$index]);
+        $this->fanbaseGalleryItems = array_values($this->fanbaseGalleryItems);
+
+        $this->persistFanbaseGalleryItems();
+
+        Flux::toast(variant: 'success', text: __('Foto galeri dihapus.'));
+    }
+
+    private function persistFanbaseGalleryItems(): void
+    {
+        $this->upsertSettings([
+            'fanbase_gallery_items' => json_encode(array_values($this->fanbaseGalleryItems)),
+            'fanbase_gallery' => json_encode(array_values(array_filter(array_column($this->fanbaseGalleryItems, 'photo')))),
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $settings
+     * @return array<int, array{photo: string|null, caption: string}>
+     */
+    private function decodeFanbaseGalleryItems(array $settings): array
+    {
+        $items = json_decode((string) ($settings['fanbase_gallery_items'] ?? ''), true);
+
+        if (is_array($items) && $items !== []) {
+            return array_slice(array_values(array_map(fn (array $item): array => [
+                'photo' => filled($item['photo'] ?? null) ? (string) $item['photo'] : null,
+                'caption' => (string) ($item['caption'] ?? ''),
+            ], array_filter($items, 'is_array'))), 0, 20);
+        }
+
+        $legacy = json_decode((string) ($settings['fanbase_gallery'] ?? '[]'), true);
+
+        return array_slice(array_values(array_map(fn (string $path): array => [
+            'photo' => $path,
+            'caption' => '',
+        ], array_values(array_filter(array_map('strval', is_array($legacy) ? $legacy : []))))), 0, 20);
     }
 
     private function upsertSettings(array $settings): void
@@ -302,12 +492,11 @@ new #[Title('About settings')] class extends Component {
 }; ?>
 
 <section class="w-full">
-    @include('partials.settings-heading')
+    <div class="w-full max-w-4xl">
+        <flux:heading level="1" size="xl">{{ __('About Idol & Fansite') }}</flux:heading>
+        <flux:subheading>{{ __('Kelola informasi Idol dan Fansite.') }}</flux:subheading>
 
-    <flux:heading class="sr-only">{{ __('About settings') }}</flux:heading>
-
-    <x-pages::settings.layout :heading="__('About')" :subheading="__('Kelola informasi Idol dan Fansite')" :maxWidthClass="'max-w-4xl'">
-        <div class="space-y-6">
+        <div class="mt-5 space-y-6">
             <div class="flex flex-wrap items-center gap-2 rounded-lg border border-zinc-200 p-1 dark:border-zinc-700">
                 <flux:button
                     type="button"
@@ -360,6 +549,102 @@ new #[Title('About settings')] class extends Component {
 
                         <flux:textarea wire:model="idolAchievements" :label="__('Achievements')" rows="4" />
                         <flux:textarea wire:model="idolDiscography" :label="__('Discography')" rows="4" />
+                    </div>
+
+                    <div class="space-y-4 rounded-xl border border-zinc-200 p-5 dark:border-zinc-700">
+                        <flux:heading size="lg">Kabesha</flux:heading>
+
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium">Tambah Foto Kabesha (bisa lebih dari satu)</label>
+                            <input type="file" wire:model="kabeshaPhotoUploads" accept="image/*" multiple class="block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800">
+                            @error('kabeshaPhotoUploads')
+                                <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                            @error('kabeshaPhotoUploads.*')
+                                <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                            <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Foto baru masuk ke daftar setelah disimpan. Setiap foto punya Judul dan Duration sendiri.') }}</flux:text>
+                        </div>
+
+                        @if (count($this->kabeshaItemsWithPreview()) > 0)
+                            <div
+                                class="space-y-4"
+                                x-data="{
+                                    dragging: null,
+                                    over: null,
+                                    start(index) { this.dragging = index; },
+                                    end() { this.dragging = null; this.over = null; },
+                                    drop(index) {
+                                        if (this.dragging === null || this.dragging === index) { this.end(); return; }
+                                        const total = {{ count($this->kabeshaItemsWithPreview()) }};
+                                        const order = Array.from({ length: total }, (_, i) => i);
+                                        const [moved] = order.splice(this.dragging, 1);
+                                        order.splice(index, 0, moved);
+                                        this.end();
+                                        $wire.reorderKabeshaItems(order);
+                                    },
+                                }"
+                            >
+                                <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Tarik ikon gagang untuk mengubah urutan foto.') }}</flux:text>
+
+                                @foreach ($this->kabeshaItemsWithPreview() as $index => $item)
+                                    <div
+                                        wire:key="kabesha-item-{{ $index }}"
+                                        x-on:dragover.prevent="over = {{ $index }}"
+                                        x-on:drop.prevent="drop({{ $index }})"
+                                        x-bind:class="dragging !== null && over === {{ $index }} && dragging !== {{ $index }} ? 'border-indigo-400 ring-2 ring-indigo-200 dark:ring-indigo-900/60' : ''"
+                                        class="rounded-lg border border-zinc-200 p-3 transition dark:border-zinc-700"
+                                    >
+                                        <div class="flex flex-col gap-4 sm:flex-row">
+                                            <div class="flex items-start gap-3">
+                                                <span
+                                                    draggable="true"
+                                                    x-on:dragstart="start({{ $index }})"
+                                                    x-on:dragend="end()"
+                                                    class="mt-1 flex size-8 shrink-0 cursor-grab items-center justify-center rounded-md border border-zinc-200 text-zinc-400 transition hover:text-zinc-700 active:cursor-grabbing dark:border-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-200"
+                                                    title="{{ __('Drag untuk ubah urutan') }}"
+                                                    aria-label="{{ __('Drag untuk ubah urutan') }}"
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4"><path fill-rule="evenodd" d="M2 4.75A.75.75 0 0 1 2.75 4h14.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 4.75Zm0 5A.75.75 0 0 1 2.75 9h14.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 9.75Zm0 5a.75.75 0 0 1 .75-.75h14.5a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1-.75-.75Z" clip-rule="evenodd"/></svg>
+                                                </span>
+
+                                                @if ($item['preview'])
+                                                    <img src="{{ $item['preview'] }}" alt="Kabesha {{ $index + 1 }}" class="h-28 w-28 shrink-0 rounded-lg border border-zinc-200 object-cover dark:border-zinc-700">
+                                                @endif
+                                            </div>
+
+                                            <div class="flex-1 space-y-3">
+                                                <flux:input wire:model="kabeshaItems.{{ $index }}.title" :label="__('Judul')" type="text" />
+
+                                                <div class="grid gap-3 sm:grid-cols-2">
+                                                    <flux:input wire:model="kabeshaItems.{{ $index }}.duration_from" :label="__('Duration From')" type="date" />
+                                                    <flux:input wire:model="kabeshaItems.{{ $index }}.duration_to" :label="__('Duration To')" type="date" />
+                                                </div>
+
+                                                @error("kabeshaItems.{$index}.duration_to")
+                                                    <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                                                @enderror
+                                            </div>
+
+                                            <div class="flex sm:flex-col">
+                                                <flux:button
+                                                    type="button"
+                                                    size="sm"
+                                                    variant="danger"
+                                                    icon="trash"
+                                                    wire:click="removeKabeshaItem({{ $index }})"
+                                                    wire:confirm="Hapus foto Kabesha ini?"
+                                                >
+                                                    {{ __('Hapus') }}
+                                                </flux:button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <p class="text-sm text-zinc-500 dark:text-zinc-400">{{ __('Belum ada foto Kabesha.') }}</p>
+                        @endif
                     </div>
 
                     <div class="space-y-4 rounded-xl border border-zinc-200 p-5 dark:border-zinc-700">
@@ -439,6 +724,8 @@ new #[Title('About settings')] class extends Component {
                         </div>
 
                         <flux:textarea wire:model="fanbaseDescription" :label="__('Tentang Fanbase')" rows="4" />
+                        <flux:textarea wire:model="fanbaseStructure" :label="__('Struktur Organisasi')" rows="4" />
+                        <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Satu baris = satu entri. Ditampilkan sebagai list di halaman fansite.') }}</flux:text>
                     </div>
 
                     <div class="space-y-4 rounded-xl border border-zinc-200 p-5 dark:border-zinc-700">
@@ -447,7 +734,7 @@ new #[Title('About settings')] class extends Component {
                         <flux:textarea wire:model="fanbaseActivities" :label="__('Activities')" rows="4" />
 
                         <div class="space-y-2">
-                            <label class="text-sm font-medium">Gallery (maksimal 5 gambar)</label>
+                            <label class="text-sm font-medium">Gallery (maksimal 20 gambar)</label>
                             <input type="file" wire:model="fanbaseGalleryUploads" accept="image/*" multiple class="block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800">
                             @error('fanbaseGalleryUploads')
                                 <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -455,17 +742,43 @@ new #[Title('About settings')] class extends Component {
                             @error('fanbaseGalleryUploads.*')
                                 <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                             @enderror
-
-                            @if (count($this->galleryPreviewUrls()) > 0)
-                                <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
-                                    @foreach ($this->galleryPreviewUrls() as $index => $previewUrl)
-                                        <div wire:key="gallery-preview-{{ $index }}" class="aspect-square overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
-                                            <img src="{{ $previewUrl }}" alt="Gallery preview {{ $index + 1 }}" class="h-full w-full object-cover object-center">
-                                        </div>
-                                    @endforeach
-                                </div>
-                            @endif
+                            <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Foto baru masuk ke daftar setelah disimpan. Setiap foto bisa diberi caption.') }}</flux:text>
                         </div>
+
+                        @if (count($this->fanbaseGalleryItemsWithPreview()) > 0)
+                            <div class="space-y-4">
+                                <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">{{ count($this->fanbaseGalleryItemsWithPreview()) }} / 20 {{ __('foto') }}</flux:text>
+
+                                @foreach ($this->fanbaseGalleryItemsWithPreview() as $index => $item)
+                                    <div wire:key="fanbase-gallery-item-{{ $index }}" class="rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
+                                        <div class="flex flex-col gap-4 sm:flex-row">
+                                            @if ($item['preview'])
+                                                <img src="{{ $item['preview'] }}" alt="Galeri {{ $index + 1 }}" class="h-28 w-28 shrink-0 rounded-lg border border-zinc-200 object-cover dark:border-zinc-700">
+                                            @endif
+
+                                            <div class="flex-1 space-y-3">
+                                                <flux:input wire:model="fanbaseGalleryItems.{{ $index }}.caption" :label="__('Caption')" type="text" />
+                                            </div>
+
+                                            <div class="flex sm:flex-col">
+                                                <flux:button
+                                                    type="button"
+                                                    size="sm"
+                                                    variant="danger"
+                                                    icon="trash"
+                                                    wire:click="removeFanbaseGalleryItem({{ $index }})"
+                                                    wire:confirm="Hapus foto galeri ini?"
+                                                >
+                                                    {{ __('Hapus') }}
+                                                </flux:button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <p class="text-sm text-zinc-500 dark:text-zinc-400">{{ __('Belum ada foto galeri.') }}</p>
+                        @endif
                     </div>
 
                     <div class="space-y-4 rounded-xl border border-zinc-200 p-5 dark:border-zinc-700">
@@ -513,5 +826,5 @@ new #[Title('About settings')] class extends Component {
                 </form>
             @endif
         </div>
-    </x-pages::settings.layout>
+    </div>
 </section>

@@ -78,6 +78,29 @@ class AboutPageTest extends TestCase
             ->assertSee('Tentang Freya', false);
     }
 
+    public function test_about_fansite_page_shows_structure_as_list_and_gallery_captions(): void
+    {
+        DB::table('about_settings')->upsert([
+            ['key' => 'fanbase_name', 'value' => 'Wota Nusantara'],
+            ['key' => 'fanbase_structure', 'value' => "Ketua: Oniel\nWakil: Freya"],
+            ['key' => 'fanbase_gallery_items', 'value' => json_encode([
+                ['photo' => 'about/fansite/gallery/1.jpg', 'caption' => 'Foto bersama'],
+                ['photo' => 'about/fansite/gallery/2.jpg', 'caption' => 'Nobar'],
+            ])],
+            ['key' => 'idol_name', 'value' => 'Freya'],
+        ], ['key'], ['value', 'updated_at']);
+
+        $this->get(route('about.fansite'))
+            ->assertOk()
+            ->assertSee('Struktur Organisasi')
+            ->assertSee('Ketua: Oniel')
+            ->assertSee('Wakil: Freya')
+            ->assertSee('/storage/about/fansite/gallery/1.jpg', false)
+            ->assertSee('Foto bersama')
+            ->assertSee('Nobar')
+            ->assertSee('<figcaption', false);
+    }
+
     public function test_public_header_about_dropdown_lists_idol_and_fanbase_names(): void
     {
         DB::table('about_settings')->upsert([
@@ -154,6 +177,64 @@ class AboutPageTest extends TestCase
         $this->assertContains('Song A', $names);
         $this->assertContains('Song B', $names);
         $this->assertCount(3, $names);
+    }
+
+    public function test_center_cards_merge_setlists_and_highlight_active_ones(): void
+    {
+        DB::table('about_settings')->upsert([
+            ['key' => 'idol_name', 'value' => 'Freya'],
+            ['key' => 'idol_slug', 'value' => 'freya'],
+        ], ['key'], ['value', 'updated_at']);
+
+        DB::table('show_teater')->insert([
+            ['show_id' => 1, 'show_date' => now()->format('Y/m/d'), 'setlist' => 'Setlist Sekarang', 'is_member_show' => 1, 'is_global_center' => 1, 'is_us_center' => 1],
+            ['show_id' => 2, 'show_date' => now()->subYear()->format('Y/m/d'), 'setlist' => 'Setlist Lama', 'is_member_show' => 1, 'is_global_center' => 1, 'is_us_center' => 1],
+        ]);
+
+        $this->get(route('about.idol', 'freya'))
+            ->assertOk()
+            ->assertSee('Setlist')
+            ->assertDontSee('Setlist (All)')
+            ->assertDontSee('Setlist ('.now()->year.')')
+            ->assertSee('bg-indigo-50 text-indigo-600', false)
+            ->assertSee('bg-slate-100 text-slate-600', false);
+    }
+
+    public function test_twitter_card_matches_the_other_social_cards(): void
+    {
+        DB::table('about_settings')->upsert([
+            ['key' => 'idol_name', 'value' => 'Freya'],
+            ['key' => 'idol_social_media_twitter', 'value' => 'https://x.com/freya'],
+        ], ['key'], ['value', 'updated_at']);
+
+        $this->get(route('about.idol'))
+            ->assertOk()
+            ->assertSee('href="https://x.com/freya"', false)
+            ->assertSee('Follow di Twitter')
+            ->assertSee('h-80', false);
+    }
+
+    public function test_idol_page_shows_kabesha_grid_with_per_photo_details(): void
+    {
+        DB::table('about_settings')->upsert([
+            ['key' => 'idol_name', 'value' => 'Freya'],
+            ['key' => 'idol_slug', 'value' => 'freya'],
+            ['key' => 'kabesha_items', 'value' => json_encode([
+                ['photo' => 'about/kabesha/1.jpg', 'title' => 'Kabesha Satu', 'duration_from' => '2026-01-01', 'duration_to' => '2026-01-31'],
+                ['photo' => 'about/kabesha/2.jpg', 'title' => 'Kabesha Dua', 'duration_from' => null, 'duration_to' => null],
+            ])],
+        ], ['key'], ['value', 'updated_at']);
+
+        $this->get(route('about.idol', 'freya'))
+            ->assertOk()
+            ->assertSee('Kabesha Satu')
+            ->assertSee('Kabesha Dua')
+            ->assertSee('data-kabesha-carousel', false)
+            ->assertSee('data-kabesha-item', false)
+            ->assertSee('object-contain', false)
+            ->assertSee('Duration: 1 Januari 2026 – 31 Januari 2026', false)
+            ->assertSee('data-collapse-key="idol-unit-song"', false)
+            ->assertSee('data-collapse-key="idol-centers"', false);
     }
 
     public function test_on_going_falls_back_to_previous_show_when_latest_is_member_show_is_null(): void

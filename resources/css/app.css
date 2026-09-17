@@ -474,3 +474,48 @@ select:focus[data-flux-control] {
 [data-flux-sidebar] [data-flux-sidebar-item][data-current] svg {
     color: currentColor;
 }
+
+/* =========================================================================
+   Collapsible <details> helpers (public pages, no Alpine).
+   Default state is closed; JS toggles [open] and persists it to localStorage.
+   ========================================================================= */
+
+details > summary .collapsible-open {
+    display: none;
+}
+
+details[open] > summary .collapsible-closed {
+    display: none;
+}
+
+details[open] > summary .collapsible-open {
+    display: inline;
+}
+
+.collapsible-chevron {
+    transition: transform 200ms ease-in-out;
+}
+
+details[open] > summary .collapsible-chevron {
+    transform: rotate(180deg);
+}
+
+/* =========================================================================
+   Kabesha carousel item widths (1 / 2 / 4 photos per view, 1rem gap).
+   ========================================================================= */
+
+.kabesha-item {
+    width: 100%;
+}
+
+@media (min-width: 640px) {
+    .kabesha-item {
+        width: calc((100% - 1rem) / 2);
+    }
+}
+
+@media (min-width: 1024px) {
+    .kabesha-item {
+        width: calc((100% - 3rem) / 4);
+    }
+}

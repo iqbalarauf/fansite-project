@@ -68,6 +68,11 @@
                             <flux:sidebar.item icon="photo" :href="route('content.gallery.index')" :current="request()->routeIs('content.gallery.*')" wire:navigate>
                                 {{ __('Galeri') }}
                             </flux:sidebar.item>
+                            @if (auth()->user()?->isSuperAdmin())
+                                <flux:sidebar.item icon="information-circle" :href="route('about.edit')" :current="request()->routeIs('about.edit')" wire:navigate>
+                                    {{ __('About Idol & Fansite') }}
+                                </flux:sidebar.item>
+                            @endif
                         </div>
                     </div>
 
