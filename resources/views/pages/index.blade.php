@@ -11,6 +11,10 @@
         </div>
 
         <div class="admin-table-shell">
+            <form method="GET" action="{{ route('pages.index') }}">
+                <x-admin.table-toolbar :filters="$filters" search-placeholder="Cari judul atau slug halaman..." />
+            </form>
+
             <div class="overflow-x-auto">
                 <table class="admin-table">
                     <thead class="admin-table-head">
@@ -62,6 +66,8 @@
                     </tbody>
                 </table>
             </div>
+
+            @include('show-teater.partials.pagination', ['paginator' => $pages, 'perPage' => $filters['per_page'], 'pageParam' => 'page'])
         </div>
     </div>
 </x-layouts::app>

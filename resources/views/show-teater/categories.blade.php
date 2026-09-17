@@ -65,78 +65,41 @@
         </div>
 
         {{-- ================================================================
-             Filters
-        ================================================================ --}}
-        <form method="GET" action="{{ route('show-teater.categories.index') }}" id="filter-form">
-            <input type="hidden" name="tab" value="{{ $activeTab }}" />
-            <div class="admin-filter">
-                {{-- Search --}}
-                <div class="admin-filter-search">
-                    <flux:input
-                        name="search"
-                        value="{{ $filters['search'] }}"
-                        placeholder="{{ $activeTab === 'setlist' ? 'Search nama setlist...' : 'Search nama unit song, setlist...' }}"
-                        icon="magnifying-glass"
-                    />
-                </div>
-
-                {{-- Setlist filter (only on unit song tab) --}}
-                @if ($activeTab === 'unit_song')
-                    <select
-                        name="setlist"
-                        onchange="this.form.submit()"
-                        class="admin-filter-select"
-                    >
-                        <option value="">Semua Setlist</option>
-                        @foreach ($allSetlistsForFilter as $sl)
-                            <option value="{{ $sl->id }}" {{ (string) $filters['setlist'] === (string) $sl->id ? 'selected' : '' }}>
-                                {{ $sl->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                @endif
-
-                {{-- Sort By --}}
-                <select
-                    name="sort_by"
-                    onchange="this.form.submit()"
-                    class="admin-filter-select"
-                >
-                    <option value="id" {{ $filters['sort_by'] === 'id' ? 'selected' : '' }}>ID</option>
-                    <option value="name" {{ $filters['sort_by'] === 'name' ? 'selected' : '' }}>Nama</option>
-                    <option value="jp_name" {{ $filters['sort_by'] === 'jp_name' ? 'selected' : '' }}>Nama (JP)</option>
-                </select>
-
-                {{-- Sort Direction Toggle --}}
-                <input type="hidden" name="sort_dir" value="{{ $filters['sort_dir'] }}" id="sort-dir-input" />
-                <button
-                    type="button"
-                    title="{{ $filters['sort_dir'] === 'asc' ? 'Ascending' : 'Descending' }}"
-                    onclick="document.getElementById('sort-dir-input').value = '{{ $filters['sort_dir'] === 'asc' ? 'desc' : 'asc' }}'; document.getElementById('filter-form').submit();"
-                    class="admin-filter-sort"
-                >
-                    @if ($filters['sort_dir'] === 'asc')
-                        <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
-                    @else
-                        <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"/></svg>
-                    @endif
-                </button>
-
-                <input type="hidden" name="per_page" value="{{ $filters['per_page'] }}" />
-
-                <flux:button type="submit" variant="outline">Cari</flux:button>
-
-                @if ($filters['search'] || $filters['setlist'])
-                    <a href="{{ route('show-teater.categories.index', ['tab' => $activeTab]) }}" class="admin-filter-reset">Reset</a>
-                @endif
-            </div>
-        </form>
-
-        {{-- ================================================================
              SETLIST TABLE
         ================================================================ --}}
         @if ($activeTab === 'setlist')
             <div class="admin-table-shell">
+                <form method="GET" action="{{ route('show-teater.categories.index') }}" id="filter-form">
+                    <input type="hidden" name="tab" value="setlist" />
+                    <x-admin.table-toolbar :filters="$filters" :show-filters="true" search-placeholder="Cari nama setlist...">
+                        <select name="sort_by" onchange="this.form.submit()" class="admin-filter-select">
+                            <option value="id" {{ $filters['sort_by'] === 'id' ? 'selected' : '' }}>ID</option>
+                            <option value="name" {{ $filters['sort_by'] === 'name' ? 'selected' : '' }}>Nama</option>
+                            <option value="jp_name" {{ $filters['sort_by'] === 'jp_name' ? 'selected' : '' }}>Nama (JP)</option>
+                        </select>
+
+                        <input type="hidden" name="sort_dir" value="{{ $filters['sort_dir'] }}" id="sort-dir-input" />
+                        <button
+                            type="button"
+                            title="{{ $filters['sort_dir'] === 'asc' ? 'Ascending' : 'Descending' }}"
+                            onclick="document.getElementById('sort-dir-input').value = '{{ $filters['sort_dir'] === 'asc' ? 'desc' : 'asc' }}'; document.getElementById('filter-form').submit();"
+                            class="admin-filter-sort"
+                        >
+                            @if ($filters['sort_dir'] === 'asc')
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
+                            @else
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"/></svg>
+                            @endif
+                        </button>
+
+                        <flux:button type="submit" variant="outline">{{ __('Terapkan') }}</flux:button>
+
+                        @if ($filters['search'])
+                            <a href="{{ route('show-teater.categories.index', ['tab' => 'setlist']) }}" class="admin-filter-reset">{{ __('Reset') }}</a>
+                        @endif
+                    </x-admin.table-toolbar>
+                </form>
+
                 <div class="overflow-x-auto">
                     <table class="admin-table">
                         <thead class="admin-table-head">
@@ -205,6 +168,46 @@
         ================================================================ --}}
         @if ($activeTab === 'unit_song')
             <div class="admin-table-shell">
+                <form method="GET" action="{{ route('show-teater.categories.index') }}" id="filter-form">
+                    <input type="hidden" name="tab" value="unit_song" />
+                    <x-admin.table-toolbar :filters="$filters" :show-filters="true" search-placeholder="Cari nama unit song atau setlist...">
+                        <select name="setlist" onchange="this.form.submit()" class="admin-filter-select">
+                            <option value="">{{ __('Semua Setlist') }}</option>
+                            @foreach ($allSetlistsForFilter as $sl)
+                                <option value="{{ $sl->id }}" {{ (string) $filters['setlist'] === (string) $sl->id ? 'selected' : '' }}>
+                                    {{ $sl->name }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                        <select name="sort_by" onchange="this.form.submit()" class="admin-filter-select">
+                            <option value="id" {{ $filters['sort_by'] === 'id' ? 'selected' : '' }}>ID</option>
+                            <option value="name" {{ $filters['sort_by'] === 'name' ? 'selected' : '' }}>Nama</option>
+                            <option value="jp_name" {{ $filters['sort_by'] === 'jp_name' ? 'selected' : '' }}>Nama (JP)</option>
+                        </select>
+
+                        <input type="hidden" name="sort_dir" value="{{ $filters['sort_dir'] }}" id="sort-dir-input" />
+                        <button
+                            type="button"
+                            title="{{ $filters['sort_dir'] === 'asc' ? 'Ascending' : 'Descending' }}"
+                            onclick="document.getElementById('sort-dir-input').value = '{{ $filters['sort_dir'] === 'asc' ? 'desc' : 'asc' }}'; document.getElementById('filter-form').submit();"
+                            class="admin-filter-sort"
+                        >
+                            @if ($filters['sort_dir'] === 'asc')
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
+                            @else
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"/></svg>
+                            @endif
+                        </button>
+
+                        <flux:button type="submit" variant="outline">{{ __('Terapkan') }}</flux:button>
+
+                        @if ($filters['search'] || $filters['setlist'])
+                            <a href="{{ route('show-teater.categories.index', ['tab' => 'unit_song']) }}" class="admin-filter-reset">{{ __('Reset') }}</a>
+                        @endif
+                    </x-admin.table-toolbar>
+                </form>
+
                 <div class="overflow-x-auto">
                     <table class="admin-table">
                         <thead class="admin-table-head">

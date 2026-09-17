@@ -2,6 +2,7 @@
 
 use App\Enums\ContentSection;
 use App\Http\Controllers\AboutController;
+use App\Http\Controllers\AdminSearchController;
 use App\Http\Controllers\ConcertEventsController;
 use App\Http\Controllers\Content\CategoryController;
 use App\Http\Controllers\Content\GalleryController;
@@ -51,6 +52,8 @@ Route::get('trivia', [PublicTriviaController::class, 'index'])->middleware('feat
 Route::get('photobooth/{slug?}', [PublicPhotoboothController::class, 'show'])
     ->middleware(['feature:photobooth', 'throttle:30,1'])
     ->name('photobooth.show');
+
+Route::middleware(['auth', 'verified'])->get('admin/search', AdminSearchController::class)->name('admin.search');
 
 Route::middleware(['auth', 'verified', 'block-view-only-writes'])->group(function () {
     Route::middleware('role:super_admin,view_only,bank_data_admin')->group(function () {

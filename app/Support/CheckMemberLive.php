@@ -12,6 +12,8 @@ final class CheckMemberLive
 
     private const TIMEOUT_SECONDS = 3;
 
+    private const ITEMS_CACHE_KEY = 'member_live_items';
+
     /**
      * Determine which live platforms are currently streaming for the given member.
      *
@@ -30,42 +32,71 @@ final class CheckMemberLive
         return Cache::remember(
             'member_live_'.md5(strtolower($memberName)),
             self::CACHE_SECONDS,
-            fn (): array => $this->fetch($baseUrl, $apiKey, $memberName),
+            fn (): array => $this->statusFromItems($this->items($baseUrl, $apiKey), $memberName),
         );
     }
 
     /**
+     * Raw live entries from the API that belong to the given member.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function matchingItems(string $memberName): array
+    {
+        $memberName = trim($memberName);
+        $baseUrl = rtrim((string) config('services.jkt48connect.url'), '/');
+        $apiKey = (string) config('services.jkt48connect.key');
+
+        if ($memberName === '' || $baseUrl === '' || $apiKey === '') {
+            return [];
+        }
+
+        return array_values(array_filter(
+            $this->items($baseUrl, $apiKey),
+            fn (mixed $item): bool => is_array($item) && $this->matchesMember($item, $memberName),
+        ));
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function items(string $baseUrl, string $apiKey): array
+    {
+        return Cache::remember(self::ITEMS_CACHE_KEY, self::CACHE_SECONDS, function () use ($baseUrl, $apiKey): array {
+            try {
+                $response = Http::withHeaders([
+                    'Accept' => 'application/json',
+                    'Authorization' => 'Bearer '.$apiKey,
+                    'X-API-KEY' => $apiKey,
+                ])->timeout(self::TIMEOUT_SECONDS)->get("{$baseUrl}/api/v1/live");
+            } catch (Throwable) {
+                return [];
+            }
+
+            if (! $response->successful()) {
+                return [];
+            }
+
+            $items = $response->json('data');
+
+            if (! is_array($items)) {
+                return [];
+            }
+
+            return array_values(array_filter($items, 'is_array'));
+        });
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $items
      * @return array{showroom: bool, idn: bool}
      */
-    private function fetch(string $baseUrl, string $apiKey, string $memberName): array
+    private function statusFromItems(array $items, string $memberName): array
     {
-        try {
-            $response = Http::withHeaders([
-                'Accept' => 'application/json',
-                'Authorization' => 'Bearer '.$apiKey,
-                'X-API-KEY' => $apiKey,
-            ])->timeout(self::TIMEOUT_SECONDS)->get("{$baseUrl}/api/v1/live");
-        } catch (Throwable) {
-            return $this->offline();
-        }
-
-        if (! $response->successful()) {
-            return $this->offline();
-        }
-
-        $items = $response->json('data');
-        if (! is_array($items)) {
-            return $this->offline();
-        }
-
         $status = $this->offline();
 
         foreach ($items as $item) {
-            if (! is_array($item)) {
-                continue;
-            }
-
-            if (! $this->matchesMember($item, $memberName)) {
+            if (! is_array($item) || ! $this->matchesMember($item, $memberName)) {
                 continue;
             }
 

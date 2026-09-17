@@ -6,6 +6,7 @@ use App\Enums\ContentSection;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CategoryRequest;
 use App\Models\Category;
+use App\Support\ListingQuery;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -17,9 +18,24 @@ class CategoryController extends Controller
         $type = ContentSection::tryFrom((string) $request->string('type', ContentSection::News->value))
             ?? ContentSection::News;
 
+        $filters = ListingQuery::from($request, ['name', 'created_at'], 'name');
+
+        $categories = Category::query()
+            ->ofType($type)
+            ->when($filters['search'] !== '', function ($query) use ($filters): void {
+                $query->where(function ($nested) use ($filters): void {
+                    $nested->where('name', 'like', "%{$filters['search']}%")
+                        ->orWhere('slug', 'like', "%{$filters['search']}%");
+                });
+            })
+            ->orderBy($filters['sort_by'], $filters['sort_dir'])
+            ->paginate($filters['per_page'])
+            ->withQueryString();
+
         return view('content.categories.index', [
             'type' => $type,
-            'categories' => Category::query()->ofType($type)->orderBy('name')->get(),
+            'categories' => $categories,
+            'filters' => $filters,
         ]);
     }
 
