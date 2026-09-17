@@ -81,7 +81,6 @@
                     <table class="admin-table">
                     <thead class="admin-table-head">
                         <tr>
-                            <th class="px-4 py-3 text-left font-medium text-zinc-500 dark:text-zinc-400">LIVE ID</th>
                             <th class="px-4 py-3 text-left font-medium text-zinc-500 dark:text-zinc-400">PLATFORM</th>
                             <th class="px-4 py-3 text-left font-medium text-zinc-500 dark:text-zinc-400">LIVE DATE</th>
                             <th class="px-4 py-3 text-left font-medium text-zinc-500 dark:text-zinc-400">DURATION (HH:MM)</th>
@@ -92,13 +91,6 @@
                     <tbody class="admin-table-body">
                         @forelse ($liveStreams as $liveStream)
                             <tr class="admin-table-row">
-                                <td class="px-4 py-3 font-mono text-xs text-zinc-500 dark:text-zinc-400">
-                                    @if ($liveStream->live_id)
-                                        <span class="inline-block max-w-[16rem] truncate align-middle" title="{{ $liveStream->live_id }}">{{ $liveStream->live_id }}</span>
-                                    @else
-                                        –
-                                    @endif
-                                </td>
                                 <td class="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-200">{{ $liveStream->platform }}</td>
                                 <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $liveStream->live_date?->translatedFormat('d F Y') }}</td>
                                 <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">
@@ -122,7 +114,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-4 py-16 text-center text-zinc-500 dark:text-zinc-400">
+                                <td colspan="5" class="px-4 py-16 text-center text-zinc-500 dark:text-zinc-400">
                                     <div class="flex flex-col items-center gap-3">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="size-10 text-zinc-300 dark:text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6.75a3.75 3.75 0 10-7.5 0v3.75m11.356-1.993l1.263 11.484A2.25 2.25 0 0118.631 22.5H5.37a2.25 2.25 0 01-2.238-2.504l1.263-11.484a2.25 2.25 0 012.238-1.996h10.734a2.25 2.25 0 012.238 1.996z"/></svg>
                                         <p class="font-medium">Belum ada data live streaming</p>

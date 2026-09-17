@@ -192,4 +192,34 @@ class WelcomePageTest extends TestCase
             ->assertOk()
             ->assertDontSee('Berita Terbaru');
     }
+
+    public function test_homepage_shows_single_participation_from_discography_count(): void
+    {
+        DB::table('about_settings')->upsert([
+            ['key' => 'idol_discography', 'value' => "Jacket Doki Doki Syndrome\nShekina\nRomansa Kayu Manis", 'created_at' => now(), 'updated_at' => now()],
+        ], ['key'], ['value', 'updated_at']);
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('Single Participation')
+            ->assertSee('data-test="single-participation-count">3</p>', false);
+    }
+
+    public function test_single_participation_ignores_blank_discography_lines(): void
+    {
+        DB::table('about_settings')->upsert([
+            ['key' => 'idol_discography', 'value' => "Lagu Satu\n\n   \nLagu Dua\n", 'created_at' => now(), 'updated_at' => now()],
+        ], ['key'], ['value', 'updated_at']);
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('data-test="single-participation-count">2</p>', false);
+    }
+
+    public function test_single_participation_is_zero_without_discography(): void
+    {
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('data-test="single-participation-count">0</p>', false);
+    }
 }

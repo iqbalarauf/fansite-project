@@ -7,6 +7,11 @@
 
         $heroUrl = $heroImage ? Storage::url($heroImage) : null;
         $heroStyle = $heroUrl ? "background-image: url('".$heroUrl."');" : '';
+
+        $liveIcons = collect([
+            'showroom' => 'icon-app/showroom.webp',
+            'idn' => 'icon-app/idn.webp',
+        ])->map(fn (string $path): ?string => Storage::disk('public')->exists($path) ? Storage::url($path) : null)->all();
     @endphp
 
     <section id="home" class="relative flex min-h-svh items-center overflow-hidden bg-slate-950 bg-cover bg-center"
@@ -115,7 +120,7 @@
                         </div>
                         <div class="rounded-2xl bg-indigo-50 p-5 dark:bg-indigo-950/60">
                             <p class="text-sm text-slate-500 dark:text-slate-400">Single Participation</p>
-                            <p class="mt-3 text-3xl font-black text-slate-900 dark:text-white">12</p>
+                            <p class="mt-3 text-3xl font-black text-slate-900 dark:text-white" data-test="single-participation-count">{{ $discographyCount }}</p>
                         </div>
                         <div class="rounded-2xl bg-yellow-50 p-5 dark:bg-yellow-950/50">
                             <p class="text-sm text-slate-500 dark:text-slate-400">Jumlah Setlist</p>
@@ -170,41 +175,50 @@
                         <h3 class="mt-2 text-2xl font-black text-slate-900 dark:text-white">Status Live</h3>
                     </div>
 
+                    @php
+                        $livePlatforms = [
+                            ['key' => 'showroom', 'label' => 'Showroom Live', 'live' => $showroomLive, 'url' => $showroomStreamUrl, 'badge' => 'SR', 'accent' => 'from-orange-400 to-rose-500'],
+                            ['key' => 'idn', 'label' => 'IDN App', 'live' => $idnLive, 'url' => $idnStreamUrl, 'badge' => 'IDN', 'accent' => 'from-sky-400 to-emerald-500'],
+                        ];
+                    @endphp
+
                     <div class="mt-6 grid gap-4 sm:grid-cols-2">
-                        <div class="flex flex-col items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-800/40">
-                            <div class="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-400 to-rose-500 text-base font-black text-white shadow-md">
-                                SR
+                        @foreach ($livePlatforms as $platform)
+                            @php
+                                $isLink = $platform['live'] && ! empty($platform['url']);
+                                $icon = $liveIcons[$platform['key']] ?? null;
+                            @endphp
+                            <div class="relative flex flex-col items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-5 transition dark:border-slate-800 dark:bg-slate-800/40 {{ $isLink ? 'hover:border-indigo-300 hover:shadow-md dark:hover:border-indigo-700' : '' }}">
+                                @if ($icon)
+                                    <img src="{{ $icon }}" alt="{{ $platform['label'] }}" class="size-14 rounded-2xl object-contain shadow-md" />
+                                @else
+                                    <div class="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br {{ $platform['accent'] }} text-base font-black text-white shadow-md">
+                                        {{ $platform['badge'] }}
+                                    </div>
+                                @endif
+
+                                <p class="text-base font-bold text-slate-900 dark:text-white">{{ $platform['label'] }}</p>
+
+                                @if ($platform['live'])
+                                    <span class="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900 dark:text-green-300">
+                                        <span class="size-1.5 rounded-full bg-green-500 dark:bg-green-400"></span>
+                                        Online
+                                    </span>
+                                    @if ($isLink)
+                                        <span class="text-xs font-semibold text-indigo-600 dark:text-indigo-400">{{ __('Tonton sekarang') }} →</span>
+                                    @endif
+                                @else
+                                    <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-200/70 px-3 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-700 dark:text-slate-300">
+                                        <span class="size-1.5 rounded-full bg-slate-400 dark:bg-slate-500"></span>
+                                        Offline
+                                    </span>
+                                @endif
+
+                                @if ($isLink)
+                                    <a href="{{ $platform['url'] }}" target="_blank" rel="noopener" class="absolute inset-0 rounded-2xl" aria-label="{{ __('Tonton :platform', ['platform' => $platform['label']]) }}"></a>
+                                @endif
                             </div>
-                            <p class="text-base font-bold text-slate-900 dark:text-white">Showroom Live</p>
-                            @if ($showroomLive)
-                                <span class="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900 dark:text-green-300">
-                                    <span class="size-1.5 rounded-full bg-green-500 dark:bg-green-400"></span>
-                                    Online
-                                </span>
-                            @else
-                                <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-200/70 px-3 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-700 dark:text-slate-300">
-                                    <span class="size-1.5 rounded-full bg-slate-400 dark:bg-slate-500"></span>
-                                    Offline
-                                </span>
-                            @endif
-                        </div>
-                        <div class="flex flex-col items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-800/40">
-                            <div class="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-400 to-emerald-500 text-base font-black text-white shadow-md">
-                                IDN
-                            </div>
-                            <p class="text-base font-bold text-slate-900 dark:text-white">IDN App</p>
-                            @if ($idnLive)
-                                <span class="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900 dark:text-green-300">
-                                    <span class="size-1.5 rounded-full bg-green-500 dark:bg-green-400"></span>
-                                    Online
-                                </span>
-                            @else
-                                <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-200/70 px-3 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-700 dark:text-slate-300">
-                                    <span class="size-1.5 rounded-full bg-slate-400 dark:bg-slate-500"></span>
-                                    Offline
-                                </span>
-                            @endif
-                        </div>
+                        @endforeach
                     </div>
                 </section>
             </div>
