@@ -107,4 +107,22 @@ class RoleAccessTest extends TestCase
         $this->actingAs($contentCreator)->get(route('about.edit'))->assertForbidden();
         $this->actingAs($contentCreator)->get(route('app-settings.edit'))->assertForbidden();
     }
+
+    public function test_sidebar_shows_about_idol_and_fansite_for_super_admin(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        $this->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('About Idol & Fansite');
+    }
+
+    public function test_sidebar_hides_about_idol_and_fansite_for_non_super_admin(): void
+    {
+        $this->actingAs(User::factory()->viewOnly()->create());
+
+        $this->get(route('dashboard'))
+            ->assertOk()
+            ->assertDontSee('About Idol & Fansite');
+    }
 }

@@ -36,14 +36,33 @@
         </section>
     @endif
 
-    @if (count($fanbaseGallery) > 0)
+    @if (count($fanbaseStructure) > 0)
+        <section class="mx-auto max-w-7xl px-4 pt-16 sm:px-6 lg:px-8">
+            <div class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+                <h2 class="text-3xl font-black text-slate-900 dark:text-white">Struktur Organisasi</h2>
+                <ul class="mt-6 space-y-3">
+                    @foreach ($fanbaseStructure as $line)
+                        <li class="flex items-start gap-3 text-sm leading-7 text-slate-600 dark:text-slate-300">
+                            <span class="mt-2.5 size-1.5 shrink-0 rounded-full bg-indigo-600 dark:bg-indigo-400"></span>
+                            <span>{{ $line }}</span>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        </section>
+    @endif
+
+    @if (count($fanbaseGalleryItems) > 0)
         <section class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
             <h2 class="text-3xl font-black text-slate-900 dark:text-white">Galeri</h2>
             <div class="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3">
-                @foreach ($fanbaseGallery as $index => $path)
-                    <div class="{{ $index === 0 ? 'col-span-2 row-span-2' : '' }} overflow-hidden rounded-[2rem] bg-white shadow-sm dark:bg-slate-900">
-                        <img src="{{ Storage::url($path) }}" alt="Galeri {{ $fanbaseName }} {{ $index + 1 }}" class="h-full w-full object-cover" loading="lazy" />
-                    </div>
+                @foreach ($fanbaseGalleryItems as $index => $item)
+                    <figure class="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                        <img src="{{ Storage::url($item['photo']) }}" alt="{{ $item['caption'] ?: 'Galeri '.$fanbaseName.' '.($index + 1) }}" class="aspect-square w-full object-cover" loading="lazy" />
+                        @if ($item['caption'])
+                            <figcaption class="p-4 text-sm text-slate-600 dark:text-slate-300">{{ $item['caption'] }}</figcaption>
+                        @endif
+                    </figure>
                 @endforeach
             </div>
         </section>
