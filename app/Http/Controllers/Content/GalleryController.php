@@ -8,6 +8,7 @@ use App\Http\Requests\GalleryVideoRequest;
 use App\Models\GalleryPhoto;
 use App\Models\GalleryVideo;
 use App\Support\GalleryVideoEmbed;
+use App\Support\ListingQuery;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -19,10 +20,35 @@ class GalleryController extends Controller
     {
         $tab = $request->get('tab') === 'videos' ? 'videos' : 'photos';
 
+        $filters = ListingQuery::from($request, ['created_at'], 'created_at');
+
+        $photos = GalleryPhoto::query()
+            ->when($filters['search'] !== '', function ($query) use ($filters): void {
+                $query->where(function ($nested) use ($filters): void {
+                    $nested->where('description', 'like', "%{$filters['search']}%")
+                        ->orWhere('credit_photographer', 'like', "%{$filters['search']}%");
+                });
+            })
+            ->latest()
+            ->paginate($filters['per_page'], ['*'], 'photo_page')
+            ->withQueryString();
+
+        $videos = GalleryVideo::query()
+            ->when($filters['search'] !== '', function ($query) use ($filters): void {
+                $query->where(function ($nested) use ($filters): void {
+                    $nested->where('title', 'like', "%{$filters['search']}%")
+                        ->orWhere('credit_account', 'like', "%{$filters['search']}%");
+                });
+            })
+            ->latest()
+            ->paginate($filters['per_page'], ['*'], 'video_page')
+            ->withQueryString();
+
         return view('content.gallery.index', [
             'tab' => $tab,
-            'photos' => GalleryPhoto::query()->latest()->paginate(12, ['*'], 'photo_page')->withQueryString(),
-            'videos' => GalleryVideo::query()->latest()->paginate(12, ['*'], 'video_page')->withQueryString(),
+            'photos' => $photos,
+            'videos' => $videos,
+            'filters' => $filters,
         ]);
     }
 

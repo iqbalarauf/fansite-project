@@ -27,6 +27,10 @@
         @endif
 
         <div class="admin-table-shell">
+            <form method="GET" action="{{ route('content.timeline.index') }}">
+                <x-admin.table-toolbar :filters="$filters" search-placeholder="Cari deskripsi timeline..." />
+            </form>
+
             <div class="overflow-x-auto">
                 <table class="admin-table">
                     <thead class="admin-table-head">
@@ -74,7 +78,7 @@
                     </tbody>
                 </table>
             </div>
-            @include('show-teater.partials.pagination', ['paginator' => $timelines, 'perPage' => 15, 'pageParam' => 'page'])
+            @include('show-teater.partials.pagination', ['paginator' => $timelines, 'perPage' => $filters['per_page'], 'pageParam' => 'page'])
         </div>
     </div>
 

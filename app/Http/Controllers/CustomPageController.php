@@ -3,15 +3,31 @@
 namespace App\Http\Controllers;
 
 use App\Models\CustomPage;
+use App\Support\ListingQuery;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 class CustomPageController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        $filters = ListingQuery::from($request, ['title', 'updated_at'], 'updated_at');
+
+        $pages = CustomPage::query()
+            ->when($filters['search'] !== '', function ($query) use ($filters): void {
+                $query->where(function ($nested) use ($filters): void {
+                    $nested->where('title', 'like', "%{$filters['search']}%")
+                        ->orWhere('slug', 'like', "%{$filters['search']}%");
+                });
+            })
+            ->orderBy($filters['sort_by'], $filters['sort_dir'])
+            ->paginate($filters['per_page'])
+            ->withQueryString();
+
         return view('pages.index', [
-            'pages' => CustomPage::query()->latest('updated_at')->get(),
+            'pages' => $pages,
+            'filters' => $filters,
         ]);
     }
 

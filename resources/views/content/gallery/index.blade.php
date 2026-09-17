@@ -47,6 +47,11 @@
 
         @if ($tab === 'photos')
             <div class="admin-table-shell">
+                <form method="GET" action="{{ route('content.gallery.index') }}">
+                    <input type="hidden" name="tab" value="photos" />
+                    <x-admin.table-toolbar :filters="$filters" search-placeholder="Cari deskripsi atau fotografer..." />
+                </form>
+
                 <div class="overflow-x-auto">
                     <table class="admin-table">
                         <thead class="admin-table-head">
@@ -88,10 +93,15 @@
                         </tbody>
                     </table>
                 </div>
-                @include('show-teater.partials.pagination', ['paginator' => $photos, 'perPage' => 12, 'pageParam' => 'photo_page'])
+                @include('show-teater.partials.pagination', ['paginator' => $photos, 'perPage' => $filters['per_page'], 'pageParam' => 'photo_page'])
             </div>
         @else
             <div class="admin-table-shell">
+                <form method="GET" action="{{ route('content.gallery.index') }}">
+                    <input type="hidden" name="tab" value="videos" />
+                    <x-admin.table-toolbar :filters="$filters" search-placeholder="Cari judul atau credit account..." />
+                </form>
+
                 <div class="overflow-x-auto">
                     <table class="admin-table">
                         <thead class="admin-table-head">
@@ -134,7 +144,7 @@
                         </tbody>
                     </table>
                 </div>
-                @include('show-teater.partials.pagination', ['paginator' => $videos, 'perPage' => 12, 'pageParam' => 'video_page'])
+                @include('show-teater.partials.pagination', ['paginator' => $videos, 'perPage' => $filters['per_page'], 'pageParam' => 'video_page'])
             </div>
         @endif
     </div>

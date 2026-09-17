@@ -30,66 +30,47 @@
             </div>
         @endif
 
-        <form method="GET" action="{{ route('users.index') }}" id="filter-form">
-            <div class="admin-filter">
-                <div class="admin-filter-search">
-                    <flux:input
-                        name="search"
-                        value="{{ $filters['search'] }}"
-                        placeholder="{{ __('Cari nama atau email user...') }}"
-                        icon="magnifying-glass"
-                    />
-                </div>
-
-                <select
-                    name="role"
-                    onchange="this.form.submit()"
-                    class="admin-filter-select"
-                >
-                    <option value="">{{ __('Semua Role') }}</option>
-                    @foreach ($roles as $userRole)
-                        <option value="{{ $userRole->value }}" {{ $filters['role'] === $userRole->value ? 'selected' : '' }}>
-                            {{ $userRole->label() }}
-                        </option>
-                    @endforeach
-                </select>
-
-                <select
-                    name="sort_by"
-                    onchange="this.form.submit()"
-                    class="admin-filter-select"
-                >
-                    <option value="created_at" {{ $filters['sort_by'] === 'created_at' ? 'selected' : '' }}>{{ __('Tanggal Daftar') }}</option>
-                    <option value="name" {{ $filters['sort_by'] === 'name' ? 'selected' : '' }}>{{ __('Nama') }}</option>
-                    <option value="email" {{ $filters['sort_by'] === 'email' ? 'selected' : '' }}>{{ __('Email') }}</option>
-                    <option value="role" {{ $filters['sort_by'] === 'role' ? 'selected' : '' }}>{{ __('Role') }}</option>
-                </select>
-
-                <input type="hidden" name="sort_dir" value="{{ $filters['sort_dir'] }}" id="sort-dir-input" />
-                <button
-                    type="button"
-                    title="{{ $filters['sort_dir'] === 'asc' ? 'Ascending' : 'Descending' }}"
-                    onclick="document.getElementById('sort-dir-input').value = '{{ $filters['sort_dir'] === 'asc' ? 'desc' : 'asc' }}'; document.getElementById('filter-form').submit();"
-                    class="admin-filter-sort"
-                >
-                    @if ($filters['sort_dir'] === 'asc')
-                        <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
-                    @else
-                        <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"/></svg>
-                    @endif
-                </button>
-
-                <input type="hidden" name="per_page" value="{{ $filters['per_page'] }}" />
-
-                <flux:button type="submit" variant="outline">{{ __('Cari') }}</flux:button>
-
-                @if ($filters['search'] || $filters['role'])
-                    <a href="{{ route('users.index') }}" class="admin-filter-reset">{{ __('Reset') }}</a>
-                @endif
-            </div>
-        </form>
-
         <div class="admin-table-shell">
+            <form method="GET" action="{{ route('users.index') }}" id="filter-form">
+                <x-admin.table-toolbar :filters="$filters" :show-filters="true" search-placeholder="Cari nama atau email user...">
+                    <select name="role" onchange="this.form.submit()" class="admin-filter-select">
+                        <option value="">{{ __('Semua Role') }}</option>
+                        @foreach ($roles as $userRole)
+                            <option value="{{ $userRole->value }}" {{ $filters['role'] === $userRole->value ? 'selected' : '' }}>
+                                {{ $userRole->label() }}
+                            </option>
+                        @endforeach
+                    </select>
+
+                    <select name="sort_by" onchange="this.form.submit()" class="admin-filter-select">
+                        <option value="created_at" {{ $filters['sort_by'] === 'created_at' ? 'selected' : '' }}>{{ __('Tanggal Daftar') }}</option>
+                        <option value="name" {{ $filters['sort_by'] === 'name' ? 'selected' : '' }}>{{ __('Nama') }}</option>
+                        <option value="email" {{ $filters['sort_by'] === 'email' ? 'selected' : '' }}>{{ __('Email') }}</option>
+                        <option value="role" {{ $filters['sort_by'] === 'role' ? 'selected' : '' }}>{{ __('Role') }}</option>
+                    </select>
+
+                    <input type="hidden" name="sort_dir" value="{{ $filters['sort_dir'] }}" id="sort-dir-input" />
+                    <button
+                        type="button"
+                        title="{{ $filters['sort_dir'] === 'asc' ? 'Ascending' : 'Descending' }}"
+                        onclick="document.getElementById('sort-dir-input').value = '{{ $filters['sort_dir'] === 'asc' ? 'desc' : 'asc' }}'; document.getElementById('filter-form').submit();"
+                        class="admin-filter-sort"
+                    >
+                        @if ($filters['sort_dir'] === 'asc')
+                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
+                        @else
+                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"/></svg>
+                        @endif
+                    </button>
+
+                    <flux:button type="submit" variant="outline">{{ __('Terapkan') }}</flux:button>
+
+                    @if ($filters['search'] || $filters['role'])
+                        <a href="{{ route('users.index') }}" class="admin-filter-reset">{{ __('Reset') }}</a>
+                    @endif
+                </x-admin.table-toolbar>
+            </form>
+
             <div class="overflow-x-auto">
                 <table class="admin-table">
                     <thead class="admin-table-head">
@@ -101,9 +82,9 @@
                             <th class="px-4 py-3 text-end">{{ __('Aksi') }}</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700">
+                    <tbody class="admin-table-body">
                         @forelse ($users as $user)
-                            <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+                            <tr class="admin-table-row">
                                 <td class="px-4 py-3">
                                     <div class="flex items-center gap-3">
                                         <flux:avatar

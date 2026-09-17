@@ -1,46 +1,46 @@
-@if ($paginator->hasPages())
-    <div class="flex items-center justify-between border-t border-zinc-200 px-4 py-3 dark:border-zinc-700">
-        <p class="text-sm text-zinc-500 dark:text-zinc-400">
-            Showing {{ $paginator->firstItem() }} to {{ $paginator->lastItem() }} of {{ $paginator->total() }} results
-        </p>
+@php
+    $first = $paginator->firstItem() ?? 0;
+    $last = $paginator->lastItem() ?? 0;
+@endphp
+
+<div class="flex flex-col gap-3 border-t border-gray-200 px-5 py-4 dark:border-gray-700 sm:flex-row sm:items-center sm:justify-between">
+    <p class="text-theme-sm text-gray-500 dark:text-gray-400">
+        {{ __('Showing') }}
+        <span class="font-medium text-gray-700 dark:text-gray-200">{{ $first }}</span>
+        {{ __('to') }}
+        <span class="font-medium text-gray-700 dark:text-gray-200">{{ $last }}</span>
+        {{ __('of') }}
+        <span class="font-medium text-gray-700 dark:text-gray-200">{{ $paginator->total() }}</span>
+        {{ __('entries') }}
+    </p>
+
+    @if ($paginator->hasPages())
         <div class="flex items-center gap-1">
             <a href="{{ $paginator->url(1) }}"
-               class="flex size-8 items-center justify-center rounded-lg border border-zinc-200 text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 {{ $paginator->onFirstPage() ? 'pointer-events-none opacity-40' : '' }}">
+               aria-label="{{ __('Halaman pertama') }}"
+               class="flex size-9 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700/40 {{ $paginator->onFirstPage() ? 'pointer-events-none opacity-40' : '' }}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18.75 19.5l-7.5-7.5 7.5-7.5m-6 15L5.25 12l7.5-7.5"/></svg>
             </a>
             <a href="{{ $paginator->previousPageUrl() }}"
-               class="flex size-8 items-center justify-center rounded-lg border border-zinc-200 text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 {{ $paginator->onFirstPage() ? 'pointer-events-none opacity-40' : '' }}">
+               aria-label="{{ __('Halaman sebelumnya') }}"
+               class="flex size-9 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700/40 {{ $paginator->onFirstPage() ? 'pointer-events-none opacity-40' : '' }}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
             </a>
 
-            <span class="flex items-center gap-1.5 px-1 text-sm text-zinc-600 dark:text-zinc-300">
-                Page {{ $paginator->currentPage() }} of {{ $paginator->lastPage() }}
+            <span class="flex items-center gap-1.5 px-2 text-theme-sm text-gray-600 dark:text-gray-300">
+                {{ __('Page') }} {{ $paginator->currentPage() }} {{ __('of') }} {{ $paginator->lastPage() }}
             </span>
 
             <a href="{{ $paginator->nextPageUrl() }}"
-               class="flex size-8 items-center justify-center rounded-lg border border-zinc-200 text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 {{ ! $paginator->hasMorePages() ? 'pointer-events-none opacity-40' : '' }}">
+               aria-label="{{ __('Halaman berikutnya') }}"
+               class="flex size-9 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700/40 {{ ! $paginator->hasMorePages() ? 'pointer-events-none opacity-40' : '' }}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
             </a>
             <a href="{{ $paginator->url($paginator->lastPage()) }}"
-               class="flex size-8 items-center justify-center rounded-lg border border-zinc-200 text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 {{ ! $paginator->hasMorePages() ? 'pointer-events-none opacity-40' : '' }}">
+               aria-label="{{ __('Halaman terakhir') }}"
+               class="flex size-9 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700/40 {{ ! $paginator->hasMorePages() ? 'pointer-events-none opacity-40' : '' }}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 4.5l7.5 7.5-7.5 7.5m6-15l7.5 7.5-7.5 7.5"/></svg>
             </a>
         </div>
-        <div class="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
-            <span>Rows:</span>
-            @foreach ([10, 25, 50, 100] as $size)
-                <a href="{{ request()->fullUrlWithQuery(['per_page' => $size, $pageParam => 1]) }}"
-                   class="flex size-8 items-center justify-center rounded-lg border text-xs
-                       {{ $perPage == $size
-                           ? 'border-blue-500 bg-blue-50 text-blue-600 font-medium dark:bg-blue-950 dark:text-blue-400'
-                           : 'border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800' }}">
-                    {{ $size }}
-                </a>
-            @endforeach
-        </div>
-    </div>
-@else
-    <div class="border-t border-zinc-200 px-4 py-3 dark:border-zinc-700">
-        <p class="text-sm text-zinc-500 dark:text-zinc-400">Showing {{ $paginator->total() }} results</p>
-    </div>
-@endif
+    @endif
+</div>

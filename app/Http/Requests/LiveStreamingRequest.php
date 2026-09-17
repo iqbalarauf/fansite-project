@@ -19,6 +19,7 @@ class LiveStreamingRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'live_id' => ['nullable', 'string', 'max:255', Rule::unique('live_streaming', 'live_id')->ignore($this->route('liveStreaming')?->id)],
             'platform' => ['required', Rule::enum(LiveStreamingPlatform::class)],
             'live_date' => ['required', 'date'],
             'duration' => ['nullable', 'integer', 'min:0'],

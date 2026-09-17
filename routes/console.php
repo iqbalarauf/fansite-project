@@ -9,3 +9,13 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('app:fetch-streaming-info')->everyTenMinutes()->withoutOverlapping();
+
+Schedule::command('app:fetch-theater-shows')
+    ->weeklyOn(2, '01:00')
+    ->timezone('Asia/Jakarta')
+    ->withoutOverlapping();
+
+Schedule::command('app:check-member-live')
+    ->dailyAt('00:00')
+    ->timezone('Asia/Jakarta')
+    ->withoutOverlapping();
