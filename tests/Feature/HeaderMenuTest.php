@@ -59,7 +59,21 @@ class HeaderMenuTest extends TestCase
             ->assertOk()
             ->assertSee('Jadwal')
             ->assertSee('href="'.route('schedule.index').'"', false)
-            ->assertSee('href="'.route('about.idol').'"', false);
+            ->assertSee('href="'.route('about.show').'"', false);
+    }
+
+    public function test_settings_page_previews_default_menu_and_custom_items(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        MenuItem::query()->create(['label' => 'Menu Custom', 'type' => 'link', 'url' => '/custom']);
+
+        Livewire::test('pages::settings.header-menu')
+            ->assertSee('Item Menu')
+            ->assertSee('Galeri')
+            ->set('mode', 'custom')
+            ->assertSee('Menu Custom')
+            ->assertDontSee('Galeri');
     }
 
     public function test_super_admin_can_create_a_list_page_item(): void

@@ -23,7 +23,7 @@ final class EventTimeline
             ->when($past, function ($query) use ($today, $showDateExpression): void {
                 $query->whereRaw("{$showDateExpression} < ?", [$today]);
             }, function ($query) use ($today, $showDateExpression): void {
-                $query->whereRaw("{$showDateExpression} > ?", [$today]);
+                $query->whereRaw("{$showDateExpression} >= ?", [$today]);
             })
             ->orderBy('show_date', $past ? 'desc' : 'asc');
 
@@ -32,7 +32,7 @@ final class EventTimeline
             ->when($past, function ($query) use ($today): void {
                 $query->whereDate('event_date', '<', $today);
             }, function ($query) use ($today): void {
-                $query->whereDate('event_date', '>', $today);
+                $query->whereDate('event_date', '>=', $today);
             })
             ->orderBy('event_date', $past ? 'desc' : 'asc');
 
@@ -61,7 +61,7 @@ final class EventTimeline
             foreach (array_filter([$meetGreet->event_date, $meetGreet->event_date_2]) as $eventDate) {
                 $normalizedDate = ShowDate::normalize((string) $eventDate);
                 $withinRange = ! ($from && $to) || ($normalizedDate >= $from && $normalizedDate <= $to);
-                $matchesDirection = $past ? $normalizedDate < $today : $normalizedDate > $today;
+                $matchesDirection = $past ? $normalizedDate < $today : $normalizedDate >= $today;
 
                 if ($withinRange && $matchesDirection) {
                     $events->push([

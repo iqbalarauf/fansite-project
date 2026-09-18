@@ -45,6 +45,7 @@ final class AboutPageData
 
         return [
             'fanbaseName' => $about['fanbase_name'] ?? 'Fanbase',
+            'fanbaseSlug' => $this->fanbaseSlug($about),
             'idolName' => $about['idol_name'] ?? 'Idol',
             'idolSlug' => $this->slug($about),
             'fanbaseLogo' => $about['fanbase_logo'] ?? null,
@@ -61,6 +62,16 @@ final class AboutPageData
             'fanbaseCtaButton2Text' => (string) ($about['fanbase_cta_button2_text'] ?? ''),
             'fanbaseCtaButton2Link' => (string) ($about['fanbase_cta_button2_link'] ?? ''),
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $about
+     */
+    private function fanbaseSlug(array $about): string
+    {
+        $slug = trim((string) ($about['fanbase_slug'] ?? ''));
+
+        return $slug !== '' ? $slug : Str::slug((string) ($about['fanbase_name'] ?? ''));
     }
 
     /**

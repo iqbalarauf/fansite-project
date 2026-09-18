@@ -397,7 +397,7 @@
 
                 @forelse ($upcomingEvents as $event)
                     @php
-                        $daysUntil = (int) now()->diffInDays(\Carbon\Carbon::parse($event['date']), false) +1;
+                        $daysUntil = (int) now()->startOfDay()->diffInDays(\Carbon\Carbon::parse($event['date'])->startOfDay(), false);
                         $badgeColors = ['blue' => 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', 'red' => 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400', 'orange' => 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'];
                     @endphp
                     <div class="mb-2 flex items-center gap-3 rounded-lg border border-green-100 bg-green-50 px-3 py-2.5 dark:border-green-900/20 dark:bg-green-900/10">
@@ -409,7 +409,7 @@
                             <div class="text-xs text-zinc-400">{{ \Carbon\Carbon::parse($event['date'])->locale('id')->isoFormat('D MMMM YYYY') }}</div>
                         </div>
                         <span class="shrink-0 text-xs font-medium text-green-600 dark:text-green-400">
-                            H-{{ $daysUntil }}
+                            {{ $daysUntil === 0 ? __('Hari Ini') : 'H-'.$daysUntil }}
                         </span>
                     </div>
                 @empty

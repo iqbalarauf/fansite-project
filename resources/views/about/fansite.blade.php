@@ -55,15 +55,31 @@
     @if (count($fanbaseGalleryItems) > 0)
         <section class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
             <h2 class="text-3xl font-black text-slate-900 dark:text-white">Galeri</h2>
-            <div class="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3">
-                @foreach ($fanbaseGalleryItems as $index => $item)
-                    <figure class="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                        <img src="{{ Storage::url($item['photo']) }}" alt="{{ $item['caption'] ?: 'Galeri '.$fanbaseName.' '.($index + 1) }}" class="aspect-square w-full object-cover" loading="lazy" />
-                        @if ($item['caption'])
-                            <figcaption class="p-4 text-sm text-slate-600 dark:text-slate-300">{{ $item['caption'] }}</figcaption>
-                        @endif
-                    </figure>
-                @endforeach
+
+            <div class="relative mt-8 px-1" data-fanbase-carousel>
+                <div class="overflow-hidden">
+                    <div class="flex gap-4 transition-transform duration-500 ease-out" data-fanbase-track>
+                        @foreach ($fanbaseGalleryItems as $index => $item)
+                            <figure data-fanbase-item class="fanbase-gallery-item flex shrink-0 flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                                <img src="{{ Storage::url($item['photo']) }}" alt="{{ $item['caption'] ?: 'Galeri '.$fanbaseName.' '.($index + 1) }}" class="aspect-square w-full object-cover" loading="lazy" />
+                                @if ($item['caption'])
+                                    <figcaption class="p-4 text-sm text-slate-600 dark:text-slate-300">{{ $item['caption'] }}</figcaption>
+                                @endif
+                            </figure>
+                        @endforeach
+                    </div>
+                </div>
+
+                @if (count($fanbaseGalleryItems) > 1)
+                    <button type="button" data-fanbase-prev aria-label="Foto sebelumnya"
+                            class="absolute -left-2 top-1/2 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-600 shadow-md backdrop-blur transition hover:text-indigo-600 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900/90 dark:text-slate-300 dark:hover:text-indigo-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4"><path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 0 1-.02 1.06L8.832 10l3.938 3.71a.75.75 0 1 1-1.04 1.08l-4.5-4.25a.75.75 0 0 1 0-1.08l4.5-4.25a.75.75 0 0 1 1.06.02Z" clip-rule="evenodd"/></svg>
+                    </button>
+                    <button type="button" data-fanbase-next aria-label="Foto berikutnya"
+                            class="absolute -right-2 top-1/2 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-600 shadow-md backdrop-blur transition hover:text-indigo-600 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900/90 dark:text-slate-300 dark:hover:text-indigo-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 0 1 .02-1.06L11.168 10 7.23 6.29a.75.75 0 1 1 1.04-1.08l4.5 4.25a.75.75 0 0 1 0 1.08l-4.5 4.25a.75.75 0 0 1-1.06-.02Z" clip-rule="evenodd"/></svg>
+                    </button>
+                @endif
             </div>
         </section>
     @endif
@@ -90,8 +106,58 @@
 
     <section class="mx-auto max-w-7xl px-4 py-4 pb-16 sm:px-6 lg:px-8">
         <div class="flex flex-wrap gap-4">
-            <a href="{{ route('about.idol', $idolSlug ?? '') }}" class="rounded-full bg-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500">Tentang {{ $idolName ?? 'Idol' }}</a>
+            <a href="{{ route('about.show', $idolSlug ?: null) }}" class="rounded-full bg-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500">Tentang {{ $idolName ?? 'Idol' }}</a>
             <a href="{{ route('home') }}" class="rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-900 transition hover:border-indigo-300 hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:hover:text-indigo-400">Kembali ke Beranda</a>
         </div>
     </section>
+    <script>
+        (function () {
+            document.querySelectorAll('[data-fanbase-carousel]').forEach(function (root) {
+                var track = root.querySelector('[data-fanbase-track]');
+                var items = Array.prototype.slice.call(root.querySelectorAll('[data-fanbase-item]'));
+                var prev = root.querySelector('[data-fanbase-prev]');
+                var next = root.querySelector('[data-fanbase-next]');
+
+                if (!track || items.length === 0) {
+                    return;
+                }
+
+                var index = 0;
+
+                function metrics() {
+                    var styles = window.getComputedStyle(track);
+                    var gap = parseFloat(styles.columnGap || styles.gap) || 0;
+                    var itemWidth = items[0].getBoundingClientRect().width;
+                    var viewportWidth = track.parentElement.getBoundingClientRect().width;
+                    var visible = Math.max(1, Math.floor((viewportWidth + gap) / (itemWidth + gap)));
+
+                    return {
+                        step: itemWidth + gap,
+                        maxIndex: Math.max(0, items.length - visible),
+                    };
+                }
+
+                function update() {
+                    var m = metrics();
+
+                    if (index > m.maxIndex) {
+                        index = m.maxIndex;
+                    }
+
+                    track.style.transform = 'translateX(' + (-index * m.step) + 'px)';
+
+                    if (prev) prev.disabled = index <= 0;
+                    if (next) next.disabled = index >= m.maxIndex;
+                }
+
+                if (prev) prev.addEventListener('click', function () { if (index > 0) { index--; update(); } });
+                if (next) next.addEventListener('click', function () {
+                    if (index < metrics().maxIndex) { index++; update(); }
+                });
+
+                window.addEventListener('resize', update);
+                update();
+            });
+        })();
+    </script>
 @endsection
