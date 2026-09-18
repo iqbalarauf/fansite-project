@@ -3,9 +3,9 @@
 use App\Concerns\PasswordValidationRules;
 use App\Concerns\ProfileValidationRules;
 /* @chisel-email-verification */
-use Illuminate\Contracts\Auth\MustVerifyEmail;
-/* @end-chisel-email-verification */
 use Flux\Flux;
+/* @end-chisel-email-verification */
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\ValidationException;
@@ -13,13 +13,18 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Title('Profile')] class extends Component {
+new #[Title('Profile')] class extends Component
+{
     use PasswordValidationRules, ProfileValidationRules;
 
     public string $name = '';
+
     public string $email = '';
+
     public string $current_password = '';
+
     public string $password = '';
+
     public string $password_confirmation = '';
 
     /**
@@ -197,6 +202,8 @@ new #[Title('Profile')] class extends Component {
                 </div>
             </div>
         </form>
+
+        <livewire:pages::settings.two-factor />
 
         {{-- @chisel-email-verification --}}
         @if ($this->showDeleteUser)

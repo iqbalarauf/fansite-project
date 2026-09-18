@@ -27,7 +27,7 @@ class AboutSettingsTest extends TestCase
 
         $this->actingAs(User::factory()->create());
 
-        Livewire::test('pages::settings.about')
+        Livewire::test('pages::about.manage')
             ->set('idolName', 'Freya')
             ->set('idolDescription', 'Deskripsi idol')
             ->set('idolAchievements', 'Achievement list')
@@ -62,7 +62,7 @@ class AboutSettingsTest extends TestCase
 
         $this->actingAs(User::factory()->create());
 
-        $component = Livewire::test('pages::settings.about')
+        $component = Livewire::test('pages::about.manage')
             ->set('idolName', 'Freya')
             ->set('kabeshaPhotoUploads', [
                 UploadedFile::fake()->image('kabesha-1.jpg'),
@@ -97,7 +97,7 @@ class AboutSettingsTest extends TestCase
     {
         $this->actingAs(User::factory()->create());
 
-        Livewire::test('pages::settings.about')
+        Livewire::test('pages::about.manage')
             ->set('idolName', 'Freya')
             ->set('kabeshaItems', [
                 ['photo' => null, 'title' => 'Kabesha', 'duration_from' => '2026-02-01', 'duration_to' => '2026-01-01'],
@@ -115,7 +115,7 @@ class AboutSettingsTest extends TestCase
         Storage::disk('public')->put('about/kabesha/a.jpg', 'x');
         Storage::disk('public')->put('about/kabesha/b.jpg', 'x');
 
-        Livewire::test('pages::settings.about')
+        Livewire::test('pages::about.manage')
             ->set('kabeshaItems', [
                 ['photo' => 'about/kabesha/a.jpg', 'title' => 'A', 'duration_from' => null, 'duration_to' => null],
                 ['photo' => 'about/kabesha/b.jpg', 'title' => 'B', 'duration_from' => null, 'duration_to' => null],
@@ -139,7 +139,7 @@ class AboutSettingsTest extends TestCase
     {
         $this->actingAs(User::factory()->create());
 
-        Livewire::test('pages::settings.about')
+        Livewire::test('pages::about.manage')
             ->set('kabeshaItems', [
                 ['photo' => 'about/kabesha/a.jpg', 'title' => 'A', 'duration_from' => null, 'duration_to' => null],
                 ['photo' => 'about/kabesha/b.jpg', 'title' => 'B', 'duration_from' => null, 'duration_to' => null],
@@ -163,7 +163,7 @@ class AboutSettingsTest extends TestCase
 
         $this->actingAs(User::factory()->create());
 
-        $component = Livewire::test('pages::settings.about')
+        $component = Livewire::test('pages::about.manage')
             ->set('activeTab', 'fansite')
             ->set('fanbaseName', 'Wota Nusantara')
             ->set('fanbaseDescription', 'Komunitas fanbase')
@@ -214,7 +214,7 @@ class AboutSettingsTest extends TestCase
 
         $this->actingAs(User::factory()->create());
 
-        $component = Livewire::test('pages::settings.about')
+        $component = Livewire::test('pages::about.manage')
             ->set('activeTab', 'fansite')
             ->set('fanbaseName', 'Wota Nusantara')
             ->set('fanbaseGalleryItems', array_fill(0, 19, ['photo' => null, 'caption' => '']))
@@ -235,7 +235,7 @@ class AboutSettingsTest extends TestCase
 
         $this->actingAs(User::factory()->create());
 
-        Livewire::test('pages::settings.about')
+        Livewire::test('pages::about.manage')
             ->set('activeTab', 'fansite')
             ->set('fanbaseName', 'Wota Nusantara')
             ->set('fanbaseGalleryUploads', array_map(
@@ -255,7 +255,7 @@ class AboutSettingsTest extends TestCase
         Storage::disk('public')->put('about/fansite/gallery/a.jpg', 'x');
         Storage::disk('public')->put('about/fansite/gallery/b.jpg', 'x');
 
-        Livewire::test('pages::settings.about')
+        Livewire::test('pages::about.manage')
             ->set('fanbaseGalleryItems', [
                 ['photo' => 'about/fansite/gallery/a.jpg', 'caption' => 'A'],
                 ['photo' => 'about/fansite/gallery/b.jpg', 'caption' => 'B'],
