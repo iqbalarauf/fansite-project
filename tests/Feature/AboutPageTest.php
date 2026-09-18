@@ -31,7 +31,7 @@ class AboutPageTest extends TestCase
 
         $expectedBirthDate = Carbon::parse('2004-02-13')->locale('id')->isoFormat('D MMMM YYYY');
 
-        $this->get(route('about.idol'))
+        $this->get(route('about.show'))
             ->assertOk()
             ->assertSee('About Idol', false)
             ->assertSee('Freya')
@@ -63,7 +63,7 @@ class AboutPageTest extends TestCase
             ['key' => 'idol_name', 'value' => 'Freya'],
         ], ['key'], ['value', 'updated_at']);
 
-        $this->get(route('about.fansite'))
+        $this->get(route('about.show', 'wota-nusantara'))
             ->assertOk()
             ->assertSee('About Fansite', false)
             ->assertSee('Wota Nusantara')
@@ -90,7 +90,7 @@ class AboutPageTest extends TestCase
             ['key' => 'idol_name', 'value' => 'Freya'],
         ], ['key'], ['value', 'updated_at']);
 
-        $this->get(route('about.fansite'))
+        $this->get(route('about.show', 'wota-nusantara'))
             ->assertOk()
             ->assertSee('Struktur Organisasi')
             ->assertSee('Ketua: Oniel')
@@ -98,6 +98,8 @@ class AboutPageTest extends TestCase
             ->assertSee('/storage/about/fansite/gallery/1.jpg', false)
             ->assertSee('Foto bersama')
             ->assertSee('Nobar')
+            ->assertSee('data-fanbase-carousel', false)
+            ->assertSee('data-fanbase-item', false)
             ->assertSee('<figcaption', false);
     }
 
@@ -108,8 +110,8 @@ class AboutPageTest extends TestCase
             ['key' => 'fanbase_name', 'value' => 'Wota Nusantara'],
         ], ['key'], ['value', 'updated_at']);
 
-        $idolHref = route('about.idol', 'freya');
-        $fansiteHref = route('about.fansite');
+        $idolHref = route('about.show', 'freya');
+        $fansiteHref = route('about.show', 'wota-nusantara');
 
         $this->get(route('home'))
             ->assertOk()
@@ -119,7 +121,7 @@ class AboutPageTest extends TestCase
             ->assertSee('href="'.$idolHref.'"', false)
             ->assertSee('href="'.$fansiteHref.'"', false);
 
-        $this->get(route('about.idol', 'freya'))
+        $this->get(route('about.show', 'freya'))
             ->assertOk()
             ->assertSee('href="'.$idolHref.'"', false)
             ->assertSee('href="'.$fansiteHref.'"', false);
@@ -150,7 +152,7 @@ class AboutPageTest extends TestCase
             ['show_id' => 2, 'show_date' => '2025/01/01', 'setlist' => 'Pajama Drive', 'unit_song' => 'Tenshi no Shippo, Higurashi no Koi', 'is_member_show' => 1, 'is_global_center' => 0, 'is_us_center' => 0],
         ]);
 
-        $this->get(route('about.idol', 'freya'))
+        $this->get(route('about.show', 'freya'))
             ->assertOk()
             ->assertSee('Show Teater')
             ->assertSee('Pajama Drive')
@@ -191,7 +193,7 @@ class AboutPageTest extends TestCase
             ['show_id' => 2, 'show_date' => now()->subYear()->format('Y/m/d'), 'setlist' => 'Setlist Lama', 'is_member_show' => 1, 'is_global_center' => 1, 'is_us_center' => 1],
         ]);
 
-        $this->get(route('about.idol', 'freya'))
+        $this->get(route('about.show', 'freya'))
             ->assertOk()
             ->assertSee('Setlist')
             ->assertDontSee('Setlist (All)')
@@ -207,7 +209,7 @@ class AboutPageTest extends TestCase
             ['key' => 'idol_social_media_twitter', 'value' => 'https://x.com/freya'],
         ], ['key'], ['value', 'updated_at']);
 
-        $this->get(route('about.idol'))
+        $this->get(route('about.show'))
             ->assertOk()
             ->assertSee('href="https://x.com/freya"', false)
             ->assertSee('Follow di Twitter')
@@ -225,7 +227,7 @@ class AboutPageTest extends TestCase
             ])],
         ], ['key'], ['value', 'updated_at']);
 
-        $this->get(route('about.idol', 'freya'))
+        $this->get(route('about.show', 'freya'))
             ->assertOk()
             ->assertSee('Kabesha Satu')
             ->assertSee('Kabesha Dua')

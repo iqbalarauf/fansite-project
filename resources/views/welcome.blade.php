@@ -140,7 +140,7 @@
                     <div class="mt-6 space-y-4">
                         @forelse ($upcomingEvents as $event)
                             @php
-                                $daysUntil = (int) now()->diffInDays(Carbon::parse($event['date']), false) + 1;
+                                $daysUntil = (int) now()->startOfDay()->diffInDays(Carbon::parse($event['date'])->startOfDay(), false);
                                 $badgeColors = [
                                     'blue' => 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300',
                                     'red' => 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300',
@@ -160,7 +160,7 @@
                                     <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ Carbon::parse($event['date'])->locale('id')->isoFormat('D MMMM YYYY') }}</p>
                                 </div>
                                 <span class="shrink-0 text-xs font-medium text-green-600 dark:text-green-400">
-                                    H-{{ $daysUntil }}
+                                    {{ $daysUntil === 0 ? __('Hari Ini') : 'H-'.$daysUntil }}
                                 </span>
                             </div>
                         @empty

@@ -24,3 +24,13 @@
 
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 @fluxAppearance
+
+@if (filled($appSettings['brand_color'] ?? null))
+    <style>
+        :root {
+            --brand-primary: {{ $appSettings['brand_color'] }};
+            --brand-primary-strong: {{ $appSettings['brand_color'] }};
+            --color-primary: {{ $appSettings['brand_color'] }};
+        }
+    </style>
+@endif

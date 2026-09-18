@@ -128,7 +128,7 @@ class DashboardTest extends TestCase
 
         $response->assertOk()->assertViewHas('period', 'all');
         $this->assertSame(['Past Show', 'Past Concert', 'Past Meet'], $response->viewData('pastEvents')->pluck('name')->all());
-        $this->assertSame(['Upcoming Show', 'Upcoming Concert', 'Upcoming Meet'], $response->viewData('upcomingEvents')->pluck('name')->all());
+        $this->assertSame(['Today Show', 'Upcoming Show', 'Upcoming Concert', 'Upcoming Meet'], $response->viewData('upcomingEvents')->pluck('name')->all());
     }
 
     public function test_meet_and_greet_video_call_with_two_dates_appears_twice_in_timelines(): void
@@ -237,7 +237,25 @@ class DashboardTest extends TestCase
 
         $response->assertOk();
         $this->assertSame(['Yesterday Show'], $response->viewData('pastEvents')->pluck('name')->all());
-        $this->assertSame(['Tomorrow Show'], $response->viewData('upcomingEvents')->pluck('name')->all());
+        $this->assertSame(['Today Show', 'Tomorrow Show'], $response->viewData('upcomingEvents')->pluck('name')->all());
+    }
+
+    public function test_dashboard_labels_todays_event_as_hari_ini(): void
+    {
+        DB::table('concert_events')->insert([
+            'event_name' => 'Konser Hari Ini',
+            'event_date' => now('Asia/Jakarta')->toDateString(),
+            'location' => 'Jakarta',
+            'status' => 'on-air',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs(User::factory()->create())
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Konser Hari Ini')
+            ->assertSee('Hari Ini');
     }
 
     public function test_dashboard_normalizes_slash_formatted_show_dates_for_period_filters(): void

@@ -222,4 +222,21 @@ class WelcomePageTest extends TestCase
             ->assertOk()
             ->assertSee('data-test="single-participation-count">0</p>', false);
     }
+
+    public function test_homepage_includes_todays_event_and_labels_it_hari_ini(): void
+    {
+        DB::table('concert_events')->insert([
+            'event_name' => 'Konser Hari Ini',
+            'event_date' => now()->toDateString(),
+            'location' => 'Jakarta',
+            'status' => 'on-air',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('Konser Hari Ini')
+            ->assertSee('Hari Ini');
+    }
 }

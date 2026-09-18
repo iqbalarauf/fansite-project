@@ -29,6 +29,16 @@
 @endif
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+@if (filled($__app['brand_color'] ?? null))
+    <style>
+        :root {
+            --brand-primary: {{ $__app['brand_color'] }};
+            --brand-primary-strong: {{ $__app['brand_color'] }};
+            --color-primary: {{ $__app['brand_color'] }};
+        }
+    </style>
+@endif
+
 <script>
     (function () {
         var storageKey = 'fansite-theme';

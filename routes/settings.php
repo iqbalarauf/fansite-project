@@ -11,7 +11,6 @@ Route::middleware(['auth', 'block-view-only'])->group(function () {
         Route::livewire('settings/appearance', 'pages::settings.appearance')->name('appearance.edit');
 
         Route::middleware(['role:super_admin'])->group(function () {
-            Route::livewire('settings/app-settings', 'pages::settings.app-settings')->name('app-settings.edit');
             Route::livewire('settings/features', 'pages::settings.features')->name('features.edit');
             Route::livewire('settings/header-menu', 'pages::settings.header-menu')->name('header-menu.edit');
             Route::livewire('settings/photobooth', 'pages::settings.photobooth')->name('photobooth.edit');
