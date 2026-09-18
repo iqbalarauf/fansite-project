@@ -13,7 +13,7 @@ Route::middleware(['auth', 'block-view-only'])->group(function () {
         Route::middleware(['role:super_admin'])->group(function () {
             Route::livewire('settings/features', 'pages::settings.features')->name('features.edit');
             Route::livewire('settings/header-menu', 'pages::settings.header-menu')->name('header-menu.edit');
-            Route::livewire('settings/photobooth', 'pages::settings.photobooth')->name('photobooth.edit');
+            Route::livewire('settings/photobooth', 'pages::photobooth.manage')->name('photobooth.edit');
         });
 
         Route::livewire('settings/security', 'pages::settings.security')

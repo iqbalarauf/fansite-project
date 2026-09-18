@@ -19,7 +19,6 @@
         <div class="absolute inset-0"></div>
 
         <div class="relative z-10 mx-auto flex w-full max-w-7xl flex-col items-start px-4 py-24 text-left sm:px-6 lg:px-8 lg:py-28">
-            <span class="mb-4 inline-flex w-fit rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-indigo-50">Official Fansite</span>
             <h1 class="text-4xl font-black leading-tight sm:text-5xl lg:text-6xl">
                 <span class="inline-block">Selamat Datang di Fansite</span>
                 <span class="mt-2 block text-yellow-300 [transform-style:preserve-3d] animate-[flip_1.4s_ease-in-out_1]">{{ $idolName }}</span>

@@ -1,22 +1,29 @@
 <?php
 
+use App\Support\SettingsStore;
 use Flux\Flux;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
-new #[Title('Appearance settings')] class extends Component {
+new #[Title('Appearance settings')] class extends Component
+{
     use WithFileUploads;
 
     public string $brandColor = '#6C7CE8';
+
     public string $appName = '';
+
     public string $descApp = '';
+
     public ?string $appLogoPath = null;
+
     public mixed $appLogoUpload = null;
+
     public ?string $heroImagePath = null;
+
     public mixed $heroImageUpload = null;
 
     public function mount(): void
@@ -60,23 +67,16 @@ new #[Title('Appearance settings')] class extends Component {
             $this->heroImageUpload = null;
         }
 
-        foreach ([
+        SettingsStore::setApp([
             'brand_color' => strtoupper($this->brandColor),
             'app_name' => $this->appName,
             'sidebar_name' => $this->appName,
             'desc_app' => $this->descApp,
             'app_logo' => $this->appLogoPath,
             'hero_image' => $this->heroImagePath,
-        ] as $key => $value) {
-            DB::table('app_settings')->updateOrInsert(
-                ['key' => $key],
-                ['value' => $value, 'updated_at' => now()],
-            );
-        }
+        ]);
 
         $this->brandColor = strtoupper($this->brandColor);
-
-        Cache::forget('app_settings');
 
         Flux::toast(variant: 'success', text: __('Appearance settings updated.'));
     }

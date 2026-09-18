@@ -5,24 +5,33 @@ use App\Models\MenuItem;
 use App\Models\Photobooth;
 use App\Support\HeaderMenu;
 use App\Support\SettingBag;
+use App\Support\SettingsStore;
 use Flux\Flux;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Title('Header Menu')] class extends Component {
+new #[Title('Header Menu')] class extends Component
+{
     public string $mode = 'default';
 
     public ?int $editingId = null;
+
     public string $label = '';
+
     public string $type = 'link';
+
     public string $url = '';
+
     public $target = null;
+
     public $pageId = null;
+
     public $parentId = null;
+
     public int $sortOrder = 0;
+
     public bool $showForm = false;
 
     public function mount(): void
@@ -34,12 +43,9 @@ new #[Title('Header Menu')] class extends Component {
 
     public function saveMode(): void
     {
-        DB::table('app_settings')->updateOrInsert(
-            ['key' => 'header_menu_mode'],
-            ['value' => $this->mode === 'custom' ? 'custom' : 'default', 'updated_at' => now()],
-        );
-
-        Cache::forget('app_settings');
+        SettingsStore::setApp([
+            'header_menu_mode' => $this->mode === 'custom' ? 'custom' : 'default',
+        ]);
 
         Flux::toast(variant: 'success', text: __('Mode menu berhasil disimpan.'));
     }
@@ -178,7 +184,7 @@ new #[Title('Header Menu')] class extends Component {
         return $rows;
     }
 
-    public function availablePages(): \Illuminate\Support\Collection
+    public function availablePages(): Collection
     {
         return CustomPage::query()->where('status', 'published')->orderBy('title')->get(['id', 'title']);
     }

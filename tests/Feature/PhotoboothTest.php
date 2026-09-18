@@ -31,7 +31,7 @@ class PhotoboothTest extends TestCase
 
         $this->actingAs(User::factory()->create());
 
-        Livewire::test('pages::settings.photobooth')
+        Livewire::test('pages::photobooth.manage')
             ->set('slug', 'photobooth')
             ->set('columns', 2)
             ->set('rows', 3)
@@ -58,7 +58,7 @@ class PhotoboothTest extends TestCase
 
         $this->actingAs(User::factory()->create());
 
-        Livewire::test('pages::settings.photobooth')
+        Livewire::test('pages::photobooth.manage')
             ->set('slug', 'photobooth')
             ->call('save')
             ->assertHasErrors('frameUpload');
@@ -93,7 +93,7 @@ class PhotoboothTest extends TestCase
 
         $this->actingAs(User::factory()->create());
 
-        Livewire::test('pages::settings.photobooth')
+        Livewire::test('pages::photobooth.manage')
             ->set('columns', 1)
             ->set('rows', 2)
             ->set('photoSlots', [
@@ -120,7 +120,7 @@ class PhotoboothTest extends TestCase
 
         $this->actingAs(User::factory()->create());
 
-        Livewire::test('pages::settings.photobooth')
+        Livewire::test('pages::photobooth.manage')
             ->set('frameOverlay', true)
             ->set('frameUpload', UploadedFile::fake()->image('frame.png'))
             ->call('save')
@@ -200,7 +200,7 @@ class PhotoboothTest extends TestCase
 
         $this->actingAs(User::factory()->create());
 
-        Livewire::test('pages::settings.photobooth')
+        Livewire::test('pages::photobooth.manage')
             ->set('slug', '')
             ->set('frameUpload', UploadedFile::fake()->image('frame.png'))
             ->call('save')

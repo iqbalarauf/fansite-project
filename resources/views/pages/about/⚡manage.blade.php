@@ -1,7 +1,8 @@
 <?php
 
+use App\Support\SettingBag;
+use App\Support\SettingsStore;
 use Flux\Flux;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -9,48 +10,80 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
-new #[Title('About settings')] class extends Component {
+new #[Title('About Settings')] class extends Component
+{
     use WithFileUploads;
 
     public string $activeTab = 'idol';
 
     public string $idolName = '';
+
     public string $idolShortname = '';
+
     public ?string $idolPhotoPath = null;
+
     public mixed $idolPhotoUpload = null;
+
     public string $idolDescription = '';
+
     public string $idolAchievements = '';
+
     public string $idolDiscography = '';
+
     public string $idolJikoshoukai = '';
+
     public ?string $idolBirthDate = null;
+
     public string $idolBirthPlace = '';
+
     public string $idolBloodType = '';
+
     public string $idolHoroscope = '';
+
     public string $idolInstagram = '';
+
     public string $idolTiktok = '';
+
     public string $idolTwitter = '';
+
     public bool $idolShowOnWelcome = false;
 
     /** @var array<int, array{photo: string|null, title: string, duration_from: string|null, duration_to: string|null}> */
     public array $kabeshaItems = [];
+
     public array $kabeshaPhotoUploads = [];
 
     public string $fanbaseName = '';
+
     public ?string $fanbaseLogoPath = null;
+
     public mixed $fanbaseLogoUpload = null;
+
     public string $fanbaseDescription = '';
+
     public string $fanbaseStructure = '';
+
     public string $fanbaseActivities = '';
+
     /** @var array<int, array{photo: string|null, caption: string}> */
     public array $fanbaseGalleryItems = [];
+
     public array $fanbaseGalleryUploads = [];
+
     public bool $fanbaseCtaEnabled = false;
+
     public ?string $fanbaseCtaBackgroundPath = null;
+
     public mixed $fanbaseCtaBackgroundUpload = null;
+
     public string $fanbaseCtaTitle = '';
+
     public string $fanbaseCtaButton1Text = '';
+
     public string $fanbaseCtaButton1Link = '';
+
     public string $fanbaseCtaButton2Text = '';
+
     public string $fanbaseCtaButton2Link = '';
 
     public array $bloodTypes = ['A', 'B', 'AB', 'O'];
@@ -92,7 +125,7 @@ new #[Title('About settings')] class extends Component {
         $this->idolTwitter = (string) ($settings['idol_social_media_twitter'] ?? '');
         $this->idolShowOnWelcome = filter_var($settings['idol_show_on_welcome'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
-        $this->kabeshaItems = $this->decodeKabeshaItems($settings);
+        $this->kabeshaItems = SettingBag::kabeshaItems($settings);
 
         $this->fanbaseName = (string) ($settings['fanbase_name'] ?? '');
         $this->fanbaseLogoPath = $settings['fanbase_logo'] ?? null;
@@ -100,7 +133,7 @@ new #[Title('About settings')] class extends Component {
         $this->fanbaseStructure = (string) ($settings['fanbase_structure'] ?? '');
         $this->fanbaseActivities = (string) ($settings['fanbase_activities'] ?? '');
 
-        $this->fanbaseGalleryItems = $this->decodeFanbaseGalleryItems($settings);
+        $this->fanbaseGalleryItems = SettingBag::fanbaseGalleryItems($settings);
 
         $this->fanbaseCtaEnabled = filter_var($settings['fanbase_cta_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
         $this->fanbaseCtaBackgroundPath = $settings['fanbase_cta_background'] ?? null;
@@ -348,41 +381,6 @@ new #[Title('About settings')] class extends Component {
         ]);
     }
 
-    /**
-     * @param  array<string, mixed>  $settings
-     * @return array<int, array{photo: string|null, title: string, duration_from: string|null, duration_to: string|null}>
-     */
-    private function decodeKabeshaItems(array $settings): array
-    {
-        $items = json_decode((string) ($settings['kabesha_items'] ?? ''), true);
-
-        if (is_array($items) && $items !== []) {
-            return array_values(array_map(fn (array $item): array => [
-                'photo' => filled($item['photo'] ?? null) ? (string) $item['photo'] : null,
-                'title' => (string) ($item['title'] ?? ''),
-                'duration_from' => ($item['duration_from'] ?? null) ?: null,
-                'duration_to' => ($item['duration_to'] ?? null) ?: null,
-            ], array_filter($items, 'is_array')));
-        }
-
-        $legacyPhotos = json_decode((string) ($settings['kabesha_photos'] ?? ''), true);
-
-        if (! is_array($legacyPhotos) || $legacyPhotos === []) {
-            $legacyPhotos = filled($settings['kabesha_photo'] ?? null) ? [(string) $settings['kabesha_photo']] : [];
-        }
-
-        $legacyTitle = (string) ($settings['kabesha_title'] ?? '');
-        $legacyFrom = ($settings['kabesha_duration_from'] ?? null) ?: null;
-        $legacyTo = ($settings['kabesha_duration_to'] ?? null) ?: null;
-
-        return array_values(array_map(fn (string $path): array => [
-            'photo' => $path,
-            'title' => $legacyTitle,
-            'duration_from' => $legacyFrom,
-            'duration_to' => $legacyTo,
-        ], array_values(array_filter(array_map('strval', is_array($legacyPhotos) ? $legacyPhotos : [])))));
-    }
-
     public function fanbaseLogoPreviewUrl(): ?string
     {
         if ($this->fanbaseLogoUpload) {
@@ -443,51 +441,15 @@ new #[Title('About settings')] class extends Component {
 
     private function persistFanbaseGalleryItems(): void
     {
-        $this->upsertSettings([
+        SettingsStore::setAbout([
             'fanbase_gallery_items' => json_encode(array_values($this->fanbaseGalleryItems)),
             'fanbase_gallery' => json_encode(array_values(array_filter(array_column($this->fanbaseGalleryItems, 'photo')))),
         ]);
     }
 
-    /**
-     * @param  array<string, mixed>  $settings
-     * @return array<int, array{photo: string|null, caption: string}>
-     */
-    private function decodeFanbaseGalleryItems(array $settings): array
-    {
-        $items = json_decode((string) ($settings['fanbase_gallery_items'] ?? ''), true);
-
-        if (is_array($items) && $items !== []) {
-            return array_slice(array_values(array_map(fn (array $item): array => [
-                'photo' => filled($item['photo'] ?? null) ? (string) $item['photo'] : null,
-                'caption' => (string) ($item['caption'] ?? ''),
-            ], array_filter($items, 'is_array'))), 0, 20);
-        }
-
-        $legacy = json_decode((string) ($settings['fanbase_gallery'] ?? '[]'), true);
-
-        return array_slice(array_values(array_map(fn (string $path): array => [
-            'photo' => $path,
-            'caption' => '',
-        ], array_values(array_filter(array_map('strval', is_array($legacy) ? $legacy : []))))), 0, 20);
-    }
-
     private function upsertSettings(array $settings): void
     {
-        $now = now();
-        $rows = collect($settings)
-            ->map(fn ($value, $key) => [
-                'key' => $key,
-                'value' => $value,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ])
-            ->values()
-            ->all();
-
-        DB::table('about_settings')->upsert($rows, ['key'], ['value', 'updated_at']);
-
-        Cache::forget('about_settings');
+        SettingsStore::setAbout($settings);
     }
 }; ?>
 
