@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\CustomPage;
+use App\Support\BrandPalette;
 use App\Support\HeroLink;
 use App\Support\SettingsStore;
 use Flux\Flux;
@@ -15,6 +16,10 @@ new #[Title('Appearance settings')] class extends Component
     use WithFileUploads;
 
     public string $brandColor = '#6C7CE8';
+
+    public string $brandColorSecondary = '#A5B4FC';
+
+    public string $brandColorTertiary = '#FFD166';
 
     public string $appName = '';
 
@@ -58,7 +63,9 @@ new #[Title('Appearance settings')] class extends Component
     {
         $settings = DB::table('app_settings')->pluck('value', 'key')->all();
 
-        $this->brandColor = (string) ($settings['brand_color'] ?? '#6C7CE8');
+        $this->brandColor = BrandPalette::normalize($settings['brand_color'] ?? null, BrandPalette::PRIMARY);
+        $this->brandColorSecondary = BrandPalette::normalize($settings['brand_color_secondary'] ?? null, BrandPalette::SECONDARY);
+        $this->brandColorTertiary = BrandPalette::normalize($settings['brand_color_tertiary'] ?? null, BrandPalette::TERTIARY);
         $this->appName = (string) ($settings['app_name'] ?? '');
         $this->descApp = (string) ($settings['desc_app'] ?? '');
         $this->appLogoPath = $settings['app_logo'] ?? null;
@@ -89,6 +96,8 @@ new #[Title('Appearance settings')] class extends Component
 
         $this->validate([
             'brandColor' => ['required', 'string', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
+            'brandColorSecondary' => ['required', 'string', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
+            'brandColorTertiary' => ['required', 'string', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
             'appName' => ['required', 'string', 'max:255'],
             'descApp' => ['nullable', 'string'],
             'appLogoUpload' => ['nullable', 'image', 'max:3072'],
@@ -136,6 +145,8 @@ new #[Title('Appearance settings')] class extends Component
 
         SettingsStore::setApp([
             'brand_color' => strtoupper($this->brandColor),
+            'brand_color_secondary' => strtoupper($this->brandColorSecondary),
+            'brand_color_tertiary' => strtoupper($this->brandColorTertiary),
             'app_name' => $this->appName,
             'sidebar_name' => $this->appName,
             'desc_app' => $this->descApp,
@@ -156,6 +167,8 @@ new #[Title('Appearance settings')] class extends Component
         ]);
 
         $this->brandColor = strtoupper($this->brandColor);
+        $this->brandColorSecondary = strtoupper($this->brandColorSecondary);
+        $this->brandColorTertiary = strtoupper($this->brandColorTertiary);
 
         Flux::toast(variant: 'success', text: __('Appearance settings updated.'));
     }
@@ -238,24 +251,38 @@ new #[Title('Appearance settings')] class extends Component
     <x-pages::settings.layout :heading="__('Appearance')" :subheading="__('Kelola warna brand dan identitas situs')">
         @if (auth()->user()?->isSuperAdmin())
             <form wire:submit="save" class="space-y-6">
-                <div class="space-y-3 rounded-xl border border-zinc-200 p-5 dark:border-zinc-700">
-                    <flux:heading size="sm">{{ __('Brand Color') }}</flux:heading>
-                    <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Warna utama situs dalam format HEX. Gunakan color picker atau isi kode HEX langsung.') }}</flux:text>
-
-                    <div class="flex flex-wrap items-center gap-3">
-                        <input
-                            type="color"
-                            wire:model.live="brandColor"
-                            class="h-11 w-14 cursor-pointer rounded-lg border border-zinc-300 bg-white p-1 dark:border-zinc-600 dark:bg-zinc-800"
-                            aria-label="{{ __('Color picker') }}"
-                        />
-                        <flux:input wire:model.live="brandColor" type="text" placeholder="#6C7CE8" maxlength="7" class="w-40" />
-                        <span class="inline-flex size-9 rounded-full border border-zinc-200 shadow-sm dark:border-zinc-700" style="background-color: {{ $brandColor ?: '#6C7CE8' }}"></span>
+                <div class="space-y-4 rounded-xl border border-zinc-200 p-5 dark:border-zinc-700">
+                    <div>
+                        <flux:heading size="sm">{{ __('Brand Color') }}</flux:heading>
+                        <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Tiga warna tema aplikasi (berlaku untuk light & dark mode). Gunakan color picker atau isi kode HEX.') }}</flux:text>
                     </div>
 
-                    @error('brandColor')
-                        <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                    @enderror
+                    @php
+                        $brandFields = [
+                            ['key' => 'brandColor', 'label' => 'Primer', 'usage' => 'Tombol & tautan utama, border aktif, gradient hero, badge aktif.'],
+                            ['key' => 'brandColorSecondary', 'label' => 'Sekunder', 'usage' => 'Aksen kedua: variasi gradient dan kartu sosial.'],
+                            ['key' => 'brandColorTertiary', 'label' => 'Tersier', 'usage' => 'Sorotan: nama idol, tombol highlight, dan badge.'],
+                        ];
+                    @endphp
+
+                    @foreach ($brandFields as $field)
+                        <div class="space-y-2 rounded-lg border border-dashed border-zinc-300 p-3 dark:border-zinc-600">
+                            <div class="flex flex-wrap items-center gap-3">
+                                <input
+                                    type="color"
+                                    wire:model.live="{{ $field['key'] }}"
+                                    class="h-11 w-14 cursor-pointer rounded-lg border border-zinc-300 bg-white p-1 dark:border-zinc-600 dark:bg-zinc-800"
+                                    aria-label="{{ __('Color picker') }} {{ $field['label'] }}"
+                                />
+                                <flux:input wire:model.live="{{ $field['key'] }}" :label="__($field['label'])" type="text" placeholder="#6C7CE8" maxlength="7" class="w-40" />
+                                <span class="inline-flex size-9 rounded-full border border-zinc-200 shadow-sm dark:border-zinc-700" style="background-color: {{ $this->{$field['key']} ?: '#6C7CE8' }}"></span>
+                            </div>
+                            <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">{{ $field['usage'] }}</flux:text>
+                            @error($field['key'])
+                                <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    @endforeach
                 </div>
 
                 <div class="space-y-4 rounded-xl border border-zinc-200 p-5 dark:border-zinc-700">

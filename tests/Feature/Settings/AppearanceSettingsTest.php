@@ -24,6 +24,9 @@ class AppearanceSettingsTest extends TestCase
             ->assertOk()
             ->assertSee('Brand Color')
             ->assertSee('type="color"', false)
+            ->assertSee('Primer')
+            ->assertSee('Sekunder')
+            ->assertSee('Tersier')
             ->assertSee('App Name / Sidebar Name')
             ->assertSee('Desc App')
             ->assertSee('App Logo')
@@ -82,6 +85,34 @@ class AppearanceSettingsTest extends TestCase
         $this->assertNotNull($settings['login_image']);
         Storage::disk('public')->assertExists($settings['login_image']);
         $this->assertSame($settings['login_image'], SettingBag::app()['login_image']);
+    }
+
+    public function test_three_brand_colors_can_be_saved_and_applied(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::settings.appearance')
+            ->set('appName', 'Onielity')
+            ->set('brandColor', '#112233')
+            ->set('brandColorSecondary', '#445566')
+            ->set('brandColorTertiary', '#778899')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $settings = DB::table('app_settings')->pluck('value', 'key');
+
+        $this->assertSame('#112233', $settings['brand_color']);
+        $this->assertSame('#445566', $settings['brand_color_secondary']);
+        $this->assertSame('#778899', $settings['brand_color_tertiary']);
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('--brand-primary: #112233', false)
+            ->assertSee('--brand-secondary: #445566', false)
+            ->assertSee('--brand-tertiary: #778899', false)
+            ->assertSee('--color-indigo-600: #112233', false)
+            ->assertSee('--color-violet-600: #445566', false)
+            ->assertSee('--color-yellow-500: #778899', false);
     }
 
     public function test_hero_buttons_and_youtube_settings_can_be_saved(): void
