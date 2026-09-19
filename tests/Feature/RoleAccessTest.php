@@ -114,7 +114,7 @@ class RoleAccessTest extends TestCase
 
         $this->get(route('dashboard'))
             ->assertOk()
-            ->assertSee('About Idol & Fansite');
+            ->assertSee('Halaman "About"');
     }
 
     public function test_sidebar_hides_about_idol_and_fansite_for_non_super_admin(): void
@@ -123,6 +123,6 @@ class RoleAccessTest extends TestCase
 
         $this->get(route('dashboard'))
             ->assertOk()
-            ->assertDontSee('About Idol & Fansite');
+            ->assertDontSee('Halaman "About"');
     }
 }

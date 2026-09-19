@@ -131,7 +131,10 @@ class GoogleApiSheetsClient implements GoogleSheetsClient
 
     protected function cellRange(string $sheetName, int $row, string $column): string
     {
-        return $this->quoteSheet($sheetName).'!'.$this->normalizeColumn($column).max(1, $row);
+        $start = $this->normalizeColumn($column).max(1, $row);
+
+        // Rentang terbuka (mis. A2:ZZ) agar seluruh kolom & baris ikut terbaca.
+        return $this->quoteSheet($sheetName).'!'.$start.':ZZ';
     }
 
     protected function blockRange(string $sheetName, int $startRow, int $startColumnIndex, int $rowCount, int $columnCount): string

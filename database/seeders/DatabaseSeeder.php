@@ -21,6 +21,10 @@ class DatabaseSeeder extends Seeder
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
-        $this->call(ShowTeaterCategoriesSeeder::class);
+        $this->call([
+    ShowTeaterCategoriesSeeder::class,
+    AppSettingsSeeder::class,
+    AboutSeeder::class,
+]);
     }
 }

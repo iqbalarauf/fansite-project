@@ -30,27 +30,44 @@ class SyncGoogleSheets extends Command
     {
         $integrations = SheetIntegration::query()
             ->get()
-            ->filter(fn (SheetIntegration $integration): bool => $integration->mode->isAuto())
+            ->filter(fn (SheetIntegration $integration): bool => $integration->auto_sync || $integration->mode->isAuto())
             ->filter(fn (SheetIntegration $integration): bool => $integration->isConfigured());
 
         if ($integrations->isEmpty()) {
-            $this->info('Tidak ada integrasi sheet dengan mode Auto-Sync yang siap dijalankan.');
+            $this->info('Tidak ada integrasi sheet dengan Auto-Sync yang siap dijalankan.');
 
             return self::SUCCESS;
         }
 
         foreach ($integrations as $integration) {
+            $label = $integration->master_data->label();
+
             try {
-                $result = $service->apply($integration, $integration->auto_direction);
+                if ($integration->auto_sync) {
+                    $result = $service->fillMissing($integration);
+                } else {
+                    $result = $service->apply($integration, $integration->auto_direction);
+                }
             } catch (Throwable $exception) {
-                $this->error($integration->master_data->label().': '.$exception->getMessage());
+                $this->error($label.': '.$exception->getMessage());
+
+                continue;
+            }
+
+            if ($integration->auto_sync) {
+                $this->info(sprintf(
+                    '%s: %d data diisi ke Database, %d data diisi ke Sheet (auto-sync).',
+                    $label,
+                    $result['to_database'],
+                    $result['to_sheet'],
+                ));
 
                 continue;
             }
 
             $this->info(sprintf(
                 '%s: %d data diterapkan, %d dilewati (%s).',
-                $integration->master_data->label(),
+                $label,
                 $result['applied'],
                 $result['skipped'],
                 $integration->auto_direction,

@@ -26,6 +26,7 @@ class SheetIntegrationFactory extends Factory
             'header_row' => 1,
             'header_column' => 'A',
             'mode' => SyncMode::Manual,
+            'auto_sync' => false,
         ];
     }
 
@@ -37,6 +38,11 @@ class SheetIntegrationFactory extends Factory
     public function auto(): static
     {
         return $this->state(fn (): array => ['mode' => SyncMode::Auto]);
+    }
+
+    public function autoSync(): static
+    {
+        return $this->state(fn (): array => ['auto_sync' => true]);
     }
 
     public function disabled(): static

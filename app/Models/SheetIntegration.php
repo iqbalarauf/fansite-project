@@ -20,6 +20,7 @@ class SheetIntegration extends Model
         'header_row',
         'header_column',
         'mode',
+        'auto_sync',
         'auto_direction',
         'last_synced_at',
         'last_sync_direction',
@@ -28,6 +29,7 @@ class SheetIntegration extends Model
     protected $casts = [
         'master_data' => MasterData::class,
         'mode' => SyncMode::class,
+        'auto_sync' => 'boolean',
         'header_row' => 'integer',
         'last_synced_at' => 'datetime',
     ];

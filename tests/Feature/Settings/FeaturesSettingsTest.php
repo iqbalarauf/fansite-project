@@ -17,7 +17,7 @@ class FeaturesSettingsTest extends TestCase
     {
         $this->actingAs(User::factory()->create());
 
-        $this->get(route('features.edit'))->assertOk()->assertSee('Features Activation');
+        $this->get(route('features.edit'))->assertOk()->assertSee('Features Activation')->assertSee('Sheet Integration');
     }
 
     public function test_features_are_enabled_by_default(): void
@@ -65,5 +65,29 @@ class FeaturesSettingsTest extends TestCase
 
         $this->assertTrue(SettingBag::featureEnabled('news'));
         $this->assertTrue(SettingBag::featureEnabled('magazines'));
+    }
+
+    public function test_sheet_integration_is_disabled_by_default_and_can_be_toggled(): void
+    {
+        $this->assertFalse(SettingBag::sheetIntegrationEnabled());
+
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::settings.features')
+            ->set('sheetIntegrationEnabled', true)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $settings = DB::table('app_settings')->pluck('value', 'key');
+
+        $this->assertSame('true', $settings['sheet_integration_enabled']);
+        $this->assertTrue(SettingBag::sheetIntegrationEnabled());
+
+        Livewire::test('pages::settings.features')
+            ->set('sheetIntegrationEnabled', false)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertFalse(SettingBag::sheetIntegrationEnabled());
     }
 }

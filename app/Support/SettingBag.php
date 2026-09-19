@@ -54,6 +54,14 @@ final class SettingBag
     }
 
     /**
+     * Whether the Google Sheet integration feature is enabled (default: disabled).
+     */
+    public static function sheetIntegrationEnabled(): bool
+    {
+        return filter_var(self::app()['sheet_integration_enabled'] ?? 'false', FILTER_VALIDATE_BOOLEAN);
+    }
+
+    /**
      * @param  array<string, mixed>  $about
      * @return array<int, array{photo: string|null, title: string, duration_from: string|null, duration_to: string|null}>
      */

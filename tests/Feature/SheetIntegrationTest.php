@@ -13,6 +13,8 @@ use App\Models\ShowTeater;
 use App\Models\User;
 use App\Services\SheetIntegration\SheetSyncService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 use Tests\Support\FakeGoogleSheetsClient;
 use Tests\TestCase;
@@ -33,11 +35,20 @@ class SheetIntegrationTest extends TestCase
 
     public function test_page_is_restricted_to_super_admin(): void
     {
+        $this->enableSheetIntegration();
+
         $this->actingAs(User::factory()->create());
         $this->get(route('sheet-integration.comparison'))->assertOk();
 
         $this->actingAs(User::factory()->contentCreator()->create());
         $this->get(route('sheet-integration.comparison'))->assertForbidden();
+    }
+
+    public function test_page_is_not_available_when_feature_is_disabled(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        $this->get(route('sheet-integration.comparison'))->assertNotFound();
     }
 
     public function test_super_admin_can_save_spreadsheet_configuration(): void
@@ -47,8 +58,8 @@ class SheetIntegrationTest extends TestCase
         Livewire::test('pages::sheet-integration.comparison')
             ->set('integrations.show_teater.spreadsheet_id', 'spreadsheet-abc')
             ->set('integrations.show_teater.sheet_name', 'Show Teater')
-            ->set('integrations.show_teater.mode', SyncMode::Auto->value)
-            ->set('integrations.show_teater.auto_direction', SheetSyncService::DIRECTION_DATABASE_TO_SHEET)
+            ->set('integrations.show_teater.enabled', true)
+            ->set('integrations.show_teater.header_first_cell', 'A1')
             ->call('saveSettings')
             ->assertHasNoErrors();
 
@@ -56,7 +67,7 @@ class SheetIntegrationTest extends TestCase
             'master_data' => MasterData::ShowTeater->value,
             'spreadsheet_id' => 'spreadsheet-abc',
             'sheet_name' => 'Show Teater',
-            'mode' => SyncMode::Auto->value,
+            'mode' => SyncMode::Manual->value,
         ]);
     }
 
@@ -140,7 +151,7 @@ class SheetIntegrationTest extends TestCase
         $this->assertDatabaseHas('show_teater', ['show_id' => 2, 'setlist' => 'Set C']);
     }
 
-    public function test_per_row_resolution_can_override_the_default_winner(): void
+    public function test_column_resolution_can_override_the_default_winner(): void
     {
         ShowTeater::query()->create([
             'show_id' => 1,
@@ -157,14 +168,14 @@ class SheetIntegrationTest extends TestCase
 
         Livewire::test('pages::sheet-integration.comparison')
             ->call('startSync', SheetSyncService::DIRECTION_DATABASE_TO_SHEET)
-            ->set('resolutions.show_teater.1', 'sheet')
+            ->set('resolutions.show_teater.1.columns.setlist', 'sheet')
             ->call('applySync')
             ->assertHasNoErrors();
 
         $this->assertSame('Set B', $this->sheets->writes[0]['rows'][0]['setlist']);
     }
 
-    public function test_rows_can_be_skipped_during_sync(): void
+    public function test_skipping_a_column_keeps_the_target_value(): void
     {
         ShowTeater::query()->create([
             'show_id' => 1,
@@ -180,12 +191,42 @@ class SheetIntegrationTest extends TestCase
         $this->actingAs(User::factory()->create());
 
         Livewire::test('pages::sheet-integration.comparison')
-            ->call('startSync', SheetSyncService::DIRECTION_DATABASE_TO_SHEET)
-            ->set('resolutions.show_teater.1', 'skip')
+            ->call('startSync', SheetSyncService::DIRECTION_SHEET_TO_DATABASE)
+            ->set('resolutions.show_teater.1.columns.setlist', 'skip')
             ->call('applySync')
             ->assertHasNoErrors();
 
-        $this->assertSame([], $this->sheets->writes[0]['rows']);
+        // 'Lewati' mempertahankan nilai target (database).
+        $this->assertDatabaseHas('show_teater', [
+            'show_id' => 1,
+            'setlist' => 'Set A',
+        ]);
+    }
+
+    public function test_row_count_difference_can_be_resolved_per_row(): void
+    {
+        ShowTeater::query()->create([
+            'show_id' => 1,
+            'show_date' => '2026-01-01',
+            'setlist' => 'Set A',
+        ]);
+
+        $this->seedShowTeaterSheet([
+            ['show_id' => '1', 'show_date' => '2026-01-01', 'setlist' => 'Set A'],
+            ['show_id' => '2', 'show_date' => '2026-02-02', 'setlist' => 'Set C'],
+        ]);
+
+        $this->makeIntegration(MasterData::ShowTeater);
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::sheet-integration.comparison')
+            ->call('startSync', SheetSyncService::DIRECTION_SHEET_TO_DATABASE)
+            ->set('resolutions.show_teater.2.row', 'database')
+            ->call('applySync')
+            ->assertHasNoErrors();
+
+        // Baris hanya di sheet tidak dibuat ketika dipilih Database.
+        $this->assertDatabaseMissing('show_teater', ['show_id' => 2]);
     }
 
     public function test_auto_sync_command_processes_auto_integrations(): void
@@ -262,8 +303,7 @@ class SheetIntegrationTest extends TestCase
         $this->actingAs(User::factory()->create());
 
         Livewire::test('pages::sheet-integration.comparison')
-            ->set('integrations.show_teater.header_row', 3)
-            ->set('integrations.show_teater.header_column', 'b')
+            ->set('integrations.show_teater.header_first_cell', 'b3')
             ->call('startSync', SheetSyncService::DIRECTION_DATABASE_TO_SHEET)
             ->assertHasNoErrors()
             ->call('applySync')
@@ -280,8 +320,7 @@ class SheetIntegrationTest extends TestCase
         $this->actingAs(User::factory()->create());
 
         Livewire::test('pages::sheet-integration.comparison')
-            ->set('integrations.show_teater.header_row', 2)
-            ->set('integrations.show_teater.header_column', 'c')
+            ->set('integrations.show_teater.header_first_cell', 'c2')
             ->call('saveSettings')
             ->assertHasNoErrors();
 
@@ -292,14 +331,113 @@ class SheetIntegrationTest extends TestCase
         ]);
     }
 
-    public function test_invalid_header_column_is_rejected(): void
+    public function test_invalid_header_first_cell_is_rejected(): void
     {
         $this->actingAs(User::factory()->create());
 
         Livewire::test('pages::sheet-integration.comparison')
-            ->set('integrations.show_teater.header_column', '1')
+            ->set('integrations.show_teater.header_first_cell', '1')
             ->call('saveSettings')
-            ->assertHasErrors('integrations.show_teater.header_column');
+            ->assertHasErrors('integrations.show_teater.header_first_cell');
+    }
+
+    public function test_auto_sync_switch_is_persisted(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::sheet-integration.comparison')
+            ->set('integrations.show_teater.auto_sync', true)
+            ->call('saveSettings')
+            ->assertHasNoErrors();
+
+        $integration = SheetIntegration::query()->where('master_data', 'show_teater')->first();
+
+        $this->assertNotNull($integration);
+        $this->assertTrue($integration->auto_sync);
+    }
+
+    public function test_auto_sync_fills_missing_rows_from_sheet_to_database(): void
+    {
+        ShowTeater::query()->create([
+            'show_id' => 1,
+            'show_date' => '2026-01-01',
+            'setlist' => 'Set A',
+        ]);
+
+        $this->seedShowTeaterSheet([
+            ['show_id' => '1', 'show_date' => '2026-01-01', 'setlist' => 'Set A'],
+            ['show_id' => '2', 'show_date' => '2026-02-02', 'setlist' => 'Set C'],
+        ]);
+
+        $integration = $this->makeIntegration(MasterData::ShowTeater);
+
+        $result = app(SheetSyncService::class)->fillMissing($integration);
+
+        $this->assertSame(1, $result['to_database']);
+        $this->assertSame(0, $result['to_sheet']);
+        $this->assertDatabaseHas('show_teater', ['show_id' => 2, 'setlist' => 'Set C']);
+    }
+
+    public function test_auto_sync_fills_missing_rows_from_database_to_sheet(): void
+    {
+        ShowTeater::query()->create([
+            'show_id' => 1,
+            'show_date' => '2026-01-01',
+            'setlist' => 'Set A',
+        ]);
+
+        ShowTeater::query()->create([
+            'show_id' => 9,
+            'show_date' => '2026-09-09',
+            'setlist' => 'Set Z',
+        ]);
+
+        $this->seedShowTeaterSheet([
+            ['show_id' => '1', 'show_date' => '2026-01-01', 'setlist' => 'Set A'],
+        ]);
+
+        $integration = $this->makeIntegration(MasterData::ShowTeater);
+
+        $result = app(SheetSyncService::class)->fillMissing($integration);
+
+        $this->assertSame(1, $result['to_sheet']);
+        $this->assertNotEmpty($this->sheets->writes);
+        $this->assertNotNull(
+            collect($this->sheets->writes[0]['rows'])->firstWhere('show_id', '9'),
+        );
+    }
+
+    public function test_auto_sync_command_processes_auto_sync_integrations(): void
+    {
+        ShowTeater::query()->create([
+            'show_id' => 1,
+            'show_date' => '2026-01-01',
+            'setlist' => 'Set A',
+        ]);
+
+        $this->seedShowTeaterSheet([
+            ['show_id' => '1', 'show_date' => '2026-01-01', 'setlist' => 'Set A'],
+            ['show_id' => '2', 'show_date' => '2026-02-02', 'setlist' => 'Set C'],
+        ]);
+
+        SheetIntegration::factory()
+            ->forMasterData(MasterData::ShowTeater)
+            ->autoSync()
+            ->create(['spreadsheet_id' => 'spreadsheet-show_teater', 'sheet_name' => 'Show Teater']);
+
+        $this->artisan('app:sync-google-sheets')->assertExitCode(0);
+
+        $this->assertDatabaseHas('show_teater', ['show_id' => 2, 'setlist' => 'Set C']);
+    }
+
+    private function enableSheetIntegration(): void
+    {
+        DB::table('app_settings')->updateOrInsert(
+            ['key' => 'sheet_integration_enabled'],
+            ['value' => 'true', 'updated_at' => now()],
+        );
+
+        Cache::forget('app_settings');
     }
 
     /**

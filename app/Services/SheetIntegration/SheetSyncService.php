@@ -51,7 +51,7 @@ class SheetSyncService
     }
 
     /**
-     * @param  array<string, string>  $resolutions  row key => database|sheet|skip
+     * @param  array<string, mixed>  $resolutions  row key => ['row' => database|sheet|skip, 'columns' => [column => database|sheet|skip]]
      * @return array{applied: int, skipped: int}
      */
     public function apply(SheetIntegration $integration, string $direction, array $resolutions = []): array
@@ -71,7 +71,80 @@ class SheetSyncService
     }
 
     /**
-     * @param  array<string, string>  $resolutions
+     * Fill missing data on both sides: rows that exist only in the sheet are
+     * created in the database, and rows that exist only in the database are
+     * appended to the sheet. Existing rows are preserved as-is.
+     *
+     * @return array{to_database: int, to_sheet: int}
+     */
+    public function fillMissing(SheetIntegration $integration): array
+    {
+        $masterData = $integration->master_data;
+        $result = $this->compare(
+            $masterData,
+            (string) $integration->spreadsheet_id,
+            (string) $integration->sheet_name,
+            $integration->header_row,
+            $integration->header_column,
+        );
+
+        $keyColumn = $masterData->keyColumn();
+        $model = $masterData->model();
+        $sheetRows = [];
+        $toDatabase = 0;
+        $toSheet = 0;
+
+        foreach ($result->rows as $row) {
+            if ($row->sheet !== null) {
+                $sheetRows[] = $row->sheet;
+            } else {
+                $sheetRows[] = $row->database;
+                $toSheet++;
+            }
+
+            if ($row->database !== null || $row->sheet === null) {
+                continue;
+            }
+
+            // Baris hanya ada di sheet -> salin ke database.
+            if ($row->isNewFromSheet() && $keyColumn !== 'id') {
+                continue;
+            }
+
+            $attributes = $this->attributesFor($row->sheet, $masterData);
+
+            if ($row->isNewFromSheet()) {
+                unset($attributes[$keyColumn]);
+                $model::query()->create($attributes);
+            } else {
+                $model::query()->updateOrCreate(
+                    [$keyColumn => $this->rawKey($this->extractKey($row->sheet, $keyColumn))],
+                    $attributes,
+                );
+            }
+
+            $toDatabase++;
+        }
+
+        $this->client->write(
+            (string) $integration->spreadsheet_id,
+            (string) $integration->sheet_name,
+            $result->headers,
+            array_values(array_filter($sheetRows, static fn ($row): bool => $row !== null)),
+            $integration->header_row,
+            $integration->header_column,
+        );
+
+        $integration->markSynced('auto_sync');
+
+        return ['to_database' => $toDatabase, 'to_sheet' => $toSheet];
+    }
+
+    /**
+     * Database -> Sheet. Baris yang ada di kedua sisi digabung per kolom sesuai
+     * resolusi; baris yang hanya ada di satu sisi mengikuti resolusi baris.
+     *
+     * @param  array<string, mixed>  $resolutions
      * @return array{applied: int, skipped: int}
      */
     private function pushToSheet(SheetIntegration $integration, ComparisonResult $result, array $resolutions): array
@@ -80,23 +153,31 @@ class SheetSyncService
         $skipped = 0;
 
         foreach ($result->rows as $row) {
-            $resolution = $resolutions[$row->key] ?? 'database';
-
-            if ($resolution === 'skip') {
-                $skipped++;
+            if ($row->database !== null && $row->sheet !== null) {
+                $rows[] = $this->mergeRowForSheet($row, $resolutions);
 
                 continue;
             }
 
-            $value = $resolution === 'sheet' ? $row->sheet : $row->database;
+            $resolution = $this->rowResolution($resolutions, $row->key, 'database');
 
-            if ($value === null) {
-                $skipped++;
+            if ($row->database !== null) {
+                // Hanya ada di database: sertakan ke sheet bila dipilih Database.
+                if ($resolution === 'database') {
+                    $rows[] = $row->database;
+                } else {
+                    $skipped++;
+                }
 
                 continue;
             }
 
-            $rows[] = $value;
+            // Hanya ada di sheet: hapus bila dipilih Database, selain itu pertahankan.
+            if ($resolution === 'database') {
+                $skipped++;
+            } else {
+                $rows[] = $row->sheet;
+            }
         }
 
         $this->client->write(
@@ -114,7 +195,30 @@ class SheetSyncService
     }
 
     /**
-     * @param  array<string, string>  $resolutions
+     * @param  array<string, mixed>  $resolutions
+     * @return array<string, string|null>
+     */
+    private function mergeRowForSheet(DiffRow $row, array $resolutions): array
+    {
+        $merged = $row->database;
+
+        foreach ($row->differences as $column => $difference) {
+            $resolution = $this->columnResolution($resolutions, $row->key, $column, 'database');
+
+            $merged[$column] = match ($resolution) {
+                'sheet', 'skip' => $difference['sheet'],
+                default => $difference['database'],
+            };
+        }
+
+        return $merged;
+    }
+
+    /**
+     * Sheet -> Database. Baris yang ada di kedua sisi digabung per kolom sesuai
+     * resolusi; baris yang hanya ada di satu sisi mengikuti resolusi baris.
+     *
+     * @param  array<string, mixed>  $resolutions
      * @return array{applied: int, skipped: int}
      */
     private function pullToDatabase(
@@ -131,33 +235,34 @@ class SheetSyncService
         $upserts = [];
 
         foreach ($result->rows as $row) {
-            $resolution = $resolutions[$row->key] ?? 'sheet';
-
-            if ($resolution === 'skip') {
-                $skipped++;
+            if ($row->database !== null && $row->sheet !== null) {
+                $upserts[] = ['values' => $this->mergeRowForDatabase($row, $resolutions), 'is_new' => false];
 
                 continue;
             }
 
-            $value = $resolution === 'database' ? $row->database : $row->sheet;
+            $resolution = $this->rowResolution($resolutions, $row->key, 'sheet');
 
-            if ($value === null) {
-                if (! $row->isNewFromSheet()) {
-                    $deletedKeys[] = $row->key;
+            if ($row->sheet !== null) {
+                // Hanya ada di sheet: buat bila dipilih Sheet. Baris tanpa key
+                // hanya bisa dibuat bila primary key auto-increment (id).
+                if ($resolution !== 'sheet' || ($row->isNewFromSheet() && $keyColumn !== 'id')) {
+                    $skipped++;
+
+                    continue;
                 }
 
-                $skipped++;
+                $upserts[] = ['values' => $row->sheet, 'is_new' => $row->isNewFromSheet()];
 
                 continue;
             }
 
-            if ($row->isNewFromSheet() && $keyColumn !== 'id') {
+            // Hanya ada di database: hapus bila dipilih Sheet, selain itu pertahankan.
+            if ($resolution === 'sheet') {
+                $deletedKeys[] = $row->key;
+            } else {
                 $skipped++;
-
-                continue;
             }
-
-            $upserts[] = ['values' => $value, 'is_new' => $row->isNewFromSheet()];
         }
 
         foreach ($deletedKeys as $key) {
@@ -183,6 +288,54 @@ class SheetSyncService
         $integration->markSynced(self::DIRECTION_SHEET_TO_DATABASE);
 
         return ['applied' => $applied, 'skipped' => $skipped];
+    }
+
+    /**
+     * @param  array<string, mixed>  $resolutions
+     * @return array<string, string|null>
+     */
+    private function mergeRowForDatabase(DiffRow $row, array $resolutions): array
+    {
+        $merged = $row->database;
+
+        foreach ($row->differences as $column => $difference) {
+            $resolution = $this->columnResolution($resolutions, $row->key, $column, 'sheet');
+
+            $merged[$column] = match ($resolution) {
+                'database', 'skip' => $difference['database'],
+                default => $difference['sheet'],
+            };
+        }
+
+        return $merged;
+    }
+
+    /**
+     * @param  array<string, mixed>  $resolutions
+     */
+    private function rowResolution(array $resolutions, string $key, string $default): string
+    {
+        $entry = $resolutions[$key] ?? null;
+
+        if (is_array($entry) && isset($entry['row']) && is_string($entry['row'])) {
+            return $entry['row'];
+        }
+
+        return $default;
+    }
+
+    /**
+     * @param  array<string, mixed>  $resolutions
+     */
+    private function columnResolution(array $resolutions, string $key, string $column, string $default): string
+    {
+        $entry = $resolutions[$key] ?? null;
+
+        if (is_array($entry) && isset($entry['columns'][$column]) && is_string($entry['columns'][$column])) {
+            return $entry['columns'][$column];
+        }
+
+        return $default;
     }
 
     /**

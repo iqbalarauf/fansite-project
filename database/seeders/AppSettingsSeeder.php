@@ -41,6 +41,7 @@ class AppSettingsSeeder extends Seeder
             'magazines_enabled' => 'true',
             'trivia_enabled' => 'true',
             'photobooth_enabled' => 'true',
+            'sheet_integration_enabled' => 'false',
             'gallery_mode' => 'photos',
             'welcome_feed_source' => 'news',
             'header_menu_mode' => 'default',

@@ -68,11 +68,6 @@
                             <flux:sidebar.item icon="photo" :href="route('content.gallery.index')" :current="request()->routeIs('content.gallery.*')" wire:navigate>
                                 {{ __('Galeri') }}
                             </flux:sidebar.item>
-                            @if (auth()->user()?->isSuperAdmin())
-                                <flux:sidebar.item icon="information-circle" :href="route('about.edit')" :current="request()->routeIs('about.edit')" wire:navigate>
-                                    {{ __('About Idol & Fansite') }}
-                                </flux:sidebar.item>
-                            @endif
                         </div>
                     </div>
 
@@ -107,14 +102,17 @@
                 @endif
 
                 @if (auth()->user()->isSuperAdmin())
-                    <flux:sidebar.group :heading="__('Data Integration')" class="grid">
-                        <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="table-cells" :href="route('sheet-integration.comparison')" :current="request()->routeIs('sheet-integration.*')" wire:navigate>
-                            {{ __('Sheet Integration') }}
-                        </flux:sidebar.item>
-                    </flux:sidebar.group>
-                    <flux:sidebar.group :heading="__('User Management')" class="grid">
+                    <flux:sidebar.group :heading="__('Configuration')" class="grid">
+                        @if (\App\Support\SettingBag::sheetIntegrationEnabled())
+                            <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="table-cells" :href="route('sheet-integration.comparison')" :current="request()->routeIs('sheet-integration.*')" wire:navigate>
+                                {{ __('Sheet Integration') }}
+                            </flux:sidebar.item>
+                        @endif
                         <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="users" :href="route('users.index')" :current="request()->routeIs('users.*')" wire:navigate>
-                            {{ __('Daftar User') }}
+                            {{ __('User Management') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="information-circle" :href="route('about.edit')" :current="request()->routeIs('about.edit')" wire:navigate>
+                            {{ __('Halaman "About"') }}
                         </flux:sidebar.item>
                     </flux:sidebar.group>
                 @endif

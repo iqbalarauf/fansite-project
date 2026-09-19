@@ -158,6 +158,8 @@ Route::middleware(['auth', 'verified', 'block-view-only-writes'])->group(functio
         Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 
         Route::livewire('content/about', 'pages::about.manage')->name('about.edit');
+
+        Route::livewire('sheet-integration', 'pages::sheet-integration.comparison')->middleware('sheet-integration')->name('sheet-integration.comparison');
     });
 });
 
