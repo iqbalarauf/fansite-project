@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Content;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TriviaRequest;
 use App\Models\Trivia;
+use App\Support\ListingQuery;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -14,22 +15,22 @@ class TriviaController extends Controller
 {
     public function index(Request $request): View
     {
-        $search = $request->string('search')->toString();
+        $filters = ListingQuery::from($request, ['title', 'created_at'], 'created_at');
 
         $trivias = Trivia::query()
-            ->when($search !== '', function ($query) use ($search): void {
-                $query->where(function ($nested) use ($search): void {
-                    $nested->where('title', 'like', "%{$search}%")
-                        ->orWhere('description', 'like', "%{$search}%");
+            ->when($filters['search'] !== '', function ($query) use ($filters): void {
+                $query->where(function ($nested) use ($filters): void {
+                    $nested->where('title', 'like', "%{$filters['search']}%")
+                        ->orWhere('description', 'like', "%{$filters['search']}%");
                 });
             })
-            ->latest()
-            ->paginate(15)
+            ->orderBy($filters['sort_by'], $filters['sort_dir'])
+            ->paginate($filters['per_page'])
             ->withQueryString();
 
         return view('content.trivia.index', [
             'trivias' => $trivias,
-            'search' => $search,
+            'filters' => $filters,
         ]);
     }
 

@@ -26,79 +26,50 @@
             </div>
         @endif
 
-        <form method="GET" action="{{ route('concert-events.index') }}" id="filter-form">
-            <div class="admin-filter">
-                <div class="admin-filter-search">
-                    <flux:input
-                        name="search"
-                        value="{{ $filters['search'] }}"
-                        placeholder="Search event name, location, atau purchase link..."
-                        icon="magnifying-glass"
-                    />
-                </div>
-
-                <flux:input
-                    name="date_from"
-                    type="date"
-                    value="{{ $filters['date_from'] }}"
-                    class="w-40"
-                />
-                <flux:input
-                    name="date_to"
-                    type="date"
-                    value="{{ $filters['date_to'] }}"
-                    class="w-40"
-                />
-
-                <select
-                    name="status"
-                    onchange="this.form.submit()"
-                    class="admin-filter-select"
-                >
-                    <option value="" {{ $filters['status'] === '' ? 'selected' : '' }}>Semua Status</option>
-                    <option value="on-air" {{ $filters['status'] === 'on-air' ? 'selected' : '' }}>On-Air</option>
-                    <option value="off-air" {{ $filters['status'] === 'off-air' ? 'selected' : '' }}>Off-Air</option>
-                    <option value="jkt48-event" {{ $filters['status'] === 'jkt48-event' ? 'selected' : '' }}>JKT48 Event</option>
-                    <option value="media" {{ $filters['status'] === 'media' ? 'selected' : '' }}>Media</option>
-                    <option value="ofc-event" {{ $filters['status'] === 'ofc-event' ? 'selected' : '' }}>OFC Event</option>
-                    <option value="brand" {{ $filters['status'] === 'brand' ? 'selected' : '' }}>Brand</option>
-                </select>
-
-                <select
-                    name="sort_by"
-                    onchange="this.form.submit()"
-                    class="admin-filter-select"
-                >
-                    <option value="event_date" {{ $filters['sort_by'] === 'event_date' ? 'selected' : '' }}>Event Date</option>
-                    <option value="event_name" {{ $filters['sort_by'] === 'event_name' ? 'selected' : '' }}>Event Name</option>
-                    <option value="purchase_link" {{ $filters['sort_by'] === 'purchase_link' ? 'selected' : '' }}>Purchase Link</option>
-                </select>
-
-                <input type="hidden" name="sort_dir" value="{{ $filters['sort_dir'] }}" id="sort-dir-input" />
-                <button
-                    type="button"
-                    title="{{ $filters['sort_dir'] === 'asc' ? 'Ascending' : 'Descending' }}"
-                    onclick="document.getElementById('sort-dir-input').value = '{{ $filters['sort_dir'] === 'asc' ? 'desc' : 'asc' }}'; document.getElementById('filter-form').submit();"
-                    class="admin-filter-sort"
-                >
-                    @if ($filters['sort_dir'] === 'asc')
-                        <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
-                    @else
-                        <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"/></svg>
-                    @endif
-                </button>
-
-                <input type="hidden" name="per_page" value="{{ $filters['per_page'] }}" />
-
-                <flux:button type="submit" variant="outline">Cari</flux:button>
-
-                @if ($filters['search'] || $filters['status'] || $filters['date_from'] || $filters['date_to'])
-                    <a href="{{ route('concert-events.index') }}" class="admin-filter-reset">Reset</a>
-                @endif
-            </div>
-        </form>
-
         <div class="admin-table-shell">
+            <form method="GET" action="{{ route('concert-events.index') }}" id="filter-form">
+                <x-admin.table-toolbar :filters="$filters" :show-filters="true" search-placeholder="Cari event name, location, atau purchase link...">
+                    <flux:input name="date_from" type="date" value="{{ $filters['date_from'] }}" class="w-40" aria-label="{{ __('Dari tanggal') }}" />
+                    <flux:input name="date_to" type="date" value="{{ $filters['date_to'] }}" class="w-40" aria-label="{{ __('Sampai tanggal') }}" />
+
+                    <select name="status" onchange="this.form.submit()" class="admin-filter-select">
+                        <option value="" {{ $filters['status'] === '' ? 'selected' : '' }}>{{ __('Semua Status') }}</option>
+                        <option value="on-air" {{ $filters['status'] === 'on-air' ? 'selected' : '' }}>On-Air</option>
+                        <option value="off-air" {{ $filters['status'] === 'off-air' ? 'selected' : '' }}>Off-Air</option>
+                        <option value="jkt48-event" {{ $filters['status'] === 'jkt48-event' ? 'selected' : '' }}>JKT48 Event</option>
+                        <option value="media" {{ $filters['status'] === 'media' ? 'selected' : '' }}>Media</option>
+                        <option value="ofc-event" {{ $filters['status'] === 'ofc-event' ? 'selected' : '' }}>OFC Event</option>
+                        <option value="brand" {{ $filters['status'] === 'brand' ? 'selected' : '' }}>Brand</option>
+                    </select>
+
+                    <select name="sort_by" onchange="this.form.submit()" class="admin-filter-select">
+                        <option value="event_date" {{ $filters['sort_by'] === 'event_date' ? 'selected' : '' }}>Event Date</option>
+                        <option value="event_name" {{ $filters['sort_by'] === 'event_name' ? 'selected' : '' }}>Event Name</option>
+                        <option value="purchase_link" {{ $filters['sort_by'] === 'purchase_link' ? 'selected' : '' }}>Purchase Link</option>
+                    </select>
+
+                    <input type="hidden" name="sort_dir" value="{{ $filters['sort_dir'] }}" id="sort-dir-input" />
+                    <button
+                        type="button"
+                        title="{{ $filters['sort_dir'] === 'asc' ? 'Ascending' : 'Descending' }}"
+                        onclick="document.getElementById('sort-dir-input').value = '{{ $filters['sort_dir'] === 'asc' ? 'desc' : 'asc' }}'; document.getElementById('filter-form').submit();"
+                        class="admin-filter-sort"
+                    >
+                        @if ($filters['sort_dir'] === 'asc')
+                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
+                        @else
+                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"/></svg>
+                        @endif
+                    </button>
+
+                    <flux:button type="submit" variant="outline">{{ __('Terapkan') }}</flux:button>
+
+                    @if ($filters['search'] || $filters['status'] || $filters['date_from'] || $filters['date_to'])
+                        <a href="{{ route('concert-events.index') }}" class="admin-filter-reset">{{ __('Reset') }}</a>
+                    @endif
+                </x-admin.table-toolbar>
+            </form>
+
             <div class="overflow-x-auto">
                     <table class="admin-table">
                     <thead class="admin-table-head">

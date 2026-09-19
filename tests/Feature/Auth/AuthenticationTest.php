@@ -4,6 +4,8 @@ namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Laravel\Fortify\Features;
 use Tests\TestCase;
 
@@ -16,6 +18,20 @@ class AuthenticationTest extends TestCase
         $response = $this->get(route('login'));
 
         $response->assertOk();
+    }
+
+    public function test_login_page_displays_the_configured_login_image(): void
+    {
+        DB::table('app_settings')->updateOrInsert(
+            ['key' => 'login_image'],
+            ['value' => 'app/login/background.jpg', 'updated_at' => now()],
+        );
+
+        Cache::forget('app_settings');
+
+        $this->get(route('login'))
+            ->assertOk()
+            ->assertSee('/storage/app/login/background.jpg', false);
     }
 
     public function test_users_can_authenticate_using_the_login_screen(): void

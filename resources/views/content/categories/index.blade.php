@@ -36,6 +36,11 @@
         </div>
 
         <div class="admin-table-shell">
+            <form method="GET" action="{{ route('content.categories.index') }}">
+                <input type="hidden" name="type" value="{{ $type->value }}" />
+                <x-admin.table-toolbar :filters="$filters" search-placeholder="Cari nama atau slug kategori..." />
+            </form>
+
             <div class="overflow-x-auto">
                 <table class="admin-table">
                     <thead class="admin-table-head">
@@ -73,6 +78,8 @@
                     </tbody>
                 </table>
             </div>
+
+            @include('show-teater.partials.pagination', ['paginator' => $categories, 'perPage' => $filters['per_page'], 'pageParam' => 'page'])
         </div>
     </div>
 

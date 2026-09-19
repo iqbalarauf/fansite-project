@@ -5,16 +5,30 @@ namespace App\Http\Controllers\Content;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TimelineRequest;
 use App\Models\Timeline;
+use App\Support\ListingQuery;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class TimelineController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        $filters = ListingQuery::from($request, ['date', 'created_at'], 'date');
+
+        $timelines = Timeline::query()
+            ->when($filters['search'] !== '', function ($query) use ($filters): void {
+                $query->where('description', 'like', "%{$filters['search']}%");
+            })
+            ->orderBy($filters['sort_by'], $filters['sort_dir'])
+            ->orderByDesc('id')
+            ->paginate($filters['per_page'])
+            ->withQueryString();
+
         return view('content.timeline.index', [
-            'timelines' => Timeline::query()->orderByDesc('date')->orderByDesc('id')->paginate(15)->withQueryString(),
+            'timelines' => $timelines,
+            'filters' => $filters,
         ]);
     }
 

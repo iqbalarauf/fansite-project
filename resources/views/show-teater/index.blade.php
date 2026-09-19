@@ -44,92 +44,51 @@
         @endif
 
         {{-- ================================================================
-             Filters & Search
-        ================================================================ --}}
-        <form method="GET" action="{{ route('show-teater.index') }}" id="filter-form">
-            <div class="admin-filter">
-                {{-- Search --}}
-                <div class="admin-filter-search">
-                    <flux:input
-                        name="search"
-                        value="{{ $filters['search'] }}"
-                        placeholder="Search by setlist, unit song..."
-                        icon="magnifying-glass"
-                    />
-                </div>
-
-                {{-- Date Range --}}
-                <flux:input
-                    name="date_from"
-                    type="date"
-                    value="{{ $filters['date_from'] }}"
-                    placeholder="Date from"
-                    class="w-40"
-                />
-                <flux:input
-                    name="date_to"
-                    type="date"
-                    value="{{ $filters['date_to'] }}"
-                    placeholder="Date to"
-                    class="w-40"
-                />
-
-                {{-- Setlist Filter --}}
-                <select
-                    name="setlist"
-                    onchange="this.form.submit()"
-                    class="admin-filter-select"
-                >
-                    <option value="">Semua Setlist</option>
-                    @foreach ($allSetlists as $setlist)
-                        <option value="{{ $setlist }}" {{ $filters['setlist'] === $setlist ? 'selected' : '' }}>
-                            {{ $setlist }}
-                        </option>
-                    @endforeach
-                </select>
-
-                {{-- Sort By --}}
-                <select
-                    name="sort_by"
-                    onchange="this.form.submit()"
-                    class="admin-filter-select"
-                >
-                    <option value="show_id" {{ $filters['sort_by'] === 'show_id' ? 'selected' : '' }}>Show ID</option>
-                    <option value="show_date" {{ $filters['sort_by'] === 'show_date' ? 'selected' : '' }}>Tanggal</option>
-                    <option value="setlist" {{ $filters['sort_by'] === 'setlist' ? 'selected' : '' }}>Setlist</option>
-                </select>
-
-                {{-- Sort Direction --}}
-                <input type="hidden" name="sort_dir" value="{{ $filters['sort_dir'] }}" id="sort-dir-input" />
-                <button
-                    type="button"
-                    title="{{ $filters['sort_dir'] === 'asc' ? 'Ascending' : 'Descending' }}"
-                    onclick="document.getElementById('sort-dir-input').value = '{{ $filters['sort_dir'] === 'asc' ? 'desc' : 'asc' }}'; document.getElementById('filter-form').submit();"
-                    class="admin-filter-sort"
-                >
-                    @if ($filters['sort_dir'] === 'asc')
-                        <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
-                    @else
-                        <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"/></svg>
-                    @endif
-                </button>
-
-                {{-- Per Page --}}
-                <input type="hidden" name="per_page" value="{{ $filters['per_page'] }}" />
-
-                {{-- Submit --}}
-                <flux:button type="submit" variant="outline">Cari</flux:button>
-
-                @if ($filters['search'] || $filters['setlist'] || $filters['date_from'] || $filters['date_to'])
-                    <a href="{{ route('show-teater.index') }}" class="admin-filter-reset">Reset</a>
-                @endif
-            </div>
-        </form>
-
-        {{-- ================================================================
              Table
         ================================================================ --}}
         <div class="admin-table-shell">
+            <form method="GET" action="{{ route('show-teater.index') }}" id="filter-form">
+                <x-admin.table-toolbar :filters="$filters" :show-filters="true" search-placeholder="Cari setlist atau unit song...">
+                    <flux:input name="date_from" type="date" value="{{ $filters['date_from'] }}" class="w-40" aria-label="{{ __('Dari tanggal') }}" />
+                    <flux:input name="date_to" type="date" value="{{ $filters['date_to'] }}" class="w-40" aria-label="{{ __('Sampai tanggal') }}" />
+
+                    <select name="setlist" onchange="this.form.submit()" class="admin-filter-select">
+                        <option value="">{{ __('Semua Setlist') }}</option>
+                        @foreach ($allSetlists as $setlist)
+                            <option value="{{ $setlist }}" {{ $filters['setlist'] === $setlist ? 'selected' : '' }}>
+                                {{ $setlist }}
+                            </option>
+                        @endforeach
+                    </select>
+
+                    <select name="sort_by" onchange="this.form.submit()" class="admin-filter-select">
+                        <option value="show_id" {{ $filters['sort_by'] === 'show_id' ? 'selected' : '' }}>Show ID</option>
+                        <option value="show_date" {{ $filters['sort_by'] === 'show_date' ? 'selected' : '' }}>Tanggal</option>
+                        <option value="setlist" {{ $filters['sort_by'] === 'setlist' ? 'selected' : '' }}>Setlist</option>
+                    </select>
+
+                    <input type="hidden" name="sort_dir" value="{{ $filters['sort_dir'] }}" id="sort-dir-input" />
+                    <button
+                        type="button"
+                        title="{{ $filters['sort_dir'] === 'asc' ? 'Ascending' : 'Descending' }}"
+                        onclick="document.getElementById('sort-dir-input').value = '{{ $filters['sort_dir'] === 'asc' ? 'desc' : 'asc' }}'; document.getElementById('filter-form').submit();"
+                        class="admin-filter-sort"
+                    >
+                        @if ($filters['sort_dir'] === 'asc')
+                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
+                        @else
+                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"/></svg>
+                        @endif
+                    </button>
+
+                    <flux:button type="submit" variant="outline">{{ __('Terapkan') }}</flux:button>
+
+                    @if ($filters['search'] || $filters['setlist'] || $filters['date_from'] || $filters['date_to'])
+                        <a href="{{ route('show-teater.index') }}" class="admin-filter-reset">{{ __('Reset') }}</a>
+                    @endif
+                </x-admin.table-toolbar>
+            </form>
+
             <div class="overflow-x-auto">
                     <table class="admin-table">
                         <thead class="admin-table-head">
@@ -237,57 +196,7 @@
                 </table>
             </div>
 
-            {{-- Pagination --}}
-            @if ($shows->hasPages())
-                <div class="flex items-center justify-between border-t border-zinc-200 px-4 py-3 dark:border-zinc-700">
-                    <p class="text-sm text-zinc-500 dark:text-zinc-400">
-                        Showing {{ $shows->firstItem() }} to {{ $shows->lastItem() }} of {{ $shows->total() }} results
-                    </p>
-                    <div class="flex items-center gap-1">
-                        {{-- First --}}
-                        <a
-                            href="{{ $shows->url(1) }}"
-                            class="flex size-8 items-center justify-center rounded-lg border border-zinc-200 text-zinc-500 hover:bg-zinc-50 disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 {{ $shows->onFirstPage() ? 'pointer-events-none opacity-40' : '' }}"
-                        ><svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18.75 19.5l-7.5-7.5 7.5-7.5m-6 15L5.25 12l7.5-7.5"/></svg></a>
-                        {{-- Prev --}}
-                        <a
-                            href="{{ $shows->previousPageUrl() }}"
-                            class="flex size-8 items-center justify-center rounded-lg border border-zinc-200 text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 {{ $shows->onFirstPage() ? 'pointer-events-none opacity-40' : '' }}"
-                        ><svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg></a>
-
-                        <span class="flex items-center gap-1.5 px-1 text-sm text-zinc-600 dark:text-zinc-300">
-                            Page {{ $shows->currentPage() }} of {{ $shows->lastPage() }}
-                        </span>
-
-                        {{-- Next --}}
-                        <a
-                            href="{{ $shows->nextPageUrl() }}"
-                            class="flex size-8 items-center justify-center rounded-lg border border-zinc-200 text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 {{ ! $shows->hasMorePages() ? 'pointer-events-none opacity-40' : '' }}"
-                        ><svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg></a>
-                        {{-- Last --}}
-                        <a
-                            href="{{ $shows->url($shows->lastPage()) }}"
-                            class="flex size-8 items-center justify-center rounded-lg border border-zinc-200 text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 {{ ! $shows->hasMorePages() ? 'pointer-events-none opacity-40' : '' }}"
-                        ><svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 4.5l7.5 7.5-7.5 7.5m6-15l7.5 7.5-7.5 7.5"/></svg></a>
-                    </div>
-                    {{-- Per page selector --}}
-                    <div class="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
-                        <span>Rows:</span>
-                        @foreach ([10, 25, 50, 100] as $size)
-                            <a
-                                href="{{ request()->fullUrlWithQuery(['per_page' => $size, 'page' => 1]) }}"
-                                class="flex size-8 items-center justify-center rounded-lg border text-xs {{ $filters['per_page'] == $size ? 'border-blue-500 bg-blue-50 text-blue-600 font-medium dark:bg-blue-950 dark:text-blue-400' : 'border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800' }}"
-                            >{{ $size }}</a>
-                        @endforeach
-                    </div>
-                </div>
-            @else
-                <div class="border-t border-zinc-200 px-4 py-3 dark:border-zinc-700">
-                    <p class="text-sm text-zinc-500 dark:text-zinc-400">
-                        Showing {{ $shows->total() }} results
-                    </p>
-                </div>
-            @endif
+            @include('show-teater.partials.pagination', ['paginator' => $shows, 'perPage' => $filters['per_page'], 'pageParam' => 'page'])
         </div>
     </div>
 

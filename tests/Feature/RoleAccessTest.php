@@ -80,7 +80,7 @@ class RoleAccessTest extends TestCase
 
         $this->actingAs($user)->get(route('profile.edit'))->assertForbidden();
         $this->actingAs($user)->get(route('about.edit'))->assertForbidden();
-        $this->actingAs($user)->get(route('app-settings.edit'))->assertForbidden();
+        $this->actingAs($user)->get(route('features.edit'))->assertForbidden();
         $this->actingAs($user)->get(route('appearance.edit'))->assertForbidden();
     }
 
@@ -90,21 +90,39 @@ class RoleAccessTest extends TestCase
 
         $this->actingAs($user)->get(route('profile.edit'))->assertOk();
         $this->actingAs($user)->get(route('about.edit'))->assertOk();
-        $this->actingAs($user)->get(route('app-settings.edit'))->assertOk();
+        $this->actingAs($user)->get(route('features.edit'))->assertOk();
         $this->actingAs($user)->get(route('appearance.edit'))->assertOk();
     }
 
-    public function test_non_super_admins_cannot_access_about_and_app_settings(): void
+    public function test_non_super_admins_cannot_access_about_and_features_settings(): void
     {
         $bankDataAdmin = User::factory()->bankDataAdmin()->create();
         $contentCreator = User::factory()->contentCreator()->create();
 
         // Bank Data Admin
         $this->actingAs($bankDataAdmin)->get(route('about.edit'))->assertForbidden();
-        $this->actingAs($bankDataAdmin)->get(route('app-settings.edit'))->assertForbidden();
+        $this->actingAs($bankDataAdmin)->get(route('features.edit'))->assertForbidden();
 
         // Content Creator
         $this->actingAs($contentCreator)->get(route('about.edit'))->assertForbidden();
-        $this->actingAs($contentCreator)->get(route('app-settings.edit'))->assertForbidden();
+        $this->actingAs($contentCreator)->get(route('features.edit'))->assertForbidden();
+    }
+
+    public function test_sidebar_shows_about_idol_and_fansite_for_super_admin(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        $this->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('About Idol & Fansite');
+    }
+
+    public function test_sidebar_hides_about_idol_and_fansite_for_non_super_admin(): void
+    {
+        $this->actingAs(User::factory()->viewOnly()->create());
+
+        $this->get(route('dashboard'))
+            ->assertOk()
+            ->assertDontSee('About Idol & Fansite');
     }
 }

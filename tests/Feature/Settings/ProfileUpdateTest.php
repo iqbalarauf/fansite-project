@@ -19,6 +19,16 @@ class ProfileUpdateTest extends TestCase
         $this->get(route('profile.edit'))->assertOk();
     }
 
+    public function test_two_factor_authentication_is_available_on_profile_page(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        $this->get(route('profile.edit'))
+            ->assertOk()
+            ->assertSee('Two-factor authentication')
+            ->assertSee('Enable 2FA');
+    }
+
     public function test_profile_information_can_be_updated(): void
     {
         $user = User::factory()->create();

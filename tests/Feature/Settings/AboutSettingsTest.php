@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Settings;
 
+use App\Models\CustomPage;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -27,7 +28,7 @@ class AboutSettingsTest extends TestCase
 
         $this->actingAs(User::factory()->create());
 
-        Livewire::test('pages::settings.about')
+        Livewire::test('pages::about.manage')
             ->set('idolName', 'Freya')
             ->set('idolDescription', 'Deskripsi idol')
             ->set('idolAchievements', 'Achievement list')
@@ -56,16 +57,118 @@ class AboutSettingsTest extends TestCase
         Storage::disk('public')->assertExists($settings['idol_photo']);
     }
 
-    public function test_fansite_information_can_be_updated_and_gallery_limited_to_five_uploads(): void
+    public function test_kabesha_items_can_be_created_and_updated_per_photo(): void
     {
         Storage::fake('public');
 
         $this->actingAs(User::factory()->create());
 
-        Livewire::test('pages::settings.about')
+        $component = Livewire::test('pages::about.manage')
+            ->set('idolName', 'Freya')
+            ->set('kabeshaPhotoUploads', [
+                UploadedFile::fake()->image('kabesha-1.jpg'),
+                UploadedFile::fake()->image('kabesha-2.jpg'),
+            ])
+            ->call('saveIdol')
+            ->assertHasNoErrors();
+
+        $this->assertCount(2, $component->get('kabeshaItems'));
+
+        $component
+            ->set('kabeshaItems.0.title', 'Kabesha Satu')
+            ->set('kabeshaItems.0.duration_from', '2026-01-01')
+            ->set('kabeshaItems.0.duration_to', '2026-01-31')
+            ->set('kabeshaItems.1.title', 'Kabesha Dua')
+            ->call('saveIdol')
+            ->assertHasNoErrors();
+
+        $settings = DB::table('about_settings')->pluck('value', 'key');
+        $stored = json_decode((string) $settings['kabesha_items'], true);
+
+        $this->assertCount(2, $stored);
+        $this->assertSame('Kabesha Satu', $stored[0]['title']);
+        $this->assertSame('2026-01-01', $stored[0]['duration_from']);
+        $this->assertSame('2026-01-31', $stored[0]['duration_to']);
+        $this->assertSame('Kabesha Dua', $stored[1]['title']);
+        Storage::disk('public')->assertExists($stored[0]['photo']);
+        Storage::disk('public')->assertExists($stored[1]['photo']);
+    }
+
+    public function test_kabesha_item_duration_to_must_not_be_before_its_from(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::about.manage')
+            ->set('idolName', 'Freya')
+            ->set('kabeshaItems', [
+                ['photo' => null, 'title' => 'Kabesha', 'duration_from' => '2026-02-01', 'duration_to' => '2026-01-01'],
+            ])
+            ->call('saveIdol')
+            ->assertHasErrors('kabeshaItems.0.duration_to');
+    }
+
+    public function test_kabesha_item_can_be_removed(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->create());
+
+        Storage::disk('public')->put('about/kabesha/a.jpg', 'x');
+        Storage::disk('public')->put('about/kabesha/b.jpg', 'x');
+
+        Livewire::test('pages::about.manage')
+            ->set('kabeshaItems', [
+                ['photo' => 'about/kabesha/a.jpg', 'title' => 'A', 'duration_from' => null, 'duration_to' => null],
+                ['photo' => 'about/kabesha/b.jpg', 'title' => 'B', 'duration_from' => null, 'duration_to' => null],
+            ])
+            ->call('removeKabeshaItem', 0)
+            ->assertSet('kabeshaItems', [
+                ['photo' => 'about/kabesha/b.jpg', 'title' => 'B', 'duration_from' => null, 'duration_to' => null],
+            ]);
+
+        Storage::disk('public')->assertMissing('about/kabesha/a.jpg');
+        Storage::disk('public')->assertExists('about/kabesha/b.jpg');
+
+        $settings = DB::table('about_settings')->pluck('value', 'key');
+        $stored = json_decode((string) $settings['kabesha_items'], true);
+
+        $this->assertCount(1, $stored);
+        $this->assertSame('about/kabesha/b.jpg', $stored[0]['photo']);
+    }
+
+    public function test_kabesha_items_can_be_reordered(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::about.manage')
+            ->set('kabeshaItems', [
+                ['photo' => 'about/kabesha/a.jpg', 'title' => 'A', 'duration_from' => null, 'duration_to' => null],
+                ['photo' => 'about/kabesha/b.jpg', 'title' => 'B', 'duration_from' => null, 'duration_to' => null],
+                ['photo' => 'about/kabesha/c.jpg', 'title' => 'C', 'duration_from' => null, 'duration_to' => null],
+            ])
+            ->call('reorderKabeshaItems', [2, 0, 1])
+            ->assertSet('kabeshaItems', [
+                ['photo' => 'about/kabesha/c.jpg', 'title' => 'C', 'duration_from' => null, 'duration_to' => null],
+                ['photo' => 'about/kabesha/a.jpg', 'title' => 'A', 'duration_from' => null, 'duration_to' => null],
+                ['photo' => 'about/kabesha/b.jpg', 'title' => 'B', 'duration_from' => null, 'duration_to' => null],
+            ]);
+
+        $stored = json_decode((string) DB::table('about_settings')->where('key', 'kabesha_items')->value('value'), true);
+
+        $this->assertSame(['C', 'A', 'B'], array_column($stored, 'title'));
+    }
+
+    public function test_fansite_information_can_be_updated_with_gallery_captions_and_structure(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->create());
+
+        $component = Livewire::test('pages::about.manage')
             ->set('activeTab', 'fansite')
             ->set('fanbaseName', 'Wota Nusantara')
             ->set('fanbaseDescription', 'Komunitas fanbase')
+            ->set('fanbaseStructure', "Ketua: A\nWakil: B")
             ->set('fanbaseActivities', 'Nobar, project, dan event')
             ->set('fanbaseCtaEnabled', true)
             ->set('fanbaseCtaTitle', 'Gabung sekarang')
@@ -78,37 +181,240 @@ class AboutSettingsTest extends TestCase
             ->set('fanbaseGalleryUploads', [
                 UploadedFile::fake()->image('gallery-1.jpg'),
                 UploadedFile::fake()->image('gallery-2.jpg'),
-                UploadedFile::fake()->image('gallery-3.jpg'),
-                UploadedFile::fake()->image('gallery-4.jpg'),
-                UploadedFile::fake()->image('gallery-5.jpg'),
             ])
             ->call('saveFansite')
             ->assertHasNoErrors();
 
+        $this->assertCount(2, $component->get('fanbaseGalleryItems'));
+
+        $component
+            ->set('fanbaseGalleryItems.0.caption', 'Foto bersama')
+            ->set('fanbaseGalleryItems.1.caption', 'Nobar')
+            ->call('saveFansite')
+            ->assertHasNoErrors();
+
         $settings = DB::table('about_settings')->pluck('value', 'key');
-        $gallery = json_decode($settings['fanbase_gallery'] ?? '[]', true, 512, JSON_THROW_ON_ERROR);
+        $items = json_decode((string) $settings['fanbase_gallery_items'], true);
+        $legacy = json_decode((string) $settings['fanbase_gallery'], true);
 
         $this->assertSame('Wota Nusantara', $settings['fanbase_name']);
         $this->assertSame('wota-nusantara', $settings['fanbase_slug']);
+        $this->assertSame("Ketua: A\nWakil: B", $settings['fanbase_structure']);
         $this->assertSame('true', $settings['fanbase_cta_enabled']);
-        $this->assertCount(5, $gallery);
+        $this->assertSame(['Foto bersama', 'Nobar'], array_column($items, 'caption'));
+        $this->assertCount(2, $legacy);
 
-        foreach ($gallery as $path) {
-            Storage::disk('public')->assertExists($path);
+        foreach ($items as $item) {
+            Storage::disk('public')->assertExists($item['photo']);
         }
+    }
 
-        Livewire::test('pages::settings.about')
+    public function test_fansite_gallery_is_limited_to_twenty_items(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->create());
+
+        $component = Livewire::test('pages::about.manage')
             ->set('activeTab', 'fansite')
             ->set('fanbaseName', 'Wota Nusantara')
+            ->set('fanbaseGalleryItems', array_fill(0, 19, ['photo' => null, 'caption' => '']))
             ->set('fanbaseGalleryUploads', [
-                UploadedFile::fake()->image('gallery-1.jpg'),
-                UploadedFile::fake()->image('gallery-2.jpg'),
-                UploadedFile::fake()->image('gallery-3.jpg'),
-                UploadedFile::fake()->image('gallery-4.jpg'),
-                UploadedFile::fake()->image('gallery-5.jpg'),
-                UploadedFile::fake()->image('gallery-6.jpg'),
+                UploadedFile::fake()->image('gallery-a.jpg'),
+                UploadedFile::fake()->image('gallery-b.jpg'),
+                UploadedFile::fake()->image('gallery-c.jpg'),
             ])
             ->call('saveFansite')
-            ->assertHasErrors(['fanbaseGalleryUploads']);
+            ->assertHasNoErrors();
+
+        $this->assertCount(20, $component->get('fanbaseGalleryItems'));
+    }
+
+    public function test_fansite_gallery_rejects_more_than_twenty_uploads_in_one_batch(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::about.manage')
+            ->set('activeTab', 'fansite')
+            ->set('fanbaseName', 'Wota Nusantara')
+            ->set('fanbaseGalleryUploads', array_map(
+                fn (int $index): UploadedFile => UploadedFile::fake()->image("gallery-{$index}.jpg"),
+                range(1, 21),
+            ))
+            ->call('saveFansite')
+            ->assertHasErrors('fanbaseGalleryUploads');
+    }
+
+    public function test_fansite_gallery_item_can_be_removed(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->create());
+
+        Storage::disk('public')->put('about/fansite/gallery/a.jpg', 'x');
+        Storage::disk('public')->put('about/fansite/gallery/b.jpg', 'x');
+
+        Livewire::test('pages::about.manage')
+            ->set('fanbaseGalleryItems', [
+                ['photo' => 'about/fansite/gallery/a.jpg', 'caption' => 'A'],
+                ['photo' => 'about/fansite/gallery/b.jpg', 'caption' => 'B'],
+            ])
+            ->call('removeFanbaseGalleryItem', 0)
+            ->assertSet('fanbaseGalleryItems', [
+                ['photo' => 'about/fansite/gallery/b.jpg', 'caption' => 'B'],
+            ]);
+
+        Storage::disk('public')->assertMissing('about/fansite/gallery/a.jpg');
+        Storage::disk('public')->assertExists('about/fansite/gallery/b.jpg');
+    }
+
+    public function test_fansite_history_can_use_a_custom_page(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        $page = CustomPage::create([
+            'title' => 'Sejarah Fansite',
+            'slug' => 'sejarah-fansite',
+            'status' => 'published',
+            'blocks' => [],
+        ]);
+
+        Livewire::test('pages::about.manage')
+            ->set('activeTab', 'fansite')
+            ->set('fanbaseName', 'Wota Nusantara')
+            ->set('fanbaseHistoryEnabled', true)
+            ->set('fanbaseHistorySource', 'custom')
+            ->set('fanbaseHistoryCustomPageId', $page->id)
+            ->call('saveFansite')
+            ->assertHasNoErrors();
+
+        $settings = DB::table('about_settings')->pluck('value', 'key');
+
+        $this->assertSame('true', $settings['fanbase_history_enabled']);
+        $this->assertSame('custom', $settings['fanbase_history_source']);
+        $this->assertSame((string) $page->id, (string) $settings['fanbase_history_custom_page_id']);
+    }
+
+    public function test_fansite_history_custom_page_must_exist(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::about.manage')
+            ->set('activeTab', 'fansite')
+            ->set('fanbaseName', 'Wota Nusantara')
+            ->set('fanbaseHistoryEnabled', true)
+            ->set('fanbaseHistorySource', 'custom')
+            ->set('fanbaseHistoryCustomPageId', 999)
+            ->call('saveFansite')
+            ->assertHasErrors('fanbaseHistoryCustomPageId');
+    }
+
+    public function test_fansite_history_default_pages_can_be_managed(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->create());
+
+        $component = Livewire::test('pages::about.manage')
+            ->set('activeTab', 'fansite')
+            ->set('fanbaseName', 'Wota Nusantara')
+            ->set('fanbaseHistoryEnabled', true)
+            ->set('fanbaseHistorySource', 'default')
+            ->set('fanbaseHistoryUploads', [
+                UploadedFile::fake()->image('history-1.jpg'),
+                UploadedFile::fake()->image('history-2.jpg'),
+            ])
+            ->call('saveFansite')
+            ->assertHasNoErrors();
+
+        $this->assertCount(2, $component->get('fanbaseHistoryItems'));
+
+        $component
+            ->set('fanbaseHistoryItems.0.description', 'Awal mula')
+            ->set('fanbaseHistoryItems.1.description', 'Perkembangan')
+            ->call('saveFansite')
+            ->assertHasNoErrors();
+
+        $stored = json_decode((string) DB::table('about_settings')->where('key', 'fanbase_history_items')->value('value'), true);
+
+        $this->assertSame(['Awal mula', 'Perkembangan'], array_column($stored, 'description'));
+        Storage::disk('public')->assertExists($stored[0]['photo']);
+
+        $component->call('removeFanbaseHistoryItem', 0);
+
+        $this->assertCount(1, $component->get('fanbaseHistoryItems'));
+    }
+
+    public function test_fansite_structure_and_activities_visibility_can_be_toggled(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::about.manage')
+            ->set('activeTab', 'fansite')
+            ->set('fanbaseName', 'Wota Nusantara')
+            ->set('fanbaseStructure', 'Ketua: A')
+            ->set('fanbaseStructureEnabled', false)
+            ->set('fanbaseActivities', 'Nobar')
+            ->set('fanbaseActivitiesEnabled', false)
+            ->call('saveFansite')
+            ->assertHasNoErrors();
+
+        $settings = DB::table('about_settings')->pluck('value', 'key');
+
+        $this->assertSame('false', $settings['fanbase_structure_enabled']);
+        $this->assertSame('false', $settings['fanbase_activities_enabled']);
+
+        Livewire::test('pages::about.manage')
+            ->set('activeTab', 'fansite')
+            ->set('fanbaseName', 'Wota Nusantara')
+            ->set('fanbaseStructureEnabled', true)
+            ->set('fanbaseActivitiesEnabled', true)
+            ->call('saveFansite')
+            ->assertHasNoErrors();
+
+        $settings = DB::table('about_settings')->pluck('value', 'key');
+
+        $this->assertSame('true', $settings['fanbase_structure_enabled']);
+        $this->assertSame('true', $settings['fanbase_activities_enabled']);
+    }
+
+    public function test_idol_profile_version_and_kabesha_options_can_be_saved(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::about.manage')
+            ->set('idolName', 'Freya')
+            ->set('idolProfileVersion', 'general')
+            ->set('kabeshaEnabled', false)
+            ->set('kabeshaDefaultTitle', 'Momen Spesial')
+            ->call('saveIdol')
+            ->assertHasNoErrors();
+
+        $settings = DB::table('about_settings')->pluck('value', 'key');
+
+        $this->assertSame('general', $settings['idol_profile_version']);
+        $this->assertSame('false', $settings['kabesha_enabled']);
+        $this->assertSame('Momen Spesial', $settings['kabesha_default_title']);
+    }
+
+    public function test_new_kabesha_uploads_receive_the_default_title(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->create());
+
+        $component = Livewire::test('pages::about.manage')
+            ->set('idolName', 'Freya')
+            ->set('kabeshaDefaultTitle', 'Momen Spesial')
+            ->set('kabeshaPhotoUploads', [UploadedFile::fake()->image('kabesha.jpg')])
+            ->call('saveIdol')
+            ->assertHasNoErrors();
+
+        $items = $component->get('kabeshaItems');
+
+        $this->assertCount(1, $items);
+        $this->assertSame('Momen Spesial', $items[0]['title']);
     }
 }
