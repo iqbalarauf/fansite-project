@@ -24,6 +24,7 @@ yarn-error.log
 /.zed
 /vuexy-bootstrap-html-admin-template
 /stsphotoapp
+/tailadmin-laravel-main
 
 # Ignore all markdown files
 *.md
