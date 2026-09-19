@@ -5,10 +5,12 @@
         use Illuminate\Support\Facades\Storage;
         use Illuminate\Support\Carbon;
 
+        $isJkt48 = ($idolProfileVersion ?? 'jkt48') === 'jkt48';
+
         $details = array_values(array_filter([
             $idolBirthDate ? ['label' => 'Tanggal Lahir', 'value' => Carbon::parse($idolBirthDate)->locale('id')->isoFormat('D MMMM YYYY')] : null,
             $idolBirthPlace !== '' ? ['label' => 'Tempat Lahir', 'value' => $idolBirthPlace] : null,
-            $idolBloodType !== '' ? ['label' => 'Golongan Darah', 'value' => $idolBloodType] : null,
+            ($isJkt48 && $idolBloodType !== '') ? ['label' => 'Golongan Darah', 'value' => $idolBloodType] : null,
             $idolHoroscope !== '' ? ['label' => 'Zodiak', 'value' => $idolHoroscope] : null,
         ]));
 
@@ -36,7 +38,7 @@
 
     {{-- Profile --}}
     <section class="mx-auto max-w-7xl px-4 pt-12 sm:px-6 lg:px-8">
-        <p class="text-sm font-bold uppercase tracking-[0.22em] text-indigo-600 dark:text-indigo-400">About Idol</p>
+        <p class="text-sm font-bold uppercase tracking-[0.22em] text-indigo-600 dark:text-indigo-400">About {{ $idolTerm ?? 'Idol' }}</p>
         <h1 class="mt-2 text-3xl font-black text-slate-900 dark:text-white sm:text-5xl">{{ $idolName }}</h1>
         @if ($idolDescription)
             <p class="mt-4 max-w-3xl text-lg leading-9 text-slate-600 dark:text-slate-300">{{ $idolDescription }}</p>
@@ -51,7 +53,7 @@
                 @endif
 
                 <x-social-media-icons :instagram="$idolInstagramUrl" :twitter="$idolTwitterUrl" :tiktok="$idolTiktokUrl" class="justify-center" />
-                @if ($idolJikoshoukai)
+                @if ($isJkt48 && $idolJikoshoukai)
                     <div class="rounded-[2rem] border border-indigo-200 bg-indigo-50 p-6 dark:border-indigo-900/50 dark:bg-indigo-950/40 sm:p-8">
                         <p class="text-sm font-bold uppercase tracking-[0.22em] text-indigo-600 dark:text-indigo-400">Jikoshoukai</p>
                         <p class="mt-3 text-base leading-8 text-slate-700 dark:text-indigo-100">{{ $idolJikoshoukai }}</p>
@@ -122,7 +124,7 @@
     @php
         $kabeshaSlides = array_values(array_filter($kabeshaItems, fn (array $item): bool => filled($item['photo'])));
     @endphp
-    @if (count($kabeshaSlides) > 0)
+    @if (($kabeshaEnabled ?? true) && count($kabeshaSlides) > 0)
         <section id="kabesha" class="mx-auto max-w-7xl px-4 pt-16 sm:px-6 lg:px-8">
             <h2 class="text-2xl font-black text-slate-900 dark:text-white sm:text-3xl">Kabesha</h2>
 

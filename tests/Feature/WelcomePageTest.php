@@ -6,6 +6,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class WelcomePageTest extends TestCase
@@ -238,5 +239,195 @@ class WelcomePageTest extends TestCase
             ->assertOk()
             ->assertSee('Konser Hari Ini')
             ->assertSee('Hari Ini');
+    }
+
+    public function test_homepage_renders_customized_hero_buttons(): void
+    {
+        DB::table('app_settings')->upsert([
+            ['key' => 'hero_button_1_enabled', 'value' => 'true', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'hero_button_1_label', 'value' => 'Tonton Live', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'hero_button_1_link_type', 'value' => 'url', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'hero_button_1_link_value', 'value' => 'https://youtube.com/live', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'hero_button_2_enabled', 'value' => 'true', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'hero_button_2_label', 'value' => 'Jadwal Kami', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'hero_button_2_link_type', 'value' => 'list', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'hero_button_2_link_value', 'value' => 'schedule.index', 'created_at' => now(), 'updated_at' => now()],
+        ], ['key'], ['value', 'updated_at']);
+
+        Cache::forget('app_settings');
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('Tonton Live')
+            ->assertSee('href="https://youtube.com/live"', false)
+            ->assertSee('Jadwal Kami')
+            ->assertSee('href="'.route('schedule.index').'"', false)
+            ->assertDontSee('Lihat Profil');
+    }
+
+    public function test_homepage_hero_button_can_target_a_custom_page(): void
+    {
+        DB::table('custom_pages')->insert([
+            'title' => 'Sejarah Fansite',
+            'slug' => 'sejarah-fansite',
+            'status' => 'published',
+            'blocks' => json_encode([]),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('app_settings')->upsert([
+            ['key' => 'hero_button_1_enabled', 'value' => 'true', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'hero_button_1_label', 'value' => 'Sejarah Kami', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'hero_button_1_link_type', 'value' => 'page', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'hero_button_1_link_value', 'value' => 'sejarah-fansite', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'hero_button_2_enabled', 'value' => 'false', 'created_at' => now(), 'updated_at' => now()],
+        ], ['key'], ['value', 'updated_at']);
+
+        Cache::forget('app_settings');
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('Sejarah Kami')
+            ->assertSee('href="'.route('custom-pages.show', 'sejarah-fansite').'"', false)
+            ->assertDontSee('Jadwal Terbaru');
+    }
+
+    public function test_homepage_berkenalan_button_uses_shortname_and_links_to_idol_page(): void
+    {
+        DB::table('about_settings')->upsert([
+            ['key' => 'idol_name', 'value' => 'Cornelia Vanisa', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'idol_shortname', 'value' => 'Oniel', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'idol_slug', 'value' => 'oniel', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'idol_show_on_welcome', 'value' => 'true', 'created_at' => now(), 'updated_at' => now()],
+        ], ['key'], ['value', 'updated_at']);
+
+        Cache::forget('about_settings');
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('Berkenalan dengan Oniel')
+            ->assertSee('href="'.route('about.show', 'oniel').'"', false);
+    }
+
+    public function test_homepage_shows_youtube_playlist_embed_when_enabled(): void
+    {
+        DB::table('app_settings')->upsert([
+            ['key' => 'youtube_embed_enabled', 'value' => 'true', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'youtube_display_mode', 'value' => 'embed', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'youtube_playlist_url', 'value' => 'https://www.youtube.com/playlist?list=PL1234567890', 'created_at' => now(), 'updated_at' => now()],
+        ], ['key'], ['value', 'updated_at']);
+
+        Cache::forget('app_settings');
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('id="playlist"', false)
+            ->assertSee('https://www.youtube.com/embed/videoseries?list=PL1234567890', false);
+    }
+
+    public function test_homepage_shows_youtube_playlist_cards_from_rss(): void
+    {
+        Cache::flush();
+
+        Http::fake([
+            'www.youtube.com/feeds/videos.xml*' => Http::response($this->youtubeFeed(), 200),
+        ]);
+
+        DB::table('app_settings')->upsert([
+            ['key' => 'youtube_embed_enabled', 'value' => 'true', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'youtube_display_mode', 'value' => 'cards', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'youtube_playlist_url', 'value' => 'https://www.youtube.com/playlist?list=PL1234567890', 'created_at' => now(), 'updated_at' => now()],
+        ], ['key'], ['value', 'updated_at']);
+
+        Cache::forget('app_settings');
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('id="playlist"', false)
+            ->assertSee('Lihat di YouTube')
+            ->assertSee('data-youtube-carousel', false)
+            ->assertSee('data-youtube-item', false)
+            ->assertSee('Video Terbaru')
+            ->assertSee('Deskripsi video terbaru')
+            ->assertSee('https://www.youtube.com/watch?v=VIDNEW', false)
+            ->assertSee('https://i.ytimg.com/vi/VIDNEW/hqdefault.jpg', false)
+            ->assertSee('href="https://www.youtube.com/playlist?list=PL1234567890"', false);
+    }
+
+    private function youtubeFeed(): string
+    {
+        return <<<'XML'
+        <?xml version="1.0" encoding="UTF-8"?>
+        <feed xmlns="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" xmlns:yt="http://www.youtube.com/xml/schemas/2015">
+            <entry>
+                <yt:videoId>VIDOLD</yt:videoId>
+                <title>Video Lama</title>
+                <published>2026-01-01T00:00:00+00:00</published>
+                <media:group>
+                    <media:title>Video Lama</media:title>
+                    <media:description>Deskripsi video lama</media:description>
+                    <media:thumbnail url="https://i.ytimg.com/vi/VIDOLD/hqdefault.jpg" width="480" height="360"/>
+                </media:group>
+            </entry>
+            <entry>
+                <yt:videoId>VIDNEW</yt:videoId>
+                <title>Video Terbaru</title>
+                <published>2026-02-01T00:00:00+00:00</published>
+                <media:group>
+                    <media:title>Video Terbaru</media:title>
+                    <media:description>Deskripsi video terbaru</media:description>
+                    <media:thumbnail url="https://i.ytimg.com/vi/VIDNEW/hqdefault.jpg" width="480" height="360"/>
+                </media:group>
+            </entry>
+        </feed>
+        XML;
+    }
+
+    public function test_homepage_hides_youtube_playlist_embed_when_disabled(): void
+    {
+        DB::table('app_settings')->upsert([
+            ['key' => 'youtube_embed_enabled', 'value' => 'false', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'youtube_playlist_url', 'value' => 'https://www.youtube.com/playlist?list=PL1234567890', 'created_at' => now(), 'updated_at' => now()],
+        ], ['key'], ['value', 'updated_at']);
+
+        Cache::forget('app_settings');
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertDontSee('id="playlist"', false);
+    }
+
+    public function test_homepage_hero_alternates_name_and_shortname_for_jkt48_version(): void
+    {
+        DB::table('about_settings')->upsert([
+            ['key' => 'idol_name', 'value' => 'Cornelia Vanisa', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'idol_shortname', 'value' => 'Oniel', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'idol_profile_version', 'value' => 'jkt48', 'created_at' => now(), 'updated_at' => now()],
+        ], ['key'], ['value', 'updated_at']);
+
+        Cache::forget('about_settings');
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee("data-hero-swap='", false)
+            ->assertSee('Cornelia Vanisa')
+            ->assertSee('Oniel JKT48');
+    }
+
+    public function test_homepage_hero_shows_only_name_for_general_version(): void
+    {
+        DB::table('about_settings')->upsert([
+            ['key' => 'idol_name', 'value' => 'Cornelia Vanisa', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'idol_shortname', 'value' => 'Oniel', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'idol_profile_version', 'value' => 'general', 'created_at' => now(), 'updated_at' => now()],
+        ], ['key'], ['value', 'updated_at']);
+
+        Cache::forget('about_settings');
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertDontSee("data-hero-swap='", false)
+            ->assertSee('Cornelia Vanisa');
     }
 }

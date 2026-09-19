@@ -3,6 +3,13 @@
 @section('content')
     @php
         use Illuminate\Support\Facades\Storage;
+
+        $historyIsCustom = ($fanbaseHistoryEnabled ?? false)
+            && ($fanbaseHistorySource ?? 'default') === 'custom'
+            && ! empty($fanbaseHistoryCustomPage);
+        $historyItems = $fanbaseHistoryItems ?? [];
+        $historyIsModal = ($fanbaseHistoryEnabled ?? false) && ! $historyIsCustom && count($historyItems) > 0;
+        $historyButton = $historyIsCustom || $historyIsModal;
     @endphp
 
     <section class="bg-slate-950">
@@ -20,23 +27,36 @@
         </div>
     </section>
 
-    @if (count($fanbaseActivities) > 0)
+    @if (($fanbaseActivitiesEnabled ?? true) && (count($fanbaseActivities) > 0 || $historyButton))
         <section class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
             <div class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
-                <h2 class="text-3xl font-black text-slate-900 dark:text-white">Kegiatan Fanbase</h2>
-                <div class="mt-6 grid gap-4 md:grid-cols-2">
-                    @foreach ($fanbaseActivities as $activity)
-                        <div class="flex items-start gap-3 rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/50">
-                            <span class="mt-1 flex size-6 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-xs font-black text-white">{{ $loop->iteration }}</span>
-                            <p class="text-sm leading-7 text-slate-600 dark:text-slate-300">{{ $activity }}</p>
-                        </div>
-                    @endforeach
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <h2 class="text-3xl font-black text-slate-900 dark:text-white">Kegiatan Fanbase</h2>
+
+                    @if ($historyButton)
+                        @if ($historyIsCustom)
+                            <a href="{{ route('custom-pages.show', $fanbaseHistoryCustomPage['slug']) }}" class="rounded-full bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500">Sejarah Kami</a>
+                        @else
+                            <button type="button" data-history-open class="rounded-full bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500">Sejarah Kami</button>
+                        @endif
+                    @endif
                 </div>
+
+                @if (count($fanbaseActivities) > 0)
+                    <div class="mt-6 grid gap-4 md:grid-cols-2">
+                        @foreach ($fanbaseActivities as $activity)
+                            <div class="flex items-start gap-3 rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/50">
+                                <span class="mt-1 flex size-6 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-xs font-black text-white">{{ $loop->iteration }}</span>
+                                <p class="text-sm leading-7 text-slate-600 dark:text-slate-300">{{ $activity }}</p>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
             </div>
         </section>
     @endif
 
-    @if (count($fanbaseStructure) > 0)
+    @if (($fanbaseStructureEnabled ?? true) && count($fanbaseStructure) > 0)
         <section class="mx-auto max-w-7xl px-4 pt-16 sm:px-6 lg:px-8">
             <div class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
                 <h2 class="text-3xl font-black text-slate-900 dark:text-white">Struktur Organisasi</h2>
@@ -104,12 +124,34 @@
         </section>
     @endif
 
-    <section class="mx-auto max-w-7xl px-4 py-4 pb-16 sm:px-6 lg:px-8">
-        <div class="flex flex-wrap gap-4">
-            <a href="{{ route('about.show', $idolSlug ?: null) }}" class="rounded-full bg-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500">Tentang {{ $idolName ?? 'Idol' }}</a>
-            <a href="{{ route('home') }}" class="rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-900 transition hover:border-indigo-300 hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:hover:text-indigo-400">Kembali ke Beranda</a>
+    @if ($historyIsModal)
+        <div id="fanbase-history-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 sm:p-6" role="dialog" aria-modal="true" aria-labelledby="fanbase-history-title">
+            <div class="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" data-history-close></div>
+
+            <div class="relative z-10 flex max-h-full w-full max-w-4xl flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+                <div class="flex shrink-0 items-center justify-between gap-4 border-b border-slate-200 px-6 py-4 dark:border-slate-800">
+                    <h2 id="fanbase-history-title" class="text-xl font-black text-slate-900 dark:text-white">Sejarah {{ $fanbaseName }}</h2>
+                    <button type="button" data-history-close aria-label="Tutup" class="flex size-9 shrink-0 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:text-slate-900 dark:border-slate-700 dark:text-slate-400 dark:hover:text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4"><path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"/></svg>
+                    </button>
+                </div>
+
+                <div class="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain px-6 py-6">
+                    @foreach ($historyItems as $item)
+                        @if ($item['photo'])
+                            <article class="grid gap-4 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 sm:grid-cols-2 dark:border-slate-800 dark:bg-slate-800/50">
+                                <img src="{{ Storage::url($item['photo']) }}" alt="Sejarah {{ $fanbaseName }} {{ $loop->iteration }}" class="h-full w-full object-cover" loading="lazy" />
+                                <div class="flex items-center p-5">
+                                    <p class="text-sm leading-7 text-slate-600 dark:text-slate-300">{{ $item['description'] }}</p>
+                                </div>
+                            </article>
+                        @endif
+                    @endforeach
+                </div>
+            </div>
         </div>
-    </section>
+    @endif
+
     <script>
         (function () {
             document.querySelectorAll('[data-fanbase-carousel]').forEach(function (root) {
@@ -159,5 +201,41 @@
                 update();
             });
         })();
+
+        @if ($historyIsModal)
+            (function () {
+                var modal = document.getElementById('fanbase-history-modal');
+
+                if (!modal) {
+                    return;
+                }
+
+                function openModal() {
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                    document.body.style.overflow = 'hidden';
+                }
+
+                function closeModal() {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                    document.body.style.overflow = '';
+                }
+
+                document.querySelectorAll('[data-history-open]').forEach(function (trigger) {
+                    trigger.addEventListener('click', openModal);
+                });
+
+                modal.querySelectorAll('[data-history-close]').forEach(function (trigger) {
+                    trigger.addEventListener('click', closeModal);
+                });
+
+                document.addEventListener('keydown', function (event) {
+                    if (event.key === 'Escape' && !modal.classList.contains('hidden')) {
+                        closeModal();
+                    }
+                });
+            })();
+        @endif
     </script>
 @endsection

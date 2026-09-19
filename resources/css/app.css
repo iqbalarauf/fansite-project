@@ -550,3 +550,28 @@ details[open] > summary .collapsible-chevron {
         width: calc((100% - 2rem) / 3);
     }
 }
+
+/* =========================================================================
+   Hero idol name swap (JKT48 version): alternates name <-> shortname.
+   ========================================================================= */
+
+@keyframes hero-swap {
+    0% {
+        opacity: 0;
+        transform: skewX(-14deg) scaleX(0.96);
+    }
+
+    60% {
+        opacity: 1;
+        transform: skewX(5deg) scaleX(1);
+    }
+
+    100% {
+        opacity: 1;
+        transform: skewX(0) scaleX(1);
+    }
+}
+
+.hero-swap-animate {
+    animation: hero-swap 0.7s ease-out;
+}

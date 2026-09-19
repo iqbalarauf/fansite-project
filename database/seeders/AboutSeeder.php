@@ -5,234 +5,86 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
-class AboutSettingsSeeder extends Seeder
+class AboutSeeder extends Seeder
 {
     /**
      * Run the database seeds.
      */
     public function run(): void
     {
-        $settings = [
-            // About Idol Settings
-            [
-                'key' => 'idol_name',
-                'value' => 'Your Idol Name',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'idol_slug',
-                'value' => 'your-idol-name',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'idol_photo',
-                'value' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'idol_description',
-                'value' => 'Welcome! This is a brief introduction about your favorite idol.',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'idol_achievements',
-                'value' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'idol_discography',
-                'value' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'idol_social_media_twitter',
-                'value' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'idol_social_media_tiktok',
-                'value' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'idol_social_media_instagram',
-                'value' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'idol_jikoshoukai',
-                'value' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'idol_birth_date',
-                'value' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'idol_birth_place',
-                'value' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'idol_blood_type',
-                'value' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'idol_height',
-                'value' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'idol_horoscope',
-                'value' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'idol_show_on_welcome',
-                'value' => 'false',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'showroom_room_id',
-                'value' => '416491',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'showroom_link',
-                'value' => 'https://www.showroom-live.com',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
+        $now = now();
 
-            // About Fanbase Settings
-            [
-                'key' => 'fanbase_name',
-                'value' => 'Fanbase Community',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'fanbase_slug',
-                'value' => 'fanbase-community',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'fanbase_logo',
-                'value' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'fanbase_description',
-                'value' => 'Join our vibrant community of dedicated fans!',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'fanbase_activities',
-                'value' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'fanbase_gallery',
-                'value' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'fanbase_cta_enabled',
-                'value' => 'false',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'fanbase_cta_title',
-                'value' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'fanbase_cta_description',
-                'value' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'fanbase_cta_button1_text',
-                'value' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'fanbase_cta_button1_link',
-                'value' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'fanbase_cta_button2_text',
-                'value' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'fanbase_cta_button2_link',
-                'value' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'fanbase_cta_background',
-                'value' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'instagram_url',
-                'value' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'twitter_url',
-                'value' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key' => 'tiktok_url',
-                'value' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
+        // Gambar (idol_photo, fanbase_logo, fanbase_cta_background) dan
+        // array/JSON (kabesha_items, kabesha_photos, fanbase_gallery_items,
+        // fanbase_gallery, fanbase_history_items) dikosongkan.
+        $settings = [
+            // Idol
+            'idol_name' => 'Your Idol Name',
+            'idol_shortname' => null,
+            'idol_slug' => 'your-idol-name',
+            'idol_photo' => null,
+            'idol_about' => null,
+            'idol_description' => 'Welcome! This is a brief introduction about your favorite idol.',
+            'idol_achievements' => null,
+            'idol_discography' => null,
+            'idol_jikoshoukai' => null,
+            'idol_birth_date' => null,
+            'idol_birth_place' => null,
+            'idol_blood_type' => null,
+            'idol_horoscope' => null,
+            'idol_social_media_instagram' => null,
+            'idol_social_media_tiktok' => null,
+            'idol_social_media_twitter' => null,
+            'idol_show_on_welcome' => 'false',
+            'idol_profile_version' => 'jkt48',
+            'instagram_url' => null,
+            'twitter_url' => null,
+            'tiktok_url' => null,
+
+            // Kabesha
+            'kabesha_enabled' => 'true',
+            'kabesha_default_title' => null,
+            'kabesha_items' => null,
+            'kabesha_photos' => null,
+            'kabesha_photo' => null,
+            'kabesha_title' => null,
+            'kabesha_duration_from' => null,
+            'kabesha_duration_to' => null,
+
+            // Fanbase
+            'fanbase_name' => 'Fanbase Community',
+            'fanbase_slug' => 'fanbase-community',
+            'fanbase_logo' => null,
+            'fanbase_description' => 'Join our vibrant community of dedicated fans!',
+            'fanbase_structure' => null,
+            'fanbase_structure_enabled' => 'true',
+            'fanbase_activities' => null,
+            'fanbase_activities_enabled' => 'true',
+            'fanbase_gallery_items' => null,
+            'fanbase_gallery' => null,
+            'fanbase_history_enabled' => 'false',
+            'fanbase_history_source' => 'default',
+            'fanbase_history_custom_page_id' => null,
+            'fanbase_history_items' => null,
+            'fanbase_cta_enabled' => 'false',
+            'fanbase_cta_background' => null,
+            'fanbase_cta_title' => null,
+            'fanbase_cta_button1_text' => null,
+            'fanbase_cta_button1_link' => null,
+            'fanbase_cta_button2_text' => null,
+            'fanbase_cta_button2_link' => null,
         ];
 
-        // Use bulk upsert for better performance
-        DB::table('about_settings')->upsert(
-            $settings,
-            ['key'], // unique column
-            ['value', 'updated_at'] // columns to update
-        );
+        $rows = collect($settings)
+            ->map(fn ($value, $key): array => [
+                'key' => $key,
+                'value' => $value,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ])
+            ->values()
+            ->all();
+
+        DB::table('about_settings')->upsert($rows, ['key'], ['value', 'updated_at']);
     }
 }
