@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\CustomPage;
 use App\Support\SettingBag;
 use App\Support\SettingsStore;
 use Flux\Flux;
@@ -48,6 +49,12 @@ new #[Title('About Settings')] class extends Component
 
     public bool $idolShowOnWelcome = false;
 
+    public string $idolProfileVersion = 'jkt48';
+
+    public bool $kabeshaEnabled = true;
+
+    public string $kabeshaDefaultTitle = '';
+
     /** @var array<int, array{photo: string|null, title: string, duration_from: string|null, duration_to: string|null}> */
     public array $kabeshaItems = [];
 
@@ -63,12 +70,27 @@ new #[Title('About Settings')] class extends Component
 
     public string $fanbaseStructure = '';
 
+    public bool $fanbaseStructureEnabled = true;
+
     public string $fanbaseActivities = '';
+
+    public bool $fanbaseActivitiesEnabled = true;
 
     /** @var array<int, array{photo: string|null, caption: string}> */
     public array $fanbaseGalleryItems = [];
 
     public array $fanbaseGalleryUploads = [];
+
+    public bool $fanbaseHistoryEnabled = false;
+
+    public string $fanbaseHistorySource = 'default';
+
+    public ?int $fanbaseHistoryCustomPageId = null;
+
+    /** @var array<int, array{photo: string|null, description: string}> */
+    public array $fanbaseHistoryItems = [];
+
+    public array $fanbaseHistoryUploads = [];
 
     public bool $fanbaseCtaEnabled = false;
 
@@ -125,15 +147,29 @@ new #[Title('About Settings')] class extends Component
         $this->idolTwitter = (string) ($settings['idol_social_media_twitter'] ?? '');
         $this->idolShowOnWelcome = filter_var($settings['idol_show_on_welcome'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
+        $versionValue = (string) ($settings['idol_profile_version'] ?? 'jkt48');
+        $this->idolProfileVersion = in_array($versionValue, ['jkt48', 'general'], true) ? $versionValue : 'jkt48';
+        $this->kabeshaEnabled = filter_var($settings['kabesha_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
+        $this->kabeshaDefaultTitle = (string) ($settings['kabesha_default_title'] ?? '');
+
         $this->kabeshaItems = SettingBag::kabeshaItems($settings);
 
         $this->fanbaseName = (string) ($settings['fanbase_name'] ?? '');
         $this->fanbaseLogoPath = $settings['fanbase_logo'] ?? null;
         $this->fanbaseDescription = (string) ($settings['fanbase_description'] ?? '');
         $this->fanbaseStructure = (string) ($settings['fanbase_structure'] ?? '');
+        $this->fanbaseStructureEnabled = filter_var($settings['fanbase_structure_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
         $this->fanbaseActivities = (string) ($settings['fanbase_activities'] ?? '');
+        $this->fanbaseActivitiesEnabled = filter_var($settings['fanbase_activities_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
 
         $this->fanbaseGalleryItems = SettingBag::fanbaseGalleryItems($settings);
+
+        $this->fanbaseHistoryEnabled = filter_var($settings['fanbase_history_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $historySource = (string) ($settings['fanbase_history_source'] ?? 'default');
+        $this->fanbaseHistorySource = in_array($historySource, ['custom', 'default'], true) ? $historySource : 'default';
+        $customPageId = (int) ($settings['fanbase_history_custom_page_id'] ?? 0);
+        $this->fanbaseHistoryCustomPageId = $customPageId > 0 ? $customPageId : null;
+        $this->fanbaseHistoryItems = SettingBag::fanbaseHistoryItems($settings);
 
         $this->fanbaseCtaEnabled = filter_var($settings['fanbase_cta_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
         $this->fanbaseCtaBackgroundPath = $settings['fanbase_cta_background'] ?? null;
@@ -171,6 +207,9 @@ new #[Title('About Settings')] class extends Component
             'idolTiktok' => ['nullable', 'url', 'max:255'],
             'idolTwitter' => ['nullable', 'url', 'max:255'],
             'idolShowOnWelcome' => ['boolean'],
+            'idolProfileVersion' => ['required', 'in:jkt48,general'],
+            'kabeshaEnabled' => ['boolean'],
+            'kabeshaDefaultTitle' => ['nullable', 'string', 'max:255'],
             'kabeshaItems' => ['nullable', 'array'],
             'kabeshaItems.*.title' => ['nullable', 'string', 'max:255'],
             'kabeshaItems.*.duration_from' => ['nullable', 'date'],
@@ -191,7 +230,7 @@ new #[Title('About Settings')] class extends Component
         foreach ($this->kabeshaPhotoUploads as $kabeshaUpload) {
             $this->kabeshaItems[] = [
                 'photo' => $kabeshaUpload->store('about/kabesha', 'public'),
-                'title' => '',
+                'title' => $this->kabeshaDefaultTitle,
                 'duration_from' => null,
                 'duration_to' => null,
             ];
@@ -217,6 +256,9 @@ new #[Title('About Settings')] class extends Component
             'idol_social_media_tiktok' => $this->idolTiktok,
             'idol_social_media_twitter' => $this->idolTwitter,
             'idol_show_on_welcome' => $this->idolShowOnWelcome ? 'true' : 'false',
+            'idol_profile_version' => $this->idolProfileVersion,
+            'kabesha_enabled' => $this->kabeshaEnabled ? 'true' : 'false',
+            'kabesha_default_title' => $this->kabeshaDefaultTitle,
             'kabesha_items' => json_encode(array_values($this->kabeshaItems)),
         ]);
 
@@ -230,11 +272,20 @@ new #[Title('About Settings')] class extends Component
             'fanbaseLogoUpload' => ['nullable', 'image', 'max:3072'],
             'fanbaseDescription' => ['nullable', 'string'],
             'fanbaseStructure' => ['nullable', 'string'],
+            'fanbaseStructureEnabled' => ['boolean'],
             'fanbaseActivities' => ['nullable', 'string'],
+            'fanbaseActivitiesEnabled' => ['boolean'],
             'fanbaseGalleryItems' => ['nullable', 'array', 'max:20'],
             'fanbaseGalleryItems.*.caption' => ['nullable', 'string', 'max:255'],
             'fanbaseGalleryUploads' => ['nullable', 'array', 'max:20'],
             'fanbaseGalleryUploads.*' => ['image', 'max:3072'],
+            'fanbaseHistoryEnabled' => ['boolean'],
+            'fanbaseHistorySource' => ['required', 'in:custom,default'],
+            'fanbaseHistoryCustomPageId' => ['nullable', 'integer', 'exists:custom_pages,id'],
+            'fanbaseHistoryItems' => ['nullable', 'array', 'max:20'],
+            'fanbaseHistoryItems.*.description' => ['nullable', 'string', 'max:255'],
+            'fanbaseHistoryUploads' => ['nullable', 'array', 'max:20'],
+            'fanbaseHistoryUploads.*' => ['image', 'max:3072'],
             'fanbaseCtaEnabled' => ['boolean'],
             'fanbaseCtaBackgroundUpload' => ['nullable', 'image', 'max:3072'],
             'fanbaseCtaTitle' => ['nullable', 'string', 'max:255'],
@@ -265,6 +316,18 @@ new #[Title('About Settings')] class extends Component
         $this->fanbaseGalleryUploads = [];
         $this->fanbaseGalleryItems = array_values($this->fanbaseGalleryItems);
 
+        $remainingHistory = max(0, 20 - count($this->fanbaseHistoryItems));
+
+        foreach (collect($this->fanbaseHistoryUploads)->take($remainingHistory) as $historyUpload) {
+            $this->fanbaseHistoryItems[] = [
+                'photo' => $historyUpload->store('about/fansite/history', 'public'),
+                'description' => '',
+            ];
+        }
+
+        $this->fanbaseHistoryUploads = [];
+        $this->fanbaseHistoryItems = array_values($this->fanbaseHistoryItems);
+
         if ($this->fanbaseCtaBackgroundUpload) {
             if ($this->fanbaseCtaBackgroundPath) {
                 Storage::disk('public')->delete($this->fanbaseCtaBackgroundPath);
@@ -280,9 +343,15 @@ new #[Title('About Settings')] class extends Component
             'fanbase_logo' => $this->fanbaseLogoPath,
             'fanbase_description' => $this->fanbaseDescription,
             'fanbase_structure' => $this->fanbaseStructure,
+            'fanbase_structure_enabled' => $this->fanbaseStructureEnabled ? 'true' : 'false',
             'fanbase_activities' => $this->fanbaseActivities,
+            'fanbase_activities_enabled' => $this->fanbaseActivitiesEnabled ? 'true' : 'false',
             'fanbase_gallery_items' => json_encode(array_values($this->fanbaseGalleryItems)),
             'fanbase_gallery' => json_encode(array_values(array_filter(array_column($this->fanbaseGalleryItems, 'photo')))),
+            'fanbase_history_enabled' => $this->fanbaseHistoryEnabled ? 'true' : 'false',
+            'fanbase_history_source' => $this->fanbaseHistorySource,
+            'fanbase_history_custom_page_id' => ($this->fanbaseHistoryEnabled && $this->fanbaseHistorySource === 'custom') ? $this->fanbaseHistoryCustomPageId : null,
+            'fanbase_history_items' => json_encode(array_values($this->fanbaseHistoryItems)),
             'fanbase_cta_enabled' => $this->fanbaseCtaEnabled ? 'true' : 'false',
             'fanbase_cta_background' => $this->fanbaseCtaEnabled ? $this->fanbaseCtaBackgroundPath : null,
             'fanbase_cta_title' => $this->fanbaseCtaEnabled ? $this->fanbaseCtaTitle : null,
@@ -447,6 +516,57 @@ new #[Title('About Settings')] class extends Component
         ]);
     }
 
+    /**
+     * @return array<int, array{photo: string|null, preview: string|null, description: string}>
+     */
+    public function fanbaseHistoryItemsWithPreview(): array
+    {
+        return array_map(fn (array $item): array => [
+            'photo' => $item['photo'],
+            'preview' => filled($item['photo']) ? Storage::disk('public')->url($item['photo']) : null,
+            'description' => $item['description'],
+        ], $this->fanbaseHistoryItems);
+    }
+
+    public function removeFanbaseHistoryItem(int $index): void
+    {
+        if (! isset($this->fanbaseHistoryItems[$index])) {
+            return;
+        }
+
+        $photo = $this->fanbaseHistoryItems[$index]['photo'] ?? null;
+
+        if (filled($photo)) {
+            Storage::disk('public')->delete($photo);
+        }
+
+        unset($this->fanbaseHistoryItems[$index]);
+        $this->fanbaseHistoryItems = array_values($this->fanbaseHistoryItems);
+
+        $this->persistFanbaseHistoryItems();
+
+        Flux::toast(variant: 'success', text: __('Foto sejarah dihapus.'));
+    }
+
+    private function persistFanbaseHistoryItems(): void
+    {
+        SettingsStore::setAbout([
+            'fanbase_history_items' => json_encode(array_values($this->fanbaseHistoryItems)),
+        ]);
+    }
+
+    /**
+     * @return array<int, array{id: int, title: string}>
+     */
+    public function customPages(): array
+    {
+        return CustomPage::query()
+            ->orderBy('title')
+            ->get(['id', 'title'])
+            ->map(fn (CustomPage $page): array => ['id' => $page->id, 'title' => $page->title])
+            ->all();
+    }
+
     private function upsertSettings(array $settings): void
     {
         SettingsStore::setAbout($settings);
@@ -454,7 +574,7 @@ new #[Title('About Settings')] class extends Component
 }; ?>
 
 <section class="w-full">
-    <div class="w-full max-w-4xl">
+    <div class="w-full">
         <flux:heading level="1" size="xl">{{ __('About Idol & Fansite') }}</flux:heading>
         <flux:subheading>{{ __('Kelola informasi Idol dan Fansite.') }}</flux:subheading>
 
@@ -516,6 +636,15 @@ new #[Title('About Settings')] class extends Component
                     <div class="space-y-4 rounded-xl border border-zinc-200 p-5 dark:border-zinc-700">
                         <flux:heading size="lg">Kabesha</flux:heading>
 
+                        <label class="inline-flex items-center gap-2 text-sm font-medium">
+                            <input type="checkbox" wire:model.live="kabeshaEnabled" class="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800">
+                            Tampilkan Kabesha
+                        </label>
+
+                        <flux:input wire:model="kabeshaDefaultTitle" :label="__('Default Judul Kabesha')" type="text" placeholder="Contoh: Kabesha" />
+                        <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Dipakai untuk foto Kabesha yang tidak diberi judul.') }}</flux:text>
+
+                        @if ($kabeshaEnabled)
                         <div class="space-y-2">
                             <label class="text-sm font-medium">Tambah Foto Kabesha (bisa lebih dari satu)</label>
                             <input type="file" wire:model="kabeshaPhotoUploads" accept="image/*" multiple class="block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800">
@@ -607,28 +736,55 @@ new #[Title('About Settings')] class extends Component
                         @else
                             <p class="text-sm text-zinc-500 dark:text-zinc-400">{{ __('Belum ada foto Kabesha.') }}</p>
                         @endif
+                        @endif
                     </div>
 
                     <div class="space-y-4 rounded-xl border border-zinc-200 p-5 dark:border-zinc-700">
                         <flux:heading size="lg">Profile Details (Biodata)</flux:heading>
 
-                        <flux:textarea wire:model="idolJikoshoukai" :label="__('Jikoshoukai/Salam Perkenalan')" rows="3" />
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium">Versi Profil</label>
+                            <div class="flex flex-wrap gap-6">
+                                <label class="inline-flex items-center gap-2 text-sm">
+                                    <input type="radio" wire:model.live="idolProfileVersion" value="jkt48" class="h-4 w-4 border-zinc-300 text-indigo-600 focus:ring-indigo-500 dark:border-zinc-600">
+                                    JKT48 Version
+                                </label>
+                                <label class="inline-flex items-center gap-2 text-sm">
+                                    <input type="radio" wire:model.live="idolProfileVersion" value="general" class="h-4 w-4 border-zinc-300 text-indigo-600 focus:ring-indigo-500 dark:border-zinc-600">
+                                    General Version
+                                </label>
+                            </div>
+                            <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">
+                                @if ($idolProfileVersion === 'jkt48')
+                                    {{ __('Menampilkan Jikoshoukai & Golongan Darah; sebutan "Oshimen".') }}
+                                @else
+                                    {{ __('Menyembunyikan Jikoshoukai & Golongan Darah; sebutan "Idol/Bias".') }}
+                                @endif
+                            </flux:text>
+                        </div>
+
+                        @if ($idolProfileVersion === 'jkt48')
+                            <flux:textarea wire:model="idolJikoshoukai" :label="__('Jikoshoukai/Salam Perkenalan')" rows="3" />
+                        @endif
+
                         <flux:input wire:model="idolBirthDate" :label="__('Tanggal Lahir')" type="date" />
                         <flux:input wire:model="idolBirthPlace" :label="__('Tempat Lahir')" type="text" />
 
                         <div class="grid gap-4 md:grid-cols-2">
-                            <div class="space-y-2">
-                                <label class="text-sm font-medium">Golongan Darah</label>
-                                <select wire:model="idolBloodType" class="block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800">
-                                    <option value="">Pilih golongan darah</option>
-                                    @foreach ($bloodTypes as $bloodType)
-                                        <option value="{{ $bloodType }}">{{ $bloodType }}</option>
-                                    @endforeach
-                                </select>
-                                @error('idolBloodType')
-                                    <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                                @enderror
-                            </div>
+                            @if ($idolProfileVersion === 'jkt48')
+                                <div class="space-y-2">
+                                    <label class="text-sm font-medium">Golongan Darah</label>
+                                    <select wire:model="idolBloodType" class="block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800">
+                                        <option value="">Pilih golongan darah</option>
+                                        @foreach ($bloodTypes as $bloodType)
+                                            <option value="{{ $bloodType }}">{{ $bloodType }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('idolBloodType')
+                                        <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            @endif
 
                             <div class="space-y-2">
                                 <label class="text-sm font-medium">Zodiak</label>
@@ -686,12 +842,23 @@ new #[Title('About Settings')] class extends Component
                         </div>
 
                         <flux:textarea wire:model="fanbaseDescription" :label="__('Tentang Fanbase')" rows="4" />
+
+                        <label class="inline-flex items-center gap-2 text-sm font-medium">
+                            <input type="checkbox" wire:model="fanbaseStructureEnabled" class="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800">
+                            Tampilkan Struktur Organisasi
+                        </label>
+
                         <flux:textarea wire:model="fanbaseStructure" :label="__('Struktur Organisasi')" rows="4" />
                         <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Satu baris = satu entri. Ditampilkan sebagai list di halaman fansite.') }}</flux:text>
                     </div>
 
                     <div class="space-y-4 rounded-xl border border-zinc-200 p-5 dark:border-zinc-700">
                         <flux:heading size="lg">Activities and Gallery</flux:heading>
+
+                        <label class="inline-flex items-center gap-2 text-sm font-medium">
+                            <input type="checkbox" wire:model="fanbaseActivitiesEnabled" class="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800">
+                            Tampilkan Kegiatan Fanbase
+                        </label>
 
                         <flux:textarea wire:model="fanbaseActivities" :label="__('Activities')" rows="4" />
 
@@ -740,6 +907,93 @@ new #[Title('About Settings')] class extends Component
                             </div>
                         @else
                             <p class="text-sm text-zinc-500 dark:text-zinc-400">{{ __('Belum ada foto galeri.') }}</p>
+                        @endif
+                    </div>
+
+                    <div class="space-y-4 rounded-xl border border-zinc-200 p-5 dark:border-zinc-700">
+                        <flux:heading size="lg">Sejarah Fansite</flux:heading>
+
+                        <label class="inline-flex items-center gap-2 text-sm font-medium">
+                            <input type="checkbox" wire:model.live="fanbaseHistoryEnabled" class="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800">
+                            Tampilkan Sejarah Fansite
+                        </label>
+
+                        @if ($fanbaseHistoryEnabled)
+                            <div class="space-y-3">
+                                <p class="text-sm font-medium">Sumber Sejarah</p>
+                                <div class="flex flex-wrap gap-6">
+                                    <label class="inline-flex items-center gap-2 text-sm">
+                                        <input type="radio" wire:model.live="fanbaseHistorySource" value="default" class="h-4 w-4 border-zinc-300 text-indigo-600 focus:ring-indigo-500 dark:border-zinc-600">
+                                        Default Pages
+                                    </label>
+                                    <label class="inline-flex items-center gap-2 text-sm">
+                                        <input type="radio" wire:model.live="fanbaseHistorySource" value="custom" class="h-4 w-4 border-zinc-300 text-indigo-600 focus:ring-indigo-500 dark:border-zinc-600">
+                                        Custom Pages
+                                    </label>
+                                </div>
+                            </div>
+
+                            @if ($fanbaseHistorySource === 'custom')
+                                <div class="space-y-2">
+                                    <label class="text-sm font-medium">Pilih Page</label>
+                                    <select wire:model="fanbaseHistoryCustomPageId" class="block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800">
+                                        <option value="">-- Pilih Page --</option>
+                                        @foreach ($this->customPages() as $customPageOption)
+                                            <option value="{{ $customPageOption['id'] }}">{{ $customPageOption['title'] }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('fanbaseHistoryCustomPageId')
+                                        <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            @else
+                                <div class="space-y-2">
+                                    <label class="text-sm font-medium">Gambar & Deskripsi (maksimal 20)</label>
+                                    <input type="file" wire:model="fanbaseHistoryUploads" accept="image/*" multiple class="block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800">
+                                    @error('fanbaseHistoryUploads')
+                                        <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                                    @enderror
+                                    @error('fanbaseHistoryUploads.*')
+                                        <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                                    @enderror
+                                    <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Foto baru masuk ke daftar setelah disimpan. Setiap gambar punya deskripsi sendiri.') }}</flux:text>
+                                </div>
+
+                                @if (count($this->fanbaseHistoryItemsWithPreview()) > 0)
+                                    <div class="space-y-4">
+                                        <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">{{ count($this->fanbaseHistoryItemsWithPreview()) }} / 20 {{ __('gambar') }}</flux:text>
+
+                                        @foreach ($this->fanbaseHistoryItemsWithPreview() as $index => $item)
+                                            <div wire:key="fanbase-history-item-{{ $index }}" class="rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
+                                                <div class="flex flex-col gap-4 sm:flex-row">
+                                                    @if ($item['preview'])
+                                                        <img src="{{ $item['preview'] }}" alt="Sejarah {{ $index + 1 }}" class="h-28 w-28 shrink-0 rounded-lg border border-zinc-200 object-cover dark:border-zinc-700">
+                                                    @endif
+
+                                                    <div class="flex-1 space-y-3">
+                                                        <flux:textarea wire:model="fanbaseHistoryItems.{{ $index }}.description" :label="__('Deskripsi')" rows="3" />
+                                                    </div>
+
+                                                    <div class="flex sm:flex-col">
+                                                        <flux:button
+                                                            type="button"
+                                                            size="sm"
+                                                            variant="danger"
+                                                            icon="trash"
+                                                            wire:click="removeFanbaseHistoryItem({{ $index }})"
+                                                            wire:confirm="Hapus gambar sejarah ini?"
+                                                        >
+                                                            {{ __('Hapus') }}
+                                                        </flux:button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <p class="text-sm text-zinc-500 dark:text-zinc-400">{{ __('Belum ada gambar sejarah.') }}</p>
+                                @endif
+                            @endif
                         @endif
                     </div>
 

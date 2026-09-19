@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Settings;
 
+use App\Models\CustomPage;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -267,5 +268,153 @@ class AboutSettingsTest extends TestCase
 
         Storage::disk('public')->assertMissing('about/fansite/gallery/a.jpg');
         Storage::disk('public')->assertExists('about/fansite/gallery/b.jpg');
+    }
+
+    public function test_fansite_history_can_use_a_custom_page(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        $page = CustomPage::create([
+            'title' => 'Sejarah Fansite',
+            'slug' => 'sejarah-fansite',
+            'status' => 'published',
+            'blocks' => [],
+        ]);
+
+        Livewire::test('pages::about.manage')
+            ->set('activeTab', 'fansite')
+            ->set('fanbaseName', 'Wota Nusantara')
+            ->set('fanbaseHistoryEnabled', true)
+            ->set('fanbaseHistorySource', 'custom')
+            ->set('fanbaseHistoryCustomPageId', $page->id)
+            ->call('saveFansite')
+            ->assertHasNoErrors();
+
+        $settings = DB::table('about_settings')->pluck('value', 'key');
+
+        $this->assertSame('true', $settings['fanbase_history_enabled']);
+        $this->assertSame('custom', $settings['fanbase_history_source']);
+        $this->assertSame((string) $page->id, (string) $settings['fanbase_history_custom_page_id']);
+    }
+
+    public function test_fansite_history_custom_page_must_exist(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::about.manage')
+            ->set('activeTab', 'fansite')
+            ->set('fanbaseName', 'Wota Nusantara')
+            ->set('fanbaseHistoryEnabled', true)
+            ->set('fanbaseHistorySource', 'custom')
+            ->set('fanbaseHistoryCustomPageId', 999)
+            ->call('saveFansite')
+            ->assertHasErrors('fanbaseHistoryCustomPageId');
+    }
+
+    public function test_fansite_history_default_pages_can_be_managed(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->create());
+
+        $component = Livewire::test('pages::about.manage')
+            ->set('activeTab', 'fansite')
+            ->set('fanbaseName', 'Wota Nusantara')
+            ->set('fanbaseHistoryEnabled', true)
+            ->set('fanbaseHistorySource', 'default')
+            ->set('fanbaseHistoryUploads', [
+                UploadedFile::fake()->image('history-1.jpg'),
+                UploadedFile::fake()->image('history-2.jpg'),
+            ])
+            ->call('saveFansite')
+            ->assertHasNoErrors();
+
+        $this->assertCount(2, $component->get('fanbaseHistoryItems'));
+
+        $component
+            ->set('fanbaseHistoryItems.0.description', 'Awal mula')
+            ->set('fanbaseHistoryItems.1.description', 'Perkembangan')
+            ->call('saveFansite')
+            ->assertHasNoErrors();
+
+        $stored = json_decode((string) DB::table('about_settings')->where('key', 'fanbase_history_items')->value('value'), true);
+
+        $this->assertSame(['Awal mula', 'Perkembangan'], array_column($stored, 'description'));
+        Storage::disk('public')->assertExists($stored[0]['photo']);
+
+        $component->call('removeFanbaseHistoryItem', 0);
+
+        $this->assertCount(1, $component->get('fanbaseHistoryItems'));
+    }
+
+    public function test_fansite_structure_and_activities_visibility_can_be_toggled(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::about.manage')
+            ->set('activeTab', 'fansite')
+            ->set('fanbaseName', 'Wota Nusantara')
+            ->set('fanbaseStructure', 'Ketua: A')
+            ->set('fanbaseStructureEnabled', false)
+            ->set('fanbaseActivities', 'Nobar')
+            ->set('fanbaseActivitiesEnabled', false)
+            ->call('saveFansite')
+            ->assertHasNoErrors();
+
+        $settings = DB::table('about_settings')->pluck('value', 'key');
+
+        $this->assertSame('false', $settings['fanbase_structure_enabled']);
+        $this->assertSame('false', $settings['fanbase_activities_enabled']);
+
+        Livewire::test('pages::about.manage')
+            ->set('activeTab', 'fansite')
+            ->set('fanbaseName', 'Wota Nusantara')
+            ->set('fanbaseStructureEnabled', true)
+            ->set('fanbaseActivitiesEnabled', true)
+            ->call('saveFansite')
+            ->assertHasNoErrors();
+
+        $settings = DB::table('about_settings')->pluck('value', 'key');
+
+        $this->assertSame('true', $settings['fanbase_structure_enabled']);
+        $this->assertSame('true', $settings['fanbase_activities_enabled']);
+    }
+
+    public function test_idol_profile_version_and_kabesha_options_can_be_saved(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::about.manage')
+            ->set('idolName', 'Freya')
+            ->set('idolProfileVersion', 'general')
+            ->set('kabeshaEnabled', false)
+            ->set('kabeshaDefaultTitle', 'Momen Spesial')
+            ->call('saveIdol')
+            ->assertHasNoErrors();
+
+        $settings = DB::table('about_settings')->pluck('value', 'key');
+
+        $this->assertSame('general', $settings['idol_profile_version']);
+        $this->assertSame('false', $settings['kabesha_enabled']);
+        $this->assertSame('Momen Spesial', $settings['kabesha_default_title']);
+    }
+
+    public function test_new_kabesha_uploads_receive_the_default_title(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->create());
+
+        $component = Livewire::test('pages::about.manage')
+            ->set('idolName', 'Freya')
+            ->set('kabeshaDefaultTitle', 'Momen Spesial')
+            ->set('kabeshaPhotoUploads', [UploadedFile::fake()->image('kabesha.jpg')])
+            ->call('saveIdol')
+            ->assertHasNoErrors();
+
+        $items = $component->get('kabeshaItems');
+
+        $this->assertCount(1, $items);
+        $this->assertSame('Momen Spesial', $items[0]['title']);
     }
 }

@@ -110,4 +110,22 @@ final class SettingBag
             'caption' => '',
         ], array_values(array_filter(array_map('strval', is_array($legacy) ? $legacy : []))))), 0, 20);
     }
+
+    /**
+     * @param  array<string, mixed>  $about
+     * @return array<int, array{photo: string|null, description: string}>
+     */
+    public static function fanbaseHistoryItems(array $about): array
+    {
+        $items = json_decode((string) ($about['fanbase_history_items'] ?? ''), true);
+
+        if (! is_array($items) || $items === []) {
+            return [];
+        }
+
+        return array_slice(array_values(array_map(fn (array $item): array => [
+            'photo' => filled($item['photo'] ?? null) ? (string) $item['photo'] : null,
+            'description' => (string) ($item['description'] ?? ''),
+        ], array_filter($items, 'is_array'))), 0, 20);
+    }
 }
