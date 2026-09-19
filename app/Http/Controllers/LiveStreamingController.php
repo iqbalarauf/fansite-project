@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class LiveStreamingController extends Controller
@@ -51,7 +52,10 @@ class LiveStreamingController extends Controller
 
     public function store(LiveStreamingRequest $request): RedirectResponse
     {
-        LiveStreaming::create($request->validated());
+        $data = $request->validated();
+        $data['live_id'] = filled($data['live_id'] ?? null) ? $data['live_id'] : $this->generateLiveId();
+
+        LiveStreaming::create($data);
 
         return redirect()->route('live-streaming.index')
             ->with('success', 'Live streaming berhasil ditambahkan.');
@@ -59,10 +63,28 @@ class LiveStreamingController extends Controller
 
     public function update(LiveStreamingRequest $request, LiveStreaming $liveStreaming): RedirectResponse
     {
-        $liveStreaming->update($request->validated());
+        $data = $request->validated();
+        $data['live_id'] = filled($data['live_id'] ?? null)
+            ? $data['live_id']
+            : ($liveStreaming->live_id ?: $this->generateLiveId());
+
+        $liveStreaming->update($data);
 
         return redirect()->route('live-streaming.index')
             ->with('success', 'Live streaming berhasil diupdate.');
+    }
+
+    /**
+     * Manual entries have no external identifier, so give them a unique one to keep
+     * the live_id column (and its unique index) meaningful.
+     */
+    private function generateLiveId(): string
+    {
+        do {
+            $candidate = 'manual-'.now()->format('ymdHis').'-'.Str::lower(Str::random(4));
+        } while (LiveStreaming::query()->where('live_id', $candidate)->exists());
+
+        return $candidate;
     }
 
     public function fetchManually(Request $request): JsonResponse

@@ -34,7 +34,7 @@ final class HeaderMenu
         return [
             'home' => ['label' => 'Home', 'url' => route('home')],
             'about_idol' => ['label' => 'About Idol', 'url' => self::aboutIdolUrl()],
-            'about_fansite' => ['label' => 'About Fansite', 'url' => route('about.fansite')],
+            'about_fansite' => ['label' => 'About Fansite', 'url' => self::aboutFansiteUrl()],
             'magazines' => ['label' => 'Majalah', 'url' => route('magazine.index')],
             'news' => ['label' => 'News', 'url' => route('news.index')],
             'blog' => ['label' => 'Blog', 'url' => route('blog.index')],
@@ -58,7 +58,19 @@ final class HeaderMenu
             $slug = Str::slug((string) ($about['idol_name'] ?? ''));
         }
 
-        return $slug !== '' ? route('about.idol', $slug) : route('about.idol');
+        return $slug !== '' ? route('about.show', $slug) : route('about.show');
+    }
+
+    private static function aboutFansiteUrl(): string
+    {
+        $about = SettingBag::about();
+        $slug = trim((string) ($about['fanbase_slug'] ?? ''));
+
+        if ($slug === '') {
+            $slug = Str::slug((string) ($about['fanbase_name'] ?? ''));
+        }
+
+        return $slug !== '' ? route('about.show', $slug) : route('about.show');
     }
 
     public static function builtInLabel(?string $key): ?string

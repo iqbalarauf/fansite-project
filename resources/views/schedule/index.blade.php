@@ -13,18 +13,15 @@
         $weekdays = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
     @endphp
 
-    <section class="bg-gradient-to-br from-indigo-950 via-slate-950 to-violet-950">
-        <div class="mx-auto flex max-w-7xl flex-col items-start px-4 py-16 text-left sm:px-6 lg:px-8 lg:py-20">
-            <span class="mb-4 inline-flex w-fit rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-indigo-50">Jadwal</span>
-            <h1 class="max-w-2xl text-4xl font-black leading-tight text-white sm:text-5xl">Schedule</h1>
-            <p class="mt-4 max-w-xl text-base text-indigo-100 sm:text-lg">Jadwal Show Teater, Meet &amp; Greet, Concert &amp; Event, dan Live Streaming dalam satu kalender bulanan.</p>
-        </div>
-    </section>
-
     <section class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         {{-- Controls --}}
-        <div class="flex flex-wrap items-center justify-between gap-4">
-            <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center justify-between gap-4 lg:grid lg:grid-cols-3">
+            <div class="inline-flex items-center rounded-full border border-slate-200 bg-white p-1 lg:justify-self-start dark:border-slate-700 dark:bg-slate-900">
+                <button type="button" data-schedule-view="calendar" class="rounded-full px-4 py-1.5 text-sm font-semibold transition">Kalender</button>
+                <button type="button" data-schedule-view="list" class="rounded-full px-4 py-1.5 text-sm font-semibold transition">List</button>
+            </div>
+
+            <div class="flex items-center justify-center gap-2 lg:justify-self-center">
                 <a href="{{ route('schedule.index', ['month' => $prev['month'], 'year' => $prev['year'], 'view' => $initialView]) }}"
                    aria-label="Bulan sebelumnya"
                    class="flex size-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-indigo-300 hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:text-indigo-400">
@@ -38,7 +35,7 @@
                 </a>
             </div>
 
-            <form method="GET" action="{{ route('schedule.index') }}" class="flex items-center gap-2">
+            <form method="GET" action="{{ route('schedule.index') }}" class="flex items-center gap-2 lg:justify-self-end">
                 <input type="hidden" name="view" value="{{ $initialView }}" />
                 <select name="month" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
                     @for ($m = 1; $m <= 12; $m++)
@@ -52,15 +49,10 @@
                 </select>
                 <button type="submit" class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-indigo-300 hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:text-indigo-400">Terapkan</button>
             </form>
-
-            <div class="inline-flex items-center rounded-full border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-900">
-                <button type="button" data-schedule-view="calendar" class="rounded-full px-4 py-1.5 text-sm font-semibold transition">Kalender</button>
-                <button type="button" data-schedule-view="list" class="rounded-full px-4 py-1.5 text-sm font-semibold transition">List</button>
-            </div>
         </div>
 
         {{-- Legend --}}
-        <div class="mt-6 flex flex-wrap gap-4 text-xs text-slate-500 dark:text-slate-400">
+        <div class="mt-6 flex flex-wrap gap-4 text-xs text-slate-500 dark:text-slate-400 items-center justify-center">
             @foreach (['Show Teater' => '#3b82f6', 'Event' => '#ef4444', 'Meet & Greet' => '#f97316', 'Live Streaming' => '#22c55e'] as $label => $color)
                 <span class="inline-flex items-center gap-1.5">
                     <span class="inline-block size-2.5 rounded-full" style="background: {{ $color }}"></span>
@@ -129,7 +121,9 @@
                         <p class="text-sm font-bold text-slate-900 dark:text-white">{{ Carbon::parse($event['date'])->locale('id')->isoFormat('D MMM YYYY') }}</p>
                         <p class="text-xs text-slate-500 dark:text-slate-400">{{ Carbon::parse($event['date'])->locale('id')->isoFormat('dddd') }}</p>
                     </div>
-                    <span class="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium {{ $badgeClasses[$event['badge']] }}">{{ $event['type'] }}</span>
+                    <div class="w-32 shrink-0">
+                        <span class="inline-block whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium {{ $badgeClasses[$event['badge']] }}">{{ $event['type'] }}</span>
+                    </div>
                     <div class="min-w-0 flex-1">
                         @if ($event['purchase_link'])
                             <a href="{{ $event['purchase_link'] }}" target="_blank" rel="noopener" class="line-clamp-2 font-bold text-slate-900 hover:text-indigo-600 dark:text-white dark:hover:text-indigo-400">{{ $event['name'] }}</a>

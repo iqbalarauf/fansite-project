@@ -2,6 +2,7 @@
 
 use App\Enums\ContentSection;
 use App\Http\Controllers\AboutController;
+use App\Http\Controllers\AdminSearchController;
 use App\Http\Controllers\ConcertEventsController;
 use App\Http\Controllers\Content\CategoryController;
 use App\Http\Controllers\Content\GalleryController;
@@ -29,7 +30,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', WelcomeController::class)->name('home');
 
 Route::get('about/fansite', [AboutController::class, 'fansite'])->name('about.fansite');
-Route::get('about/{idol?}', [AboutController::class, 'idol'])->name('about.idol');
+Route::get('about/{slug?}', [AboutController::class, 'show'])->name('about.show');
 
 Route::get('majalah', [PublicMagazineController::class, 'index'])->middleware('feature:magazines')->name('magazine.index');
 Route::get('majalah/{magazine:slug}', [PublicMagazineController::class, 'show'])->middleware('feature:magazines')->name('magazine.show');
@@ -51,6 +52,8 @@ Route::get('trivia', [PublicTriviaController::class, 'index'])->middleware('feat
 Route::get('photobooth/{slug?}', [PublicPhotoboothController::class, 'show'])
     ->middleware(['feature:photobooth', 'throttle:30,1'])
     ->name('photobooth.show');
+
+Route::middleware(['auth', 'verified'])->get('admin/search', AdminSearchController::class)->name('admin.search');
 
 Route::middleware(['auth', 'verified', 'block-view-only-writes'])->group(function () {
     Route::middleware('role:super_admin,view_only,bank_data_admin')->group(function () {
@@ -154,8 +157,7 @@ Route::middleware(['auth', 'verified', 'block-view-only-writes'])->group(functio
         Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
         Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 
-        Route::livewire('data-management/sheet-integration', 'pages::sheet-integration.comparison')
-            ->name('sheet-integration.comparison');
+        Route::livewire('content/about', 'pages::about.manage')->name('about.edit');
     });
 });
 

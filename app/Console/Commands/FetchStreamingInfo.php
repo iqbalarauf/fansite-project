@@ -104,7 +104,7 @@ class FetchStreamingInfo extends Command
      */
     private function saveItem(array $item): bool
     {
-        $liveId = $item['_id'] ?? null;
+        $liveId = $item['_id'] ?? $item['data_id'] ?? null;
         if (! $liveId) {
             return false;
         }

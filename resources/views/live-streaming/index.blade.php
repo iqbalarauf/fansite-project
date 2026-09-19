@@ -37,75 +37,46 @@
             </div>
         @endif
 
-        <form method="GET" action="{{ route('live-streaming.index') }}" id="filter-form">
-            <div class="admin-filter">
-                <div class="admin-filter-search">
-                    <flux:input
-                        name="search"
-                        value="{{ $filters['search'] }}"
-                        placeholder="Search platform atau additional info..."
-                        icon="magnifying-glass"
-                    />
-                </div>
-
-                <flux:input
-                    name="date_from"
-                    type="date"
-                    value="{{ $filters['date_from'] }}"
-                    class="w-40"
-                />
-                <flux:input
-                    name="date_to"
-                    type="date"
-                    value="{{ $filters['date_to'] }}"
-                    class="w-40"
-                />
-
-                <select
-                    name="platform"
-                    onchange="this.form.submit()"
-                    class="admin-filter-select"
-                >
-                    <option value="">Semua Platform</option>
-                    <option value="Showroom" {{ $filters['platform'] === 'Showroom' ? 'selected' : '' }}>Showroom</option>
-                    <option value="IDN App" {{ $filters['platform'] === 'IDN App' ? 'selected' : '' }}>IDN App</option>
-                </select>
-
-                <select
-                    name="sort_by"
-                    onchange="this.form.submit()"
-                    class="admin-filter-select"
-                >
-                    <option value="live_date" {{ $filters['sort_by'] === 'live_date' ? 'selected' : '' }}>Live Date</option>
-                    <option value="platform" {{ $filters['sort_by'] === 'platform' ? 'selected' : '' }}>Platform</option>
-                    <option value="duration" {{ $filters['sort_by'] === 'duration' ? 'selected' : '' }}>Duration</option>
-                </select>
-
-                <input type="hidden" name="sort_dir" value="{{ $filters['sort_dir'] }}" id="sort-dir-input" />
-                <button
-                    type="button"
-                    title="{{ $filters['sort_dir'] === 'asc' ? 'Ascending' : 'Descending' }}"
-                    onclick="document.getElementById('sort-dir-input').value = '{{ $filters['sort_dir'] === 'asc' ? 'desc' : 'asc' }}'; document.getElementById('filter-form').submit();"
-                    class="admin-filter-sort"
-                >
-                    @if ($filters['sort_dir'] === 'asc')
-                        <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
-                    @else
-                        <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"/></svg>
-                    @endif
-                </button>
-
-                <input type="hidden" name="per_page" value="{{ $filters['per_page'] }}" />
-
-                <flux:button type="submit" variant="outline">Cari</flux:button>
-
-                @if ($filters['search'] || $filters['platform'] || $filters['date_from'] || $filters['date_to'])
-                    <a href="{{ route('live-streaming.index') }}" class="admin-filter-reset">Reset</a>
-                @endif
-            </div>
-        </form>
-
         <div class="admin-table-shell">
+            <form method="GET" action="{{ route('live-streaming.index') }}" id="filter-form">
+                <x-admin.table-toolbar :filters="$filters" :show-filters="true" search-placeholder="Cari platform atau additional info...">
+                    <flux:input name="date_from" type="date" value="{{ $filters['date_from'] }}" class="w-40" aria-label="{{ __('Dari tanggal') }}" />
+                    <flux:input name="date_to" type="date" value="{{ $filters['date_to'] }}" class="w-40" aria-label="{{ __('Sampai tanggal') }}" />
+
+                    <select name="platform" onchange="this.form.submit()" class="admin-filter-select">
+                        <option value="">{{ __('Semua Platform') }}</option>
+                        <option value="Showroom" {{ $filters['platform'] === 'Showroom' ? 'selected' : '' }}>Showroom</option>
+                        <option value="IDN App" {{ $filters['platform'] === 'IDN App' ? 'selected' : '' }}>IDN App</option>
+                    </select>
+
+                    <select name="sort_by" onchange="this.form.submit()" class="admin-filter-select">
+                        <option value="live_date" {{ $filters['sort_by'] === 'live_date' ? 'selected' : '' }}>Live Date</option>
+                        <option value="platform" {{ $filters['sort_by'] === 'platform' ? 'selected' : '' }}>Platform</option>
+                        <option value="duration" {{ $filters['sort_by'] === 'duration' ? 'selected' : '' }}>Duration</option>
+                    </select>
+
+                    <input type="hidden" name="sort_dir" value="{{ $filters['sort_dir'] }}" id="sort-dir-input" />
+                    <button
+                        type="button"
+                        title="{{ $filters['sort_dir'] === 'asc' ? 'Ascending' : 'Descending' }}"
+                        onclick="document.getElementById('sort-dir-input').value = '{{ $filters['sort_dir'] === 'asc' ? 'desc' : 'asc' }}'; document.getElementById('filter-form').submit();"
+                        class="admin-filter-sort"
+                    >
+                        @if ($filters['sort_dir'] === 'asc')
+                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
+                        @else
+                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"/></svg>
+                        @endif
+                    </button>
+
+                    <flux:button type="submit" variant="outline">{{ __('Terapkan') }}</flux:button>
+
+                    @if ($filters['search'] || $filters['platform'] || $filters['date_from'] || $filters['date_to'])
+                        <a href="{{ route('live-streaming.index') }}" class="admin-filter-reset">{{ __('Reset') }}</a>
+                    @endif
+                </x-admin.table-toolbar>
+            </form>
+
             <div class="overflow-x-auto">
                     <table class="admin-table">
                     <thead class="admin-table-head">

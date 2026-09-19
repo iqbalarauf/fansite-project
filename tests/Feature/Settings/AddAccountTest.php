@@ -4,7 +4,9 @@ namespace Tests\Feature\Settings;
 
 use App\Enums\UserRole;
 use App\Models\User;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 class AddAccountTest extends TestCase
@@ -31,6 +33,27 @@ class AddAccountTest extends TestCase
             'name' => 'New Admin',
             'role' => UserRole::ContentCreator->value,
         ]);
+    }
+
+    public function test_newly_created_account_receives_email_verification_notification(): void
+    {
+        Notification::fake();
+
+        $this->actingAs(User::factory()->create());
+
+        $this->post(route('users.store'), [
+            'name' => 'Verify Me',
+            'email' => 'verify-me@example.com',
+            'role' => UserRole::ContentCreator->value,
+            'password' => 'password123!',
+            'password_confirmation' => 'password123!',
+        ])->assertRedirect(route('users.index'));
+
+        $user = User::where('email', 'verify-me@example.com')->firstOrFail();
+
+        $this->assertNull($user->email_verified_at);
+
+        Notification::assertSentTo($user, VerifyEmail::class);
     }
 
     public function test_create_account_requires_matching_password_confirmation(): void

@@ -34,7 +34,7 @@ class TimelineTest extends TestCase
             ['key' => 'idol_name', 'value' => 'Freya', 'created_at' => now(), 'updated_at' => now()],
         ], ['key'], ['value', 'updated_at']);
 
-        $this->get(route('about.idol'))
+        $this->get(route('about.show'))
             ->assertOk()
             ->assertSee('Lihat Timeline')
             ->assertSee('href="'.route('timeline.index').'"', false);

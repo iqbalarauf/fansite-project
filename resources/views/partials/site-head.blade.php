@@ -29,6 +29,8 @@
 @endif
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+@include('partials.brand-colors')
+
 <script>
     (function () {
         var storageKey = 'fansite-theme';

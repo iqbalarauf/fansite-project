@@ -26,49 +26,38 @@
             </div>
         @endif
 
-        <form method="GET" action="{{ route('magazines.index') }}" id="filter-form">
-            <div class="admin-filter">
-                <div class="admin-filter-search">
-                    <flux:input
-                        name="search"
-                        value="{{ $filters['search'] }}"
-                        placeholder="Cari judul atau slug majalah..."
-                        icon="magnifying-glass"
-                    />
-                </div>
-
-                <select name="sort_by" onchange="this.form.submit()" class="admin-filter-select">
-                    <option value="created_at" {{ $filters['sort_by'] === 'created_at' ? 'selected' : '' }}>Terbaru</option>
-                    <option value="title" {{ $filters['sort_by'] === 'title' ? 'selected' : '' }}>Judul</option>
-                    <option value="views" {{ $filters['sort_by'] === 'views' ? 'selected' : '' }}>Viewers</option>
-                    <option value="downloads" {{ $filters['sort_by'] === 'downloads' ? 'selected' : '' }}>Downloads</option>
-                </select>
-
-                <input type="hidden" name="sort_dir" value="{{ $filters['sort_dir'] }}" id="sort-dir-input" />
-                <button
-                    type="button"
-                    title="{{ $filters['sort_dir'] === 'asc' ? 'Ascending' : 'Descending' }}"
-                    onclick="document.getElementById('sort-dir-input').value = '{{ $filters['sort_dir'] === 'asc' ? 'desc' : 'asc' }}'; document.getElementById('filter-form').submit();"
-                    class="admin-filter-sort"
-                >
-                    @if ($filters['sort_dir'] === 'asc')
-                        <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
-                    @else
-                        <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"/></svg>
-                    @endif
-                </button>
-
-                <input type="hidden" name="per_page" value="{{ $filters['per_page'] }}" />
-
-                <flux:button type="submit" variant="outline">Cari</flux:button>
-
-                @if ($filters['search'])
-                    <a href="{{ route('magazines.index') }}" class="admin-filter-reset">Reset</a>
-                @endif
-            </div>
-        </form>
-
         <div class="admin-table-shell">
+            <form method="GET" action="{{ route('magazines.index') }}" id="filter-form">
+                <x-admin.table-toolbar :filters="$filters" :show-filters="true" search-placeholder="Cari judul atau slug majalah...">
+                    <select name="sort_by" onchange="this.form.submit()" class="admin-filter-select">
+                        <option value="created_at" {{ $filters['sort_by'] === 'created_at' ? 'selected' : '' }}>{{ __('Terbaru') }}</option>
+                        <option value="title" {{ $filters['sort_by'] === 'title' ? 'selected' : '' }}>{{ __('Judul') }}</option>
+                        <option value="views" {{ $filters['sort_by'] === 'views' ? 'selected' : '' }}>Viewers</option>
+                        <option value="downloads" {{ $filters['sort_by'] === 'downloads' ? 'selected' : '' }}>Downloads</option>
+                    </select>
+
+                    <input type="hidden" name="sort_dir" value="{{ $filters['sort_dir'] }}" id="sort-dir-input" />
+                    <button
+                        type="button"
+                        title="{{ $filters['sort_dir'] === 'asc' ? 'Ascending' : 'Descending' }}"
+                        onclick="document.getElementById('sort-dir-input').value = '{{ $filters['sort_dir'] === 'asc' ? 'desc' : 'asc' }}'; document.getElementById('filter-form').submit();"
+                        class="admin-filter-sort"
+                    >
+                        @if ($filters['sort_dir'] === 'asc')
+                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
+                        @else
+                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"/></svg>
+                        @endif
+                    </button>
+
+                    <flux:button type="submit" variant="outline">{{ __('Terapkan') }}</flux:button>
+
+                    @if ($filters['search'])
+                        <a href="{{ route('magazines.index') }}" class="admin-filter-reset">{{ __('Reset') }}</a>
+                    @endif
+                </x-admin.table-toolbar>
+            </form>
+
             <div class="overflow-x-auto">
                 <table class="admin-table">
                     <thead class="admin-table-head">

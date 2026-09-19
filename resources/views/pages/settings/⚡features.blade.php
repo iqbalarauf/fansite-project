@@ -1,18 +1,25 @@
 <?php
 
+use App\Support\SettingsStore;
 use Flux\Flux;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Title('Features Activation')] class extends Component {
+new #[Title('Features Activation')] class extends Component
+{
     public bool $newsEnabled = true;
+
     public bool $blogEnabled = true;
+
     public bool $magazineEnabled = true;
+
     public bool $triviaEnabled = true;
+
     public bool $photoboothEnabled = true;
+
     public string $galleryMode = 'photos';
+
     public string $welcomeFeedSource = 'news';
 
     public function mount(): void
@@ -41,30 +48,15 @@ new #[Title('Features Activation')] class extends Component {
             'welcomeFeedSource' => ['required', 'in:news,blog,magazines,trivia'],
         ]);
 
-        foreach ([
-            'news_enabled' => $this->newsEnabled,
-            'blog_enabled' => $this->blogEnabled,
-            'magazines_enabled' => $this->magazineEnabled,
-            'trivia_enabled' => $this->triviaEnabled,
-            'photobooth_enabled' => $this->photoboothEnabled,
-        ] as $key => $enabled) {
-            DB::table('app_settings')->updateOrInsert(
-                ['key' => $key],
-                ['value' => $enabled ? 'true' : 'false', 'updated_at' => now()],
-            );
-        }
-
-        DB::table('app_settings')->updateOrInsert(
-            ['key' => 'gallery_mode'],
-            ['value' => $this->galleryMode, 'updated_at' => now()],
-        );
-
-        DB::table('app_settings')->updateOrInsert(
-            ['key' => 'welcome_feed_source'],
-            ['value' => $this->welcomeFeedSource, 'updated_at' => now()],
-        );
-
-        Cache::forget('app_settings');
+        SettingsStore::setApp([
+            'news_enabled' => $this->newsEnabled ? 'true' : 'false',
+            'blog_enabled' => $this->blogEnabled ? 'true' : 'false',
+            'magazines_enabled' => $this->magazineEnabled ? 'true' : 'false',
+            'trivia_enabled' => $this->triviaEnabled ? 'true' : 'false',
+            'photobooth_enabled' => $this->photoboothEnabled ? 'true' : 'false',
+            'gallery_mode' => $this->galleryMode,
+            'welcome_feed_source' => $this->welcomeFeedSource,
+        ]);
 
         Flux::toast(variant: 'success', text: __('Features updated.'));
     }

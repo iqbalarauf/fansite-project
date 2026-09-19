@@ -62,7 +62,7 @@
                 </div>
 
                 <aside class="space-y-5">
-                    <div class="space-y-4 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+                    <div class="space-y-4 admin-card p-4">
                         <div>
                             <flux:label for="post-status">Status</flux:label>
                             <select id="post-status" name="status" class="admin-filter-select mt-1 w-full">
@@ -95,7 +95,7 @@
                         </div>
                     </div>
 
-                    <div class="space-y-4 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+                    <div class="space-y-4 admin-card p-4">
                         <p class="text-sm font-semibold text-zinc-700 dark:text-zinc-200">Cover</p>
                         @if ($post?->cover)
                             <img src="{{ Storage::url($post->cover) }}" alt="{{ $post->title }}" class="aspect-video w-full rounded-lg object-cover" />
@@ -105,7 +105,7 @@
                 </aside>
             </div>
 
-            <div class="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+            <div class="admin-card p-4">
                 <p class="text-sm font-semibold text-zinc-700 dark:text-zinc-200">SEO Meta</p>
                 <div class="mt-4 space-y-4">
                     <div>

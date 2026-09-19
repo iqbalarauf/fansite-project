@@ -10,6 +10,7 @@ use App\Models\Post;
 use App\Models\ShowTeater;
 use App\Models\Trivia;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 final class WelcomePageData
 {
@@ -32,10 +33,24 @@ final class WelcomePageData
         $feedEnabled = SettingBag::featureEnabled($feedSource);
 
         $idolMemberName = (string) ($about['idol_shortname'] ?? '');
-        $liveStatus = $this->memberLive->status($idolMemberName);
+        $liveStatus = $this->memberLive->details($idolMemberName);
+
+        $youtubeEnabled = filter_var($app['youtube_embed_enabled'] ?? 'false', FILTER_VALIDATE_BOOLEAN);
+        $youtubeModeValue = (string) ($app['youtube_display_mode'] ?? 'cards');
+        $youtubeMode = in_array($youtubeModeValue, ['cards', 'embed'], true) ? $youtubeModeValue : 'cards';
+        $youtubeUrl = (string) ($app['youtube_playlist_url'] ?? '');
+
+        $idolSlug = trim((string) ($about['idol_slug'] ?? ''));
+        $idolSlug = $idolSlug !== '' ? $idolSlug : Str::slug((string) ($about['idol_name'] ?? ''));
+
+        $idolVersionValue = (string) ($about['idol_profile_version'] ?? 'jkt48');
+        $idolProfileVersion = in_array($idolVersionValue, ['jkt48', 'general'], true) ? $idolVersionValue : 'jkt48';
 
         return [
             'idolName' => $about['idol_name'] ?? 'Oshimen',
+            'idolSlug' => $idolSlug,
+            'idolShortname' => $idolMemberName,
+            'idolProfileVersion' => $idolProfileVersion,
             'idolDescription' => $about['idol_about'] ?? $about['idol_description'] ?? 'This is your idol profile.',
             'idolPhoto' => $about['idol_photo'] ?? null,
             'instagramUrl' => $about['instagram_url'] ?? $about['idol_social_media_instagram'] ?? null,
@@ -46,20 +61,55 @@ final class WelcomePageData
             'idolTiktokUrl' => $about['idol_social_media_tiktok'] ?? null,
             'heroImage' => $app['hero_image'] ?? null,
             'appLogo' => $app['app_logo'] ?? null,
+            'heroButtons' => $this->heroButtons($app),
+            'youtubeEnabled' => $youtubeEnabled,
+            'youtubeDisplayMode' => $youtubeMode,
+            'youtubePlaylistUrl' => $youtubeUrl,
+            'youtubeEmbedUrl' => ($youtubeEnabled && $youtubeMode === 'embed') ? YoutubeEmbed::embedUrl($youtubeUrl) : null,
+            'youtubeVideos' => ($youtubeEnabled && $youtubeMode === 'cards') ? YoutubePlaylist::videos($youtubeUrl, 7) : [],
             'sidebarName' => $app['sidebar_name'] ?? config('app.name', 'Laravel'),
             'appName' => $app['app_name'] ?? config('app.name', 'Laravel'),
             'showOnWelcome' => filter_var($about['idol_show_on_welcome'] ?? 'false', FILTER_VALIDATE_BOOLEAN),
             'showCount' => $showCount,
             'setlistCount' => ShowTeater::query()->distinct()->count('setlist'),
+            'discographyCount' => count(TextLines::parse($about['idol_discography'] ?? '')),
             'upcomingShowCount' => $upcomingShowCount,
             'lastEventDate' => $this->lastEventDate($today),
             'upcomingEvents' => $this->timeline->events('upcoming', null, null, $today, 5),
             'feedEnabled' => $feedEnabled,
             'feed' => $feedEnabled ? $this->feed($feedSource) : ['label' => '', 'heading' => '', 'indexRoute' => '#', 'items' => []],
             'galleryPhotos' => $this->galleryPhotos(),
-            'showroomLive' => $liveStatus['showroom'],
-            'idnLive' => $liveStatus['idn'],
+            'showroomLive' => $liveStatus['showroom']['live'],
+            'idnLive' => $liveStatus['idn']['live'],
+            'showroomStreamUrl' => $liveStatus['showroom']['url'],
+            'idnStreamUrl' => $liveStatus['idn']['url'],
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $app
+     * @return array<int, array{label: string, url: string}>
+     */
+    private function heroButtons(array $app): array
+    {
+        $buttons = [];
+
+        foreach ([1, 2] as $index) {
+            if (! filter_var($app["hero_button_{$index}_enabled"] ?? 'true', FILTER_VALIDATE_BOOLEAN)) {
+                continue;
+            }
+
+            $label = trim((string) ($app["hero_button_{$index}_label"] ?? ''));
+            $type = (string) ($app["hero_button_{$index}_link_type"] ?? 'url');
+            $value = (string) ($app["hero_button_{$index}_link_value"] ?? '');
+            $url = HeroLink::resolve($type, $value);
+
+            if ($label !== '' && $url !== null) {
+                $buttons[] = ['label' => $label, 'url' => $url];
+            }
+        }
+
+        return $buttons;
     }
 
     /**

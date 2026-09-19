@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\LiveStreaming;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
@@ -82,5 +83,111 @@ class LiveStreamingTest extends TestCase
             'duration' => 75,
             'additional_info' => 'Updated info',
         ]);
+    }
+
+    public function test_live_id_is_unique(): void
+    {
+        LiveStreaming::create([
+            'live_id' => 'duplicate-live-id',
+            'platform' => 'Showroom',
+            'live_date' => '2026-07-01',
+        ]);
+
+        $this->expectException(QueryException::class);
+
+        LiveStreaming::create([
+            'live_id' => 'duplicate-live-id',
+            'platform' => 'IDN App',
+            'live_date' => '2026-07-02',
+        ]);
+    }
+
+    public function test_manual_creation_generates_a_unique_live_id(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post(route('live-streaming.store'), [
+            'platform' => 'Showroom',
+            'live_date' => '2026-07-05',
+            'duration' => 95,
+        ])->assertRedirect(route('live-streaming.index'));
+
+        $stream = LiveStreaming::query()->latest('id')->firstOrFail();
+
+        $this->assertNotNull($stream->live_id);
+        $this->assertStringStartsWith('manual-', (string) $stream->live_id);
+    }
+
+    public function test_manual_update_keeps_the_existing_live_id(): void
+    {
+        $user = User::factory()->create();
+
+        $stream = LiveStreaming::create([
+            'live_id' => 'keep-this-live-id',
+            'platform' => 'Showroom',
+            'live_date' => '2026-07-10',
+        ]);
+
+        $this->actingAs($user)->put(route('live-streaming.update', $stream), [
+            'platform' => 'Showroom',
+            'live_date' => '2026-07-12',
+            'duration' => 70,
+        ])->assertRedirect(route('live-streaming.index'));
+
+        $this->assertSame('keep-this-live-id', $stream->fresh()->live_id);
+    }
+
+    public function test_live_id_is_backfilled_for_legacy_rows_on_update(): void
+    {
+        $user = User::factory()->create();
+
+        $stream = LiveStreaming::create([
+            'platform' => 'Showroom',
+            'live_date' => '2026-07-10',
+        ]);
+
+        $this->assertNull($stream->live_id);
+
+        $this->actingAs($user)->put(route('live-streaming.update', $stream), [
+            'platform' => 'Showroom',
+            'live_date' => '2026-07-12',
+        ])->assertRedirect(route('live-streaming.index'));
+
+        $liveId = (string) $stream->fresh()->live_id;
+
+        $this->assertNotSame('', $liveId);
+        $this->assertStringStartsWith('manual-', $liveId);
+    }
+
+    public function test_backfill_command_fills_missing_live_ids(): void
+    {
+        LiveStreaming::create(['platform' => 'Showroom', 'live_date' => '2026-01-01']);
+        LiveStreaming::create(['platform' => 'IDN App', 'live_date' => '2026-01-02']);
+
+        $this->artisan('app:backfill-live-ids')->assertExitCode(0);
+
+        $this->assertSame(0, LiveStreaming::query()->whereNull('live_id')->count());
+
+        // Running it again is a no-op.
+        $this->artisan('app:backfill-live-ids')->assertExitCode(0);
+
+        $this->assertSame(0, LiveStreaming::query()->whereNull('live_id')->count());
+    }
+
+    public function test_index_hides_the_live_id_column(): void
+    {
+        $user = User::factory()->create();
+
+        LiveStreaming::create([
+            'live_id' => 'hidden-live-id-123',
+            'platform' => 'Showroom',
+            'live_date' => '2026-07-10',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('live-streaming.index'))
+            ->assertOk()
+            ->assertDontSee('LIVE ID')
+            ->assertDontSee('hidden-live-id-123');
     }
 }

@@ -7,6 +7,11 @@
 
         $heroUrl = $heroImage ? Storage::url($heroImage) : null;
         $heroStyle = $heroUrl ? "background-image: url('".$heroUrl."');" : '';
+
+        $liveIcons = collect([
+            'showroom' => 'icon-app/showroom.webp',
+            'idn' => 'icon-app/idn.webp',
+        ])->map(fn (string $path): ?string => Storage::disk('public')->exists($path) ? Storage::url($path) : null)->all();
     @endphp
 
     <section id="home" class="relative flex min-h-svh items-center overflow-hidden bg-slate-950 bg-cover bg-center"
@@ -14,17 +19,29 @@
         <div class="absolute inset-0"></div>
 
         <div class="relative z-10 mx-auto flex w-full max-w-7xl flex-col items-start px-4 py-24 text-left sm:px-6 lg:px-8 lg:py-28">
-            <span class="mb-4 inline-flex w-fit rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-indigo-50">Official Fansite</span>
             <h1 class="text-4xl font-black leading-tight sm:text-5xl lg:text-6xl">
                 <span class="inline-block">Selamat Datang di Fansite</span>
-                <span class="mt-2 block text-yellow-300 [transform-style:preserve-3d] animate-[flip_1.4s_ease-in-out_1]">{{ $idolName }}</span>
+                @if (($idolProfileVersion ?? 'jkt48') === 'jkt48' && filled($idolShortname))
+                    <span
+                        class="mt-2 block text-yellow-300"
+                        data-hero-swap='@json([$idolName, $idolShortname.' JKT48'])'
+                        data-hero-swap-interval="4000"
+                    >{{ $idolName }}</span>
+                @else
+                    <span class="mt-2 block text-yellow-300">{{ $idolName }}</span>
+                @endif
             </h1>
             <p class="mt-5 max-w-xl text-base text-indigo-100 sm:text-lg">Temukan aktivitas terbaru, jadwal, dan momen favorit dari {{ $idolName }} dalam satu halaman yang selalu diperbarui.</p>
 
-            <div class="mt-8 flex flex-wrap justify-start gap-4">
-                <a href="#about" class="rounded-full bg-yellow-300 px-6 py-3 text-sm font-bold text-slate-900 shadow-lg shadow-yellow-200/50 transition hover:bg-yellow-200">Lihat Profil</a>
-                <a href="#schedule" class="rounded-full border border-white/40 bg-white/10 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/15">Jadwal Terbaru</a>
-            </div>
+            @if (! empty($heroButtons))
+                <div class="mt-8 flex flex-wrap justify-start gap-4">
+                    @foreach ($heroButtons as $index => $button)
+                        <a href="{{ $button['url'] }}" class="{{ $index === 0
+                            ? 'rounded-full bg-yellow-300 px-6 py-3 text-sm font-bold text-slate-900 shadow-lg shadow-yellow-200/50 transition hover:bg-yellow-200'
+                            : 'rounded-full border border-white/40 bg-white/10 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/15' }}">{{ $button['label'] }}</a>
+                    @endforeach
+                </div>
+            @endif
         </div>
     </section>
 
@@ -49,9 +66,9 @@
 
                             <p class="mt-6 text-base leading-8 text-slate-600 dark:text-slate-300">{{ $idolDescription }}</p>
 
-                            <a href="{{ $instagramUrl ?? '#' }}" target="{{ $instagramUrl ? '_blank' : '_self' }}" rel="noopener"
+                            <a href="{{ route('about.show', $idolSlug ?: null) }}"
                                class="mt-6 flex w-full items-center justify-center rounded-full bg-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500">
-                                Berkenalan dengan Oniel
+                                Berkenalan dengan {{ $idolShortname ?: $idolName }}
                             </a>
                         </div>
                     @endif
@@ -115,7 +132,7 @@
                         </div>
                         <div class="rounded-2xl bg-indigo-50 p-5 dark:bg-indigo-950/60">
                             <p class="text-sm text-slate-500 dark:text-slate-400">Single Participation</p>
-                            <p class="mt-3 text-3xl font-black text-slate-900 dark:text-white">12</p>
+                            <p class="mt-3 text-3xl font-black text-slate-900 dark:text-white" data-test="single-participation-count">{{ $discographyCount }}</p>
                         </div>
                         <div class="rounded-2xl bg-yellow-50 p-5 dark:bg-yellow-950/50">
                             <p class="text-sm text-slate-500 dark:text-slate-400">Jumlah Setlist</p>
@@ -135,7 +152,7 @@
                     <div class="mt-6 space-y-4">
                         @forelse ($upcomingEvents as $event)
                             @php
-                                $daysUntil = (int) now()->diffInDays(Carbon::parse($event['date']), false) + 1;
+                                $daysUntil = (int) now()->startOfDay()->diffInDays(Carbon::parse($event['date'])->startOfDay(), false);
                                 $badgeColors = [
                                     'blue' => 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300',
                                     'red' => 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300',
@@ -155,7 +172,7 @@
                                     <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ Carbon::parse($event['date'])->locale('id')->isoFormat('D MMMM YYYY') }}</p>
                                 </div>
                                 <span class="shrink-0 text-xs font-medium text-green-600 dark:text-green-400">
-                                    H-{{ $daysUntil }}
+                                    {{ $daysUntil === 0 ? __('Hari Ini') : 'H-'.$daysUntil }}
                                 </span>
                             </div>
                         @empty
@@ -170,41 +187,50 @@
                         <h3 class="mt-2 text-2xl font-black text-slate-900 dark:text-white">Status Live</h3>
                     </div>
 
+                    @php
+                        $livePlatforms = [
+                            ['key' => 'showroom', 'label' => 'Showroom Live', 'live' => $showroomLive, 'url' => $showroomStreamUrl, 'badge' => 'SR', 'accent' => 'from-orange-400 to-rose-500'],
+                            ['key' => 'idn', 'label' => 'IDN App', 'live' => $idnLive, 'url' => $idnStreamUrl, 'badge' => 'IDN', 'accent' => 'from-sky-400 to-emerald-500'],
+                        ];
+                    @endphp
+
                     <div class="mt-6 grid gap-4 sm:grid-cols-2">
-                        <div class="flex flex-col items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-800/40">
-                            <div class="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-400 to-rose-500 text-base font-black text-white shadow-md">
-                                SR
+                        @foreach ($livePlatforms as $platform)
+                            @php
+                                $isLink = $platform['live'] && ! empty($platform['url']);
+                                $icon = $liveIcons[$platform['key']] ?? null;
+                            @endphp
+                            <div class="relative flex flex-col items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-5 transition dark:border-slate-800 dark:bg-slate-800/40 {{ $isLink ? 'hover:border-indigo-300 hover:shadow-md dark:hover:border-indigo-700' : '' }}">
+                                @if ($icon)
+                                    <img src="{{ $icon }}" alt="{{ $platform['label'] }}" class="size-14 rounded-2xl object-contain shadow-md" />
+                                @else
+                                    <div class="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br {{ $platform['accent'] }} text-base font-black text-white shadow-md">
+                                        {{ $platform['badge'] }}
+                                    </div>
+                                @endif
+
+                                <p class="text-base font-bold text-slate-900 dark:text-white">{{ $platform['label'] }}</p>
+
+                                @if ($platform['live'])
+                                    <span class="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900 dark:text-green-300">
+                                        <span class="size-1.5 rounded-full bg-green-500 dark:bg-green-400"></span>
+                                        Online
+                                    </span>
+                                    @if ($isLink)
+                                        <span class="text-xs font-semibold text-indigo-600 dark:text-indigo-400">{{ __('Tonton sekarang') }} →</span>
+                                    @endif
+                                @else
+                                    <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-200/70 px-3 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-700 dark:text-slate-300">
+                                        <span class="size-1.5 rounded-full bg-slate-400 dark:bg-slate-500"></span>
+                                        Offline
+                                    </span>
+                                @endif
+
+                                @if ($isLink)
+                                    <a href="{{ $platform['url'] }}" target="_blank" rel="noopener" class="absolute inset-0 rounded-2xl" aria-label="{{ __('Tonton :platform', ['platform' => $platform['label']]) }}"></a>
+                                @endif
                             </div>
-                            <p class="text-base font-bold text-slate-900 dark:text-white">Showroom Live</p>
-                            @if ($showroomLive)
-                                <span class="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900 dark:text-green-300">
-                                    <span class="size-1.5 rounded-full bg-green-500 dark:bg-green-400"></span>
-                                    Online
-                                </span>
-                            @else
-                                <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-200/70 px-3 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-700 dark:text-slate-300">
-                                    <span class="size-1.5 rounded-full bg-slate-400 dark:bg-slate-500"></span>
-                                    Offline
-                                </span>
-                            @endif
-                        </div>
-                        <div class="flex flex-col items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-800/40">
-                            <div class="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-400 to-emerald-500 text-base font-black text-white shadow-md">
-                                IDN
-                            </div>
-                            <p class="text-base font-bold text-slate-900 dark:text-white">IDN App</p>
-                            @if ($idnLive)
-                                <span class="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900 dark:text-green-300">
-                                    <span class="size-1.5 rounded-full bg-green-500 dark:bg-green-400"></span>
-                                    Online
-                                </span>
-                            @else
-                                <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-200/70 px-3 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-700 dark:text-slate-300">
-                                    <span class="size-1.5 rounded-full bg-slate-400 dark:bg-slate-500"></span>
-                                    Offline
-                                </span>
-                            @endif
-                        </div>
+                        @endforeach
                     </div>
                 </section>
             </div>
@@ -246,15 +272,91 @@
     @endif
     </section>
 
+    @php
+        $youtubeHasContent = $youtubeEnabled && ($youtubeDisplayMode === 'embed'
+            ? filled($youtubeEmbedUrl)
+            : count($youtubeVideos) > 0);
+    @endphp
+
+    @if ($youtubeHasContent)
+        <section id="playlist" class="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
+            <div class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <p class="text-sm font-bold uppercase tracking-[0.22em] text-indigo-600 dark:text-indigo-400">Playlist</p>
+                        <h2 class="mt-2 text-2xl font-black text-slate-900 dark:text-white sm:text-3xl">Lihat konten terbaru</h2>
+                    </div>
+
+                    @if (filled($youtubePlaylistUrl))
+                        <a href="{{ $youtubePlaylistUrl }}" target="_blank" rel="noopener"
+                           class="inline-flex shrink-0 items-center gap-2 rounded-full bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500">
+                            {{ __('Lihat di YouTube') }}
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4"><path d="M11 3a1 1 0 1 0 0 2h2.586l-6.293 6.293a1 1 0 1 0 1.414 1.414L15 6.414V9a1 1 0 1 0 2 0V4a1 1 0 0 0-1-1h-5Z"/><path d="M5 5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-3a1 1 0 1 0-2 0v3H5V7h3a1 1 0 0 0 0-2H5Z"/></svg>
+                        </a>
+                    @endif
+                </div>
+
+                @if ($youtubeDisplayMode === 'embed')
+                    <div class="mt-6 overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
+                        <div class="relative aspect-video">
+                            <iframe
+                                src="{{ $youtubeEmbedUrl }}"
+                                title="Youtube Playlist"
+                                class="absolute inset-0 h-full w-full"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                referrerpolicy="strict-origin-when-cross-origin"
+                                allowfullscreen
+                                loading="lazy"
+                            ></iframe>
+                        </div>
+                    </div>
+                @else
+                    <div class="relative mt-6 px-1" data-youtube-carousel>
+                        <div class="overflow-hidden">
+                            <div class="flex gap-4 transition-transform duration-500 ease-out" data-youtube-track>
+                                @foreach ($youtubeVideos as $video)
+                                    <a href="{{ $video['url'] }}" target="_blank" rel="noopener" data-youtube-item
+                                       class="group flex w-[calc((100%-2rem)/3)] shrink-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-indigo-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-700">
+                                        <div class="aspect-video w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+                                            @if ($video['thumbnail'])
+                                                <img src="{{ $video['thumbnail'] }}" alt="{{ $video['title'] }}" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" />
+                                            @endif
+                                        </div>
+                                        <div class="flex flex-1 flex-col gap-2 p-4">
+                                            <p class="line-clamp-2 text-sm font-bold text-slate-900 transition group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400">{{ $video['title'] }}</p>
+                                            @if ($video['description'])
+                                                <p class="line-clamp-2 text-xs text-slate-500 dark:text-slate-400">{{ $video['description'] }}</p>
+                                            @endif
+                                        </div>
+                                    </a>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        @if (count($youtubeVideos) > 3)
+                            <button type="button" data-youtube-nav data-youtube-prev aria-label="Video sebelumnya"
+                                    class="absolute -left-2 top-1/2 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-600 shadow-md backdrop-blur transition hover:text-indigo-600 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900/90 dark:text-slate-300 dark:hover:text-indigo-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4"><path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 0 1-.02 1.06L8.832 10l3.938 3.71a.75.75 0 1 1-1.04 1.08l-4.5-4.25a.75.75 0 0 1 0-1.08l4.5-4.25a.75.75 0 0 1 1.06.02Z" clip-rule="evenodd"/></svg>
+                            </button>
+                            <button type="button" data-youtube-nav data-youtube-next aria-label="Video berikutnya"
+                                    class="absolute -right-2 top-1/2 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-600 shadow-md backdrop-blur transition hover:text-indigo-600 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900/90 dark:text-slate-300 dark:hover:text-indigo-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 0 1 .02-1.06L11.168 10 7.23 6.29a.75.75 0 1 1 1.04-1.08l4.5 4.25a.75.75 0 0 1 0 1.08l-4.5 4.25a.75.75 0 0 1-1.06-.02Z" clip-rule="evenodd"/></svg>
+                            </button>
+                        @endif
+                    </div>
+                @endif
+            </div>
+        </section>
+    @endif
+
     <script>
         (function () {
-            document.querySelectorAll('[data-gallery-carousel]').forEach(function (root) {
-                var track = root.querySelector('[data-gallery-track]');
-                var items = Array.prototype.slice.call(root.querySelectorAll('[data-gallery-item]'));
-                var prev = root.querySelector('[data-gallery-prev]');
-                var next = root.querySelector('[data-gallery-next]');
-                var navs = Array.prototype.slice.call(root.querySelectorAll('[data-gallery-nav]'));
-                var visible = 3;
+            function setupCarousel(root, selectors, visible) {
+                var track = root.querySelector(selectors.track);
+                var items = Array.prototype.slice.call(root.querySelectorAll(selectors.item));
+                var prev = root.querySelector(selectors.prev);
+                var next = root.querySelector(selectors.next);
+                var navs = Array.prototype.slice.call(root.querySelectorAll(selectors.nav));
                 var index = 0;
                 var maxIndex = Math.max(0, items.length - visible);
 
@@ -285,6 +387,51 @@
                 if (next) next.addEventListener('click', function () { if (index < maxIndex) { index++; update(); } });
                 window.addEventListener('resize', update);
                 update();
+            }
+
+            document.querySelectorAll('[data-gallery-carousel]').forEach(function (root) {
+                setupCarousel(root, {
+                    track: '[data-gallery-track]',
+                    item: '[data-gallery-item]',
+                    prev: '[data-gallery-prev]',
+                    next: '[data-gallery-next]',
+                    nav: '[data-gallery-nav]',
+                }, 3);
+            });
+
+            document.querySelectorAll('[data-youtube-carousel]').forEach(function (root) {
+                setupCarousel(root, {
+                    track: '[data-youtube-track]',
+                    item: '[data-youtube-item]',
+                    prev: '[data-youtube-prev]',
+                    next: '[data-youtube-next]',
+                    nav: '[data-youtube-nav]',
+                }, 3);
+            });
+
+            document.querySelectorAll('[data-hero-swap]').forEach(function (el) {
+                var texts = [];
+
+                try {
+                    texts = JSON.parse(el.getAttribute('data-hero-swap')) || [];
+                } catch (error) {
+                    return;
+                }
+
+                if (!Array.isArray(texts) || texts.length < 2) {
+                    return;
+                }
+
+                var index = 0;
+                var interval = parseInt(el.getAttribute('data-hero-swap-interval') || '4000', 10);
+
+                setInterval(function () {
+                    index = (index + 1) % texts.length;
+                    el.classList.remove('hero-swap-animate');
+                    void el.offsetWidth;
+                    el.textContent = texts[index];
+                    el.classList.add('hero-swap-animate');
+                }, interval);
             });
         })();
     </script>

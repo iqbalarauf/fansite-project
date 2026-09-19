@@ -26,19 +26,11 @@
             </div>
         @endif
 
-        <form method="GET" action="{{ route('content.trivia.index') }}">
-            <div class="admin-filter">
-                <div class="admin-filter-search">
-                    <flux:input name="search" value="{{ $search }}" placeholder="Cari judul atau deskripsi..." icon="magnifying-glass" />
-                </div>
-                <flux:button type="submit" variant="outline">Cari</flux:button>
-                @if ($search !== '')
-                    <a href="{{ route('content.trivia.index') }}" class="admin-filter-reset">Reset</a>
-                @endif
-            </div>
-        </form>
-
         <div class="admin-table-shell">
+            <form method="GET" action="{{ route('content.trivia.index') }}">
+                <x-admin.table-toolbar :filters="$filters" search-placeholder="Cari judul atau deskripsi..." />
+            </form>
+
             <div class="overflow-x-auto">
                 <table class="admin-table">
                     <thead class="admin-table-head">
@@ -86,7 +78,7 @@
                     </tbody>
                 </table>
             </div>
-            @include('show-teater.partials.pagination', ['paginator' => $trivias, 'perPage' => 15, 'pageParam' => 'page'])
+            @include('show-teater.partials.pagination', ['paginator' => $trivias, 'perPage' => $filters['per_page'], 'pageParam' => 'page'])
         </div>
     </div>
 

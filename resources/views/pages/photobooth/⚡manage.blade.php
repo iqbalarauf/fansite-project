@@ -8,21 +8,33 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
-new #[Title('Photobooth')] class extends Component {
+new #[Title('Photobooth Settings')] class extends Component
+{
     use WithFileUploads;
 
     public ?int $photoboothId = null;
+
     public string $slug = '';
+
     public ?string $framePath = null;
+
     public mixed $frameUpload = null;
+
     public int $columns = 2;
+
     public int $rows = 3;
+
     /** @var array<int, array{x: float|int|string, y: float|int|string, width: float|int|string, height: float|int|string}> */
     public array $photoSlots = [];
+
     public bool $frameOverlay = false;
+
     public bool $isFullOpen = true;
+
     public ?string $startAt = null;
+
     public ?string $endAt = null;
+
     public bool $isActive = true;
 
     public function mount(): void

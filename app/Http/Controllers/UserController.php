@@ -44,15 +44,17 @@ class UserController extends Controller
     {
         $validated = $request->validated();
 
-        User::create([
+        $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => $validated['password'],
             'role' => $validated['role'],
         ]);
 
+        $user->sendEmailVerificationNotification();
+
         return redirect()->route('users.index')
-            ->with('success', 'User '.$validated['name'].' berhasil ditambahkan.');
+            ->with('success', 'User '.$validated['name'].' berhasil ditambahkan. Verifikasi email telah dikirim ke '.$validated['email'].'.');
     }
 
     public function update(UpdateUserRequest $request, User $user): RedirectResponse
