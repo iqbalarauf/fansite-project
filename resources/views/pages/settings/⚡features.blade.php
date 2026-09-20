@@ -18,6 +18,8 @@ new #[Title('Features Activation')] class extends Component
 
     public bool $photoboothEnabled = true;
 
+    public bool $sheetIntegrationEnabled = false;
+
     public string $galleryMode = 'photos';
 
     public string $welcomeFeedSource = 'news';
@@ -33,6 +35,7 @@ new #[Title('Features Activation')] class extends Component
         $this->magazineEnabled = filter_var($settings['magazines_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
         $this->triviaEnabled = filter_var($settings['trivia_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
         $this->photoboothEnabled = filter_var($settings['photobooth_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
+        $this->sheetIntegrationEnabled = filter_var($settings['sheet_integration_enabled'] ?? 'false', FILTER_VALIDATE_BOOLEAN);
 
         $galleryMode = (string) ($settings['gallery_mode'] ?? 'photos');
         $this->galleryMode = in_array($galleryMode, ['photos', 'videos', 'both'], true) ? $galleryMode : 'photos';
@@ -54,6 +57,7 @@ new #[Title('Features Activation')] class extends Component
             'magazines_enabled' => $this->magazineEnabled ? 'true' : 'false',
             'trivia_enabled' => $this->triviaEnabled ? 'true' : 'false',
             'photobooth_enabled' => $this->photoboothEnabled ? 'true' : 'false',
+            'sheet_integration_enabled' => $this->sheetIntegrationEnabled ? 'true' : 'false',
             'gallery_mode' => $this->galleryMode,
             'welcome_feed_source' => $this->welcomeFeedSource,
         ]);
@@ -107,6 +111,14 @@ new #[Title('Features Activation')] class extends Component
                     <span class="text-sm text-zinc-700 dark:text-zinc-200">
                         <span class="font-medium">{{ __('Photobooth') }}</span>
                         <span class="block text-xs text-zinc-500 dark:text-zinc-400">{{ __('Tampilkan menu dan halaman publik Photobooth.') }}</span>
+                    </span>
+                </label>
+
+                <label class="flex items-start gap-3">
+                    <input type="checkbox" wire:model="sheetIntegrationEnabled" value="1" class="mt-0.5 rounded border-zinc-300 text-blue-600">
+                    <span class="text-sm text-zinc-700 dark:text-zinc-200">
+                        <span class="font-medium">{{ __('Sheet Integration') }}</span>
+                        <span class="block text-xs text-zinc-500 dark:text-zinc-400">{{ __('Tampilkan menu Sheet Integration (sinkronisasi Master Data dengan Google Sheet). Nonaktif secara default.') }}</span>
                     </span>
                 </label>
             </div>

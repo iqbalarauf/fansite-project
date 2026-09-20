@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Http\Requests\MeetGreetEventRequest;
 use App\Models\MeetGreetEvents;
 use App\Support\ListingQuery;
+use App\Support\Spreadsheet;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class MeetGreetEventsController extends Controller
 {
@@ -43,6 +45,31 @@ class MeetGreetEventsController extends Controller
             'events' => $events,
             'filters' => $filters,
         ]);
+    }
+
+    public function export(): StreamedResponse
+    {
+        $events = MeetGreetEvents::query()->orderByDesc('event_date')->get();
+
+        return Spreadsheet::download('meet-greet-events-'.now()->format('Ymd-His').'.xlsx', [
+            'id',
+            'event_name',
+            'event_type',
+            'event_date',
+            'event_date_2',
+            'ticket_sale_datetime',
+            'purchase_link',
+            'location',
+        ], $events->map(static fn (MeetGreetEvents $event): array => [
+            $event->id,
+            $event->event_name,
+            $event->event_type instanceof \BackedEnum ? $event->event_type->value : (string) $event->event_type,
+            $event->event_date?->format('Y-m-d'),
+            $event->event_date_2?->format('Y-m-d'),
+            $event->ticket_sale_datetime?->format('Y-m-d H:i:s'),
+            $event->purchase_link,
+            $event->location,
+        ]));
     }
 
     public function store(MeetGreetEventRequest $request): RedirectResponse

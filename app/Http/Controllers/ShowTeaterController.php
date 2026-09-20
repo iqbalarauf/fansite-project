@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Spreadsheet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
@@ -170,6 +171,38 @@ class ShowTeaterController extends Controller
                 'per_page' => $perPage,
             ],
         ]);
+    }
+
+    public function export()
+    {
+        $shows = DB::table('show_teater')
+            ->whereNull('deleted_at')
+            ->orderBy('show_id')
+            ->get();
+
+        return Spreadsheet::download('show-teater-'.now()->format('Ymd-His').'.xlsx', [
+            'show_id',
+            'show_date',
+            'setlist',
+            'unit_song',
+            'is_global_center',
+            'is_us_center',
+            'is_the_show_has_event',
+            'additional_information',
+            'is_scraped_data',
+            'is_member_show',
+        ], $shows->map(static fn ($show): array => [
+            $show->show_id,
+            $show->show_date,
+            $show->setlist,
+            $show->unit_song,
+            $show->is_global_center,
+            $show->is_us_center,
+            $show->is_the_show_has_event,
+            $show->additional_information,
+            $show->is_scraped_data,
+            $show->is_member_show,
+        ]));
     }
 
     public function store(Request $request)

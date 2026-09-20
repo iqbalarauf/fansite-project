@@ -5,9 +5,14 @@
                 <flux:heading size="xl" class="font-bold">Meet &amp; Greet Events</flux:heading>
                 <flux:subheading>Kelola jadwal event, penjualan tiket, dan purchase link</flux:subheading>
             </div>
-            <flux:modal.trigger name="modal-create-event">
-                <flux:button variant="primary" icon="plus">Tambah Event</flux:button>
-            </flux:modal.trigger>
+            <div class="admin-page-actions">
+                <flux:button variant="filled" icon="arrow-down-tray" :href="route('meet-greet-events.export')">
+                    Export to Excel
+                </flux:button>
+                <flux:modal.trigger name="modal-create-event">
+                    <flux:button variant="primary" icon="plus">Tambah Event</flux:button>
+                </flux:modal.trigger>
+            </div>
         </div>
 
         @if (session('success'))

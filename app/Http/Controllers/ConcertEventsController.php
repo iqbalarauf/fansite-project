@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ConcertEventRequest;
 use App\Models\ConcertEvents;
 use App\Support\ListingQuery;
+use App\Support\Spreadsheet;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ConcertEventsController extends Controller
 {
@@ -44,6 +46,27 @@ class ConcertEventsController extends Controller
             'events' => $events,
             'filters' => $filters,
         ]);
+    }
+
+    public function export(): StreamedResponse
+    {
+        $events = ConcertEvents::query()->orderByDesc('event_date')->get();
+
+        return Spreadsheet::download('concert-events-'.now()->format('Ymd-His').'.xlsx', [
+            'id',
+            'event_name',
+            'event_date',
+            'location',
+            'status',
+            'purchase_link',
+        ], $events->map(static fn (ConcertEvents $event): array => [
+            $event->id,
+            $event->event_name,
+            $event->event_date?->format('Y-m-d'),
+            $event->location,
+            $event->status instanceof \BackedEnum ? $event->status->value : (string) $event->status,
+            $event->purchase_link,
+        ]));
     }
 
     public function store(ConcertEventRequest $request): RedirectResponse
