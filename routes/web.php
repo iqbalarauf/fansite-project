@@ -61,6 +61,7 @@ Route::middleware(['auth', 'verified', 'block-view-only-writes'])->group(functio
 
         // Show Teater
         Route::get('show-teater', [ShowTeaterController::class, 'index'])->name('show-teater.index');
+        Route::get('show-teater/export', [ShowTeaterController::class, 'export'])->name('show-teater.export');
         Route::post('show-teater', [ShowTeaterController::class, 'store'])->name('show-teater.store');
         Route::put('show-teater/{id}', [ShowTeaterController::class, 'update'])->name('show-teater.update');
         Route::post('show-teater/{id}/confirm', [ShowTeaterController::class, 'confirmMemberShow'])->name('show-teater.confirm');
@@ -70,23 +71,27 @@ Route::middleware(['auth', 'verified', 'block-view-only-writes'])->group(functio
         // Show Teater Categories
         Route::get('show-teater/categories', [ShowTeaterCategoriesController::class, 'index'])->name('show-teater.categories.index');
         Route::post('show-teater/categories', [ShowTeaterCategoriesController::class, 'store'])->name('show-teater.categories.store');
+        Route::post('show-teater/categories/import', [ShowTeaterCategoriesController::class, 'import'])->name('show-teater.categories.import');
         Route::put('show-teater/categories/{id}', [ShowTeaterCategoriesController::class, 'update'])->name('show-teater.categories.update');
         Route::post('show-teater/categories/{id}/toggle-status', [ShowTeaterCategoriesController::class, 'toggleStatus'])->name('show-teater.categories.toggle-status');
 
         // Meet & Greet Events
         Route::get('meet-greet-events', [MeetGreetEventsController::class, 'index'])->name('meet-greet-events.index');
+        Route::get('meet-greet-events/export', [MeetGreetEventsController::class, 'export'])->name('meet-greet-events.export');
         Route::post('meet-greet-events', [MeetGreetEventsController::class, 'store'])->name('meet-greet-events.store');
         Route::put('meet-greet-events/{meetGreetEvent}', [MeetGreetEventsController::class, 'update'])->name('meet-greet-events.update');
         Route::delete('meet-greet-events/{meetGreetEvent}', [MeetGreetEventsController::class, 'destroy'])->name('meet-greet-events.destroy');
 
         // Concerts Events
         Route::get('concert-events', [ConcertEventsController::class, 'index'])->name('concert-events.index');
+        Route::get('concert-events/export', [ConcertEventsController::class, 'export'])->name('concert-events.export');
         Route::post('concert-events', [ConcertEventsController::class, 'store'])->name('concert-events.store');
         Route::put('concert-events/{concertEvent}', [ConcertEventsController::class, 'update'])->name('concert-events.update');
         Route::delete('concert-events/{concertEvent}', [ConcertEventsController::class, 'destroy'])->name('concert-events.destroy');
 
         // Live Streaming
         Route::get('live-streaming', [LiveStreamingController::class, 'index'])->name('live-streaming.index');
+        Route::get('live-streaming/export', [LiveStreamingController::class, 'export'])->name('live-streaming.export');
         Route::post('live-streaming', [LiveStreamingController::class, 'store'])->name('live-streaming.store');
         Route::post('live-streaming/fetch', [LiveStreamingController::class, 'fetchManually'])->name('live-streaming.fetch-manually');
         Route::put('live-streaming/{liveStreaming}', [LiveStreamingController::class, 'update'])->name('live-streaming.update');

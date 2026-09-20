@@ -11,6 +11,7 @@ use App\Models\MeetGreetEvents;
 use App\Models\SheetIntegration;
 use App\Models\ShowTeater;
 use App\Models\User;
+use App\Services\SheetIntegration\ComparisonResult;
 use App\Services\SheetIntegration\SheetSyncService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -354,6 +355,65 @@ class SheetIntegrationTest extends TestCase
 
         $this->assertNotNull($integration);
         $this->assertTrue($integration->auto_sync);
+    }
+
+    public function test_auto_sync_switch_enables_the_integration(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::sheet-integration.comparison')
+            ->set('integrations.show_teater.auto_sync', true)
+            ->assertSet('integrations.show_teater.enabled', true);
+
+        $this->assertDatabaseHas('sheet_integrations', [
+            'master_data' => MasterData::ShowTeater->value,
+            'mode' => SyncMode::Manual->value,
+            'auto_sync' => true,
+        ]);
+    }
+
+    public function test_auto_sync_without_configuration_shows_error_and_skips_api(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        $component = Livewire::test('pages::sheet-integration.comparison')
+            ->set('integrations.show_teater.auto_sync', true);
+
+        $this->assertNotNull($component->get('error'));
+        $this->assertSame([], $this->sheets->reads);
+    }
+
+    public function test_auto_sync_is_skipped_when_lock_is_held(): void
+    {
+        $this->makeIntegration(MasterData::ShowTeater);
+        $this->actingAs(User::factory()->create());
+
+        Cache::put('sheet_sync_auto_show_teater', true, now()->addMinutes(5));
+
+        $component = Livewire::test('pages::sheet-integration.comparison')
+            ->set('integrations.show_teater.auto_sync', true);
+
+        $this->assertNotNull($component->get('error'));
+        $this->assertSame([], $this->sheets->reads);
+    }
+
+    public function test_fill_missing_returns_comparison_result(): void
+    {
+        ShowTeater::query()->create([
+            'show_id' => 1,
+            'show_date' => '2026-01-01',
+            'setlist' => 'Set A',
+        ]);
+
+        $this->seedShowTeaterSheet([
+            ['show_id' => '1', 'show_date' => '2026-01-01', 'setlist' => 'Set A'],
+        ]);
+
+        $integration = $this->makeIntegration(MasterData::ShowTeater);
+
+        $result = app(SheetSyncService::class)->fillMissing($integration);
+
+        $this->assertInstanceOf(ComparisonResult::class, $result['result']);
     }
 
     public function test_auto_sync_fills_missing_rows_from_sheet_to_database(): void

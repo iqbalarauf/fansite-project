@@ -15,6 +15,9 @@
                         Fetch Data
                     </button>
                 @endunless
+                <flux:button variant="filled" icon="arrow-down-tray" :href="route('live-streaming.export')">
+                    Export to Excel
+                </flux:button>
                 <flux:modal.trigger name="modal-create-live-stream">
                     <flux:button variant="primary" icon="plus">Tambah Live Streaming</flux:button>
                 </flux:modal.trigger>

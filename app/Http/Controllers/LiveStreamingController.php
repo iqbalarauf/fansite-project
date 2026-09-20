@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\LiveStreamingRequest;
 use App\Models\LiveStreaming;
 use App\Support\ListingQuery;
+use App\Support\Spreadsheet;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class LiveStreamingController extends Controller
 {
@@ -48,6 +50,27 @@ class LiveStreamingController extends Controller
             'liveStreams' => $liveStreams,
             'filters' => $filters,
         ]);
+    }
+
+    public function export(): StreamedResponse
+    {
+        $streams = LiveStreaming::query()->orderByDesc('live_date')->get();
+
+        return Spreadsheet::download('live-streaming-'.now()->format('Ymd-His').'.xlsx', [
+            'id',
+            'live_id',
+            'platform',
+            'live_date',
+            'duration',
+            'additional_info',
+        ], $streams->map(static fn (LiveStreaming $stream): array => [
+            $stream->id,
+            $stream->live_id,
+            $stream->platform instanceof \BackedEnum ? $stream->platform->value : (string) $stream->platform,
+            $stream->live_date?->format('Y-m-d'),
+            $stream->duration,
+            $stream->additional_info,
+        ]));
     }
 
     public function store(LiveStreamingRequest $request): RedirectResponse

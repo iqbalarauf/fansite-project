@@ -7,6 +7,7 @@ use App\Services\SheetIntegration\ComparisonResult;
 use App\Services\SheetIntegration\DiffRow;
 use App\Services\SheetIntegration\SheetSyncService;
 use Flux\Flux;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
@@ -115,7 +116,7 @@ new #[Title('Sheet Integration')] class extends Component
             return;
         }
 
-        $this->persistIntegrations();
+        $this->persistIntegration($matches[1]);
 
         if (! $value) {
             return;
@@ -127,31 +128,71 @@ new #[Title('Sheet Integration')] class extends Component
     private function runAutoSync(string $masterValue): void
     {
         $integration = SheetIntegration::query()->where('master_data', $masterValue)->first();
+        $label = MasterData::from($masterValue)->label();
 
         if (! $integration instanceof SheetIntegration || ! $integration->isConfigured()) {
+            $this->error = __(':master: lengkapi Spreadsheet ID dan Nama Sheet sebelum mengaktifkan Auto-Sync.', [
+                'master' => $label,
+            ]);
+
+            return;
+        }
+
+        $lockKey = 'sheet_sync_auto_'.$masterValue;
+
+        if (! Cache::add($lockKey, now()->addMinutes(5))) {
+            $this->error = __(':master: Auto-Sync sedang berjalan, tunggu hingga selesai.', [
+                'master' => $label,
+            ]);
+
             return;
         }
 
         try {
             $result = app(SheetSyncService::class)->fillMissing($integration);
         } catch (Throwable $exception) {
-            $this->error = $integration->master_data->label().': '.$exception->getMessage();
+            $this->error = $label.': '.$exception->getMessage();
 
             return;
+        } finally {
+            Cache::forget($lockKey);
         }
 
         $this->direction ??= SheetSyncService::DIRECTION_DATABASE_TO_SHEET;
         $this->loadStatuses();
-        $this->buildComparisons();
+        $this->error = null;
+        $this->resolutions[$masterValue] = [];
+        $this->recordComparison($masterValue, $result['result']);
 
         Flux::toast(
             variant: 'success',
             text: __('Auto-Sync :master: :toDatabase data diisi ke Database, :toSheet data diisi ke Sheet.', [
-                'master' => $integration->master_data->label(),
+                'master' => $label,
                 'toDatabase' => $result['to_database'],
                 'toSheet' => $result['to_sheet'],
             ]),
         );
+    }
+
+    private function persistIntegration(string $masterValue): void
+    {
+        if (! isset($this->integrations[$masterValue])) {
+            return;
+        }
+
+        $this->validate([
+            "integrations.{$masterValue}.spreadsheet_id" => ['nullable', 'string', 'max:255'],
+            "integrations.{$masterValue}.sheet_name" => ['nullable', 'string', 'max:255'],
+            "integrations.{$masterValue}.header_first_cell" => ['required', 'string', 'regex:/^[A-Za-z]{1,3}[0-9]{1,6}$/'],
+            "integrations.{$masterValue}.enabled" => ['boolean'],
+            "integrations.{$masterValue}.auto_sync" => ['boolean'],
+        ], [], [
+            "integrations.{$masterValue}.spreadsheet_id" => __('Spreadsheet ID'),
+            "integrations.{$masterValue}.sheet_name" => __('Nama Sheet'),
+            "integrations.{$masterValue}.header_first_cell" => __('Header First Cell'),
+        ]);
+
+        $this->persistOne($masterValue, $this->integrations[$masterValue]);
     }
 
     private function persistIntegrations(): void
@@ -169,23 +210,34 @@ new #[Title('Sheet Integration')] class extends Component
         ]);
 
         foreach ($this->integrations as $masterValue => $config) {
-            $cell = $this->parseHeaderCell((string) $config['header_first_cell']);
-
-            SheetIntegration::query()->updateOrCreate(
-                ['master_data' => $masterValue],
-                [
-                    'spreadsheet_id' => filled($config['spreadsheet_id']) ? $config['spreadsheet_id'] : null,
-                    'sheet_name' => filled($config['sheet_name']) ? $config['sheet_name'] : null,
-                    'header_row' => $cell['row'],
-                    'header_column' => $cell['column'],
-                    'mode' => ($config['enabled'] ?? false) ? SyncMode::Manual->value : SyncMode::Disabled->value,
-                    'auto_sync' => (bool) ($config['auto_sync'] ?? false),
-                    'auto_direction' => $config['auto_direction'] ?? SheetSyncService::DIRECTION_DATABASE_TO_SHEET,
-                ],
-            );
-
-            $this->integrations[$masterValue]['header_first_cell'] = $cell['column'].$cell['row'];
+            $this->persistOne($masterValue, $config);
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $config
+     */
+    private function persistOne(string $masterValue, array $config): void
+    {
+        $cell = $this->parseHeaderCell((string) $config['header_first_cell']);
+        $autoSync = (bool) ($config['auto_sync'] ?? false);
+        $enabled = (bool) ($config['enabled'] ?? false) || $autoSync;
+
+        SheetIntegration::query()->updateOrCreate(
+            ['master_data' => $masterValue],
+            [
+                'spreadsheet_id' => filled($config['spreadsheet_id']) ? $config['spreadsheet_id'] : null,
+                'sheet_name' => filled($config['sheet_name']) ? $config['sheet_name'] : null,
+                'header_row' => $cell['row'],
+                'header_column' => $cell['column'],
+                'mode' => $enabled ? SyncMode::Manual->value : SyncMode::Disabled->value,
+                'auto_sync' => $autoSync,
+                'auto_direction' => $config['auto_direction'] ?? SheetSyncService::DIRECTION_DATABASE_TO_SHEET,
+            ],
+        );
+
+        $this->integrations[$masterValue]['header_first_cell'] = $cell['column'].$cell['row'];
+        $this->integrations[$masterValue]['enabled'] = $enabled;
     }
 
     /**
@@ -233,23 +285,28 @@ new #[Title('Sheet Integration')] class extends Component
                 continue;
             }
 
-            $this->comparisons[$masterData->value] = $this->presentResult($result);
+            $this->recordComparison($masterData->value, $result);
+        }
+    }
 
-            $default = $this->direction === SheetSyncService::DIRECTION_SHEET_TO_DATABASE ? 'sheet' : 'database';
+    private function recordComparison(string $masterValue, ComparisonResult $result): void
+    {
+        $this->comparisons[$masterValue] = $this->presentResult($result);
 
-            foreach ($result->rows as $row) {
-                $entry = ['columns' => []];
+        $default = $this->direction === SheetSyncService::DIRECTION_SHEET_TO_DATABASE ? 'sheet' : 'database';
 
-                foreach (array_keys($row->differences) as $column) {
-                    $entry['columns'][$column] = $default;
-                }
+        foreach ($result->rows as $row) {
+            $entry = ['columns' => []];
 
-                if ($row->database === null || $row->sheet === null) {
-                    $entry['row'] = $default;
-                }
-
-                $this->resolutions[$masterData->value][$row->key] = $entry;
+            foreach (array_keys($row->differences) as $column) {
+                $entry['columns'][$column] = $default;
             }
+
+            if ($row->database === null || $row->sheet === null) {
+                $entry['row'] = $default;
+            }
+
+            $this->resolutions[$masterValue][$row->key] = $entry;
         }
     }
 
@@ -395,7 +452,7 @@ new #[Title('Sheet Integration')] class extends Component
 
                             <div class="space-y-1 rounded-lg border border-dashed border-zinc-300 p-3 dark:border-zinc-600">
                                 <flux:switch wire:model.live="integrations.{{ $masterData->value }}.auto_sync" :label="__('Auto-Sync')" />
-                                <flux:text class="text-[11px] text-zinc-500 dark:text-zinc-400">{{ __('Jika aktif: data yang kosong di Database/Sheet otomatis diisi dari sisi yang sudah terisi (dua arah).') }}</flux:text>
+                                <flux:text class="text-[11px] text-zinc-500 dark:text-zinc-400">{{ __('Jika aktif: integrasi ini otomatis diaktifkan, dan data yang kosong di Database/Sheet otomatis diisi dari sisi yang sudah terisi (dua arah).') }}</flux:text>
                             </div>
                         </div>
                     @endforeach

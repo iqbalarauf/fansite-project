@@ -75,7 +75,7 @@ class SheetSyncService
      * created in the database, and rows that exist only in the database are
      * appended to the sheet. Existing rows are preserved as-is.
      *
-     * @return array{to_database: int, to_sheet: int}
+     * @return array{to_database: int, to_sheet: int, result: ComparisonResult}
      */
     public function fillMissing(SheetIntegration $integration): array
     {
@@ -137,7 +137,7 @@ class SheetSyncService
 
         $integration->markSynced('auto_sync');
 
-        return ['to_database' => $toDatabase, 'to_sheet' => $toSheet];
+        return ['to_database' => $toDatabase, 'to_sheet' => $toSheet, 'result' => $result];
     }
 
     /**

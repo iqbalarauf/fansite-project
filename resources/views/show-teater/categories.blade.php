@@ -13,10 +13,22 @@
                 <flux:heading size="xl" class="font-bold">Setlist &amp; Unit Song</flux:heading>
                 <flux:subheading>Kelola data setlist dan unit song pertunjukan teater</flux:subheading>
             </div>
-            <flux:modal.trigger name="modal-create-category">
-                <flux:button variant="primary" icon="plus">Tambah Kategori</flux:button>
-            </flux:modal.trigger>
+            <div class="admin-page-actions">
+                <form method="POST" action="{{ route('show-teater.categories.import') }}" enctype="multipart/form-data" class="flex flex-wrap items-end gap-2">
+                    @csrf
+                    <input type="file" name="file" accept=".csv,text/csv" required class="block w-56 rounded-lg border border-zinc-300 px-3 py-2 text-xs dark:border-zinc-600 dark:bg-zinc-800">
+                    <flux:button type="submit" variant="filled" icon="arrow-up-tray">Import Excel</flux:button>
+                </form>
+                <flux:modal.trigger name="modal-create-category">
+                    <flux:button variant="primary" icon="plus">Tambah Kategori</flux:button>
+                </flux:modal.trigger>
+            </div>
         </div>
+
+        <p class="text-xs text-zinc-500 dark:text-zinc-400">
+            {{ __('Format import CSV:') }} <code>type,name,jp_name,setlist</code> —
+            {{ __('type = setlist/unit_song; kolom setlist diisi nama setlist induk untuk unit_song. Data yang sudah ada akan diperbarui (jp_name).') }}
+        </p>
 
         {{-- Flash Messages --}}
         @if (session('success'))
