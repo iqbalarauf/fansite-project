@@ -68,7 +68,7 @@ class HeaderMenuTest extends TestCase
 
         MenuItem::query()->create(['label' => 'Menu Custom', 'type' => 'link', 'url' => '/custom']);
 
-        Livewire::test('pages::settings.header-menu')
+        Livewire::test('pages::header-menu.index')
             ->assertSee('Item Menu')
             ->assertSee('Galeri')
             ->set('mode', 'custom')
@@ -80,7 +80,7 @@ class HeaderMenuTest extends TestCase
     {
         $this->actingAs(User::factory()->create());
 
-        Livewire::test('pages::settings.header-menu')
+        Livewire::test('pages::header-menu.index')
             ->set('label', 'Jadwal')
             ->set('type', 'page_list')
             ->call('save')
@@ -118,7 +118,7 @@ class HeaderMenuTest extends TestCase
     {
         $this->actingAs(User::factory()->create());
 
-        Livewire::test('pages::settings.header-menu')
+        Livewire::test('pages::header-menu.index')
             ->set('label', 'Kontak')
             ->set('type', 'link')
             ->set('url', 'https://contoh.test')
@@ -129,7 +129,7 @@ class HeaderMenuTest extends TestCase
 
         $item = MenuItem::query()->where('label', 'Kontak')->firstOrFail();
 
-        Livewire::test('pages::settings.header-menu')
+        Livewire::test('pages::header-menu.index')
             ->call('delete', $item->id);
 
         $this->assertDatabaseMissing('menu_items', ['id' => $item->id]);
@@ -151,7 +151,7 @@ class HeaderMenuTest extends TestCase
 
         $this->actingAs(User::factory()->create());
 
-        Livewire::test('pages::settings.header-menu')
+        Livewire::test('pages::header-menu.index')
             ->call('edit', $item->id)
             ->set('label', 'Item')
             ->set('type', 'link')
@@ -193,7 +193,7 @@ class HeaderMenuTest extends TestCase
     {
         $this->actingAs(User::factory()->create());
 
-        Livewire::test('pages::settings.header-menu')
+        Livewire::test('pages::header-menu.index')
             ->set('label', 'Kategori')
             ->set('type', 'group')
             ->call('save')
@@ -202,14 +202,14 @@ class HeaderMenuTest extends TestCase
         $group = MenuItem::query()->where('label', 'Kategori')->firstOrFail();
         $this->assertSame('group', $group->type);
 
-        Livewire::test('pages::settings.header-menu')
+        Livewire::test('pages::header-menu.index')
             ->call('edit', $group->id)
             ->call('save')
             ->assertHasErrors('type');
 
         MenuItem::query()->create(['label' => 'Anak', 'type' => 'link', 'url' => '/anak', 'parent_id' => $group->id]);
 
-        Livewire::test('pages::settings.header-menu')
+        Livewire::test('pages::header-menu.index')
             ->call('edit', $group->id)
             ->call('save')
             ->assertHasNoErrors();

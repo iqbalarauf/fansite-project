@@ -45,7 +45,7 @@ class AppearanceSettingsTest extends TestCase
 
         Cache::put('app_settings', ['hero_image' => 'app/hero/old.jpg'], now()->addHour());
 
-        Livewire::test('pages::settings.appearance')
+        Livewire::test('pages::appearance.index')
             ->set('brandColor', '#4e5fd4')
             ->set('appName', 'Onielity')
             ->set('descApp', 'Fansite baru')
@@ -74,7 +74,7 @@ class AppearanceSettingsTest extends TestCase
 
         $this->actingAs(User::factory()->create());
 
-        Livewire::test('pages::settings.appearance')
+        Livewire::test('pages::appearance.index')
             ->set('appName', 'Onielity')
             ->set('loginImageUpload', UploadedFile::fake()->image('login.jpg'))
             ->call('save')
@@ -91,7 +91,7 @@ class AppearanceSettingsTest extends TestCase
     {
         $this->actingAs(User::factory()->create());
 
-        Livewire::test('pages::settings.appearance')
+        Livewire::test('pages::appearance.index')
             ->set('appName', 'Onielity')
             ->set('brandColor', '#112233')
             ->set('brandColorSecondary', '#445566')
@@ -119,7 +119,7 @@ class AppearanceSettingsTest extends TestCase
     {
         $this->actingAs(User::factory()->create());
 
-        Livewire::test('pages::settings.appearance')
+        Livewire::test('pages::appearance.index')
             ->set('appName', 'Onielity')
             ->set('heroButton1Enabled', true)
             ->set('heroButton1Label', 'Tonton Live')
@@ -149,11 +149,43 @@ class AppearanceSettingsTest extends TestCase
         $this->assertSame('cards', $settings['youtube_display_mode']);
     }
 
+    public function test_appearance_layout_uses_multi_column_grids(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        $this->get(route('appearance.edit'))
+            ->assertOk()
+            ->assertSeeHtml('md:grid-cols-3')
+            ->assertSeeHtml('md:grid-cols-2');
+    }
+
+    public function test_youtube_cards_mode_shows_mock_preview(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::appearance.index')
+            ->set('youtubeEmbedEnabled', true)
+            ->set('youtubeDisplayMode', 'cards')
+            ->assertSee('Preview Tampilan')
+            ->assertSee('Kartu menampilkan 3 video terbaru');
+    }
+
+    public function test_youtube_embed_mode_preview_uses_playlist_embed_url(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::appearance.index')
+            ->set('youtubeEmbedEnabled', true)
+            ->set('youtubePlaylistUrl', 'https://www.youtube.com/playlist?list=PL123')
+            ->set('youtubeDisplayMode', 'embed')
+            ->assertSee('https://www.youtube.com/embed/videoseries?list=PL123', false);
+    }
+
     public function test_brand_color_must_be_a_valid_hex(): void
     {
         $this->actingAs(User::factory()->create());
 
-        Livewire::test('pages::settings.appearance')
+        Livewire::test('pages::appearance.index')
             ->set('brandColor', 'not-a-color')
             ->set('appName', 'Onielity')
             ->call('save')
@@ -173,27 +205,34 @@ class AppearanceSettingsTest extends TestCase
             ->assertSee('--brand-primary: #123456', false);
     }
 
-    public function test_settings_menu_is_rendered_as_horizontal_tabs(): void
+    public function test_standalone_settings_pages_do_not_use_the_settings_tabs(): void
     {
         $this->actingAs(User::factory()->create());
 
         $this->get(route('appearance.edit'))
             ->assertOk()
-            ->assertSee('aria-label="Settings"', false)
             ->assertSee('Appearance')
-            ->assertSee('Features Activation')
-            ->assertSee('Header Menu')
-            ->assertDontSee('App Settings');
+            ->assertDontSee('aria-label="Settings"', false);
     }
 
-    public function test_super_admin_only_tabs_are_hidden_for_other_roles(): void
+    public function test_configuration_sidebar_links_to_standalone_settings_pages_for_super_admin(): void
     {
-        $this->actingAs(User::factory()->contentCreator()->create());
+        $this->actingAs(User::factory()->create());
 
-        $this->get(route('appearance.edit'))
+        $this->get(route('dashboard'))
             ->assertOk()
-            ->assertSee('Appearance')
-            ->assertDontSee('Features Activation')
-            ->assertDontSee('Header Menu');
+            ->assertSee(route('appearance.edit'))
+            ->assertSee(route('features.edit'))
+            ->assertSee(route('header-menu.edit'));
+    }
+
+    public function test_configuration_sidebar_hides_standalone_settings_pages_for_other_roles(): void
+    {
+        $this->actingAs(User::factory()->viewOnly()->create());
+
+        $this->get(route('dashboard'))
+            ->assertOk()
+            ->assertDontSee(route('features.edit'))
+            ->assertDontSee(route('header-menu.edit'));
     }
 }
