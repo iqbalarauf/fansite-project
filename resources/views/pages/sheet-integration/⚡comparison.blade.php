@@ -463,7 +463,7 @@ new #[Title('Sheet Integration')] class extends Component
                     <div class="space-y-4 rounded-xl border border-zinc-200 p-4 dark:border-zinc-700">
                         <div>
                             <flux:heading size="sm">{{ __('Manual Sync') }}</flux:heading>
-                            <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Pilih arah sinkronisasi. Tentukan nilai tiap kolom yang berbeda (Database/Sheet/Lewati); untuk baris yang jumlahnya berbeda, pilih Database, Sheet, atau Lewati.') }}</flux:text>
+                            <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Pilih arah sinkronisasi, lalu tentukan sumber nilai tiap kolom/baris yang berbeda lewat ikon: Database, Sheet, atau Lewati. Klik baris berstatus bukan "Sama" untuk membuka detail perbandingannya.') }}</flux:text>
                         </div>
 
                         <div class="flex flex-wrap gap-3">
@@ -515,7 +515,18 @@ new #[Title('Sheet Integration')] class extends Component
                                             </thead>
                                             <tbody>
                                                 @foreach ($comparison['rows'] as $row)
-                                                    <tr class="border-b border-zinc-100 align-top dark:border-zinc-800" wire:key="row-{{ $masterValue }}-{{ $row['key'] }}">
+                                                    @php
+                                                        $columns = $comparison['columns'];
+                                                        $leftmost = $columns[0] ?? null;
+                                                        $leftmostValue = $row['database'][$leftmost] ?? $row['sheet'][$leftmost] ?? null;
+                                                        $isSame = $row['status'] === 'same';
+                                                        $hasDetail = $columns !== [] && ($row['database'] !== null || $row['sheet'] !== null);
+                                                        $rowResolutions = $resolutions[$masterValue][$row['key']] ?? [];
+                                                        $rowPath = 'resolutions.'.$masterValue.'.'.$row['key'].'.row';
+                                                        $rowCurrent = $rowResolutions['row'] ?? null;
+                                                    @endphp
+
+                                                    <tr class="border-b border-zinc-100 align-top dark:border-zinc-800" wire:key="row-{{ $masterValue }}-{{ $row['key'] }}" x-data="{ open: false }">
                                                         <td class="px-3 py-2 font-mono text-xs text-zinc-600 dark:text-zinc-300">
                                                             {{ $row['is_new'] ? __('(baru)') : $row['key'] }}
                                                         </td>
@@ -523,64 +534,53 @@ new #[Title('Sheet Integration')] class extends Component
                                                             <flux:badge color="{{ $row['status_color'] }}" size="sm">{{ $row['status_label'] }}</flux:badge>
                                                         </td>
                                                         <td class="px-3 py-2">
-                                                            @if ($comparison['columns'] === [] || ($row['database'] === null && $row['sheet'] === null))
+                                                            @if (! $hasDetail)
                                                                 <span class="text-xs text-zinc-400">—</span>
+                                                            @elseif ($isSame)
+                                                                <span class="text-xs text-zinc-600 dark:text-zinc-300">{{ filled($leftmostValue) ? $leftmostValue : '∅' }}</span>
                                                             @else
                                                                 <div class="space-y-2">
-                                                                    @foreach ($comparison['columns'] as $column)
-                                                                        @php
-                                                                            $diff = collect($row['differences'])->firstWhere('column', $column);
-                                                                            $dbValue = $row['database'][$column] ?? null;
-                                                                            $sheetValue = $row['sheet'][$column] ?? null;
-                                                                        @endphp
+                                                                    <button type="button" @click="open = ! open" class="inline-flex items-center gap-1 text-xs font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white">
+                                                                        <flux:icon.chevron-right variant="micro" class="transition-transform" x-bind:class="open ? 'rotate-90' : ''" />
+                                                                        {{ __(':count kolom berbeda', ['count' => count($row['differences'])]) }}
+                                                                    </button>
 
-                                                                        @if ($column !== '')
-                                                                            <div class="rounded-lg border p-2 text-xs {{ $diff ? 'border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/30' : 'border-zinc-100 dark:border-zinc-800' }}">
-                                                                                <p class="font-semibold text-zinc-700 dark:text-zinc-200">{{ $column }}</p>
-                                                                                <div class="mt-1 flex flex-wrap items-center gap-2">
-                                                                                    <span class="text-blue-600 dark:text-blue-400">DB: {{ filled($dbValue) ? $dbValue : '∅' }}</span>
-                                                                                    <span class="text-zinc-300 dark:text-zinc-600">|</span>
-                                                                                    <span class="text-green-600 dark:text-green-400">Sheet: {{ filled($sheetValue) ? $sheetValue : '∅' }}</span>
-                                                                                </div>
+                                                                    <div x-show="open" x-cloak class="space-y-2">
+                                                                        @foreach ($columns as $column)
+                                                                            @php
+                                                                                $columnDiff = collect($row['differences'])->firstWhere('column', $column);
+                                                                                $dbValue = $row['database'][$column] ?? null;
+                                                                                $sheetValue = $row['sheet'][$column] ?? null;
+                                                                                $columnPath = 'resolutions.'.$masterValue.'.'.$row['key'].'.columns.'.$column;
+                                                                                $columnCurrent = $rowResolutions['columns'][$column] ?? null;
+                                                                            @endphp
 
-                                                                                @if ($diff)
-                                                                                    <div class="mt-1 flex flex-wrap gap-3">
-                                                                                        <label class="inline-flex cursor-pointer items-center gap-1.5">
-                                                                                            <input type="radio" wire:model="resolutions.{{ $masterValue }}.{{ $row['key'] }}.columns.{{ $column }}" value="database" class="h-3.5 w-3.5">
-                                                                                            {{ __('Database') }}
-                                                                                        </label>
-                                                                                        <label class="inline-flex cursor-pointer items-center gap-1.5">
-                                                                                            <input type="radio" wire:model="resolutions.{{ $masterValue }}.{{ $row['key'] }}.columns.{{ $column }}" value="sheet" class="h-3.5 w-3.5">
-                                                                                            {{ __('Sheet') }}
-                                                                                        </label>
-                                                                                        <label class="inline-flex cursor-pointer items-center gap-1.5">
-                                                                                            <input type="radio" wire:model="resolutions.{{ $masterValue }}.{{ $row['key'] }}.columns.{{ $column }}" value="skip" class="h-3.5 w-3.5">
-                                                                                            {{ __('Lewati') }}
-                                                                                        </label>
+                                                                            @if ($column !== '')
+                                                                                <div class="rounded-lg border p-2 text-xs {{ $columnDiff ? 'border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/30' : 'border-zinc-100 dark:border-zinc-800' }}">
+                                                                                    <p class="font-semibold text-zinc-700 dark:text-zinc-200">{{ $column }}</p>
+                                                                                    <div class="mt-1 flex flex-wrap items-center gap-2">
+                                                                                        <span class="text-blue-600 dark:text-blue-400">DB: {{ filled($dbValue) ? $dbValue : '∅' }}</span>
+                                                                                        <span class="text-zinc-300 dark:text-zinc-600">|</span>
+                                                                                        <span class="text-green-600 dark:text-green-400">Sheet: {{ filled($sheetValue) ? $sheetValue : '∅' }}</span>
                                                                                     </div>
-                                                                                @endif
-                                                                            </div>
-                                                                        @endif
-                                                                    @endforeach
+
+                                                                                    @if ($columnDiff)
+                                                                                        <div class="mt-1">
+                                                                                            <x-sync-choice :path="$columnPath" :current="$columnCurrent" />
+                                                                                        </div>
+                                                                                    @endif
+                                                                                </div>
+                                                                            @endif
+                                                                        @endforeach
+                                                                    </div>
                                                                 </div>
                                                             @endif
                                                         </td>
                                                         <td class="px-3 py-2">
                                                             @if (in_array($row['status'], ['only_database', 'only_sheet'], true))
-                                                                <div class="flex flex-col items-end gap-1 text-xs">
-                                                                <label class="inline-flex cursor-pointer items-center gap-2">
-                                                                    <input type="radio" wire:model="resolutions.{{ $masterValue }}.{{ $row['key'] }}.row" value="database" class="h-3.5 w-3.5">
-                                                                    {{ __('Database') }}
-                                                                </label>
-                                                                <label class="inline-flex cursor-pointer items-center gap-2">
-                                                                    <input type="radio" wire:model="resolutions.{{ $masterValue }}.{{ $row['key'] }}.row" value="sheet" class="h-3.5 w-3.5">
-                                                                    {{ __('Sheet') }}
-                                                                </label>
-                                                                <label class="inline-flex cursor-pointer items-center gap-2">
-                                                                    <input type="radio" wire:model="resolutions.{{ $masterValue }}.{{ $row['key'] }}.row" value="skip" class="h-3.5 w-3.5">
-                                                                    {{ __('Lewati') }}
-                                                                </label>
-                                                            </div>
+                                                                <div class="flex justify-end">
+                                                                    <x-sync-choice :path="$rowPath" :current="$rowCurrent" />
+                                                                </div>
                                                             @else
                                                                 <span class="text-xs text-zinc-400">—</span>
                                                             @endif

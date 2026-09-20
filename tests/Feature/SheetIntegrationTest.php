@@ -416,6 +416,56 @@ class SheetIntegrationTest extends TestCase
         $this->assertInstanceOf(ComparisonResult::class, $result['result']);
     }
 
+    public function test_resolution_controls_render_as_icon_choices_with_tooltips(): void
+    {
+        ShowTeater::query()->create([
+            'show_id' => 1,
+            'show_date' => '2026-01-01',
+            'setlist' => 'Set A',
+        ]);
+
+        $this->seedShowTeaterSheet([
+            ['show_id' => '1', 'show_date' => '2026-01-01', 'setlist' => 'Set B'],
+        ]);
+
+        $this->makeIntegration(MasterData::ShowTeater);
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::sheet-integration.comparison')
+            ->call('startSync', SheetSyncService::DIRECTION_DATABASE_TO_SHEET)
+            ->assertSee('Ambil nilai dari Database')
+            ->assertSee('Ambil nilai dari Sheet')
+            ->assertSee('Lewati (biarkan apa adanya)')
+            ->assertSee('1 kolom berbeda')
+            ->assertDontSeeHtml('type="radio"');
+    }
+
+    public function test_same_rows_only_show_the_leftmost_column_value(): void
+    {
+        ShowTeater::query()->create([
+            'show_id' => 7,
+            'show_date' => '2026-03-03',
+            'setlist' => 'Set S',
+        ]);
+
+        $this->seedShowTeaterSheet([
+            ['show_id' => '7', 'show_date' => '2026-03-03', 'setlist' => 'Set S'],
+        ]);
+
+        $this->makeIntegration(MasterData::ShowTeater);
+        $this->actingAs(User::factory()->create());
+
+        $component = Livewire::test('pages::sheet-integration.comparison')
+            ->call('startSync', SheetSyncService::DIRECTION_DATABASE_TO_SHEET);
+
+        $this->assertSame('same', $component->get('comparisons')['show_teater']['rows'][0]['status']);
+
+        $component
+            ->assertSee('7')
+            ->assertDontSee('Set S')
+            ->assertDontSee('kolom berbeda');
+    }
+
     public function test_auto_sync_fills_missing_rows_from_sheet_to_database(): void
     {
         ShowTeater::query()->create([

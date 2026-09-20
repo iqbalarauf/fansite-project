@@ -4,6 +4,7 @@ use App\Models\CustomPage;
 use App\Support\BrandPalette;
 use App\Support\HeroLink;
 use App\Support\SettingsStore;
+use App\Support\YoutubeEmbed;
 use Flux\Flux;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -212,6 +213,11 @@ new #[Title('Appearance settings')] class extends Component
         return null;
     }
 
+    public function youtubePreviewEmbedUrl(): ?string
+    {
+        return YoutubeEmbed::embedUrl($this->youtubePlaylistUrl);
+    }
+
     public function updatedHeroButton1LinkType(): void
     {
         $this->heroButton1LinkValue = '';
@@ -244,11 +250,12 @@ new #[Title('Appearance settings')] class extends Component
 }; ?>
 
 <section class="w-full">
-    @include('partials.settings-heading')
+    <div>
+        <flux:heading level="1" size="xl">{{ __('Appearance') }}</flux:heading>
+        <flux:subheading>{{ __('Kelola warna brand dan identitas situs') }}</flux:subheading>
+    </div>
 
-    <flux:heading class="sr-only">{{ __('Appearance settings') }}</flux:heading>
-
-    <x-pages::settings.layout :heading="__('Appearance')" :subheading="__('Kelola warna brand dan identitas situs')">
+    <div class="mt-5 w-full">
         @if (auth()->user()?->isSuperAdmin())
             <form wire:submit="save" class="space-y-6">
                 <div class="space-y-4 rounded-xl border border-zinc-200 p-5 dark:border-zinc-700">
@@ -265,24 +272,26 @@ new #[Title('Appearance settings')] class extends Component
                         ];
                     @endphp
 
-                    @foreach ($brandFields as $field)
-                        <div class="space-y-2 rounded-lg border border-dashed border-zinc-300 p-3 dark:border-zinc-600">
-                            <div class="flex flex-wrap items-center gap-3">
-                                <input
-                                    type="color"
-                                    wire:model.live="{{ $field['key'] }}"
-                                    class="h-11 w-14 cursor-pointer rounded-lg border border-zinc-300 bg-white p-1 dark:border-zinc-600 dark:bg-zinc-800"
-                                    aria-label="{{ __('Color picker') }} {{ $field['label'] }}"
-                                />
-                                <flux:input wire:model.live="{{ $field['key'] }}" :label="__($field['label'])" type="text" placeholder="#6C7CE8" maxlength="7" class="w-40" />
-                                <span class="inline-flex size-9 rounded-full border border-zinc-200 shadow-sm dark:border-zinc-700" style="background-color: {{ $this->{$field['key']} ?: '#6C7CE8' }}"></span>
+                    <div class="grid gap-4 md:grid-cols-3">
+                        @foreach ($brandFields as $field)
+                            <div class="flex flex-col gap-3 rounded-lg border border-dashed border-zinc-300 p-3 dark:border-zinc-600">
+                                <div class="flex items-center gap-3">
+                                    <input
+                                        type="color"
+                                        wire:model.live="{{ $field['key'] }}"
+                                        class="h-11 w-14 shrink-0 cursor-pointer rounded-lg border border-zinc-300 bg-white p-1 dark:border-zinc-600 dark:bg-zinc-800"
+                                        aria-label="{{ __('Color picker') }} {{ $field['label'] }}"
+                                    />
+                                    <span class="inline-flex size-9 shrink-0 rounded-full border border-zinc-200 shadow-sm dark:border-zinc-700" style="background-color: {{ $this->{$field['key']} ?: '#6C7CE8' }}"></span>
+                                </div>
+                                <flux:input wire:model.live="{{ $field['key'] }}" :label="__($field['label'])" type="text" placeholder="#6C7CE8" maxlength="7" />
+                                <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">{{ $field['usage'] }}</flux:text>
+                                @error($field['key'])
+                                    <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                                @enderror
                             </div>
-                            <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">{{ $field['usage'] }}</flux:text>
-                            @error($field['key'])
-                                <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                            @enderror
-                        </div>
-                    @endforeach
+                        @endforeach
+                    </div>
                 </div>
 
                 <div class="space-y-4 rounded-xl border border-zinc-200 p-5 dark:border-zinc-700">
@@ -293,41 +302,52 @@ new #[Title('Appearance settings')] class extends Component
 
                     <flux:textarea wire:model="descApp" :label="__('Desc App')" rows="4" />
 
-                    <div class="space-y-2">
-                        <flux:label>{{ __('App Logo') }}</flux:label>
-                        <input type="file" wire:model="appLogoUpload" accept="image/*" class="block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800">
-                        @error('appLogoUpload')
-                            <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
+                    <div class="grid gap-4 md:grid-cols-3">
+                        <div class="flex flex-col gap-2">
+                            <flux:label>{{ __('App Logo') }}</flux:label>
+                            @if ($this->appLogoPreviewUrl())
+                                <img src="{{ $this->appLogoPreviewUrl() }}" alt="App Logo" class="h-auto w-full rounded-lg border border-zinc-200 object-contain dark:border-zinc-700">
+                            @else
+                                <div class="flex aspect-video w-full items-center justify-center rounded-lg border border-dashed border-zinc-300 text-xs text-zinc-400 dark:border-zinc-600">
+                                    <flux:icon.photo variant="micro" />
+                                </div>
+                            @endif
+                            <input type="file" wire:model="appLogoUpload" accept="image/*" class="block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800">
+                            @error('appLogoUpload')
+                                <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                        </div>
 
-                        @if ($this->appLogoPreviewUrl())
-                            <img src="{{ $this->appLogoPreviewUrl() }}" alt="App Logo" class="mt-2 h-20 w-auto rounded-lg border border-zinc-200 object-contain dark:border-zinc-700">
-                        @endif
-                    </div>
+                        <div class="flex flex-col gap-2">
+                            <flux:label>{{ __('Hero Image') }}</flux:label>
+                            @if ($this->heroImagePreviewUrl())
+                                <img src="{{ $this->heroImagePreviewUrl() }}" alt="Hero Image" class="h-auto w-full rounded-lg border border-zinc-200 object-cover dark:border-zinc-700">
+                            @else
+                                <div class="flex aspect-video w-full items-center justify-center rounded-lg border border-dashed border-zinc-300 text-xs text-zinc-400 dark:border-zinc-600">
+                                    <flux:icon.photo variant="micro" />
+                                </div>
+                            @endif
+                            <input type="file" wire:model="heroImageUpload" accept="image/*" class="block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800">
+                            @error('heroImageUpload')
+                                <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                        </div>
 
-                    <div class="space-y-2">
-                        <flux:label>{{ __('Hero Image') }}</flux:label>
-                        <input type="file" wire:model="heroImageUpload" accept="image/*" class="block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800">
-                        @error('heroImageUpload')
-                            <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
-
-                        @if ($this->heroImagePreviewUrl())
-                            <img src="{{ $this->heroImagePreviewUrl() }}" alt="Hero Image" class="mt-2 h-full w-full rounded-lg border border-zinc-200 object-cover dark:border-zinc-700">
-                        @endif
-                    </div>
-
-                    <div class="space-y-2">
-                        <flux:label>{{ __('Login Image') }}</flux:label>
-                        <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Ditampilkan sebagai panel gambar pada halaman login.') }}</flux:text>
-                        <input type="file" wire:model="loginImageUpload" accept="image/*" class="block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800">
-                        @error('loginImageUpload')
-                            <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
-
-                        @if ($this->loginImagePreviewUrl())
-                            <img src="{{ $this->loginImagePreviewUrl() }}" alt="Login Image" class="mt-2 aspect-video w-full rounded-lg border border-zinc-200 object-cover dark:border-zinc-700">
-                        @endif
+                        <div class="flex flex-col gap-2">
+                            <flux:label>{{ __('Login Image') }}</flux:label>
+                            @if ($this->loginImagePreviewUrl())
+                                <img src="{{ $this->loginImagePreviewUrl() }}" alt="Login Image" class="h-auto w-full rounded-lg border border-zinc-200 object-cover dark:border-zinc-700">
+                            @else
+                                <div class="flex aspect-video w-full items-center justify-center rounded-lg border border-dashed border-zinc-300 text-xs text-zinc-400 dark:border-zinc-600">
+                                    <flux:icon.photo variant="micro" />
+                                </div>
+                            @endif
+                            <input type="file" wire:model="loginImageUpload" accept="image/*" class="block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800">
+                            <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Ditampilkan sebagai panel gambar pada halaman login.') }}</flux:text>
+                            @error('loginImageUpload')
+                                <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                        </div>
                     </div>
                 </div>
 
@@ -337,7 +357,8 @@ new #[Title('Appearance settings')] class extends Component
                         <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Kustomisasi label dan tautan dua tombol pada bagian hero beranda.') }}</flux:text>
                     </div>
 
-                    @foreach ([1, 2] as $buttonIndex)
+                    <div class="grid gap-4 md:grid-cols-2">
+                        @foreach ([1, 2] as $buttonIndex)
                         @php
                             $enabledKey = "heroButton{$buttonIndex}Enabled";
                             $labelKey = "heroButton{$buttonIndex}Label";
@@ -389,6 +410,7 @@ new #[Title('Appearance settings')] class extends Component
                             @endif
                         </div>
                     @endforeach
+                    </div>
                 </div>
 
                 <div class="space-y-4 rounded-xl border border-zinc-200 p-5 dark:border-zinc-700">
@@ -400,21 +422,66 @@ new #[Title('Appearance settings')] class extends Component
                     </label>
 
                     @if ($youtubeEmbedEnabled)
-                        <flux:input wire:model="youtubePlaylistUrl" :label="__('Link Playlist Youtube')" type="text" placeholder="https://www.youtube.com/playlist?list=..." />
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <div class="space-y-4">
+                                <flux:input wire:model.blur="youtubePlaylistUrl" :label="__('Link Playlist Youtube')" type="text" placeholder="https://www.youtube.com/playlist?list=..." />
 
-                        <div class="space-y-2">
-                            <label class="text-sm font-medium">{{ __('Mode Tampilan') }}</label>
-                            <select wire:model.live="youtubeDisplayMode" class="block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800">
-                                <option value="cards">{{ __('Cards (Carousel)') }}</option>
-                                <option value="embed">{{ __('Embed Playlist') }}</option>
-                            </select>
-                            <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">
-                                @if ($youtubeDisplayMode === 'cards')
-                                    {{ __('Menampilkan 7 video terbaru dari RSS YouTube (3 tampil, dapat digeser). Tidak memerlukan API Key.') }}
+                                <div class="space-y-2">
+                                    <label class="text-sm font-medium">{{ __('Mode Tampilan') }}</label>
+                                    <select wire:model.live="youtubeDisplayMode" class="block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800">
+                                        <option value="cards">{{ __('Cards (Carousel)') }}</option>
+                                        <option value="embed">{{ __('Embed Playlist') }}</option>
+                                    </select>
+                                    <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">
+                                        @if ($youtubeDisplayMode === 'cards')
+                                            {{ __('Menampilkan 7 video terbaru dari RSS YouTube (3 tampil, dapat digeser). Tidak memerlukan API Key.') }}
+                                        @else
+                                            {{ __('Menampilkan player playlist langsung dari link yang diberikan.') }}
+                                        @endif
+                                    </flux:text>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2">
+                                <flux:label>{{ __('Preview Tampilan') }}</flux:label>
+
+                                @if ($youtubeDisplayMode === 'embed')
+                                    @if ($this->youtubePreviewEmbedUrl())
+                                        <div class="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700">
+                                            <div class="relative aspect-video">
+                                                <iframe
+                                                    src="{{ $this->youtubePreviewEmbedUrl() }}"
+                                                    title="Youtube Playlist Preview"
+                                                    class="absolute inset-0 h-full w-full"
+                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                                    referrerpolicy="strict-origin-when-cross-origin"
+                                                    allowfullscreen
+                                                    loading="lazy"
+                                                ></iframe>
+                                            </div>
+                                        </div>
+                                    @else
+                                        <div class="flex aspect-video w-full items-center justify-center rounded-xl border border-dashed border-zinc-300 text-xs text-zinc-400 dark:border-zinc-600">
+                                            {{ __('Isi Link Playlist untuk melihat preview.') }}
+                                        </div>
+                                    @endif
                                 @else
-                                    {{ __('Menampilkan player playlist langsung dari link yang diberikan.') }}
+                                    <div class="grid grid-cols-3 gap-3">
+                                        @foreach (range(1, 3) as $card)
+                                            <div class="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700">
+                                                <div class="flex aspect-video w-full items-center justify-center bg-zinc-100 dark:bg-zinc-800">
+                                                    <flux:icon.play-circle variant="solid" class="size-6 text-zinc-400" />
+                                                </div>
+                                                <div class="space-y-1.5 p-3">
+                                                    <div class="h-2 w-full rounded bg-zinc-200 dark:bg-zinc-700"></div>
+                                                    <div class="h-2 w-2/3 rounded bg-zinc-200 dark:bg-zinc-700"></div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                    <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Kartu menampilkan 3 video terbaru, dapat digeser untuk melihat sisanya.') }}</flux:text>
                                 @endif
-                            </flux:text>
+                            </div>
                         </div>
                     @endif
                 </div>
@@ -426,5 +493,5 @@ new #[Title('Appearance settings')] class extends Component
         @else
             <p class="text-sm text-zinc-500 dark:text-zinc-400">{{ __('Pengaturan tampilan hanya dapat diubah oleh Super Admin.') }}</p>
         @endif
-    </x-pages::settings.layout>
+    </div>
 </section>

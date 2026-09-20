@@ -294,11 +294,12 @@ new #[Title('Header Menu')] class extends Component
 }; ?>
 
 <section class="w-full">
-    @include('partials.settings-heading')
+    <div>
+        <flux:heading level="1" size="xl">{{ __('Header Menu') }}</flux:heading>
+        <flux:subheading>{{ __('Kustomisasi menu navigasi header situs publik.') }}</flux:subheading>
+    </div>
 
-    <flux:heading class="sr-only">{{ __('Header Menu') }}</flux:heading>
-
-    <x-pages::settings.layout :heading="__('Header Menu')" :subheading="__('Kustomisasi menu navigasi header situs publik.')">
+    <div class="mt-5 w-full">
         @php
             $rows = $this->menuRows();
             $typeLabels = $this->typeLabels();
@@ -494,5 +495,5 @@ new #[Title('Header Menu')] class extends Component
                 </div>
             </div>
         </div>
-    </x-pages::settings.layout>
+    </div>
 </section>

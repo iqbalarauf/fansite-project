@@ -103,6 +103,15 @@
 
                 @if (auth()->user()->isSuperAdmin())
                     <flux:sidebar.group :heading="__('Configuration')" class="grid">
+                        <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="paint-brush" :href="route('appearance.edit')" :current="request()->routeIs('appearance.edit')" wire:navigate>
+                            {{ __('Appearance') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="bolt" :href="route('features.edit')" :current="request()->routeIs('features.edit')" wire:navigate>
+                            {{ __('Features Activation') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="bars-3" :href="route('header-menu.edit')" :current="request()->routeIs('header-menu.edit')" wire:navigate>
+                            {{ __('Header Menu') }}
+                        </flux:sidebar.item>
                         @if (\App\Support\SettingBag::sheetIntegrationEnabled())
                             <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="table-cells" :href="route('sheet-integration.comparison')" :current="request()->routeIs('sheet-integration.*')" wire:navigate>
                                 {{ __('Sheet Integration') }}
