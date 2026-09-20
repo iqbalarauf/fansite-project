@@ -31,3 +31,5 @@ yarn-error.log
 
 # Do not ignore README.md
 !README.md
+!prd.md
+!design.md
