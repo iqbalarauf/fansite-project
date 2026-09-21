@@ -10,10 +10,12 @@ return new class extends Migration
     {
         Schema::create('timelines', function (Blueprint $table) {
             $table->id();
-            $table->date('date');
+            $table->date('date')->index();
             $table->text('description')->nullable();
             $table->string('image')->nullable();
+            $table->unsignedInteger('sort_order')->default(0)->index();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

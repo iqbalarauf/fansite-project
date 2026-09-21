@@ -62,8 +62,9 @@
                                         <button type="button" class="admin-action-link"
                                                 data-id="{{ $timeline->id }}"
                                                 data-date="{{ $timeline->date?->format('Y-m-d') }}"
-                                                data-description="{{ $timeline->description }}"
-                                                onclick="openEditTimelineModal(this)">Edit</button>
+                                                    data-description="{{ $timeline->description }}"
+                                                    data-sort-order="{{ $timeline->sort_order }}"
+                                                    onclick="openEditTimelineModal(this)">Edit</button>
                                         <form method="POST" action="{{ route('content.timeline.destroy', $timeline) }}" onsubmit="return confirm('Hapus timeline ini?')">
                                             @csrf
                                             @method('DELETE')
@@ -99,6 +100,10 @@
                     <flux:label for="create-timeline-image">Image</flux:label>
                     <input id="create-timeline-image" type="file" name="image" accept="image/*" class="mt-1 block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800">
                 </div>
+                <div>
+                    <flux:label for="create-timeline-sort-order">Urutan Tampil (opsional)</flux:label>
+                    <flux:input id="create-timeline-sort-order" name="sort_order" type="number" min="0" placeholder="0" class="mt-1" />
+                </div>
                 <div class="flex items-center justify-end gap-3 pt-2">
                     <flux:modal.close><flux:button variant="ghost">Batal</flux:button></flux:modal.close>
                     <flux:button type="submit" variant="primary" :disabled="auth()->user()?->isViewOnly()">Simpan</flux:button>
@@ -125,6 +130,10 @@
                     <flux:label for="edit-timeline-image">Image (biarkan kosong bila tidak diganti)</flux:label>
                     <input id="edit-timeline-image" type="file" name="image" accept="image/*" class="mt-1 block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800">
                 </div>
+                <div>
+                    <flux:label for="edit-timeline-sort-order">Urutan Tampil</flux:label>
+                    <flux:input id="edit-timeline-sort-order" name="sort_order" type="number" min="0" class="mt-1" />
+                </div>
                 <div class="flex items-center justify-end gap-3 pt-2">
                     <flux:modal.close><flux:button variant="ghost">Batal</flux:button></flux:modal.close>
                     <flux:button type="submit" variant="primary" :disabled="auth()->user()?->isViewOnly()">Update</flux:button>
@@ -138,6 +147,7 @@
             document.getElementById('edit-timeline-form').action = `{{ url('content/timeline') }}/${target.dataset.id}`;
             document.getElementById('edit-timeline-date').value = target.dataset.date || '';
             document.getElementById('edit-timeline-description').value = target.dataset.description || '';
+            document.getElementById('edit-timeline-sort-order').value = target.dataset.sortOrder || '';
             Flux.modal('modal-edit-timeline').show();
         }
     </script>

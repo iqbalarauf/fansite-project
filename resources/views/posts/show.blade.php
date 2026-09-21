@@ -44,7 +44,7 @@
             @endif
 
             <div class="rich-content mt-8">
-                {!! $post->content !!}
+                {!! \App\Support\HtmlSanitizer::article($post->content) !!}
             </div>
         </div>
     </article>

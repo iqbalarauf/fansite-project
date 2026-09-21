@@ -20,6 +20,7 @@ class TimelineRequest extends FormRequest
             'date' => ['required', 'date'],
             'description' => ['nullable', 'string', 'max:2000'],
             'image' => ['nullable', 'image', 'max:5120'],
+            'sort_order' => ['nullable', 'integer', 'min:0'],
         ];
     }
 }

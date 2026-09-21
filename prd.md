@@ -59,7 +59,7 @@ Aplikasi dibangun berbasis web dengan arsitektur terpusat, sehingga seluruh data
 - **Enums + role-based authorization** (`UserRole`, `ContentSection`, `ConcertStatus`, `MeetGreetEventType`, `LiveStreamingPlatform`, `MasterData`, `SyncMode`, `DiffStatus`) + middleware kustom.
 - **Feature flags** berbasis setting (`SettingBag::featureEnabled()`) untuk mengaktifkan/menonaktifkan News, Blog, Majalah, Trivia, Photobooth, dan Sheet Integration.
 - **Support/Service classes** (`app/Support`): `DashboardAssembler`, `WelcomePageData`, `AboutPageData`, `EventTimeline`, `SettingBag`, `SettingsStore`, `ListingQuery`, `ShowDate`, `CustomPageStatistic`, `BrandPalette`, `HeroLink`, `HeaderMenu`, `YoutubeEmbed`/`YoutubeRss`/`YoutubePlaylist`, `Spreadsheet`, `Csv`.
-- **Soft deletes** pada `show_teater`, `meet_greet_events`, `concert_events`, `custom_pages`, dan `news_posts`/`blog_posts`, dengan penyaringan `deleted_at` di seluruh query (termasuk raw `DB::table`).
+- **Soft deletes** pada `show_teater`, `meet_greet_events`, `concert_events`, `custom_pages`, `news_posts`/`blog_posts`, `magazines`, `gallery_photos`/`gallery_videos`, `timelines`, dan `trivias`, dengan penyaringan `deleted_at` di seluruh query (termasuk raw `DB::table`).
 - **Pipeline fetch data** dari API eksternal (JKT48 public API) via Artisan command.
 
 ---
@@ -229,9 +229,9 @@ Enums: `App\Enums\UserRole`
 | `concert_events` | `ConcertEvents` | Soft deletes, status enum |
 | `live_streaming` | `LiveStreaming` | — |
 | `categories` | `Category` | `type` = `news`/`blog`, slug unik per tipe |
-| `news_posts` | `NewsPost` (extends `Post`) | Soft deletes, SEO, status, jadwal, featured |
-| `blog_posts` | `BlogPost` (extends `Post`) | Soft deletes, SEO, status, jadwal, featured |
-| `magazines` | `Magazine` | File PDF + cover, `is_main`, `views`, `downloads` |
+| `news_posts` | `NewsPost` (extends `Post`) | Soft deletes, SEO, status, jadwal, featured, audit `created_by`/`updated_by`, FULLTEXT `(title, excerpt)` |
+| `blog_posts` | `BlogPost` (extends `Post`) | Soft deletes, SEO, status, jadwal, featured, audit `created_by`/`updated_by`, FULLTEXT `(title, excerpt)` |
+| `magazines` | `Magazine` | File PDF + cover, `is_main`, `views`, `downloads`, soft deletes, audit |
 | `about_settings` | `AboutSettings` | KV |
 | `app_settings` | `AppSettings` | KV (branding + feature flags) |
 | `custom_pages` | `CustomPage` | JSON `blocks`, soft deletes |
@@ -260,9 +260,9 @@ Enums: `App\Enums\UserRole`
 ## 8. Fitur Non-Fungsional
 
 - **Performa:** Statistik dashboard & setting di-cache; pipeline fetch data mengurangi beban manual.
-- **Keamanan:** 2FA, verifikasi email, RBAC, hash password, **soft deletes** untuk recovery data, feature flags berbasis setting.
+- **Keamanan:** 2FA, verifikasi email, RBAC, hash password, **soft deletes** untuk recovery data, feature flags berbasis setting, serta **sanitasi HTML** (`App\Support\HtmlSanitizer`) untuk konten artikel (profil ketat) dan blok embed page builder (profil longgar) guna mencegah XSS.
 - **Idempotensi:** `TheaterReference` mencegah duplikasi saat fetch dari API JKT48; soft delete pada `show_teater` menjaga `show_id` tetap stabil.
-- **Testing:** 53 file test PHPUnit (feature) yang mencakup auth, settings, role access, feature toggle, soft delete, setiap domain data, serta Sheet Integration & ekspor/impor Excel.
+- **Testing:** 60 file test PHPUnit (feature) yang mencakup auth, settings, role access, feature toggle, soft delete, setiap domain data, Sheet Integration, ekspor/impor Excel, serta **HTML sanitizer** & `sort_order` konten.
 
 ---
 
@@ -289,18 +289,18 @@ Status selesai (September 2026):
 - [x] **Refactor kategori:** `ShowTeaterCategoriesController` & `ShowTeaterController` memakai model Eloquent `ShowTeaterCategories` (scopes `setlists`/`unitSongs`/`active`).
 - [x] **Fase 2:** index komposit (`menu_items`, `news_posts`/`blog_posts`, `photobooths`, `live_streaming`, `timelines`), kolom `sort_order` pada tabel galeri/timeline/trivia (schema + urutan baca), **soft delete** untuk tabel konten Eloquent (`magazines`, `gallery_*`, `timelines`, `trivias`).
 - [x] **Fase 3:** kolom audit `created_by`/`updated_by` (trait `HasAuditColumns` pada post, magazine, custom page), index **FULLTEXT** `(title, excerpt)` untuk news/blog, typed accessors `SettingBag::bool/string/int/array`.
+- [x] **HTML Sanitizer** (`App\Support\HtmlSanitizer`, berbasis DOM) untuk konten artikel (profil `article`) dan blok embed page builder (profil `embed`).
+- [x] **Input `sort_order`** pada UI admin galeri (foto/video), timeline, dan trivia.
+- [x] **Konsolidasi migrasi:** 10 migrasi inkremental (change/add/optimize/adjust) digabung ke file `create` terkait → 35 menjadi **25 file** (baseline tetap berbasis migrasi; kompatibel MySQL & SQLite).
 
 Sisa backlog yang belum dikerjakan:
 
-1. **HTML sanitizer** untuk blok Embed (raw HTML) dan konten artikel (XSS).
-2. **Unifikasi** markup `block-preview.blade.php` vs `render-block.blade.php`.
-3. Unifikasi tabel `news_posts`/`blog_posts` menjadi satu tabel `posts` + `type` (migrasi & query besar; dipertimbangkan bila jenis konten bertambah).
-4. Input `sort_order` pada UI admin galeri/timeline/trivia (schema & urutan baca sudah siap).
-5. Squash migrasi (`php artisan schema:dump`) — dipertimbangkan setelah skema stabil.
-6. Konsistensi akses DB: sisa raw `DB::table` (mis. `ShowTeaterCategoriesSeeder` bulk insert sengaja raw).
-7. Test tambahan untuk mode tampilan (full/welcome) & background color rendering page builder.
-8. Otorisasi tingkat-kebijakan: penerapan Policy untuk kepemilikan/modifikasi konten.
-9. Pertimbangkan penghapusan kolom teks `show_teater.setlist`/`unit_song` setelah seluruh jalur baca memakai normalisasi.
+1. **Unifikasi** markup `block-preview.blade.php` vs `render-block.blade.php`.
+2. Unifikasi tabel `news_posts`/`blog_posts` menjadi satu tabel `posts` + `type` (migrasi & query besar; dipertimbangkan bila jenis konten bertambah).
+3. Konsistensi akses DB: sisa raw `DB::table` (mis. `ShowTeaterCategoriesSeeder` bulk insert sengaja raw).
+4. Test tambahan untuk mode tampilan (full/welcome) & background color rendering page builder.
+5. Otorisasi tingkat-kebijakan: penerapan Policy untuk kepemilikan/modifikasi konten.
+6. Pertimbangkan penghapusan kolom teks `show_teater.setlist`/`unit_song` setelah seluruh jalur baca memakai normalisasi.
 
 ---
 

@@ -21,6 +21,8 @@ return new class extends Migration
             $table->string('display_mode')->default('full');
             $table->string('background_color')->default('slate');
             $table->string('title_alignment')->default('left');
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->softDeletes();
             $table->timestamps();
         });

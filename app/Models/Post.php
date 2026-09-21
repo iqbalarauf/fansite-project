@@ -4,7 +4,9 @@ namespace App\Models;
 
 use App\Enums\ContentSection;
 use App\Models\Concerns\HasAuditColumns;
+use App\Support\HtmlSanitizer;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -41,6 +43,16 @@ abstract class Post extends Model
     }
 
     abstract public function section(): ContentSection;
+
+    /**
+     * Sanitasi konten HTML saat disimpan (mencegah XSS).
+     */
+    protected function content(): Attribute
+    {
+        return Attribute::make(
+            set: static fn (?string $value): string => HtmlSanitizer::article($value),
+        );
+    }
 
     /**
      * @return BelongsTo<Category, $this>

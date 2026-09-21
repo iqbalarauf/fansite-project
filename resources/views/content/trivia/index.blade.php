@@ -62,8 +62,9 @@
                                         <button type="button" class="admin-action-link"
                                                 data-id="{{ $trivia->id }}"
                                                 data-title="{{ $trivia->title }}"
-                                                data-description="{{ $trivia->description }}"
-                                                onclick="openEditTriviaModal(this)">Edit</button>
+                                                    data-description="{{ $trivia->description }}"
+                                                    data-sort-order="{{ $trivia->sort_order }}"
+                                                    onclick="openEditTriviaModal(this)">Edit</button>
                                         <form method="POST" action="{{ route('content.trivia.destroy', $trivia) }}" onsubmit="return confirm('Hapus trivia ini?')">
                                             @csrf
                                             @method('DELETE')
@@ -99,6 +100,10 @@
                     <flux:label for="create-trivia-image">Image (opsional)</flux:label>
                     <input id="create-trivia-image" type="file" name="image" accept="image/*" class="mt-1 block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800">
                 </div>
+                <div>
+                    <flux:label for="create-trivia-sort-order">Urutan Tampil (opsional)</flux:label>
+                    <flux:input id="create-trivia-sort-order" name="sort_order" type="number" min="0" placeholder="0" class="mt-1" />
+                </div>
                 <div class="flex items-center justify-end gap-3 pt-2">
                     <flux:modal.close><flux:button variant="ghost">Batal</flux:button></flux:modal.close>
                     <flux:button type="submit" variant="primary" :disabled="auth()->user()?->isViewOnly()">Simpan</flux:button>
@@ -125,6 +130,10 @@
                     <flux:label for="edit-trivia-image">Image (biarkan kosong bila tidak diganti)</flux:label>
                     <input id="edit-trivia-image" type="file" name="image" accept="image/*" class="mt-1 block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800">
                 </div>
+                <div>
+                    <flux:label for="edit-trivia-sort-order">Urutan Tampil</flux:label>
+                    <flux:input id="edit-trivia-sort-order" name="sort_order" type="number" min="0" class="mt-1" />
+                </div>
                 <div class="flex items-center justify-end gap-3 pt-2">
                     <flux:modal.close><flux:button variant="ghost">Batal</flux:button></flux:modal.close>
                     <flux:button type="submit" variant="primary" :disabled="auth()->user()?->isViewOnly()">Update</flux:button>
@@ -138,6 +147,7 @@
             document.getElementById('edit-trivia-form').action = `{{ url('content/trivia') }}/${target.dataset.id}`;
             document.getElementById('edit-trivia-title').value = target.dataset.title || '';
             document.getElementById('edit-trivia-description').value = target.dataset.description || '';
+            document.getElementById('edit-trivia-sort-order').value = target.dataset.sortOrder || '';
             Flux.modal('modal-edit-trivia').show();
         }
     </script>

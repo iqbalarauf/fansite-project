@@ -22,7 +22,10 @@ return new class extends Migration
             $table->boolean('is_main')->default(false)->index();
             $table->unsignedBigInteger('views')->default(0);
             $table->unsignedBigInteger('downloads')->default(0);
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
