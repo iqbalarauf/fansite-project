@@ -5,6 +5,7 @@ use App\Http\Controllers\AboutController;
 use App\Http\Controllers\AdminSearchController;
 use App\Http\Controllers\ConcertEventsController;
 use App\Http\Controllers\Content\CategoryController;
+use App\Http\Controllers\Content\EditorImageController;
 use App\Http\Controllers\Content\GalleryController;
 use App\Http\Controllers\Content\PostController;
 use App\Http\Controllers\Content\TimelineController;
@@ -111,6 +112,9 @@ Route::middleware(['auth', 'verified', 'block-view-only-writes'])->group(functio
             Route::post('magazines/{magazine}/main', [MagazineController::class, 'setMain'])->name('magazines.set-main');
             Route::delete('magazines/{magazine}', [MagazineController::class, 'destroy'])->name('magazines.destroy');
         });
+
+        // Unggah gambar dari rich text editor
+        Route::post('content/editor/image', EditorImageController::class)->name('content.editor.image');
 
         // News & Blog (fitur sama, tabel berbeda)
         foreach (ContentSection::cases() as $contentSection) {

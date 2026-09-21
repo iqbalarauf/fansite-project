@@ -164,8 +164,8 @@
                                     {{ $event['type'] }}
                                 </span>
                                 <div class="min-w-0 flex-1">
-                                    @if (in_array($event['type'], ['Event', 'Meet & Greet'], true) && ! empty($event['purchase_link']))
-                                        <a href="{{ $event['purchase_link'] }}" target="_blank" rel="noopener" class="line-clamp-2 text-base font-bold text-slate-900 dark:text-white">{{ $event['name'] }}</a>
+                                    @if (! empty($event['purchase_link']))
+                                        <a href="{{ $event['purchase_link'] }}" target="_blank" rel="noopener" class="line-clamp-2 text-base font-bold text-slate-900 transition hover:text-indigo-600 dark:text-white dark:hover:text-indigo-400">{{ $event['name'] }}</a>
                                     @else
                                         <p class="line-clamp-2 text-base font-bold text-slate-900 dark:text-white">{{ $event['name'] }}</p>
                                     @endif

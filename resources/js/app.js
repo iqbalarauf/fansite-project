@@ -37,12 +37,7 @@ function runCommand(editor, command) {
             return chain.extendMarkRange('link').unsetLink().run();
         }
         case 'image': {
-            const url = window.prompt('URL gambar:', 'https://');
-
-            if (url) {
-                return chain.setImage({ src: url }).run();
-            }
-
+            // Ditangani melalui input unggah berkas (lihat initRichText).
             return false;
         }
         case 'undo':
@@ -135,8 +130,56 @@ function initRichText(root) {
         },
     });
 
+    const imageInput = root.querySelector('[data-rich-text-image-input]');
+    const imageUploadUrl = root.dataset.imageUploadUrl;
+    const csrfToken = root.dataset.csrfToken || '';
+
+    if (imageInput && imageUploadUrl) {
+        imageInput.addEventListener('change', async () => {
+            const file = imageInput.files && imageInput.files[0];
+
+            if (!file) {
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('image', file);
+
+                const response = await fetch(imageUploadUrl, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json',
+                    },
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    throw new Error('Upload gagal');
+                }
+
+                const data = await response.json();
+
+                if (data.url) {
+                    editor.chain().focus().setImage({ src: data.url }).run();
+                }
+            } catch (error) {
+                window.alert('Gagal mengunggah gambar. Pastikan berkas berupa gambar (maks. 5MB).');
+            } finally {
+                imageInput.value = '';
+            }
+        });
+    }
+
     root.querySelectorAll('[data-rich-text-command]').forEach((button) => {
         button.addEventListener('click', () => {
+            if (button.dataset.richTextCommand === 'image' && imageInput) {
+                imageInput.click();
+
+                return;
+            }
+
             runCommand(editor, button.dataset.richTextCommand);
         });
     });

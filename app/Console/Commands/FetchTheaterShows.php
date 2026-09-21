@@ -77,7 +77,9 @@ class FetchTheaterShows extends Command
      */
     private function processShow(array $show, string $idolShortname): void
     {
-        $referenceCode = $show['reference_code'] ?? null;
+        // Reference code diambil dari data.link (query ?code=), fallback ke reference_code.
+        $referenceCode = $this->extractReferenceCode($show['link'] ?? null, $show['reference_code'] ?? null);
+
         if (! $referenceCode) {
             return;
         }
@@ -85,11 +87,16 @@ class FetchTheaterShows extends Command
         $date = $show['date'] ?? null;
         $title = isset($show['title']) ? trim((string) $show['title']) : '';
 
-        $alreadySynced = $date && $title !== '' && $this->showExists((string) $date, $title);
+        if (! $date || $title === '') {
+            return;
+        }
 
-        // Reference sudah pernah diproses: bila show-nya juga sudah ada, beri tahu sudah tersinkronisasi.
+        $alreadySynced = $this->showExists((string) $date, $title);
+
+        // Reference sudah pernah diproses pada bulan berjalan.
         if (TheaterReference::query()->where('reference_code', $referenceCode)->exists()) {
             if ($alreadySynced) {
+                $this->attachReferenceCode((string) $date, $title, $referenceCode);
                 $this->error('Show terbaru sudah tersinkronisasi');
             }
 
@@ -104,13 +111,10 @@ class FetchTheaterShows extends Command
             return;
         }
 
-        if (! $date || $title === '') {
-            return;
-        }
-
-        $this->recordReference((string) $referenceCode);
+        $this->recordReference($referenceCode);
 
         if ($alreadySynced) {
+            $this->attachReferenceCode((string) $date, $title, $referenceCode);
             $this->error('Show terbaru sudah tersinkronisasi');
 
             return;
@@ -123,12 +127,57 @@ class FetchTheaterShows extends Command
             'show_id' => $newShowId,
             'show_date' => (string) $date,
             'setlist' => $title,
+            'reference_code' => $referenceCode,
             'is_scraped_data' => 1,
         ]);
 
         app(ShowTeaterNormalizer::class)->syncShow($newShowId);
 
         $this->info("Saved show: {$newShowId} - {$date} - {$title}");
+    }
+
+    /**
+     * Isi reference_code pada show yang sudah ada namun belum memiliki reference_code.
+     */
+    private function attachReferenceCode(string $date, string $title, string $referenceCode): void
+    {
+        $dateSlash = str_replace('-', '/', $date);
+
+        ShowTeater::withTrashed()
+            ->where(function ($query) use ($date, $dateSlash): void {
+                $query->where('show_date', $date)->orWhere('show_date', $dateSlash);
+            })
+            ->where('setlist', $title)
+            ->whereNull('reference_code')
+            ->update(['reference_code' => $referenceCode]);
+    }
+
+    /**
+     * Ambil reference code dari link (mis. ...?code=SH79AC); fallback ke field reference_code.
+     *
+     * @param  mixed  $link
+     * @param  mixed  $fallback
+     */
+    private function extractReferenceCode($link, $fallback): ?string
+    {
+        if (is_string($link) && $link !== '') {
+            $query = parse_url($link, PHP_URL_QUERY);
+
+            if (is_string($query)) {
+                parse_str($query, $params);
+
+                if (isset($params['code']) && is_string($params['code']) && $params['code'] !== '') {
+                    return $params['code'];
+                }
+            }
+
+            // Link berupa kode langsung (tanpa skema/separator).
+            if (! str_contains($link, '/') && ! str_contains($link, '?')) {
+                return $link;
+            }
+        }
+
+        return is_string($fallback) && $fallback !== '' ? $fallback : null;
     }
 
     private function showExists(string $date, string $title): bool
