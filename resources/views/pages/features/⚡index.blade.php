@@ -128,8 +128,8 @@ new #[Title('Features Activation')] class extends Component
                 <div class="space-y-6">
                     <div class="space-y-4 rounded-xl border border-zinc-200 p-4 dark:border-zinc-700">
                         <div>
-                            <p class="text-sm font-semibold text-zinc-700 dark:text-zinc-200">{{ __('Galeri — Tampilan Publik') }}</p>
-                            <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Pilih konten yang ditampilkan di halaman Galeri publik.') }}</p>
+                            <p class="text-sm font-semibold text-zinc-700 dark:text-zinc-200">{{ __('Galeri di Landing Page') }}</p>
+                            <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Pilih konten yang ditampilkan di halaman Landing Page.') }}</p>
                         </div>
 
                         @foreach (['photos' => 'Foto', 'videos' => 'Video', 'both' => 'Keduanya'] as $value => $label)
@@ -144,8 +144,8 @@ new #[Title('Features Activation')] class extends Component
 
                     <div class="space-y-4 rounded-xl border border-zinc-200 p-4 dark:border-zinc-700">
                         <div>
-                            <p class="text-sm font-semibold text-zinc-700 dark:text-zinc-200">{{ __('Kartu "Berita Terbaru" (Welcome)') }}</p>
-                            <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Pilih sumber konten untuk kartu di halaman Welcome.') }}</p>
+                            <p class="text-sm font-semibold text-zinc-700 dark:text-zinc-200">{{ __('Konten yang ditampilkan di Landing Page') }}</p>
+                            <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Pilih konten yang ditampilkan di Landing Page.') }}</p>
                         </div>
 
                         @foreach (['news' => 'News', 'blog' => 'Blog', 'magazines' => 'Majalah', 'trivia' => 'Trivia'] as $value => $label)

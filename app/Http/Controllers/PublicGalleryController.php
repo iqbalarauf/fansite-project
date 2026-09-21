@@ -16,10 +16,10 @@ class PublicGalleryController extends Controller
         return view('gallery.index', [
             'mode' => $mode,
             'photos' => in_array($mode, ['photos', 'both'], true)
-                ? GalleryPhoto::query()->latest()->paginate(12, ['*'], 'photo_page')
+                ? GalleryPhoto::query()->orderBy('sort_order')->orderByDesc('created_at')->paginate(12, ['*'], 'photo_page')
                 : null,
             'videos' => in_array($mode, ['videos', 'both'], true)
-                ? GalleryVideo::query()->latest()->paginate(9, ['*'], 'video_page')
+                ? GalleryVideo::query()->orderBy('sort_order')->orderByDesc('created_at')->paginate(9, ['*'], 'video_page')
                 : null,
         ]);
     }

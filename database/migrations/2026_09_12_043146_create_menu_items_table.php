@@ -18,6 +18,8 @@ return new class extends Migration
             $table->foreignId('page_id')->nullable()->constrained('custom_pages')->nullOnDelete();
             $table->unsignedInteger('sort_order')->default(0);
             $table->timestamps();
+
+            $table->index(['parent_id', 'sort_order']);
         });
     }
 

@@ -78,7 +78,7 @@ class TriviaTest extends TestCase
         $this->delete(route('content.trivia.destroy', $trivia))
             ->assertRedirect(route('content.trivia.index'));
 
-        $this->assertDatabaseMissing('trivias', ['id' => $trivia->id]);
+        $this->assertSoftDeleted('trivias', ['id' => $trivia->id]);
         Storage::disk('public')->assertMissing($image);
     }
 }

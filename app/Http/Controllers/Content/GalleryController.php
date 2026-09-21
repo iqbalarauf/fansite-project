@@ -29,7 +29,8 @@ class GalleryController extends Controller
                         ->orWhere('credit_photographer', 'like', "%{$filters['search']}%");
                 });
             })
-            ->latest()
+            ->orderBy('sort_order')
+            ->orderByDesc('created_at')
             ->paginate($filters['per_page'], ['*'], 'photo_page')
             ->withQueryString();
 
@@ -40,7 +41,8 @@ class GalleryController extends Controller
                         ->orWhere('credit_account', 'like', "%{$filters['search']}%");
                 });
             })
-            ->latest()
+            ->orderBy('sort_order')
+            ->orderByDesc('created_at')
             ->paginate($filters['per_page'], ['*'], 'video_page')
             ->withQueryString();
 
@@ -58,6 +60,7 @@ class GalleryController extends Controller
             'photo' => $request->file('photo')->store('gallery/photos', 'public'),
             'description' => $request->validated('description'),
             'credit_photographer' => $request->validated('credit_photographer'),
+            'sort_order' => (int) ($request->validated('sort_order') ?? 0),
         ]);
 
         return redirect()->route('content.gallery.index', ['tab' => 'photos'])
@@ -69,6 +72,7 @@ class GalleryController extends Controller
         $data = [
             'description' => $request->validated('description'),
             'credit_photographer' => $request->validated('credit_photographer'),
+            'sort_order' => (int) ($request->validated('sort_order') ?? 0),
         ];
 
         if ($request->hasFile('photo')) {
@@ -100,6 +104,7 @@ class GalleryController extends Controller
             'url' => $url,
             'title' => $request->validated('title'),
             'credit_account' => $request->validated('credit_account'),
+            'sort_order' => (int) ($request->validated('sort_order') ?? 0),
         ]);
 
         return redirect()->route('content.gallery.index', ['tab' => 'videos'])
@@ -115,6 +120,7 @@ class GalleryController extends Controller
             'url' => $url,
             'title' => $request->validated('title'),
             'credit_account' => $request->validated('credit_account'),
+            'sort_order' => (int) ($request->validated('sort_order') ?? 0),
         ]);
 
         return redirect()->route('content.gallery.index', ['tab' => 'videos'])

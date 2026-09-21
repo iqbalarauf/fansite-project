@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\AboutSettings;
 use App\Models\ShowTeater;
 use App\Models\TheaterReference;
+use App\Support\ShowTeaterNormalizer;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 
@@ -123,6 +124,8 @@ class FetchTheaterShows extends Command
             'setlist' => $title,
             'is_scraped_data' => 1,
         ]);
+
+        app(ShowTeaterNormalizer::class)->syncShow($newShowId);
 
         $this->info("Saved show: {$newShowId} - {$date} - {$title}");
     }

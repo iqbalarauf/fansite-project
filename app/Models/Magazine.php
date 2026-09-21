@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasAuditColumns;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
     'title',
@@ -19,6 +21,9 @@ use Illuminate\Database\Eloquent\Model;
 ])]
 class Magazine extends Model
 {
+    use HasAuditColumns;
+    use SoftDeletes;
+
     /**
      * @return array<string, string>
      */

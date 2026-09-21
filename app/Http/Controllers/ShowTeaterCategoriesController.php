@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ShowTeaterCategories;
 use App\Support\Spreadsheet;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class ShowTeaterCategoriesController extends Controller
 {
@@ -25,67 +25,46 @@ class ShowTeaterCategoriesController extends Controller
         $sortDir = $sortDir === 'desc' ? 'desc' : 'asc';
 
         // --- Setlist table ---
-        $setlistQuery = DB::table('show_teater_categories as c')
-            ->where('c.type', 'setlist')
-            ->select(
-                'c.id',
-                'c.name',
-                'c.jp_name',
-                'c.is_active as is_active',
-                'c.created_at',
-                DB::raw("CONCAT(c.name, IF(c.jp_name IS NOT NULL AND c.jp_name != '', CONCAT(' (', c.jp_name, ')'), '')) as display_name")
-            );
-
-        if ($search && $tab === 'setlist') {
-            $setlistQuery->where(function ($q) use ($search) {
-                $q->where('c.name', 'like', "%{$search}%")
-                    ->orWhere('c.jp_name', 'like', "%{$search}%");
-            });
-        }
-
-        $setlists = $setlistQuery->orderBy("c.{$sortBy}", $sortDir)->paginate($perPage, ['*'], 'setlist_page')->withQueryString();
+        $setlists = ShowTeaterCategories::query()
+            ->setlists()
+            ->when($search && $tab === 'setlist', function ($query) use ($search): void {
+                $query->where(function ($nested) use ($search): void {
+                    $nested->where('name', 'like', "%{$search}%")
+                        ->orWhere('jp_name', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy($sortBy, $sortDir)
+            ->paginate($perPage, ['*'], 'setlist_page')
+            ->withQueryString();
 
         // --- Unit Song table ---
-        $unitSongQuery = DB::table('show_teater_categories as c')
+        $unitSongs = ShowTeaterCategories::query()
+            ->from('show_teater_categories as c')
             ->leftJoin('show_teater_categories as s', 'c.setlist_id', '=', 's.id')
             ->where('c.type', 'unit_song')
-            ->select(
-                'c.id',
-                'c.name',
-                'c.jp_name',
-                'c.setlist_id',
-                'c.is_active as is_active',
-                'c.created_at',
-                's.name as setlist_name',
-                's.jp_name as setlist_jp_name',
-                DB::raw("CONCAT(c.name, IF(c.jp_name IS NOT NULL AND c.jp_name != '', CONCAT(' (', c.jp_name, ')'), '')) as display_name"),
-                DB::raw("CONCAT(s.name, IF(s.jp_name IS NOT NULL AND s.jp_name != '', CONCAT(' (', s.jp_name, ')'), '')) as display_setlist_name")
-            );
+            ->select('c.*', 's.name as setlist_name', 's.jp_name as setlist_jp_name')
+            ->when($search && $tab === 'unit_song', function ($query) use ($search): void {
+                $query->where(function ($nested) use ($search): void {
+                    $nested->where('c.name', 'like', "%{$search}%")
+                        ->orWhere('c.jp_name', 'like', "%{$search}%")
+                        ->orWhere('s.name', 'like', "%{$search}%");
+                });
+            })
+            ->when($setlistFilter, fn ($query) => $query->where('c.setlist_id', $setlistFilter))
+            ->orderBy("c.{$sortBy}", $sortDir)
+            ->paginate($perPage, ['*'], 'unit_page')
+            ->withQueryString();
 
-        if ($search && $tab === 'unit_song') {
-            $unitSongQuery->where(function ($q) use ($search) {
-                $q->where('c.name', 'like', "%{$search}%")
-                    ->orWhere('c.jp_name', 'like', "%{$search}%")
-                    ->orWhere('s.name', 'like', "%{$search}%");
-            });
-        }
-
-        if ($setlistFilter) {
-            $unitSongQuery->where('c.setlist_id', $setlistFilter);
-        }
-
-        $unitSongs = $unitSongQuery->orderBy("c.{$sortBy}", $sortDir)->paginate($perPage, ['*'], 'unit_page')->withQueryString();
-
-        // All active setlists for dropdowns
-        $allSetlists = DB::table('show_teater_categories')
-            ->where('type', 'setlist')
-            ->where('is_active', 1)
+        // All active setlists for dropdowns.
+        $allSetlists = ShowTeaterCategories::query()
+            ->setlists()
+            ->active()
             ->orderBy('name')
             ->get(['id', 'name', 'jp_name']);
 
-        // All setlists (including inactive) for filter dropdown
-        $allSetlistsForFilter = DB::table('show_teater_categories')
-            ->where('type', 'setlist')
+        // All setlists (including inactive) for the filter dropdown.
+        $allSetlistsForFilter = ShowTeaterCategories::query()
+            ->setlists()
             ->orderBy('name')
             ->get(['id', 'name']);
 
@@ -147,26 +126,18 @@ class ShowTeaterCategoriesController extends Controller
             }
 
             if ($type === 'setlist') {
-                $existing = DB::table('show_teater_categories')
-                    ->where('type', 'setlist')
-                    ->where('name', $name)
-                    ->first();
+                $setlist = ShowTeaterCategories::query()->setlists()->where('name', $name)->first();
 
-                if ($existing) {
-                    DB::table('show_teater_categories')->where('id', $existing->id)->update([
-                        'jp_name' => $jpName !== '' ? $jpName : null,
-                        'updated_at' => now(),
-                    ]);
+                if ($setlist) {
+                    $setlist->update(['jp_name' => $jpName !== '' ? $jpName : null]);
                     $updated++;
                 } else {
-                    DB::table('show_teater_categories')->insert([
-                        'type' => 'setlist',
+                    ShowTeaterCategories::query()->create([
+                        'type' => ShowTeaterCategories::TYPE_SETLIST,
                         'name' => $name,
                         'jp_name' => $jpName !== '' ? $jpName : null,
                         'setlist_id' => null,
-                        'is_active' => 1,
-                        'created_at' => now(),
-                        'updated_at' => now(),
+                        'is_active' => true,
                     ]);
                     $added++;
                 }
@@ -180,10 +151,7 @@ class ShowTeaterCategoriesController extends Controller
                 continue;
             }
 
-            $setlist = DB::table('show_teater_categories')
-                ->where('type', 'setlist')
-                ->where('name', $setlistName)
-                ->first();
+            $setlist = ShowTeaterCategories::query()->setlists()->where('name', $setlistName)->first();
 
             if (! $setlist) {
                 $errors[] = "Baris {$line}: setlist \"{$setlistName}\" tidak ditemukan.";
@@ -191,27 +159,22 @@ class ShowTeaterCategoriesController extends Controller
                 continue;
             }
 
-            $existing = DB::table('show_teater_categories')
-                ->where('type', 'unit_song')
+            $existing = ShowTeaterCategories::query()
+                ->unitSongs()
                 ->where('setlist_id', $setlist->id)
                 ->where('name', $name)
                 ->first();
 
             if ($existing) {
-                DB::table('show_teater_categories')->where('id', $existing->id)->update([
-                    'jp_name' => $jpName !== '' ? $jpName : null,
-                    'updated_at' => now(),
-                ]);
+                $existing->update(['jp_name' => $jpName !== '' ? $jpName : null]);
                 $updated++;
             } else {
-                DB::table('show_teater_categories')->insert([
-                    'type' => 'unit_song',
+                ShowTeaterCategories::query()->create([
+                    'type' => ShowTeaterCategories::TYPE_UNIT_SONG,
                     'name' => $name,
                     'jp_name' => $jpName !== '' ? $jpName : null,
                     'setlist_id' => $setlist->id,
-                    'is_active' => 1,
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'is_active' => true,
                 ]);
                 $added++;
             }
@@ -236,11 +199,11 @@ class ShowTeaterCategoriesController extends Controller
             'setlist_id' => 'required_if:type,unit_song|nullable|exists:show_teater_categories,id',
         ]);
 
-        $query = DB::table('show_teater_categories')
+        $query = ShowTeaterCategories::query()
             ->where('type', $validated['type'])
             ->where('name', $validated['name']);
 
-        if ($validated['type'] === 'unit_song' && ! empty($validated['setlist_id'])) {
+        if ($validated['type'] === ShowTeaterCategories::TYPE_UNIT_SONG && ! empty($validated['setlist_id'])) {
             $query->where('setlist_id', $validated['setlist_id']);
         }
 
@@ -248,17 +211,16 @@ class ShowTeaterCategoriesController extends Controller
             return back()->withErrors(['name' => 'Kategori sudah ada.'])->withInput();
         }
 
-        DB::table('show_teater_categories')->insert([
+        ShowTeaterCategories::query()->create([
             'type' => $validated['type'],
             'name' => $validated['name'],
             'jp_name' => $validated['jp_name'] ?? null,
-            'setlist_id' => $validated['type'] === 'unit_song' ? ($validated['setlist_id'] ?? null) : null,
-            'is_active' => 1,
-            'created_at' => now(),
+            'setlist_id' => $validated['type'] === ShowTeaterCategories::TYPE_UNIT_SONG ? ($validated['setlist_id'] ?? null) : null,
+            'is_active' => true,
         ]);
 
         return redirect()
-            ->route('show-teater.categories.index', ['tab' => $validated['type'] === 'setlist' ? 'setlist' : 'unit_song'])
+            ->route('show-teater.categories.index', ['tab' => $validated['type'] === ShowTeaterCategories::TYPE_SETLIST ? 'setlist' : 'unit_song'])
             ->with('success', 'Kategori berhasil ditambahkan.');
     }
 
@@ -270,18 +232,18 @@ class ShowTeaterCategoriesController extends Controller
             'setlist_id' => 'nullable|exists:show_teater_categories,id',
         ]);
 
-        $current = DB::table('show_teater_categories')->where('id', $id)->first();
+        $current = ShowTeaterCategories::query()->find($id);
 
         if (! $current) {
             return back()->withErrors(['id' => 'Data tidak ditemukan.']);
         }
 
-        $query = DB::table('show_teater_categories')
+        $query = ShowTeaterCategories::query()
             ->where('type', $current->type)
             ->where('name', $validated['name'])
-            ->where('id', '!=', $id);
+            ->whereKeyNot($id);
 
-        if ($current->type === 'unit_song' && ! empty($validated['setlist_id'])) {
+        if ($current->type === ShowTeaterCategories::TYPE_UNIT_SONG && ! empty($validated['setlist_id'])) {
             $query->where('setlist_id', $validated['setlist_id']);
         }
 
@@ -289,39 +251,34 @@ class ShowTeaterCategoriesController extends Controller
             return back()->withErrors(['name' => 'Kategori sudah ada.'])->withInput();
         }
 
-        DB::table('show_teater_categories')
-            ->where('id', $id)
-            ->update([
-                'name' => $validated['name'],
-                'jp_name' => $validated['jp_name'] ?? null,
-                'setlist_id' => $current->type === 'unit_song' ? ($validated['setlist_id'] ?? $current->setlist_id) : null,
-            ]);
+        $current->update([
+            'name' => $validated['name'],
+            'jp_name' => $validated['jp_name'] ?? null,
+            'setlist_id' => $current->type === ShowTeaterCategories::TYPE_UNIT_SONG ? ($validated['setlist_id'] ?? $current->setlist_id) : null,
+        ]);
 
         return redirect()
-            ->route('show-teater.categories.index', ['tab' => $current->type === 'setlist' ? 'setlist' : 'unit_song'])
+            ->route('show-teater.categories.index', ['tab' => $current->type === ShowTeaterCategories::TYPE_SETLIST ? 'setlist' : 'unit_song'])
             ->with('success', 'Kategori berhasil diupdate.');
     }
 
     public function toggleStatus($id)
     {
-        $category = DB::table('show_teater_categories')->where('id', $id)->first();
+        $category = ShowTeaterCategories::query()->find($id);
 
         if (! $category) {
             return response()->json(['error' => 'Not found'], 404);
         }
 
-        $newStatus = $category->is_active ? 0 : 1;
+        $newStatus = ! $category->is_active;
 
-        DB::table('show_teater_categories')->where('id', $id)->update(['is_active' => $newStatus]);
+        $category->update(['is_active' => $newStatus]);
 
-        // If deactivating a setlist, also deactivate its unit songs
-        if ($category->type === 'setlist' && $newStatus === 0) {
-            DB::table('show_teater_categories')
-                ->where('type', 'unit_song')
-                ->where('setlist_id', $id)
-                ->update(['is_active' => 0]);
+        // Menonaktifkan setlist juga menonaktifkan unit song di dalamnya.
+        if ($category->type === ShowTeaterCategories::TYPE_SETLIST && ! $newStatus) {
+            $category->unitSongs()->update(['is_active' => false]);
         }
 
-        return response()->json(['success' => true, 'is_active' => $newStatus]);
+        return response()->json(['success' => true, 'is_active' => $newStatus ? 1 : 0]);
     }
 }

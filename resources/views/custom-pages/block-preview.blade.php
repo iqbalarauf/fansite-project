@@ -78,6 +78,6 @@
         <span class="inline-flex rounded-full bg-indigo-600 px-5 py-2.5 font-bold text-white">{{ $block['data']['label'] ?? '' }}</span>
         @break
     @case('embed')
-        <div class="overflow-hidden rounded-xl border border-dashed border-zinc-300 p-3">{!! $block['data']['html'] ?? '' !!}</div>
+        <div class="overflow-hidden rounded-xl border border-dashed border-zinc-300 p-3">{!! \App\Support\HtmlSanitizer::embed($block['data']['html'] ?? '') !!}</div>
         @break
 @endswitch

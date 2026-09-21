@@ -121,7 +121,7 @@ final class WelcomePageData
             return collect();
         }
 
-        return GalleryPhoto::query()->latest()->take(6)->get();
+        return GalleryPhoto::query()->orderBy('sort_order')->orderByDesc('created_at')->take(6)->get();
     }
 
     /**
@@ -157,7 +157,8 @@ final class WelcomePageData
                 'heading' => 'Trivia Terbaru',
                 'indexRoute' => route('trivia.index'),
                 'items' => Trivia::query()
-                    ->latest('created_at')
+                    ->orderBy('sort_order')
+                    ->orderByDesc('created_at')
                     ->take(4)
                     ->get()
                     ->map(fn (Trivia $trivia): array => [

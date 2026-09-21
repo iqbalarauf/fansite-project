@@ -69,7 +69,7 @@ class ShowTeaterTest extends TestCase
             'name' => 'Pajama Drive',
             'jp_name' => 'パジャマドライブ',
             'type' => 'setlist',
-            'status' => 1,
+            'is_active' => 1,
         ]);
 
         DB::table('show_teater_categories')->insert([
@@ -78,14 +78,14 @@ class ShowTeaterTest extends TestCase
                 'jp_name' => '天使のしっぽ',
                 'type' => 'unit_song',
                 'setlist_id' => $setlistId,
-                'status' => 1,
+                'is_active' => 1,
             ],
             [
                 'name' => 'Higurashi no Koi',
                 'jp_name' => 'ひぐらしの恋',
                 'type' => 'unit_song',
                 'setlist_id' => $setlistId,
-                'status' => 1,
+                'is_active' => 1,
             ],
         ]);
 
@@ -125,7 +125,7 @@ class ShowTeaterTest extends TestCase
             'name' => 'Pajama Drive',
             'jp_name' => 'パジャマドライブ',
             'type' => 'setlist',
-            'status' => 1,
+            'is_active' => 1,
         ]);
 
         DB::table('show_teater_categories')->insert([
@@ -134,14 +134,14 @@ class ShowTeaterTest extends TestCase
                 'jp_name' => '天使のしっぽ',
                 'type' => 'unit_song',
                 'setlist_id' => $setlistId,
-                'status' => 1,
+                'is_active' => 1,
             ],
             [
                 'name' => 'Higurashi no Koi',
                 'jp_name' => 'ひぐらしの恋',
                 'type' => 'unit_song',
                 'setlist_id' => $setlistId,
-                'status' => 1,
+                'is_active' => 1,
             ],
         ]);
 

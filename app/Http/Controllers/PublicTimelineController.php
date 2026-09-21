@@ -10,7 +10,7 @@ class PublicTimelineController extends Controller
     public function index(): View
     {
         return view('timeline.index', [
-            'timelines' => Timeline::query()->orderBy('date')->orderBy('id')->get(),
+            'timelines' => Timeline::query()->orderBy('date')->orderBy('sort_order')->orderBy('id')->get(),
         ]);
     }
 }

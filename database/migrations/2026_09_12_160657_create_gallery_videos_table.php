@@ -14,7 +14,9 @@ return new class extends Migration
             $table->string('url');
             $table->string('title')->nullable();
             $table->string('credit_account')->nullable();
+            $table->unsignedInteger('sort_order')->default(0)->index();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
