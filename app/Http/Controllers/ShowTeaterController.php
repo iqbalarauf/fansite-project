@@ -6,6 +6,8 @@ use App\Models\ShowTeaterCategories;
 use App\Support\ShowTeaterNormalizer;
 use App\Support\Spreadsheet;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -72,60 +74,12 @@ class ShowTeaterController extends Controller
         $sortColumn = $sortBy === 'setlist' ? 'show_teater.setlist' : "show_teater.{$sortBy}";
         $shows = $query->orderBy($sortColumn, $sortDir)->paginate($perPage)->withQueryString();
 
-        // Normalized unit songs (pivot) for the current page.
-        $unitSongByShow = DB::table('show_teater_unit_song as pivot')
-            ->join('show_teater_categories as category', 'pivot.show_teater_categories_id', '=', 'category.id')
-            ->whereIn('pivot.show_id', $shows->getCollection()->pluck('show_id'))
-            ->orderBy('pivot.position')
-            ->get(['pivot.show_id', 'category.name', 'category.jp_name'])
-            ->groupBy('show_id');
-
-        // Legacy fallback: setlist_name -> [unit_song_name => jp_name].
-        $unitSongJpMap = [];
-        $unitSongCategories = ShowTeaterCategories::query()
-            ->unitSongs()
-            ->with('setlist:id,name')
-            ->get(['id', 'name', 'jp_name', 'setlist_id']);
-
-        foreach ($unitSongCategories as $unitSong) {
-            if ($unitSong->setlist) {
-                $unitSongJpMap[$unitSong->setlist->name][$unitSong->name] = $unitSong->jp_name;
-            }
-        }
+        // Normalized unit songs (pivot) for the current page + fallback map.
+        $unitSongByShow = $this->unitSongByShow($shows->getCollection()->pluck('show_id'));
+        $unitSongJpMap = $this->unitSongJpMap();
 
         $shows->getCollection()->transform(function ($show) use ($unitSongByShow, $unitSongJpMap) {
-            $normalized = $unitSongByShow->get($show->show_id);
-
-            if ($normalized && $normalized->isNotEmpty()) {
-                $show->display_unit_song = $normalized
-                    ->map(fn ($song): string => $song->jp_name ? "{$song->name} ({$song->jp_name})" : (string) $song->name)
-                    ->implode('; ');
-
-                return $show;
-            }
-
-            if (empty($show->unit_song)) {
-                $show->display_unit_song = '';
-
-                return $show;
-            }
-
-            $songs = preg_split('/\s*;\s*/', $show->unit_song) ?: [];
-            $formattedSongs = [];
-            foreach ($songs as $song) {
-                if ($song === '') {
-                    continue;
-                }
-
-                $jpName = $unitSongJpMap[$show->setlist][$song] ?? null;
-                if ($jpName) {
-                    $formattedSongs[] = "{$song} ({$jpName})";
-                } else {
-                    $formattedSongs[] = $song;
-                }
-            }
-
-            $show->display_unit_song = implode('; ', $formattedSongs);
+            $show->display_unit_song = $this->formatUnitSongDisplay($show, $unitSongByShow, $unitSongJpMap);
 
             return $show;
         });
@@ -192,29 +146,128 @@ class ShowTeaterController extends Controller
             ->orderBy('show_id')
             ->get();
 
+        $unitSongByShow = $this->unitSongByShow($shows->pluck('show_id'));
+        $unitSongJpMap = $this->unitSongJpMap();
+        $setlistJpMap = $this->setlistJpMap();
+
         return Spreadsheet::download('show-teater-'.now()->format('Ymd-His').'.xlsx', [
-            'show_id',
-            'show_date',
-            'setlist',
-            'unit_song',
-            'is_global_center',
-            'is_us_center',
-            'is_the_show_has_event',
-            'additional_information',
-            'is_scraped_data',
-            'is_member_show',
-        ], $shows->map(static fn ($show): array => [
-            $show->show_id,
-            $show->show_date,
-            $show->setlist,
-            $show->unit_song,
-            $show->is_global_center,
-            $show->is_us_center,
-            $show->is_the_show_has_event,
-            $show->additional_information,
-            $show->is_scraped_data,
-            $show->is_member_show,
-        ]));
+            'Show ID',
+            'Tanggal',
+            'Setlist',
+            'Unit Song',
+            'Global Center',
+            'US Center',
+            'Event',
+            'Info Tambahan',
+        ], $shows->map(function ($show) use ($unitSongByShow, $unitSongJpMap, $setlistJpMap): array {
+            $date = (string) $show->show_date;
+
+            try {
+                $date = Carbon::parse($show->show_date)->translatedFormat('d F Y');
+            } catch (\Throwable $exception) {
+                // Keep the original value if parsing fails.
+            }
+
+            return [
+                $show->show_id,
+                $date,
+                $this->formatSetlistDisplay((string) $show->setlist, $setlistJpMap),
+                $this->formatUnitSongDisplay($show, $unitSongByShow, $unitSongJpMap),
+                $show->is_global_center ? 'Yes' : '-',
+                $show->is_us_center ? 'Yes' : '-',
+                $show->is_the_show_has_event ?: '-',
+                $show->additional_information ?: '-',
+            ];
+        }));
+    }
+
+    /**
+     * Pivot unit song per show (terurut), dikelompokkan per show_id.
+     *
+     * @param  Collection<int, int>  $showIds
+     * @return Collection<int, Collection<int, object>>
+     */
+    private function unitSongByShow(Collection $showIds): Collection
+    {
+        return DB::table('show_teater_unit_song as pivot')
+            ->join('show_teater_categories as category', 'pivot.show_teater_categories_id', '=', 'category.id')
+            ->whereIn('pivot.show_id', $showIds)
+            ->orderBy('pivot.position')
+            ->get(['pivot.show_id', 'category.name', 'category.jp_name'])
+            ->groupBy('show_id');
+    }
+
+    /**
+     * Fallback: nama setlist => [nama unit song => jp_name].
+     *
+     * @return array<string, array<string, ?string>>
+     */
+    private function unitSongJpMap(): array
+    {
+        $map = [];
+
+        $unitSongs = ShowTeaterCategories::query()
+            ->unitSongs()
+            ->with('setlist:id,name')
+            ->get(['id', 'name', 'jp_name', 'setlist_id']);
+
+        foreach ($unitSongs as $unitSong) {
+            if ($unitSong->setlist) {
+                $map[$unitSong->setlist->name][$unitSong->name] = $unitSong->jp_name;
+            }
+        }
+
+        return $map;
+    }
+
+    /**
+     * @return array<string, ?string>
+     */
+    private function setlistJpMap(): array
+    {
+        return ShowTeaterCategories::query()->setlists()->pluck('jp_name', 'name')->all();
+    }
+
+    /**
+     * @param  Collection<int, Collection<int, object>>  $unitSongByShow
+     * @param  array<string, array<string, ?string>>  $unitSongJpMap
+     */
+    private function formatUnitSongDisplay(object $show, Collection $unitSongByShow, array $unitSongJpMap): string
+    {
+        $normalized = $unitSongByShow->get($show->show_id);
+
+        if ($normalized && $normalized->isNotEmpty()) {
+            return $normalized
+                ->map(fn ($song): string => $song->jp_name ? "{$song->name} ({$song->jp_name})" : (string) $song->name)
+                ->implode('; ');
+        }
+
+        if (empty($show->unit_song)) {
+            return '';
+        }
+
+        $formattedSongs = [];
+
+        foreach (preg_split('/\s*;\s*/', $show->unit_song) ?: [] as $song) {
+            if ($song === '') {
+                continue;
+            }
+
+            $jpName = $unitSongJpMap[$show->setlist][$song] ?? null;
+            $formattedSongs[] = $jpName ? "{$song} ({$jpName})" : $song;
+        }
+
+        return implode('; ', $formattedSongs);
+    }
+
+    /**
+     * @param  array<string, ?string>  $setlistJpMap
+     */
+    private function formatSetlistDisplay(string $setlist, array $setlistJpMap): string
+    {
+        $jpName = $setlistJpMap[$setlist] ?? null;
+
+        return $jpName ? "{$setlist} ({$jpName})" : $setlist;
     }
 
     public function store(Request $request)

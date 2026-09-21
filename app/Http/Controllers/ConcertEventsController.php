@@ -53,20 +53,38 @@ class ConcertEventsController extends Controller
         $events = ConcertEvents::query()->orderByDesc('event_date')->get();
 
         return Spreadsheet::download('concert-events-'.now()->format('Ymd-His').'.xlsx', [
-            'id',
-            'event_name',
-            'event_date',
-            'location',
-            'status',
-            'purchase_link',
-        ], $events->map(static fn (ConcertEvents $event): array => [
-            $event->id,
-            $event->event_name,
-            $event->event_date?->format('Y-m-d'),
-            $event->location,
-            $event->status instanceof \BackedEnum ? $event->status->value : (string) $event->status,
-            $event->purchase_link,
-        ]));
+            'Event Name',
+            'Date',
+            'Location',
+            'Status',
+            'Purchase Link',
+        ], $events->map(function (ConcertEvents $event): array {
+            $status = $event->status instanceof \BackedEnum ? $event->status->value : (string) $event->status;
+
+            return [
+                $event->event_name,
+                $event->event_date?->translatedFormat('d F Y'),
+                $event->location,
+                $this->statusLabel($status),
+                $event->purchase_link ?: '–',
+            ];
+        }));
+    }
+
+    /**
+     * Label status yang sama dengan badge pada tabel.
+     */
+    private function statusLabel(string $status): string
+    {
+        return match ($status) {
+            'on-air' => 'On-Air',
+            'off-air' => 'Off-Air',
+            'jkt48-event' => 'JKT48 Event',
+            'media' => 'Media',
+            'ofc-event' => 'OFC Event',
+            'brand' => 'Brand',
+            default => ucfirst($status),
+        };
     }
 
     public function store(ConcertEventRequest $request): RedirectResponse
