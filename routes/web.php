@@ -68,6 +68,7 @@ Route::middleware(['auth', 'verified', 'block-view-only-writes'])->group(functio
         Route::post('show-teater/{id}/confirm', [ShowTeaterController::class, 'confirmMemberShow'])->name('show-teater.confirm');
         Route::post('show-teater/{id}/reject', [ShowTeaterController::class, 'rejectMemberShow'])->name('show-teater.reject');
         Route::post('show-teater/fetch', [ShowTeaterController::class, 'fetchManually'])->name('show-teater.fetch-manually');
+        Route::post('show-teater/predictor', [ShowTeaterController::class, 'savePredictor'])->name('show-teater.predictor');
 
         // Show Teater Categories
         Route::get('show-teater/categories', [ShowTeaterCategoriesController::class, 'index'])->name('show-teater.categories.index');

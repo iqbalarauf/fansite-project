@@ -7,6 +7,7 @@ use App\Models\TheaterReference;
 use App\Models\User;
 use App\Support\Timezone;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -184,6 +185,124 @@ class FetchTheaterShowsTest extends TestCase
 
         $this->assertDatabaseMissing('theater_references', ['reference_code' => 'OLD1']);
         $this->assertDatabaseHas('theater_references', ['reference_code' => 'NEW1']);
+    }
+
+    public function test_it_predicts_unit_song_from_the_previous_show_with_the_same_setlist(): void
+    {
+        $this->setShortname('Oniel');
+
+        DB::table('show_teater')->insert([
+            'show_id' => 1,
+            'show_date' => '2026/01/01',
+            'setlist' => 'Cara Meminum Ramune',
+            'unit_song' => 'Nice to Meet You!',
+        ]);
+
+        $this->fakeTheater([
+            $this->show(['reference_code' => 'NEWREF', 'title' => 'Cara Meminum Ramune', 'date' => '2026-09-13']),
+        ]);
+
+        $this->artisan('app:fetch-theater-shows')->assertExitCode(0);
+
+        $this->assertDatabaseHas('show_teater', [
+            'setlist' => 'Cara Meminum Ramune',
+            'show_date' => '2026-09-13',
+            'unit_song' => 'Nice to Meet You!',
+        ]);
+    }
+
+    public function test_it_predicts_center_flags_from_the_previous_show_with_the_same_setlist(): void
+    {
+        $this->setShortname('Oniel');
+
+        DB::table('show_teater')->insert([
+            'show_id' => 1,
+            'show_date' => '2026/01/01',
+            'setlist' => 'Cara Meminum Ramune',
+            'unit_song' => 'Nice to Meet You!',
+            'is_global_center' => null,
+            'is_us_center' => 1,
+        ]);
+
+        $this->fakeTheater([
+            $this->show(['reference_code' => 'CENTER1', 'title' => 'Cara Meminum Ramune', 'date' => '2026-09-13']),
+        ]);
+
+        $this->artisan('app:fetch-theater-shows')->assertExitCode(0);
+
+        $this->assertDatabaseHas('show_teater', [
+            'show_date' => '2026-09-13',
+            'unit_song' => 'Nice to Meet You!',
+            'is_us_center' => 1,
+        ]);
+
+        // Center lain dibiarkan NULL (bukan 0) agar statistik IS NOT NULL tetap benar.
+        $this->assertNull(DB::table('show_teater')->where('show_date', '2026-09-13')->value('is_global_center'));
+    }
+
+    public function test_it_backfills_center_on_an_already_synced_show(): void
+    {
+        $this->setShortname('Oniel');
+
+        DB::table('show_teater')->insert([
+            'show_id' => 1,
+            'show_date' => '2026/01/01',
+            'setlist' => 'Cara Meminum Ramune',
+            'unit_song' => 'Nice to Meet You!',
+            'is_us_center' => 1,
+        ]);
+
+        TheaterReference::query()->create([
+            'reference_code' => 'EXIST1',
+            'month' => Timezone::nowLocal()->month,
+            'year' => Timezone::nowLocal()->year,
+            'processed_at' => now(),
+        ]);
+
+        // Show target sudah ada, reference sudah tercatat, center masih NULL.
+        DB::table('show_teater')->insert([
+            'show_id' => 2,
+            'show_date' => '2026/09/13',
+            'setlist' => 'Cara Meminum Ramune',
+            'is_member_show' => 1,
+        ]);
+
+        $this->fakeTheater([
+            $this->show(['reference_code' => 'EXIST1', 'title' => 'Cara Meminum Ramune', 'date' => '2026-09-13']),
+        ]);
+
+        $this->artisan('app:fetch-theater-shows')->assertExitCode(0);
+
+        $this->assertSame(1, (int) DB::table('show_teater')->where('show_id', 2)->value('is_us_center'));
+    }
+
+    public function test_it_does_not_predict_unit_song_when_predictor_is_disabled(): void
+    {
+        DB::table('app_settings')->updateOrInsert(
+            ['key' => 'show_teater_predictor_enabled'],
+            ['value' => 'false', 'updated_at' => now()],
+        );
+        Cache::forget('app_settings');
+
+        $this->setShortname('Oniel');
+
+        DB::table('show_teater')->insert([
+            'show_id' => 1,
+            'show_date' => '2026/01/01',
+            'setlist' => 'Cara Meminum Ramune',
+            'unit_song' => 'Nice to Meet You!',
+        ]);
+
+        $this->fakeTheater([
+            $this->show(['reference_code' => 'NOPRED', 'title' => 'Cara Meminum Ramune', 'date' => '2026-09-13']),
+        ]);
+
+        $this->artisan('app:fetch-theater-shows')->assertExitCode(0);
+
+        $this->assertDatabaseHas('show_teater', [
+            'show_date' => '2026-09-13',
+            'unit_song' => null,
+        ]);
     }
 
     public function test_it_reports_already_synced_when_reference_and_show_already_exist(): void

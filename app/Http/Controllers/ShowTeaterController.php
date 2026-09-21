@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\ShowTeaterCategories;
+use App\Support\SettingBag;
+use App\Support\SettingsStore;
 use App\Support\ShowTeaterNormalizer;
+use App\Support\ShowTeaterUnitSongPredictor;
 use App\Support\Spreadsheet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -121,11 +124,19 @@ class ShowTeaterController extends Controller
             ->whereNull('deleted_at')
             ->max('last_fetch_at');
 
+        // Prediksi unit song per setlist (dari show terakhir setlist yang sama).
+        $predictorEnabled = SettingBag::showTeaterPredictorEnabled();
+        $setlistUnitSongPredictions = $predictorEnabled
+            ? app(ShowTeaterUnitSongPredictor::class)->mapBySetlist()
+            : [];
+
         return view('show-teater.index', [
             'shows' => $shows,
             'nextShowId' => $nextShowId,
             'allSetlists' => $allSetlists,
             'setlistsWithUnitSongs' => $setlistsWithUnitSongs,
+            'setlistUnitSongPredictions' => $setlistUnitSongPredictions,
+            'predictorEnabled' => $predictorEnabled,
             'lastFetchAt' => $lastFetchAt,
             'filters' => [
                 'search' => $search,
@@ -268,6 +279,22 @@ class ShowTeaterController extends Controller
         $jpName = $setlistJpMap[$setlist] ?? null;
 
         return $jpName ? "{$setlist} ({$jpName})" : $setlist;
+    }
+
+    public function savePredictor(Request $request)
+    {
+        $enabled = $request->boolean('enabled');
+
+        SettingsStore::setApp([
+            'show_teater_predictor_enabled' => $enabled ? 'true' : 'false',
+        ]);
+
+        Cache::flush();
+
+        return redirect()->route('show-teater.index')
+            ->with('success', $enabled
+                ? 'Fitur Predictor Unit Song diaktifkan.'
+                : 'Fitur Predictor Unit Song dinonaktifkan.');
     }
 
     public function store(Request $request)

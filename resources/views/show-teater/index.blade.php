@@ -51,6 +51,26 @@
              Table
         ================================================================ --}}
         <div class="admin-table-shell">
+            {{-- Opsi tabel: aktif/nonaktif Predictor Unit Song --}}
+            <div class="flex items-center justify-end px-4 pt-3">
+                <form method="POST" action="{{ route('show-teater.predictor') }}">
+                    @csrf
+                    <input type="hidden" name="enabled" value="0">
+                    <label class="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                        <input
+                            type="checkbox"
+                            name="enabled"
+                            value="1"
+                            onchange="this.form.submit()"
+                            @checked($predictorEnabled)
+                            @disabled(auth()->user()?->isViewOnly())
+                            class="h-4 w-4 rounded border-zinc-300 text-blue-600 dark:border-zinc-600 dark:bg-zinc-800"
+                        >
+                        {{ __('Predictor Unit Song') }}
+                    </label>
+                </form>
+            </div>
+
             <form method="GET" action="{{ route('show-teater.index') }}" id="filter-form">
                 <x-admin.table-toolbar :filters="$filters" :show-filters="true" search-placeholder="Cari setlist atau unit song...">
                     <flux:input name="date_from" type="date" value="{{ $filters['date_from'] }}" class="w-40" aria-label="{{ __('Dari tanggal') }}" />
@@ -211,17 +231,28 @@
         <div class="space-y-6"
             x-data="{
                 setlists: {{ Js::from($setlistsWithUnitSongs) }},
+                predictions: {{ Js::from($setlistUnitSongPredictions) }},
+                predictorEnabled: @json($predictorEnabled),
                 selectedSetlist: null,
                 unitSongs: [],
                 doubleUs: false,
                 selectedUnitSong: '',
                 selectedUnitSong2: '',
+                isGlobalCenter: false,
+                isUsCenter: false,
                 selectSetlist(name) {
                     this.selectedSetlist = name;
                     const found = this.setlists.find(s => s.name === name);
                     this.unitSongs = found ? found.unit_songs : [];
-                    this.selectedUnitSong = '';
-                    this.selectedUnitSong2 = '';
+
+                    const predicted = this.predictorEnabled ? (this.predictions[name] || null) : null;
+                    const songs = (predicted?.unit_song || '').split(/\s*;\s*/).filter(Boolean);
+
+                    this.doubleUs = songs.length > 1;
+                    this.selectedUnitSong = songs[0] || '';
+                    this.selectedUnitSong2 = songs[1] || '';
+                    this.isGlobalCenter = !!predicted?.is_global_center;
+                    this.isUsCenter = !!predicted?.is_us_center;
                 },
                 get availableUnitSongs2() {
                     return this.unitSongs.filter(s => s.name !== this.selectedUnitSong);
@@ -264,7 +295,7 @@
                     <div class="mb-1 flex items-center gap-3">
                         <flux:label for="create-setlist">Setlist</flux:label>
                         <label class="flex items-center gap-1.5 text-sm text-zinc-600 dark:text-zinc-300 cursor-pointer">
-                            <input type="checkbox" name="is_global_center" value="1" class="rounded border-zinc-300 dark:border-zinc-600 text-blue-600" />
+                            <input type="checkbox" name="is_global_center" value="1" x-model="isGlobalCenter" class="rounded border-zinc-300 dark:border-zinc-600 text-blue-600" />
                             Global Center
                         </label>
                     </div>
@@ -291,7 +322,7 @@
                             Double US
                         </label>
                         <label class="flex items-center gap-1.5 text-sm text-zinc-600 dark:text-zinc-300 cursor-pointer">
-                            <input type="checkbox" name="is_us_center" value="1" class="rounded border-zinc-300 dark:border-zinc-600 text-blue-600" />
+                            <input type="checkbox" name="is_us_center" value="1" x-model="isUsCenter" class="rounded border-zinc-300 dark:border-zinc-600 text-blue-600" />
                             US Center
                         </label>
                     </div>

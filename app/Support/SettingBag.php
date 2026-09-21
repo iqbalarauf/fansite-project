@@ -119,6 +119,14 @@ final class SettingBag
     }
 
     /**
+     * Apakah fitur Predictor Unit Song pada Show Teater diaktifkan (default: aktif).
+     */
+    public static function showTeaterPredictorEnabled(): bool
+    {
+        return self::bool('show_teater_predictor_enabled', true);
+    }
+
+    /**
      * @param  array<string, mixed>  $about
      * @return array<int, array{photo: string|null, title: string, duration_from: string|null, duration_to: string|null}>
      */
