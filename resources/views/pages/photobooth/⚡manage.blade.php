@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Photobooth;
+use App\Support\Timezone;
 use Flux\Flux;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -52,8 +53,8 @@ new #[Title('Photobooth Settings')] class extends Component
             $this->photoSlots = $photobooth->resolvedSlots();
             $this->frameOverlay = $photobooth->frame_overlay;
             $this->isFullOpen = $photobooth->is_full_open;
-            $this->startAt = $photobooth->start_at?->format('Y-m-d\TH:i');
-            $this->endAt = $photobooth->end_at?->format('Y-m-d\TH:i');
+            $this->startAt = Timezone::toLocal($photobooth->start_at)?->format('Y-m-d\TH:i');
+            $this->endAt = Timezone::toLocal($photobooth->end_at)?->format('Y-m-d\TH:i');
             $this->isActive = $photobooth->is_active;
         }
 
@@ -116,8 +117,8 @@ new #[Title('Photobooth Settings')] class extends Component
             'slots' => $this->normalizedSlots(),
             'frame_overlay' => $this->frameOverlay,
             'is_full_open' => $this->isFullOpen,
-            'start_at' => $this->isFullOpen ? null : $this->startAt,
-            'end_at' => $this->isFullOpen ? null : $this->endAt,
+            'start_at' => $this->isFullOpen ? null : Timezone::fromLocal($this->startAt)?->toDateTimeString(),
+            'end_at' => $this->isFullOpen ? null : Timezone::fromLocal($this->endAt)?->toDateTimeString(),
             'is_active' => $this->isActive,
         ]);
         $photobooth->save();

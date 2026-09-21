@@ -8,6 +8,7 @@ use App\Http\Requests\PostRequest;
 use App\Models\Category;
 use App\Models\Post;
 use App\Support\ListingQuery;
+use App\Support\Timezone;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -162,6 +163,6 @@ class PostController extends Controller
             return now()->toDateTimeString();
         }
 
-        return $publishedAt;
+        return Timezone::fromLocal($publishedAt)?->toDateTimeString();
     }
 }

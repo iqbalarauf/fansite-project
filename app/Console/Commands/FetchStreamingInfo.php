@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\AboutSettings;
 use App\Models\LiveStreaming;
+use App\Support\Timezone;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
@@ -133,7 +134,7 @@ class FetchStreamingInfo extends Command
         $start = $item['live_info']['date']['start'] ?? null;
         $liveDate = $start
             ? Carbon::parse($start)->timezone('Asia/Jakarta')->toDateString()
-            : now('Asia/Jakarta')->toDateString();
+            : Timezone::nowLocal()->toDateString();
 
         $title = $item['idn']['title'] ?? null;
 

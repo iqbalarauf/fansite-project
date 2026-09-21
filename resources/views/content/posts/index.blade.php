@@ -114,7 +114,7 @@
                                     @endphp
                                     <flux:badge :color="$statusColor" size="sm">{{ ucfirst($post->displayStatus()) }}</flux:badge>
                                 </td>
-                                <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $post->published_at?->format('d M Y H:i') ?? '–' }}</td>
+                                <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $post->published_at?->timezone(\App\Support\Timezone::display())?->format('d M Y H:i') ?? '–' }}</td>
                                 <td class="px-4 py-3 text-right">
                                     <div class="flex items-center justify-end gap-2">
                                         @if ($post->status === 'published')

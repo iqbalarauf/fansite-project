@@ -74,7 +74,7 @@
                         <div>
                             <flux:label for="post-published-at">Jadwal Terbit</flux:label>
                             <flux:input id="post-published-at" name="published_at" type="datetime-local" class="mt-1"
-                                        value="{{ old('published_at', $post?->published_at?->format('Y-m-d\TH:i')) }}" />
+                                        value="{{ old('published_at', $post?->published_at?->timezone(\App\Support\Timezone::display())?->format('Y-m-d\TH:i')) }}" />
                             <flux:text class="mt-1 text-xs">Kosongkan untuk terbit sekarang saat status Published.</flux:text>
                         </div>
 

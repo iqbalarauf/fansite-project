@@ -21,7 +21,7 @@ final class IdolTheaterStats
      */
     public function build(): array
     {
-        $year = (int) now('Asia/Jakarta')->year;
+        $year = (int) Timezone::nowLocal()->year;
 
         $shows = DB::table('show_teater')
             ->whereNull('deleted_at')

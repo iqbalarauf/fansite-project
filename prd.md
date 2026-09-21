@@ -61,6 +61,7 @@ Aplikasi dibangun berbasis web dengan arsitektur terpusat, sehingga seluruh data
 - **Support/Service classes** (`app/Support`): `DashboardAssembler`, `WelcomePageData`, `AboutPageData`, `EventTimeline`, `SettingBag`, `SettingsStore`, `ListingQuery`, `ShowDate`, `CustomPageStatistic`, `BrandPalette`, `HeroLink`, `HeaderMenu`, `YoutubeEmbed`/`YoutubeRss`/`YoutubePlaylist`, `Spreadsheet`, `Csv`.
 - **Soft deletes** pada `show_teater`, `meet_greet_events`, `concert_events`, `custom_pages`, `news_posts`/`blog_posts`, `magazines`, `gallery_photos`/`gallery_videos`, `timelines`, dan `trivias`, dengan penyaringan `deleted_at` di seluruh query (termasuk raw `DB::table`).
 - **Pipeline fetch data** dari API eksternal (JKT48 public API) via Artisan command.
+- **Zona waktu:** timestamp disimpan **UTC** di database; input pengguna dikonversi lokal → UTC saat disimpan dan UTC → lokal saat ditampilkan via `App\Support\Timezone` (zona tampilan dari `config('app.display_timezone')` / `APP_DISPLAY_TIMEZONE`, default `Asia/Jakarta`).
 
 ---
 

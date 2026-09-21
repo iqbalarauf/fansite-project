@@ -6,6 +6,7 @@ use App\Models\AboutSettings;
 use App\Models\ShowTeater;
 use App\Models\TheaterReference;
 use App\Support\ShowTeaterNormalizer;
+use App\Support\Timezone;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 
@@ -169,8 +170,8 @@ class FetchTheaterShows extends Command
         TheaterReference::query()->firstOrCreate(
             ['reference_code' => $referenceCode],
             [
-                'month' => now()->month,
-                'year' => now()->year,
+                'month' => Timezone::nowLocal()->month,
+                'year' => Timezone::nowLocal()->year,
                 'processed_at' => now(),
             ],
         );

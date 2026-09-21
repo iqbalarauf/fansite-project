@@ -131,7 +131,7 @@
                                     @endif
                                 </td>
                                 <td class="px-4 py-3 text-xs text-zinc-500 dark:text-zinc-400">
-                                    {{ $user->created_at?->format('d M Y, H:i') ?? '-' }}
+                                    {{ $user->created_at?->timezone(\App\Support\Timezone::display())?->format('d M Y, H:i') ?? '-' }}
                                 </td>
                                 <td class="px-4 py-3 text-end">
                                     <div class="flex items-center justify-end gap-2">

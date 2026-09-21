@@ -27,7 +27,7 @@
                 <h1 class="mt-4 text-3xl font-black leading-tight text-white sm:text-5xl">{{ $post->title }}</h1>
 
                 <p class="mt-5 text-sm text-indigo-100">
-                    {{ $post->published_at?->locale('id')->isoFormat('D MMMM YYYY') }}
+                    {{ $post->published_at?->timezone(\App\Support\Timezone::display())?->locale('id')->isoFormat('D MMMM YYYY') }}
                 </p>
             </div>
         </section>
@@ -64,7 +64,7 @@
                         </div>
                         <div class="flex flex-1 flex-col p-5">
                             <h3 class="line-clamp-2 text-base font-black text-slate-900 dark:text-white">{{ $item->title }}</h3>
-                            <p class="mt-auto pt-3 text-xs text-slate-500 dark:text-slate-400">{{ $item->published_at?->locale('id')->isoFormat('D MMMM YYYY') }}</p>
+                            <p class="mt-auto pt-3 text-xs text-slate-500 dark:text-slate-400">{{ $item->published_at?->timezone(\App\Support\Timezone::display())?->locale('id')->isoFormat('D MMMM YYYY') }}</p>
                         </div>
                     </a>
                 @endforeach

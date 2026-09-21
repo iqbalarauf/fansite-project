@@ -26,7 +26,7 @@ final class WelcomePageData
     {
         $about = SettingBag::about();
         $app = SettingBag::app();
-        $today = now()->toDateString();
+        $today = Timezone::today();
         $showCount = ShowTeater::query()->count();
         $upcomingShowCount = $this->timeline->upcomingShowCount($today);
         $feedSource = SettingBag::welcomeFeedSource();

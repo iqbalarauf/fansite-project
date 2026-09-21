@@ -100,7 +100,7 @@ final class DashboardAssembler
                 ->all()
         ))->map(fn ($item) => (object) $item);
 
-        $today = now('Asia/Jakarta')->toDateString();
+        $today = Timezone::today();
         $fromStr = $dateFrom->toDateString();
         $toStr = $dateTo->toDateString();
         $upcomingShows = $this->timeline->upcomingShowCount($today, $isAllPeriod ? null : $toStr);
@@ -145,12 +145,12 @@ final class DashboardAssembler
             return [null, false];
         }
 
-        $nextBirthday = Carbon::parse($idolBirthDate)->setYear(now()->year);
+        $nextBirthday = Carbon::parse($idolBirthDate)->setYear(Timezone::nowLocal()->year);
         if ($nextBirthday->isPast()) {
             $nextBirthday->addYear();
         }
 
-        $countdown = (int) now()->diffInDays($nextBirthday, false) + 1;
+        $countdown = (int) Timezone::nowLocal()->diffInDays($nextBirthday, false) + 1;
 
         return [$countdown, $countdown <= self::BIRTHDAY_REMINDER_DAYS];
     }
@@ -160,7 +160,7 @@ final class DashboardAssembler
      */
     private function resolvePeriod(string $period, ?string $customFrom = null, ?string $customTo = null): array
     {
-        $now = now();
+        $now = Timezone::nowLocal();
         [$dateFrom, $dateTo] = match ($period) {
             'all' => $this->resolveAllPeriod(),
             'custom' => [
@@ -202,7 +202,7 @@ final class DashboardAssembler
 
         return $firstDate && $lastDate
             ? [Carbon::parse($firstDate)->startOfDay(), Carbon::parse($lastDate)->endOfDay()]
-            : [now()->startOfDay(), now()->endOfDay()];
+            : [Timezone::nowLocal()->startOfDay(), Timezone::nowLocal()->endOfDay()];
     }
 
     /**
