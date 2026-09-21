@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\AboutSettings;
 use App\Models\TheaterReference;
 use App\Models\User;
+use App\Support\Timezone;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -160,6 +161,29 @@ class FetchTheaterShowsTest extends TestCase
             'setlist' => 'Cara Meminum Ramune',
             'reference_code' => 'SH79AC',
         ]);
+    }
+
+    public function test_it_removes_old_theater_references_on_fetch(): void
+    {
+        $this->setShortname('Oniel');
+
+        $previous = Timezone::nowLocal()->subMonthNoOverflow();
+
+        TheaterReference::query()->create([
+            'reference_code' => 'OLD1',
+            'month' => $previous->month,
+            'year' => $previous->year,
+            'processed_at' => now(),
+        ]);
+
+        $this->fakeTheater([
+            $this->show(['reference_code' => 'NEW1', 'title' => 'Cara Meminum Ramune', 'date' => '2026-09-13']),
+        ]);
+
+        $this->artisan('app:fetch-theater-shows')->assertExitCode(0);
+
+        $this->assertDatabaseMissing('theater_references', ['reference_code' => 'OLD1']);
+        $this->assertDatabaseHas('theater_references', ['reference_code' => 'NEW1']);
     }
 
     public function test_it_reports_already_synced_when_reference_and_show_already_exist(): void
