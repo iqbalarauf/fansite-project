@@ -36,6 +36,7 @@ class ShowTeater extends Model
         'is_us_center',
         'is_the_show_has_event',
         'additional_information',
+        'reference_code',
         'is_scraped_data',
         'is_member_show',
         'last_fetch_at',

@@ -21,6 +21,7 @@ return new class extends Migration
             $table->tinyInteger('is_us_center')->nullable();
             $table->string('is_the_show_has_event', 255)->nullable();
             $table->string('additional_information', 255)->nullable();
+            $table->string('reference_code', 255)->nullable();
             $table->tinyInteger('is_scraped_data')->nullable();
             $table->tinyInteger('is_member_show')->nullable();
             $table->timestamp('last_fetch_at')->nullable();

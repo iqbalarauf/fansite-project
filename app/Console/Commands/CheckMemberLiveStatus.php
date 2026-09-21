@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\AboutSettings;
 use App\Models\LiveStreaming;
 use App\Support\CheckMemberLive;
+use App\Support\Timezone;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 
@@ -92,7 +93,7 @@ class CheckMemberLiveStatus extends Command
         $startedAt = $item['started_at'] ?? null;
         $liveDate = $startedAt
             ? Carbon::parse($startedAt)->timezone('Asia/Jakarta')->toDateString()
-            : now('Asia/Jakarta')->toDateString();
+            : Timezone::nowLocal()->toDateString();
 
         $title = $item['title'] ?? ($item['idn']['title'] ?? null);
 

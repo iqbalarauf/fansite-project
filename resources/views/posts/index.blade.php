@@ -35,7 +35,7 @@
                     @if ($featured->excerpt)
                         <p class="mt-3 line-clamp-3 text-base leading-7 text-slate-600 dark:text-slate-300">{{ $featured->excerpt }}</p>
                     @endif
-                    <p class="mt-5 text-sm text-slate-500 dark:text-slate-400">{{ $featured->published_at?->locale('id')->isoFormat('D MMMM YYYY') }}</p>
+                    <p class="mt-5 text-sm text-slate-500 dark:text-slate-400">{{ $featured->published_at?->timezone(\App\Support\Timezone::display())?->locale('id')->isoFormat('D MMMM YYYY') }}</p>
                 </div>
             </a>
         </section>
@@ -68,7 +68,7 @@
                             @if ($post->excerpt)
                                 <p class="mt-2 line-clamp-3 text-sm leading-6 text-slate-500 dark:text-slate-400">{{ $post->excerpt }}</p>
                             @endif
-                            <p class="mt-auto pt-4 text-xs text-slate-500 dark:text-slate-400">{{ $post->published_at?->locale('id')->isoFormat('D MMMM YYYY') }}</p>
+                            <p class="mt-auto pt-4 text-xs text-slate-500 dark:text-slate-400">{{ $post->published_at?->timezone(\App\Support\Timezone::display())?->locale('id')->isoFormat('D MMMM YYYY') }}</p>
                         </div>
                     </article>
                 @endforeach

@@ -5,14 +5,14 @@ namespace Tests\Feature;
 use App\Models\AboutSettings;
 use App\Models\TheaterReference;
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class FetchTheaterShowsTest extends TestCase
 {
-    use DatabaseTransactions;
+    use RefreshDatabase;
 
     protected function setUp(): void
     {
@@ -138,6 +138,28 @@ class FetchTheaterShowsTest extends TestCase
 
         $this->assertSame($countBefore, DB::table('show_teater')->count());
         $this->assertDatabaseHas('theater_references', ['reference_code' => 'REF-SYNCED']);
+    }
+
+    public function test_it_saves_reference_code_taken_from_the_link(): void
+    {
+        $this->setShortname('Oniel');
+
+        $this->fakeTheater([
+            $this->show([
+                'reference_code' => null,
+                'link' => 'https://jkt48.com/purchase/schedule/show?code=SH79AC',
+                'title' => 'Cara Meminum Ramune',
+                'date' => '2026-09-13',
+            ]),
+        ]);
+
+        $this->artisan('app:fetch-theater-shows')->assertExitCode(0);
+
+        $this->assertDatabaseHas('theater_references', ['reference_code' => 'SH79AC']);
+        $this->assertDatabaseHas('show_teater', [
+            'setlist' => 'Cara Meminum Ramune',
+            'reference_code' => 'SH79AC',
+        ]);
     }
 
     public function test_it_reports_already_synced_when_reference_and_show_already_exist(): void

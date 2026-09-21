@@ -432,7 +432,7 @@ new #[Title('Sheet Integration')] class extends Component
                                     <p class="text-sm font-bold text-zinc-800 dark:text-zinc-100">{{ $masterData->label() }}</p>
                                     @if ($status[$masterData->value]['last_synced_at'] ?? null)
                                         <flux:text class="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
-                                            {{ __('Terakhir') }}: {{ \Illuminate\Support\Carbon::parse($status[$masterData->value]['last_synced_at'])->locale('id')->isoFormat('D MMM YYYY HH:mm') }}
+                                            {{ __('Terakhir') }}: {{ \Illuminate\Support\Carbon::parse($status[$masterData->value]['last_synced_at'])->timezone(\App\Support\Timezone::display())->locale('id')->isoFormat('D MMM YYYY HH:mm') }}
                                         </flux:text>
                                     @endif
                                 </div>

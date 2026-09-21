@@ -31,14 +31,17 @@ final class PhotoboothSchedule
 
         $now = Carbon::now();
 
+        $opensAt = Timezone::toLocal($photobooth->start_at);
+        $closesAt = Timezone::toLocal($photobooth->end_at);
+
         if ($photobooth->start_at && $now->lt($photobooth->start_at)) {
-            return ['state' => self::SCHEDULED, 'opens_at' => $photobooth->start_at, 'closes_at' => $photobooth->end_at];
+            return ['state' => self::SCHEDULED, 'opens_at' => $opensAt, 'closes_at' => $closesAt];
         }
 
         if ($photobooth->end_at && $now->gt($photobooth->end_at)) {
-            return ['state' => self::CLOSED, 'opens_at' => $photobooth->start_at, 'closes_at' => $photobooth->end_at];
+            return ['state' => self::CLOSED, 'opens_at' => $opensAt, 'closes_at' => $closesAt];
         }
 
-        return ['state' => self::OPEN, 'opens_at' => $photobooth->start_at, 'closes_at' => $photobooth->end_at];
+        return ['state' => self::OPEN, 'opens_at' => $opensAt, 'closes_at' => $closesAt];
     }
 }

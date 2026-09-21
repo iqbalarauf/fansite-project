@@ -19,6 +19,12 @@ return new class extends Migration
             $table->timestamps();
             $table->timestamp('processed_at')->nullable();
         });
+
+        // FK show_teater.reference_code -> theater_references.reference_code.
+        // nullOnDelete: menghapus reference tidak menghapus show-nya.
+        Schema::table('show_teater', function (Blueprint $table) {
+            $table->foreign('reference_code')->references('reference_code')->on('theater_references')->nullOnDelete();
+        });
     }
 
     /**
@@ -26,6 +32,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table('show_teater', function (Blueprint $table) {
+            $table->dropForeign(['reference_code']);
+        });
+
         Schema::dropIfExists('theater_references');
     }
 };

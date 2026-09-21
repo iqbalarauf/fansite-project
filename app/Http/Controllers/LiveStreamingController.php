@@ -57,19 +57,17 @@ class LiveStreamingController extends Controller
         $streams = LiveStreaming::query()->orderByDesc('live_date')->get();
 
         return Spreadsheet::download('live-streaming-'.now()->format('Ymd-His').'.xlsx', [
-            'id',
-            'live_id',
-            'platform',
-            'live_date',
-            'duration',
-            'additional_info',
+            'Platform',
+            'Live Date',
+            'Duration (HH:MM)',
+            'Additional Info',
         ], $streams->map(static fn (LiveStreaming $stream): array => [
-            $stream->id,
-            $stream->live_id,
             $stream->platform instanceof \BackedEnum ? $stream->platform->value : (string) $stream->platform,
-            $stream->live_date?->format('Y-m-d'),
-            $stream->duration,
-            $stream->additional_info,
+            $stream->live_date?->translatedFormat('d F Y'),
+            $stream->duration !== null
+                ? sprintf('%02d:%02d', intdiv($stream->duration, 60), $stream->duration % 60)
+                : '–',
+            $stream->additional_info ?: '–',
         ]));
     }
 
