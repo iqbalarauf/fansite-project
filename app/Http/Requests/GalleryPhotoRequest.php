@@ -20,6 +20,7 @@ class GalleryPhotoRequest extends FormRequest
             'photo' => [$this->isMethod('post') ? 'required' : 'nullable', 'image', 'max:5120'],
             'description' => ['nullable', 'string', 'max:1000'],
             'credit_photographer' => ['nullable', 'string', 'max:255'],
+            'sort_order' => ['nullable', 'integer', 'min:0'],
         ];
     }
 }

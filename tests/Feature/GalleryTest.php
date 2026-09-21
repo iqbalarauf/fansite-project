@@ -54,7 +54,7 @@ class GalleryTest extends TestCase
         $this->delete(route('content.gallery.photos.destroy', $photo))
             ->assertRedirect(route('content.gallery.index', ['tab' => 'photos']));
 
-        $this->assertDatabaseMissing('gallery_photos', ['id' => $photo->id]);
+        $this->assertSoftDeleted('gallery_photos', ['id' => $photo->id]);
         Storage::disk('public')->assertMissing($path);
     }
 

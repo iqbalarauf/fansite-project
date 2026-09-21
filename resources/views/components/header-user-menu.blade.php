@@ -23,11 +23,6 @@
             <flux:menu.item :href="route('profile.edit')" icon="user" wire:navigate>
                 {{ __('Profile') }}
             </flux:menu.item>
-            @unless (auth()->user()?->isViewOnly())
-                <flux:menu.item :href="route('appearance.edit')" icon="cog" wire:navigate>
-                    {{ __('Settings') }}
-                </flux:menu.item>
-            @endunless
             <form method="POST" action="{{ route('logout') }}" class="w-full">
                 @csrf
                 <flux:menu.item

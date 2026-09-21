@@ -40,7 +40,7 @@
                     <div class="space-y-3 p-5 text-sm text-slate-600 dark:text-slate-300">
                         <p class="flex items-center justify-between"><span>Viewers</span><span class="font-bold text-slate-900 dark:text-white">{{ number_format($magazine->views) }}</span></p>
                         <p class="flex items-center justify-between"><span>Downloads</span><span class="font-bold text-slate-900 dark:text-white">{{ number_format($magazine->downloads) }}</span></p>
-                        <p class="flex items-center justify-between"><span>Diterbitkan</span><span class="font-bold text-slate-900 dark:text-white">{{ $magazine->created_at?->locale('id')->isoFormat('D MMM YYYY') }}</span></p>
+                        <p class="flex items-center justify-between"><span>Diterbitkan</span><span class="font-bold text-slate-900 dark:text-white">{{ $magazine->created_at?->timezone(\App\Support\Timezone::display())?->locale('id')->isoFormat('D MMM YYYY') }}</span></p>
                     </div>
                 </div>
             </aside>

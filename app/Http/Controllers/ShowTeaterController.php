@@ -2,7 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ShowTeaterCategories;
+use App\Support\ShowTeaterNormalizer;
+use App\Support\Spreadsheet;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -69,41 +74,12 @@ class ShowTeaterController extends Controller
         $sortColumn = $sortBy === 'setlist' ? 'show_teater.setlist' : "show_teater.{$sortBy}";
         $shows = $query->orderBy($sortColumn, $sortDir)->paginate($perPage)->withQueryString();
 
-        // Build a mapping of setlist_name -> [unit_song_name => jp_name] for formatting multiple unit songs
-        $unitSongsList = DB::table('show_teater_categories as unit_songs')
-            ->join('show_teater_categories as setlists', 'unit_songs.setlist_id', '=', 'setlists.id')
-            ->where('unit_songs.type', 'unit_song')
-            ->where('setlists.type', 'setlist')
-            ->get(['unit_songs.name as song_name', 'unit_songs.jp_name as song_jp_name', 'setlists.name as setlist_name']);
+        // Normalized unit songs (pivot) for the current page + fallback map.
+        $unitSongByShow = $this->unitSongByShow($shows->getCollection()->pluck('show_id'));
+        $unitSongJpMap = $this->unitSongJpMap();
 
-        $unitSongJpMap = [];
-        foreach ($unitSongsList as $item) {
-            $unitSongJpMap[$item->setlist_name][$item->song_name] = $item->song_jp_name;
-        }
-
-        $shows->getCollection()->transform(function ($show) use ($unitSongJpMap) {
-            if (empty($show->unit_song)) {
-                $show->display_unit_song = '';
-
-                return $show;
-            }
-
-            $songs = preg_split('/\s*;\s*/', $show->unit_song) ?: [];
-            $formattedSongs = [];
-            foreach ($songs as $song) {
-                if ($song === '') {
-                    continue;
-                }
-
-                $jpName = $unitSongJpMap[$show->setlist][$song] ?? null;
-                if ($jpName) {
-                    $formattedSongs[] = "{$song} ({$jpName})";
-                } else {
-                    $formattedSongs[] = $song;
-                }
-            }
-
-            $show->display_unit_song = implode('; ', $formattedSongs);
+        $shows->getCollection()->transform(function ($show) use ($unitSongByShow, $unitSongJpMap) {
+            $show->display_unit_song = $this->formatUnitSongDisplay($show, $unitSongByShow, $unitSongJpMap);
 
             return $show;
         });
@@ -111,40 +87,31 @@ class ShowTeaterController extends Controller
         $nextShowId = DB::table('show_teater')->max('show_id') + 1;
 
         // Get all unique setlists from categories for filter dropdown
-        $allSetlists = DB::table('show_teater_categories')
-            ->where('type', 'setlist')
-            ->where('is_active', 1)
+        $allSetlists = ShowTeaterCategories::query()
+            ->setlists()
+            ->active()
             ->orderBy('name')
             ->pluck('name');
 
         // Get setlists with their unit songs for the create form
-        $setlistsWithUnitSongs = DB::table('show_teater_categories as setlists')
-            ->select('setlists.id', 'setlists.name', 'setlists.jp_name')
-            ->where('setlists.type', 'setlist')
-            ->where('setlists.is_active', 1)
-            ->orderBy('setlists.name')
-            ->get()
-            ->map(function ($setlist) {
-                $unitSongs = DB::table('show_teater_categories')
-                    ->where('type', 'unit_song')
-                    ->where('setlist_id', $setlist->id)
-                    ->where('is_active', 1)
-                    ->orderBy('name')
-                    ->get(['id', 'name', 'jp_name']);
-
+        $setlistsWithUnitSongs = ShowTeaterCategories::query()
+            ->setlists()
+            ->active()
+            ->orderBy('name')
+            ->with(['unitSongs' => fn ($query) => $query->active()->orderBy('name')])
+            ->get(['id', 'name', 'jp_name'])
+            ->map(function (ShowTeaterCategories $setlist): array {
                 return [
                     'id' => $setlist->id,
                     'name' => $setlist->name,
                     'jp_name' => $setlist->jp_name,
                     'display_name' => $setlist->name.($setlist->jp_name ? ' ('.$setlist->jp_name.')' : ''),
-                    'unit_songs' => $unitSongs->map(function ($song) {
-                        return [
-                            'id' => $song->id,
-                            'name' => $song->name,
-                            'jp_name' => $song->jp_name,
-                            'display_name' => $song->name.($song->jp_name ? ' ('.$song->jp_name.')' : ''),
-                        ];
-                    }),
+                    'unit_songs' => $setlist->unitSongs->map(fn (ShowTeaterCategories $song): array => [
+                        'id' => $song->id,
+                        'name' => $song->name,
+                        'jp_name' => $song->jp_name,
+                        'display_name' => $song->name.($song->jp_name ? ' ('.$song->jp_name.')' : ''),
+                    ]),
                 ];
             });
 
@@ -170,6 +137,137 @@ class ShowTeaterController extends Controller
                 'per_page' => $perPage,
             ],
         ]);
+    }
+
+    public function export()
+    {
+        $shows = DB::table('show_teater')
+            ->whereNull('deleted_at')
+            ->orderBy('show_id')
+            ->get();
+
+        $unitSongByShow = $this->unitSongByShow($shows->pluck('show_id'));
+        $unitSongJpMap = $this->unitSongJpMap();
+        $setlistJpMap = $this->setlistJpMap();
+
+        return Spreadsheet::download('show-teater-'.now()->format('Ymd-His').'.xlsx', [
+            'Show ID',
+            'Tanggal',
+            'Setlist',
+            'Unit Song',
+            'Global Center',
+            'US Center',
+            'Event',
+            'Info Tambahan',
+        ], $shows->map(function ($show) use ($unitSongByShow, $unitSongJpMap, $setlistJpMap): array {
+            $date = (string) $show->show_date;
+
+            try {
+                $date = Carbon::parse($show->show_date)->translatedFormat('d F Y');
+            } catch (\Throwable $exception) {
+                // Keep the original value if parsing fails.
+            }
+
+            return [
+                $show->show_id,
+                $date,
+                $this->formatSetlistDisplay((string) $show->setlist, $setlistJpMap),
+                $this->formatUnitSongDisplay($show, $unitSongByShow, $unitSongJpMap),
+                $show->is_global_center ? 'Yes' : '-',
+                $show->is_us_center ? 'Yes' : '-',
+                $show->is_the_show_has_event ?: '-',
+                $show->additional_information ?: '-',
+            ];
+        }));
+    }
+
+    /**
+     * Pivot unit song per show (terurut), dikelompokkan per show_id.
+     *
+     * @param  Collection<int, int>  $showIds
+     * @return Collection<int, Collection<int, object>>
+     */
+    private function unitSongByShow(Collection $showIds): Collection
+    {
+        return DB::table('show_teater_unit_song as pivot')
+            ->join('show_teater_categories as category', 'pivot.show_teater_categories_id', '=', 'category.id')
+            ->whereIn('pivot.show_id', $showIds)
+            ->orderBy('pivot.position')
+            ->get(['pivot.show_id', 'category.name', 'category.jp_name'])
+            ->groupBy('show_id');
+    }
+
+    /**
+     * Fallback: nama setlist => [nama unit song => jp_name].
+     *
+     * @return array<string, array<string, ?string>>
+     */
+    private function unitSongJpMap(): array
+    {
+        $map = [];
+
+        $unitSongs = ShowTeaterCategories::query()
+            ->unitSongs()
+            ->with('setlist:id,name')
+            ->get(['id', 'name', 'jp_name', 'setlist_id']);
+
+        foreach ($unitSongs as $unitSong) {
+            if ($unitSong->setlist) {
+                $map[$unitSong->setlist->name][$unitSong->name] = $unitSong->jp_name;
+            }
+        }
+
+        return $map;
+    }
+
+    /**
+     * @return array<string, ?string>
+     */
+    private function setlistJpMap(): array
+    {
+        return ShowTeaterCategories::query()->setlists()->pluck('jp_name', 'name')->all();
+    }
+
+    /**
+     * @param  Collection<int, Collection<int, object>>  $unitSongByShow
+     * @param  array<string, array<string, ?string>>  $unitSongJpMap
+     */
+    private function formatUnitSongDisplay(object $show, Collection $unitSongByShow, array $unitSongJpMap): string
+    {
+        $normalized = $unitSongByShow->get($show->show_id);
+
+        if ($normalized && $normalized->isNotEmpty()) {
+            return $normalized
+                ->map(fn ($song): string => $song->jp_name ? "{$song->name} ({$song->jp_name})" : (string) $song->name)
+                ->implode('; ');
+        }
+
+        if (empty($show->unit_song)) {
+            return '';
+        }
+
+        $formattedSongs = [];
+
+        foreach (preg_split('/\s*;\s*/', $show->unit_song) ?: [] as $song) {
+            if ($song === '') {
+                continue;
+            }
+
+            $jpName = $unitSongJpMap[$show->setlist][$song] ?? null;
+            $formattedSongs[] = $jpName ? "{$song} ({$jpName})" : $song;
+        }
+
+        return implode('; ', $formattedSongs);
+    }
+
+    /**
+     * @param  array<string, ?string>  $setlistJpMap
+     */
+    private function formatSetlistDisplay(string $setlist, array $setlistJpMap): string
+    {
+        $jpName = $setlistJpMap[$setlist] ?? null;
+
+        return $jpName ? "{$setlist} ({$jpName})" : $setlist;
     }
 
     public function store(Request $request)
@@ -220,6 +318,8 @@ class ShowTeaterController extends Controller
             DB::table('show_teater')->insert(['show_id' => $validated['show_id']] + $payload);
         }
 
+        app(ShowTeaterNormalizer::class)->syncShow((int) $validated['show_id']);
+
         Cache::flush();
 
         return redirect()->route('show-teater.index')->with('success', 'Show berhasil ditambahkan.');
@@ -258,6 +358,8 @@ class ShowTeaterController extends Controller
                 'is_the_show_has_event' => $validated['is_the_show_has_event'] ?? null,
                 'additional_information' => $validated['additional_information'] ?? null,
             ]);
+
+        app(ShowTeaterNormalizer::class)->syncShow((int) $id);
 
         Cache::flush();
 

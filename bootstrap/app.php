@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureFeatureEnabled;
 use App\Http\Middleware\EnsureNotViewOnly;
+use App\Http\Middleware\EnsureSheetIntegrationEnabled;
 use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\PreventViewOnlyWrites;
 use Illuminate\Foundation\Application;
@@ -21,10 +22,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'block-view-only-writes' => PreventViewOnlyWrites::class,
             'block-view-only' => EnsureNotViewOnly::class,
             'feature' => EnsureFeatureEnabled::class,
+            'sheet-integration' => EnsureSheetIntegrationEnabled::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
-            fn (Request $request) => $request->is('api/*'),
+            fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
     })->create();

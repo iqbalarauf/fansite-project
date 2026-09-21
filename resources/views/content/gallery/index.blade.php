@@ -78,6 +78,7 @@
                                                     data-id="{{ $photo->id }}"
                                                     data-description="{{ $photo->description }}"
                                                     data-credit="{{ $photo->credit_photographer }}"
+                                                    data-sort-order="{{ $photo->sort_order }}"
                                                     onclick="openEditPhotoModal(this)">Edit</button>
                                             <form method="POST" action="{{ route('content.gallery.photos.destroy', $photo) }}" onsubmit="return confirm('Hapus foto ini?')">
                                                 @csrf
@@ -129,6 +130,7 @@
                                                     data-url="{{ $video->url }}"
                                                     data-title="{{ $video->title }}"
                                                     data-credit="{{ $video->credit_account }}"
+                                                    data-sort-order="{{ $video->sort_order }}"
                                                     onclick="openEditVideoModal(this)">Edit</button>
                                             <form method="POST" action="{{ route('content.gallery.videos.destroy', $video) }}" onsubmit="return confirm('Hapus video ini?')">
                                                 @csrf
@@ -167,6 +169,10 @@
                     <flux:label for="create-photo-credit">Credit Photographer</flux:label>
                     <flux:input id="create-photo-credit" name="credit_photographer" class="mt-1" />
                 </div>
+                <div>
+                    <flux:label for="create-photo-sort-order">Urutan Tampil (opsional)</flux:label>
+                    <flux:input id="create-photo-sort-order" name="sort_order" type="number" min="0" placeholder="0" class="mt-1" />
+                </div>
                 <div class="flex items-center justify-end gap-3 pt-2">
                     <flux:modal.close><flux:button variant="ghost">Batal</flux:button></flux:modal.close>
                     <flux:button type="submit" variant="primary" :disabled="auth()->user()?->isViewOnly()">Simpan</flux:button>
@@ -194,6 +200,10 @@
                     <flux:label for="edit-photo-credit">Credit Photographer</flux:label>
                     <flux:input id="edit-photo-credit" name="credit_photographer" class="mt-1" />
                 </div>
+                <div>
+                    <flux:label for="edit-photo-sort-order">Urutan Tampil</flux:label>
+                    <flux:input id="edit-photo-sort-order" name="sort_order" type="number" min="0" class="mt-1" />
+                </div>
                 <div class="flex items-center justify-end gap-3 pt-2">
                     <flux:modal.close><flux:button variant="ghost">Batal</flux:button></flux:modal.close>
                     <flux:button type="submit" variant="primary" :disabled="auth()->user()?->isViewOnly()">Update</flux:button>
@@ -219,6 +229,10 @@
                 <div>
                     <flux:label for="create-video-credit">Credit Account</flux:label>
                     <flux:input id="create-video-credit" name="credit_account" class="mt-1" />
+                </div>
+                <div>
+                    <flux:label for="create-video-sort-order">Urutan Tampil (opsional)</flux:label>
+                    <flux:input id="create-video-sort-order" name="sort_order" type="number" min="0" placeholder="0" class="mt-1" />
                 </div>
                 <div class="flex items-center justify-end gap-3 pt-2">
                     <flux:modal.close><flux:button variant="ghost">Batal</flux:button></flux:modal.close>
@@ -247,6 +261,10 @@
                     <flux:label for="edit-video-credit">Credit Account</flux:label>
                     <flux:input id="edit-video-credit" name="credit_account" class="mt-1" />
                 </div>
+                <div>
+                    <flux:label for="edit-video-sort-order">Urutan Tampil</flux:label>
+                    <flux:input id="edit-video-sort-order" name="sort_order" type="number" min="0" class="mt-1" />
+                </div>
                 <div class="flex items-center justify-end gap-3 pt-2">
                     <flux:modal.close><flux:button variant="ghost">Batal</flux:button></flux:modal.close>
                     <flux:button type="submit" variant="primary" :disabled="auth()->user()?->isViewOnly()">Update</flux:button>
@@ -260,6 +278,7 @@
             document.getElementById('edit-photo-form').action = `{{ url('content/gallery/photos') }}/${target.dataset.id}`;
             document.getElementById('edit-photo-description').value = target.dataset.description || '';
             document.getElementById('edit-photo-credit').value = target.dataset.credit || '';
+            document.getElementById('edit-photo-sort-order').value = target.dataset.sortOrder || '';
             Flux.modal('modal-edit-photo').show();
         }
 
@@ -268,6 +287,7 @@
             document.getElementById('edit-video-url').value = target.dataset.url || '';
             document.getElementById('edit-video-title').value = target.dataset.title || '';
             document.getElementById('edit-video-credit').value = target.dataset.credit || '';
+            document.getElementById('edit-video-sort-order').value = target.dataset.sortOrder || '';
             Flux.modal('modal-edit-video').show();
         }
     </script>

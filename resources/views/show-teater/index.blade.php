@@ -9,6 +9,10 @@
                 <flux:subheading>Kelola jadwal pertunjukan teater</flux:subheading>
             </div>
             <div class="admin-page-actions">
+                <flux:button variant="filled" icon="arrow-down-tray" :href="route('show-teater.export')">
+                    Export to Excel
+                </flux:button>
+
                 {{-- Fetch Data Button --}}
                 <flux:button
                     id="btn-fetch"

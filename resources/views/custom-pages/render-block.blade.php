@@ -72,6 +72,6 @@
         <a href="{{ $block['data']['url'] ?? '#' }}" target="_blank" rel="noopener" class="inline-flex rounded-full bg-indigo-600 px-6 py-3 font-bold text-white transition hover:bg-indigo-700">{{ $block['data']['label'] ?? '' }}</a>
         @break
     @case('embed')
-        {!! $block['data']['html'] ?? '' !!}
+        {!! \App\Support\HtmlSanitizer::embed($block['data']['html'] ?? '') !!}
         @break
 @endswitch

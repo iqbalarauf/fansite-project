@@ -44,6 +44,9 @@ final class EventTimeline
                 'name' => $show->setlist,
                 'date' => ShowDate::normalize($show->show_date),
                 'badge_color' => 'blue',
+                'purchase_link' => filled($show->reference_code)
+                    ? 'https://jkt48.com/purchase/schedule/show?code='.rawurlencode((string) $show->reference_code)
+                    : null,
             ]);
         }
 

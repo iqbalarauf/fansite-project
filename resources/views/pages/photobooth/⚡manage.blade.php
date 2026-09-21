@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Photobooth;
+use App\Support\Timezone;
 use Flux\Flux;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -52,8 +53,8 @@ new #[Title('Photobooth Settings')] class extends Component
             $this->photoSlots = $photobooth->resolvedSlots();
             $this->frameOverlay = $photobooth->frame_overlay;
             $this->isFullOpen = $photobooth->is_full_open;
-            $this->startAt = $photobooth->start_at?->format('Y-m-d\TH:i');
-            $this->endAt = $photobooth->end_at?->format('Y-m-d\TH:i');
+            $this->startAt = Timezone::toLocal($photobooth->start_at)?->format('Y-m-d\TH:i');
+            $this->endAt = Timezone::toLocal($photobooth->end_at)?->format('Y-m-d\TH:i');
             $this->isActive = $photobooth->is_active;
         }
 
@@ -116,8 +117,8 @@ new #[Title('Photobooth Settings')] class extends Component
             'slots' => $this->normalizedSlots(),
             'frame_overlay' => $this->frameOverlay,
             'is_full_open' => $this->isFullOpen,
-            'start_at' => $this->isFullOpen ? null : $this->startAt,
-            'end_at' => $this->isFullOpen ? null : $this->endAt,
+            'start_at' => $this->isFullOpen ? null : Timezone::fromLocal($this->startAt)?->toDateTimeString(),
+            'end_at' => $this->isFullOpen ? null : Timezone::fromLocal($this->endAt)?->toDateTimeString(),
             'is_active' => $this->isActive,
         ]);
         $photobooth->save();
@@ -188,14 +189,12 @@ new #[Title('Photobooth Settings')] class extends Component
 }; ?>
 
 <section class="w-full">
-    @include('partials.settings-heading')
-
-    <flux:heading class="sr-only">{{ __('Photobooth Settings') }}</flux:heading>
+    <div>
+        <flux:heading level="1" size="xl">{{ __('Photobooth') }}</flux:heading>
+        <flux:subheading>{{ __('Atur photobooth online: slug, jadwal, layout, frame, dan posisi foto.') }}</flux:subheading>
+    </div>
 
     <div class="w-full max-w-7xl">
-        <flux:heading>{{ __('Photobooth Settings') }}</flux:heading>
-        <flux:subheading>{{ __('Atur photobooth online: slug, jadwal, layout, frame, dan posisi foto.') }}</flux:subheading>
-
         <form wire:submit="save" class="mt-5 space-y-6">
             <div class="grid items-stretch gap-6 lg:grid-cols-3">
                 <div class="space-y-6">

@@ -5,9 +5,14 @@
                 <flux:heading size="xl" class="font-bold">Concert & Events</flux:heading>
                 <flux:subheading>Kelola jadwal konser dan event, serta purchase link</flux:subheading>
             </div>
-            <flux:modal.trigger name="modal-create-concert-event">
-                <flux:button variant="primary" icon="plus">Tambah Event</flux:button>
-            </flux:modal.trigger>
+            <div class="admin-page-actions">
+                <flux:button variant="filled" icon="arrow-down-tray" :href="route('concert-events.export')">
+                    Export to Excel
+                </flux:button>
+                <flux:modal.trigger name="modal-create-concert-event">
+                    <flux:button variant="primary" icon="plus">Tambah Event</flux:button>
+                </flux:modal.trigger>
+            </div>
         </div>
 
         @if (session('success'))

@@ -40,6 +40,7 @@ class TriviaController extends Controller
             'title' => $request->validated('title'),
             'description' => $request->validated('description'),
             'image' => $request->hasFile('image') ? $request->file('image')->store('trivia', 'public') : null,
+            'sort_order' => (int) ($request->validated('sort_order') ?? 0),
         ]);
 
         return redirect()->route('content.trivia.index')
@@ -51,6 +52,7 @@ class TriviaController extends Controller
         $data = [
             'title' => $request->validated('title'),
             'description' => $request->validated('description'),
+            'sort_order' => (int) ($request->validated('sort_order') ?? 0),
         ];
 
         if ($request->hasFile('image')) {

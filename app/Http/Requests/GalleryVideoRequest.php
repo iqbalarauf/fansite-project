@@ -22,6 +22,7 @@ class GalleryVideoRequest extends FormRequest
             'url' => ['required', 'url', 'max:500'],
             'title' => ['nullable', 'string', 'max:255'],
             'credit_account' => ['nullable', 'string', 'max:255'],
+            'sort_order' => ['nullable', 'integer', 'min:0'],
         ];
     }
 

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('live_id')->nullable()->unique();
             $table->enum('platform', ['IDN App', 'Showroom']);
-            $table->date('live_date');
+            $table->date('live_date')->index();
             $table->integer('duration')->nullable()->comment('Duration in minutes');
             $table->text('additional_info')->nullable();
             $table->timestamps();

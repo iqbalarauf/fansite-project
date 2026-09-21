@@ -38,6 +38,7 @@ class TimelineController extends Controller
             'date' => $request->validated('date'),
             'description' => $request->validated('description'),
             'image' => $request->hasFile('image') ? $request->file('image')->store('timeline', 'public') : null,
+            'sort_order' => (int) ($request->validated('sort_order') ?? 0),
         ]);
 
         return redirect()->route('content.timeline.index')
@@ -49,6 +50,7 @@ class TimelineController extends Controller
         $data = [
             'date' => $request->validated('date'),
             'description' => $request->validated('description'),
+            'sort_order' => (int) ($request->validated('sort_order') ?? 0),
         ];
 
         if ($request->hasFile('image')) {

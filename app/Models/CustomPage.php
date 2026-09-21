@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasAuditColumns;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -9,6 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[Fillable(['title', 'slug', 'status', 'display_mode', 'background_color', 'title_alignment', 'blocks'])]
 class CustomPage extends Model
 {
+    use HasAuditColumns;
     use SoftDeletes;
 
     protected function casts(): array

@@ -74,7 +74,7 @@ class TimelineTest extends TestCase
         $this->delete(route('content.timeline.destroy', $timeline))
             ->assertRedirect(route('content.timeline.index'));
 
-        $this->assertDatabaseMissing('timelines', ['id' => $timeline->id]);
+        $this->assertSoftDeleted('timelines', ['id' => $timeline->id]);
         Storage::disk('public')->assertMissing($image);
     }
 }

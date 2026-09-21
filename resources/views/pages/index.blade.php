@@ -35,7 +35,7 @@
                             <td class="admin-table-cell">
                                 <flux:badge :color="$page->status === 'published' ? 'green' : 'zinc'">{{ $page->status }}</flux:badge>
                             </td>
-                            <td class="admin-table-cell">{{ $page->updated_at?->format('d M Y H:i') }}</td>
+                            <td class="admin-table-cell">{{ $page->updated_at?->timezone(\App\Support\Timezone::display())?->format('d M Y H:i') }}</td>
                             <td class="admin-table-cell text-right">
                                 <div class="flex items-center justify-end gap-2">
                                     <flux:button :href="route('pages.edit', $page)" icon="pencil-square" size="sm" square :aria-label="__('Edit page')" wire:navigate />

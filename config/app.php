@@ -69,6 +69,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Application Display Timezone
+    |--------------------------------------------------------------------------
+    |
+    | Timestamp disimpan di database dalam UTC. Zona ini dipakai untuk
+    | mengonversi input pengguna (lokal -> UTC) dan menampilkan kembali
+    | (UTC -> lokal). Pemisahan ini menjaga data tetap portabel.
+    |
+    */
+
+    'display_timezone' => env('APP_DISPLAY_TIMEZONE', 'Asia/Jakarta'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Locale Configuration
     |--------------------------------------------------------------------------
     |

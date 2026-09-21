@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Http\Requests\MeetGreetEventRequest;
 use App\Models\MeetGreetEvents;
 use App\Support\ListingQuery;
+use App\Support\Spreadsheet;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class MeetGreetEventsController extends Controller
 {
@@ -43,6 +45,35 @@ class MeetGreetEventsController extends Controller
             'events' => $events,
             'filters' => $filters,
         ]);
+    }
+
+    public function export(): StreamedResponse
+    {
+        $events = MeetGreetEvents::query()->orderByDesc('event_date')->get();
+
+        return Spreadsheet::download('meet-greet-events-'.now()->format('Ymd-His').'.xlsx', [
+            'Event Name',
+            'Location',
+            'Type',
+            'Event Date(s)',
+            'Ticket Sale',
+            'Purchase Link',
+        ], $events->map(static function (MeetGreetEvents $event): array {
+            $dates = $event->event_date?->translatedFormat('d F Y') ?? '–';
+
+            if ($event->event_date_2) {
+                $dates .= ', '.$event->event_date_2->translatedFormat('d F Y');
+            }
+
+            return [
+                $event->event_name,
+                $event->location ?: '–',
+                $event->event_type === 'video-call' ? 'Video Call' : 'Meet & Greet Festival',
+                $dates,
+                $event->ticket_sale_datetime?->translatedFormat('d F Y') ?? '–',
+                $event->purchase_link ?: '–',
+            ];
+        }));
     }
 
     public function store(MeetGreetEventRequest $request): RedirectResponse

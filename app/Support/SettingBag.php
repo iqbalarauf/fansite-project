@@ -25,12 +25,69 @@ final class SettingBag
     }
 
     /**
+     * Typed accessor for an app or about setting.
+     *
+     * @param  'app'|'about'  $bag
+     */
+    public static function string(string $key, string $default = '', string $bag = 'app'): string
+    {
+        $value = self::bag($bag)[$key] ?? null;
+
+        return $value === null ? $default : (string) $value;
+    }
+
+    /**
+     * @param  'app'|'about'  $bag
+     */
+    public static function bool(string $key, bool $default = false, string $bag = 'app'): bool
+    {
+        $value = self::bag($bag)[$key] ?? null;
+
+        if ($value === null) {
+            return $default;
+        }
+
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+    }
+
+    /**
+     * @param  'app'|'about'  $bag
+     */
+    public static function int(string $key, int $default = 0, string $bag = 'app'): int
+    {
+        $value = self::bag($bag)[$key] ?? null;
+
+        return $value === null ? $default : (int) $value;
+    }
+
+    /**
+     * @param  array<int|string, mixed>  $default
+     * @param  'app'|'about'  $bag
+     * @return array<int|string, mixed>
+     */
+    public static function array(string $key, array $default = [], string $bag = 'app'): array
+    {
+        $decoded = json_decode((string) (self::bag($bag)[$key] ?? ''), true);
+
+        return is_array($decoded) ? $decoded : $default;
+    }
+
+    /**
+     * @param  'app'|'about'  $bag
+     * @return array<string, mixed>
+     */
+    private static function bag(string $bag): array
+    {
+        return $bag === 'about' ? self::about() : self::app();
+    }
+
+    /**
      * Determine whether a content feature (e.g. "news", "blog") is enabled.
      * Defaults to enabled when the setting has never been saved.
      */
     public static function featureEnabled(string $feature): bool
     {
-        return filter_var(self::app()[$feature.'_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
+        return self::bool($feature.'_enabled', true);
     }
 
     /**
@@ -51,6 +108,14 @@ final class SettingBag
         $source = (string) (self::app()['welcome_feed_source'] ?? 'news');
 
         return in_array($source, ['news', 'blog', 'magazines', 'trivia'], true) ? $source : 'news';
+    }
+
+    /**
+     * Whether the Google Sheet integration feature is enabled (default: disabled).
+     */
+    public static function sheetIntegrationEnabled(): bool
+    {
+        return self::bool('sheet_integration_enabled');
     }
 
     /**

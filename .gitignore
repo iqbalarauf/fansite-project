@@ -28,6 +28,9 @@ yarn-error.log
 
 # Ignore all markdown files
 *.md
+*.sql
 
 # Do not ignore README.md
 !README.md
+!prd.md
+!design.md

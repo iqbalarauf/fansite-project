@@ -107,7 +107,7 @@ class MagazineTest extends TestCase
 
         $this->delete(route('magazines.destroy', $magazine))->assertRedirect(route('magazines.index'));
 
-        $this->assertDatabaseMissing('magazines', ['id' => $magazine->id]);
+        $this->assertSoftDeleted('magazines', ['id' => $magazine->id]);
         Storage::disk('public')->assertMissing($file);
         Storage::disk('public')->assertMissing($cover);
     }

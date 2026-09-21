@@ -26,7 +26,7 @@ final class WelcomePageData
     {
         $about = SettingBag::about();
         $app = SettingBag::app();
-        $today = now()->toDateString();
+        $today = Timezone::today();
         $showCount = ShowTeater::query()->count();
         $upcomingShowCount = $this->timeline->upcomingShowCount($today);
         $feedSource = SettingBag::welcomeFeedSource();
@@ -121,7 +121,7 @@ final class WelcomePageData
             return collect();
         }
 
-        return GalleryPhoto::query()->latest()->take(6)->get();
+        return GalleryPhoto::query()->orderBy('sort_order')->orderByDesc('created_at')->take(6)->get();
     }
 
     /**
@@ -157,7 +157,8 @@ final class WelcomePageData
                 'heading' => 'Trivia Terbaru',
                 'indexRoute' => route('trivia.index'),
                 'items' => Trivia::query()
-                    ->latest('created_at')
+                    ->orderBy('sort_order')
+                    ->orderByDesc('created_at')
                     ->take(4)
                     ->get()
                     ->map(fn (Trivia $trivia): array => [

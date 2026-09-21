@@ -13,7 +13,9 @@ return new class extends Migration
             $table->string('photo');
             $table->text('description')->nullable();
             $table->string('credit_photographer')->nullable();
+            $table->unsignedInteger('sort_order')->default(0)->index();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

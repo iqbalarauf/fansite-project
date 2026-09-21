@@ -52,6 +52,31 @@ class PhotoboothTest extends TestCase
         Storage::disk('public')->assertExists($photobooth->frame);
     }
 
+    public function test_photobooth_schedule_is_converted_from_local_input_to_utc(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::photobooth.manage')
+            ->set('slug', 'photobooth')
+            ->set('isFullOpen', false)
+            ->set('startAt', '2026-01-01T08:00')
+            ->set('endAt', '2026-01-31T20:00')
+            ->set('frameUpload', UploadedFile::fake()->image('frame.png'))
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $photobooth = Photobooth::query()->firstOrFail();
+
+        // 08:00 & 20:00 WIB (UTC+7) => 01:00 & 13:00 UTC
+        $this->assertSame('2026-01-01 01:00:00', $photobooth->start_at?->toDateTimeString());
+        $this->assertSame('2026-01-31 13:00:00', $photobooth->end_at?->toDateTimeString());
+
+        // Re-mount menampilkan kembali waktu lokal.
+        Livewire::test('pages::photobooth.manage')->assertSet('startAt', '2026-01-01T08:00');
+    }
+
     public function test_frame_is_required_when_creating(): void
     {
         Storage::fake('public');
