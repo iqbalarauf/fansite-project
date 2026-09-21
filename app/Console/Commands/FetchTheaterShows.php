@@ -5,7 +5,9 @@ namespace App\Console\Commands;
 use App\Models\AboutSettings;
 use App\Models\ShowTeater;
 use App\Models\TheaterReference;
+use App\Support\SettingBag;
 use App\Support\ShowTeaterNormalizer;
+use App\Support\ShowTeaterUnitSongPredictor;
 use App\Support\Timezone;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
@@ -65,9 +67,13 @@ class FetchTheaterShows extends Command
             return self::FAILURE;
         }
 
+        $unitSongPredictions = SettingBag::showTeaterPredictorEnabled()
+            ? app(ShowTeaterUnitSongPredictor::class)->mapBySetlist()
+            : [];
+
         foreach ($shows as $show) {
             if (is_array($show)) {
-                $this->processShow($show, trim((string) $idolShortname));
+                $this->processShow($show, trim((string) $idolShortname), $unitSongPredictions);
             }
         }
 
@@ -78,8 +84,9 @@ class FetchTheaterShows extends Command
 
     /**
      * @param  array<string, mixed>  $show
+     * @param  array<string, string>  $unitSongPredictions
      */
-    private function processShow(array $show, string $idolShortname): void
+    private function processShow(array $show, string $idolShortname, array $unitSongPredictions): void
     {
         // Reference code diambil dari data.link (query ?code=), fallback ke reference_code.
         $referenceCode = $this->extractReferenceCode($show['link'] ?? null, $show['reference_code'] ?? null);
@@ -96,11 +103,12 @@ class FetchTheaterShows extends Command
         }
 
         $alreadySynced = $this->showExists((string) $date, $title);
+        $prediction = $unitSongPredictions[$title] ?? null;
 
         // Reference sudah pernah diproses pada bulan berjalan.
         if (TheaterReference::query()->where('reference_code', $referenceCode)->exists()) {
             if ($alreadySynced) {
-                $this->attachReferenceCode((string) $date, $title, $referenceCode);
+                $this->attachReferenceCode((string) $date, $title, $referenceCode, $prediction);
                 $this->error('Show terbaru sudah tersinkronisasi');
             }
 
@@ -118,7 +126,7 @@ class FetchTheaterShows extends Command
         $this->recordReference($referenceCode);
 
         if ($alreadySynced) {
-            $this->attachReferenceCode((string) $date, $title, $referenceCode);
+            $this->attachReferenceCode((string) $date, $title, $referenceCode, $prediction);
             $this->error('Show terbaru sudah tersinkronisasi');
 
             return;
@@ -127,13 +135,31 @@ class FetchTheaterShows extends Command
         // Hitung dari seluruh baris (termasuk yang ter-soft delete) agar show_id tidak menimpa PK.
         $newShowId = (int) (ShowTeater::withTrashed()->max('show_id') ?? 0) + 1;
 
-        ShowTeater::query()->create([
+        // Unit song: pakai dari API bila ada, jika tidak prediksi dari show terakhir setlist sama.
+        $apiUnitSong = $show['unit_song'] ?? null;
+        $unitSong = is_string($apiUnitSong) && trim($apiUnitSong) !== ''
+            ? trim($apiUnitSong)
+            : ($prediction['unit_song'] ?? null);
+
+        $attributes = [
             'show_id' => $newShowId,
             'show_date' => (string) $date,
             'setlist' => $title,
+            'unit_song' => $unitSong,
             'reference_code' => $referenceCode,
             'is_scraped_data' => 1,
-        ]);
+        ];
+
+        // Center (input manual, tidak ada di API): ikut prediksi bila show sebelumnya center.
+        if ($prediction['is_global_center'] ?? false) {
+            $attributes['is_global_center'] = 1;
+        }
+
+        if ($prediction['is_us_center'] ?? false) {
+            $attributes['is_us_center'] = 1;
+        }
+
+        ShowTeater::query()->create($attributes);
 
         app(ShowTeaterNormalizer::class)->syncShow($newShowId);
 
@@ -141,19 +167,32 @@ class FetchTheaterShows extends Command
     }
 
     /**
-     * Isi reference_code pada show yang sudah ada namun belum memiliki reference_code.
+     * Isi reference_code & center pada show yang sudah ada namun belum terisi.
+     *
+     * @param  array{unit_song: ?string, is_global_center: bool, is_us_center: bool}|null  $prediction
      */
-    private function attachReferenceCode(string $date, string $title, string $referenceCode): void
+    private function attachReferenceCode(string $date, string $title, string $referenceCode, ?array $prediction = null): void
     {
         $dateSlash = str_replace('-', '/', $date);
 
-        ShowTeater::withTrashed()
+        $matchShow = fn () => ShowTeater::withTrashed()
             ->where(function ($query) use ($date, $dateSlash): void {
                 $query->where('show_date', $date)->orWhere('show_date', $dateSlash);
             })
-            ->where('setlist', $title)
+            ->where('setlist', $title);
+
+        $matchShow()
             ->whereNull('reference_code')
             ->update(['reference_code' => $referenceCode]);
+
+        // Center diisi hanya bila belum ada nilainya (NULL), agar input manual 0 tidak tertimpa.
+        if ($prediction['is_global_center'] ?? false) {
+            $matchShow()->whereNull('is_global_center')->update(['is_global_center' => 1]);
+        }
+
+        if ($prediction['is_us_center'] ?? false) {
+            $matchShow()->whereNull('is_us_center')->update(['is_us_center' => 1]);
+        }
     }
 
     /**
