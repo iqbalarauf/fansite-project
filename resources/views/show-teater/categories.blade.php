@@ -152,7 +152,7 @@
                                                 type="button"
                                                 id="toggle-btn-setlist-{{ $item->id }}"
                                                 class="text-sm font-medium {{ $item->is_active ? 'text-red-500 hover:text-red-700' : 'text-green-600 hover:text-green-800' }}"
-                                                onclick="toggleStatus({{ $item->id }}, 'setlist', {{ $item->is_active }})"
+                                                onclick="toggleStatus({{ $item->id }}, 'setlist', {{ $item->is_active ? 1 : 0 }})"
                                                 @disabled(auth()->user()?->isViewOnly())
                                             >{{ $item->is_active ? 'Inactive' : 'Active' }}</button>
                                         </div>
@@ -266,7 +266,7 @@
                                                 type="button"
                                                 id="toggle-btn-unit-{{ $item->id }}"
                                                 class="text-sm font-medium {{ $item->is_active ? 'text-red-500 hover:text-red-700' : 'text-green-600 hover:text-green-800' }}"
-                                                onclick="toggleStatus({{ $item->id }}, 'unit', {{ $item->is_active }})"
+                                                onclick="toggleStatus({{ $item->id }}, 'unit', {{ $item->is_active ? 1 : 0 }})"
                                                 @disabled(auth()->user()?->isViewOnly())
                                             >{{ $item->is_active ? 'Inactive' : 'Active' }}</button>
                                         </div>

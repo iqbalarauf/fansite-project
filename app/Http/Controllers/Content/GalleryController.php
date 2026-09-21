@@ -29,7 +29,8 @@ class GalleryController extends Controller
                         ->orWhere('credit_photographer', 'like', "%{$filters['search']}%");
                 });
             })
-            ->latest()
+            ->orderBy('sort_order')
+            ->orderByDesc('created_at')
             ->paginate($filters['per_page'], ['*'], 'photo_page')
             ->withQueryString();
 
@@ -40,7 +41,8 @@ class GalleryController extends Controller
                         ->orWhere('credit_account', 'like', "%{$filters['search']}%");
                 });
             })
-            ->latest()
+            ->orderBy('sort_order')
+            ->orderByDesc('created_at')
             ->paginate($filters['per_page'], ['*'], 'video_page')
             ->withQueryString();
 

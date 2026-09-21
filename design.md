@@ -142,7 +142,7 @@ Kelas utilitas bersama di `app.css` (`@layer components`):
 
 - **Form CRUD:** `flux:modal` (varian `flyout`), tombol submit `variant="primary"`, dibatasi untuk view-only.
 - **Komponen Flux:** `flux:heading`, `flux:subheading`, `flux:button`, `flux:input`, `flux:textarea`, `flux:label`, `flux:badge`, `flux:modal`, `flux:sidebar`, `flux:navlist`, `flux:menu`.
-- **Sidebar admin** (`layouts/app/sidebar.blade.php`): grup **Dashboard**, **Master Data**, **Content Management** (Pages, Majalah, News, Blog, Kategori, Galeri, Timeline, Trivia), **Additional Content**, **User Management**; difilter sesuai peran & feature flag.
+- **Sidebar admin** (`layouts/app/sidebar.blade.php`): grup **Dashboard**, **Master Data**, **Content Management** (Pages, Majalah, News, Blog, Kategori, Galeri, Timeline, Trivia), **Additional Content**, dan **Configuration** (Appearance, Features Activation, Header Menu, Sheet Integration, User Management, Halaman "About"); difilter sesuai peran & feature flag.
 
 ### 7.3 Komponen Blade Kustom
 | Komponen | Berkas | Kegunaan |
@@ -150,7 +150,7 @@ Kelas utilitas bersama di `app.css` (`@layer components`):
 | Rich Text Editor | `components/rich-text-editor.blade.php` | Editor Tiptap v3 untuk News/Blog |
 | Social Media Icons | `components/social-media-icons.blade.php` | Tombol ikon Instagram/X/TikTok |
 | App Logo | `components/app-logo.blade.php` + `app-logo-icon.blade.php` | Logo dari pengaturan |
-| Placeholder Pattern | `components/placeholder-pattern.blade.php` | Pola latar placeholder |
+| Sync Choice | `components/sync-choice.blade.php` | Pemilih sumber nilai (Database/Sheet/Lewati) dengan ikon + tooltip (Sheet Integration) |
 | Admin Table Toolbar | `components/admin/table-toolbar.blade.php` | Toolbar filter + aksi tabel |
 | Admin Search | `components/admin-search.blade.php` | Pencarian global admin |
 
@@ -184,7 +184,11 @@ resources/views/welcome.blade.php               # Halaman Welcome
 resources/views/about/idol.blade.php            # Halaman profil idola
 resources/views/about/fansite.blade.php         # Halaman profil fanbase
 resources/views/components/                     # Komponen Blade kustom
-resources/views/pages/settings/                 # Halaman pengaturan (Volt)
+resources/views/pages/settings/                 # Halaman akun (profile/security) + 2FA (Volt)
+resources/views/pages/appearance/               # Halaman konfigurasi Appearance (standalone)
+resources/views/pages/features/                 # Halaman konfigurasi Features Activation (standalone)
+resources/views/pages/header-menu/              # Halaman konfigurasi Header Menu (standalone)
+resources/views/pages/sheet-integration/        # Sheet Integration (perbandingan & sinkronisasi)
 ```
 
 **Referensi fitur konten:** `docs/pages-feature-reference.md`

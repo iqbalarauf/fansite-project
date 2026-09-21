@@ -1,0 +1,39 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * @var array<int, string>
+     */
+    private array $tables = ['magazines', 'gallery_photos', 'gallery_videos', 'timelines', 'trivias'];
+
+    /**
+     * Run the migrations.
+     *
+     * Kebijakan: tabel konten yang dikelola penuh lewat Eloquent memakai soft delete.
+     */
+    public function up(): void
+    {
+        foreach ($this->tables as $table) {
+            Schema::table($table, function (Blueprint $blueprint): void {
+                $blueprint->softDeletes();
+            });
+        }
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        foreach ($this->tables as $table) {
+            Schema::table($table, function (Blueprint $blueprint): void {
+                $blueprint->dropSoftDeletes();
+            });
+        }
+    }
+};

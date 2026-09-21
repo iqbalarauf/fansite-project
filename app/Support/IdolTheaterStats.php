@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\ShowTeaterCategories;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -26,8 +27,8 @@ final class IdolTheaterStats
             ->whereNull('deleted_at')
             ->get(['setlist', 'unit_song', 'show_date', 'is_member_show', 'is_global_center', 'is_us_center']);
 
-        $setlistCategories = DB::table('show_teater_categories')
-            ->where('type', 'setlist')
+        $setlistCategories = ShowTeaterCategories::query()
+            ->setlists()
             ->get(['name', 'jp_name', 'is_active']);
 
         $activeLookup = [];
@@ -35,7 +36,7 @@ final class IdolTheaterStats
         foreach ($setlistCategories as $category) {
             $key = $this->normalize((string) $category->name);
             $setlistJp[$key] = $category->jp_name;
-            if ((int) $category->is_active === 1) {
+            if ($category->is_active) {
                 $activeLookup[$key] = true;
             }
         }
@@ -171,7 +172,7 @@ final class IdolTheaterStats
     {
         $lookup = [];
 
-        foreach (DB::table('show_teater_categories')->where('type', 'unit_song')->get(['name', 'jp_name']) as $category) {
+        foreach (ShowTeaterCategories::query()->unitSongs()->get(['name', 'jp_name']) as $category) {
             $entry = ['name' => (string) $category->name, 'jp_name' => $category->jp_name];
             $lookup[$this->normalize((string) $category->name)] = $entry;
 
