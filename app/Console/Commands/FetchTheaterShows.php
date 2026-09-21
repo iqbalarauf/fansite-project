@@ -31,6 +31,10 @@ class FetchTheaterShows extends Command
      */
     public function handle(): int
     {
+        // Reset bulanan: hapus reference lama, pertahankan yang dipakai show yang belum lewat.
+        $now = Timezone::nowLocal();
+        TheaterReference::deleteOldReferences($now->month, $now->year);
+
         $baseUrl = rtrim((string) config('services.jkt48connect.url'), '/');
         $apiKey = (string) config('services.jkt48connect.key');
 
