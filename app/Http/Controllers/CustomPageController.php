@@ -7,6 +7,7 @@ use App\Support\ListingQuery;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class CustomPageController extends Controller
 {
@@ -33,6 +34,8 @@ class CustomPageController extends Controller
 
     public function edit(CustomPage $customPage): View
     {
+        Gate::authorize('view', $customPage);
+
         return view('custom-pages.admin', [
             'pageId' => $customPage->id,
         ]);
@@ -40,6 +43,8 @@ class CustomPageController extends Controller
 
     public function destroy(CustomPage $customPage): RedirectResponse
     {
+        Gate::authorize('delete', $customPage);
+
         $customPage->delete();
 
         return to_route('pages.index')->with('success', __('Page deleted.'));

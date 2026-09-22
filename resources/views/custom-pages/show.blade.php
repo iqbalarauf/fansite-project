@@ -1,9 +1,9 @@
 @php
-    use Illuminate\Support\Facades\DB;
+    use App\Support\SettingBag;
     use Illuminate\Support\Facades\Storage;
 
-    $appSettings = DB::table('app_settings')->pluck('value', 'key')->all();
-    $about = DB::table('about_settings')->pluck('value', 'key')->all();
+    $appSettings = SettingBag::app();
+    $about = SettingBag::about();
     $appName = $appSettings['app_name'] ?? config('app.name', 'Laravel');
     $sidebarName = $appSettings['sidebar_name'] ?? $appName;
     $appLogo = $appSettings['app_logo'] ?? null;
@@ -69,7 +69,7 @@
             </header>
             <div class="space-y-5">
                 @foreach ($page->blocks ?? [] as $block)
-                    @include('custom-pages.render-block', ['block' => $block])
+                    <x-custom-page-block :block="$block" />
                 @endforeach
             </div>
         </main>

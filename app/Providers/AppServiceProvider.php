@@ -3,10 +3,19 @@
 namespace App\Providers;
 
 use App\Contracts\GoogleSheetsClient;
+use App\Models\BlogPost;
+use App\Models\CustomPage;
+use App\Models\Magazine;
+use App\Models\NewsPost;
+use App\Models\Post;
+use App\Policies\CustomPagePolicy;
+use App\Policies\MagazinePolicy;
+use App\Policies\PostPolicy;
 use App\Services\Google\GoogleApiSheetsClient;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -26,6 +35,19 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->registerContentPolicies();
+    }
+
+    /**
+     * Daftarkan Policy konten agar aturan peran & kepemilikan terpusat.
+     */
+    protected function registerContentPolicies(): void
+    {
+        Gate::policy(Post::class, PostPolicy::class);
+        Gate::policy(NewsPost::class, PostPolicy::class);
+        Gate::policy(BlogPost::class, PostPolicy::class);
+        Gate::policy(Magazine::class, MagazinePolicy::class);
+        Gate::policy(CustomPage::class, CustomPagePolicy::class);
     }
 
     /**

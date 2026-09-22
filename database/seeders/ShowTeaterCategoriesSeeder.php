@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\ShowTeaterCategories;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class ShowTeaterCategoriesSeeder extends Seeder
 {
@@ -13,7 +13,7 @@ class ShowTeaterCategoriesSeeder extends Seeder
      */
     public function run(): void
     {
-        DB::table('show_teater_categories')->truncate();
+        ShowTeaterCategories::query()->truncate();
 
         $now = now();
 
@@ -215,6 +215,6 @@ class ShowTeaterCategoriesSeeder extends Seeder
             ['id' => 171, 'type' => 'unit_song', 'setlist_id' => 24, 'name' => 'Rider', 'jp_name' => '', 'created_at' => $now],
         ];
 
-        DB::table('show_teater_categories')->insert($categories);
+        ShowTeaterCategories::query()->insert($categories);
     }
 }

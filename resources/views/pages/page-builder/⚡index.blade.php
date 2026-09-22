@@ -4,6 +4,7 @@ use App\Models\CustomPage;
 use App\Support\ImageOptimizer;
 use Flux\Flux;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -277,6 +278,12 @@ new #[Title('Custom Pages')] class extends Component {
     {
         abort_if(auth()->user()?->isViewOnly(), 403);
 
+        if ($this->pageId) {
+            Gate::authorize('update', CustomPage::query()->findOrFail($this->pageId));
+        } else {
+            Gate::authorize('create', CustomPage::class);
+        }
+
         $this->resetErrorBag('imageUpload');
         $this->validatePage($nextStatus);
 
@@ -308,6 +315,8 @@ new #[Title('Custom Pages')] class extends Component {
 
         if ($this->pageId) {
             $page = CustomPage::query()->findOrFail($this->pageId);
+
+            Gate::authorize('delete', $page);
 
             foreach ($page->blocks ?? [] as $block) {
                 $this->deleteBlockFile($block);
@@ -637,7 +646,7 @@ new #[Title('Custom Pages')] class extends Component {
                                 <span class="flex items-center gap-2"><flux:icon name="bars-3" class="size-4 cursor-grab" /> {{ $block['type'] }}</span>
                                 <flux:button wire:click.stop="removeBlock({{ $index }})" icon="trash" size="sm" square :aria-label="__('Remove block')" />
                             </div>
-                            @include('custom-pages.block-preview', ['block' => $block])
+                            <x-custom-page-block :block="$block" preview />
                         </article>
                     @empty
                         <div class="flex min-h-64 items-center justify-center rounded-xl border border-dashed border-zinc-300 text-sm text-zinc-500">{{ __('Tambahkan blok dari panel kanan.') }}</div>

@@ -12,6 +12,7 @@ use App\Support\ListingQuery;
 use App\Support\Timezone;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
@@ -67,6 +68,8 @@ class PostController extends Controller
         $contentSection = $this->section($request);
         $model = $contentSection->model();
 
+        Gate::authorize('create', $model);
+
         $post = new $model;
         $this->fillPost($post, $request);
         $post->save();
@@ -80,6 +83,8 @@ class PostController extends Controller
         $contentSection = $this->section($request);
         $post = $contentSection->model()::query()->findOrFail($this->postId($request));
 
+        Gate::authorize('view', $post);
+
         return view('content.posts.form', [
             'section' => $contentSection,
             'post' => $post,
@@ -92,6 +97,9 @@ class PostController extends Controller
         $contentSection = $this->section($request);
 
         $post = $contentSection->model()::query()->findOrFail($this->postId($request));
+
+        Gate::authorize('update', $post);
+
         $this->fillPost($post, $request);
         $post->save();
 
@@ -103,7 +111,11 @@ class PostController extends Controller
     {
         $contentSection = $this->section($request);
 
-        $contentSection->model()::query()->findOrFail($this->postId($request))->delete();
+        $post = $contentSection->model()::query()->findOrFail($this->postId($request));
+
+        Gate::authorize('delete', $post);
+
+        $post->delete();
 
         return redirect()->route($contentSection->adminRoute().'.index')
             ->with('success', $contentSection->label().' berhasil dihapus.');
