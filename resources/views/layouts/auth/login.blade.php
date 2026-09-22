@@ -31,7 +31,7 @@
 
             <div class="relative hidden w-full overflow-hidden lg:flex lg:w-1/2">
                 @if ($loginImage)
-                    <img src="{{ Storage::url($loginImage) }}" alt="{{ $appName }}" class="absolute inset-0 h-full w-full object-cover" />
+                    <img src="{{ Storage::url($loginImage) }}" alt="{{ $appName }}" class="absolute inset-0 h-full w-full object-cover" loading="eager" fetchpriority="high" decoding="async" />
                     <div class="absolute inset-0 bg-gradient-to-br from-indigo-950/85 via-slate-950/70 to-violet-950/80"></div>
                 @else
                     <div class="absolute inset-0 bg-gradient-to-br from-indigo-950 via-slate-900 to-violet-950"></div>

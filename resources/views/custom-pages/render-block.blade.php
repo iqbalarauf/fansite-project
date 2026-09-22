@@ -58,7 +58,7 @@
                 ? Storage::url($block['data']['storage_path'])
                 : ($block['data']['url'] ?? '');
         @endphp
-        <img src="{{ $imageSrc }}" alt="{{ $block['data']['alt'] ?? '' }}" class="max-h-[560px] w-full rounded-2xl object-cover shadow-sm">
+        <img src="{{ $imageSrc }}" alt="{{ $block['data']['alt'] ?? '' }}" class="max-h-[560px] w-full rounded-2xl object-cover shadow-sm" loading="lazy" decoding="async">
         @break
     @case('video')
         @php

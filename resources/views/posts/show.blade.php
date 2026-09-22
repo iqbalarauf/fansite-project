@@ -34,7 +34,7 @@
 
         @if ($post->cover)
             <div class="mx-auto -mt-8 max-w-3xl px-4 sm:px-6 lg:px-8">
-                <img src="{{ Storage::url($post->cover) }}" alt="{{ $post->title }}" class="aspect-video w-full rounded-[2rem] border border-slate-200 object-cover shadow-lg dark:border-slate-800" />
+                <img src="{{ Storage::url($post->cover) }}" alt="{{ $post->title }}" class="aspect-video w-full rounded-[2rem] border border-slate-200 object-cover shadow-lg dark:border-slate-800" loading="eager" fetchpriority="high" decoding="async" />
             </div>
         @endif
 
@@ -57,7 +57,7 @@
                     <a href="{{ $item->publicUrl() }}" class="flex flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
                         <div class="overflow-hidden bg-slate-100 dark:bg-slate-800">
                             @if ($item->cover)
-                                <img src="{{ Storage::url($item->cover) }}" alt="{{ $item->title }}" class="aspect-video w-full object-cover" loading="lazy" />
+                                <img src="{{ Storage::url($item->cover) }}" alt="{{ $item->title }}" class="aspect-video w-full object-cover" loading="lazy" decoding="async" />
                             @else
                                 <div class="flex aspect-video w-full items-center justify-center text-3xl font-black text-indigo-600 dark:text-indigo-400">{{ \Illuminate\Support\Str::of($item->title)->substr(0, 1) }}</div>
                             @endif

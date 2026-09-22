@@ -8,6 +8,7 @@ use App\Http\Requests\GalleryVideoRequest;
 use App\Models\GalleryPhoto;
 use App\Models\GalleryVideo;
 use App\Support\GalleryVideoEmbed;
+use App\Support\ImageOptimizer;
 use App\Support\ListingQuery;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -57,7 +58,7 @@ class GalleryController extends Controller
     public function storePhoto(GalleryPhotoRequest $request): RedirectResponse
     {
         GalleryPhoto::query()->create([
-            'photo' => $request->file('photo')->store('gallery/photos', 'public'),
+            'photo' => ImageOptimizer::store($request->file('photo'), 'gallery/photos'),
             'description' => $request->validated('description'),
             'credit_photographer' => $request->validated('credit_photographer'),
             'sort_order' => (int) ($request->validated('sort_order') ?? 0),
@@ -77,7 +78,7 @@ class GalleryController extends Controller
 
         if ($request->hasFile('photo')) {
             Storage::disk('public')->delete($galleryPhoto->photo);
-            $data['photo'] = $request->file('photo')->store('gallery/photos', 'public');
+            $data['photo'] = ImageOptimizer::store($request->file('photo'), 'gallery/photos');
         }
 
         $galleryPhoto->update($data);

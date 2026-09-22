@@ -32,7 +32,7 @@
                 <div class="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
                     <div class="overflow-hidden bg-slate-100 dark:bg-slate-800">
                         @if ($cover)
-                            <img src="{{ $cover }}" alt="{{ $magazine->title }}" class="aspect-[3/4] w-full object-cover" />
+                            <img src="{{ $cover }}" alt="{{ $magazine->title }}" class="aspect-[3/4] w-full object-cover" loading="eager" fetchpriority="high" decoding="async" />
                         @else
                             <div class="flex aspect-[3/4] items-center justify-center text-4xl font-black text-indigo-600 dark:text-indigo-400">{{ \Illuminate\Support\Str::of($magazine->title)->substr(0, 1) }}</div>
                         @endif

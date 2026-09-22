@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\MagazineStoreRequest;
 use App\Http\Requests\MagazineUpdateRequest;
 use App\Models\Magazine;
+use App\Support\ImageOptimizer;
 use App\Support\ListingQuery;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -49,7 +50,7 @@ class MagazineController extends Controller
                 'title' => $validated['title'],
                 'slug' => $validated['slug'],
                 'description' => $validated['description'] ?? null,
-                'cover' => isset($validated['cover']) ? $validated['cover']->store('magazines/covers', 'public') : null,
+                'cover' => isset($validated['cover']) ? ImageOptimizer::store($validated['cover'], 'magazines/covers', maxWidth: 1000) : null,
                 'file_path' => $validated['file']->store('magazines/files', 'public'),
                 'original_name' => $validated['file']->getClientOriginalName(),
                 'is_main' => $isMain,

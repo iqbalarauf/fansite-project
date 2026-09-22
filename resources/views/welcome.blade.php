@@ -1,4 +1,4 @@
-﻿@extends('layouts.public', ['title' => null, 'active' => 'home'])
+@extends('layouts.public', ['title' => null, 'active' => 'home'])
 
 @section('content')
     @php
@@ -56,7 +56,7 @@
 
                             <div class="mt-6">
                                 @if ($idolPhoto)
-                                    <img src="{{ Storage::url($idolPhoto) }}" alt="{{ $idolName }}" class="h-[380px] w-full rounded-[1.5rem] object-cover shadow-lg shadow-indigo-200/50 dark:shadow-none" />
+                                    <img src="{{ Storage::url($idolPhoto) }}" alt="{{ $idolName }}" class="h-[380px] w-full rounded-[1.5rem] object-cover shadow-lg shadow-indigo-200/50 dark:shadow-none" loading="lazy" decoding="async" />
                                 @else
                                     <div class="flex h-[380px] w-full items-center justify-center rounded-[1.5rem] border border-slate-200 bg-slate-100 text-xl font-bold text-indigo-600 dark:border-slate-700 dark:bg-slate-800 dark:text-indigo-400">{{ $idolName }}</div>
                                 @endif
@@ -88,7 +88,7 @@
                                     <a href="{{ $item['url'] }}" class="group flex items-start gap-4">
                                         @if ($item['cover'])
                                             <div class="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800">
-                                                <img src="{{ Storage::url($item['cover']) }}" alt="{{ $item['title'] }}" class="h-full w-full object-cover" loading="lazy" />
+                                                <img src="{{ Storage::url($item['cover']) }}" alt="{{ $item['title'] }}" class="h-full w-full object-cover" loading="lazy" decoding="async" />
                                             </div>
                                         @endif
                                         <div class="min-w-0">
@@ -253,7 +253,7 @@
                     <div class="flex gap-4 transition-transform duration-500 ease-out" data-gallery-track>
                         @foreach ($galleryPhotos as $photo)
                             <a href="{{ route('gallery.index') }}" data-gallery-item class="group w-[calc((100%-2rem)/3)] shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                                <img src="{{ Storage::url($photo->photo) }}" alt="{{ $photo->description ?: 'Gallery photo' }}" class="aspect-square w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" />
+                                <img src="{{ Storage::url($photo->photo) }}" alt="{{ $photo->description ?: 'Gallery photo' }}" class="aspect-square w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" decoding="async" />
                             </a>
                         @endforeach
                     </div>
@@ -319,7 +319,7 @@
                                        class="group flex w-[calc((100%-2rem)/3)] shrink-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-indigo-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-700">
                                         <div class="aspect-video w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
                                             @if ($video['thumbnail'])
-                                                <img src="{{ $video['thumbnail'] }}" alt="{{ $video['title'] }}" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" />
+                                                <img src="{{ $video['thumbnail'] }}" alt="{{ $video['title'] }}" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" decoding="async" />
                                             @endif
                                         </div>
                                         <div class="flex flex-1 flex-col gap-2 p-4">

@@ -3,6 +3,7 @@
 use App\Models\CustomPage;
 use App\Support\BrandPalette;
 use App\Support\HeroLink;
+use App\Support\ImageOptimizer;
 use App\Support\SettingsStore;
 use App\Support\YoutubeEmbed;
 use Flux\Flux;
@@ -122,7 +123,7 @@ new #[Title('Appearance settings')] class extends Component
                 Storage::disk('public')->delete($this->appLogoPath);
             }
 
-            $this->appLogoPath = $this->appLogoUpload->store('app', 'public');
+            $this->appLogoPath = ImageOptimizer::store($this->appLogoUpload, 'app', maxWidth: 512);
             $this->appLogoUpload = null;
         }
 
@@ -131,7 +132,7 @@ new #[Title('Appearance settings')] class extends Component
                 Storage::disk('public')->delete($this->heroImagePath);
             }
 
-            $this->heroImagePath = $this->heroImageUpload->store('app/hero', 'public');
+            $this->heroImagePath = ImageOptimizer::store($this->heroImageUpload, 'app/hero');
             $this->heroImageUpload = null;
         }
 
@@ -140,7 +141,7 @@ new #[Title('Appearance settings')] class extends Component
                 Storage::disk('public')->delete($this->loginImagePath);
             }
 
-            $this->loginImagePath = $this->loginImageUpload->store('app/login', 'public');
+            $this->loginImagePath = ImageOptimizer::store($this->loginImageUpload, 'app/login');
             $this->loginImageUpload = null;
         }
 

@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Photobooth;
+use App\Support\ImageOptimizer;
 use App\Support\Timezone;
 use Flux\Flux;
 use Illuminate\Support\Facades\Storage;
@@ -102,7 +103,7 @@ new #[Title('Photobooth Settings')] class extends Component
                 Storage::disk('public')->delete($this->framePath);
             }
 
-            $this->framePath = $this->frameUpload->store('photobooth', 'public');
+            $this->framePath = ImageOptimizer::store($this->frameUpload, 'photobooth');
             $this->frameUpload = null;
         }
 
