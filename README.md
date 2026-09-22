@@ -22,4 +22,4 @@ Sebagai catatan, pada proses pengembangan aplikasinya (terkhusus pada aspek codi
 
 ### Tentang IqbalARauf dan LabqiTech
 
-Temukan portofolio real-case saya yang lain di [portfolio web](https://iqbalarauf.my.id) atau cek [Linkedin](https://linkedin.com/in/iqbalarauf) saya. Lihat lebih jauh seluruh eksperimen saya di [sini](https://labqitech.my.id)
+Temukan portofolio real-case saya yang lain di [portfolio web](https://iqbalarauf.my.id) atau cek [Linkedin](https://linkedin.com/in/iqbalarauf) saya. Lihat lebih jauh seluruh eksperimen saya di [sini](https://iqbalarauf.my.id/lab)
