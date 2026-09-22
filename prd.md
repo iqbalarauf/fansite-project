@@ -1,12 +1,8 @@
 # PRD — FANSIGHT (Fansite Platform)
 
 **Dokumen:** Product Requirements Document
-**Versi:** 1.2
-<<<<<<< HEAD
-**Tanggal:** 19 September 2026
-=======
-**Tanggal:** 20 September 2026
->>>>>>> 3c2a07d05e2a0974e6c3025de57ca0a7d33594e2
+**Versi:** 1.3
+**Tanggal:** 22 September 2026
 **Author:** Analisis Otomatis dari Codebase
 
 ---
@@ -20,16 +16,10 @@ Aplikasi dibangun berbasis web dengan arsitektur terpusat, sehingga seluruh data
 ### Tujuan Utama
 1. Mengelola data statistik penampilan idola (pertunjukan teater, konser, meet & greet, live streaming).
 2. Mengelola informasi fanbase dan data profil idola.
-<<<<<<< HEAD
-3. Mengelola konten publik: halaman custom (page builder), **Majalah digital**, **News & Blog**, **Timeline**, **Trivia**, dan **Galeri**.
-4. Membangun situs publik (welcome, profil idola/fanbase, artikel, majalah, jadwal, galeri, timeline, trivia, photobooth) untuk membagikan data/konten kepada publik.
-5. Mempermudah pengelolaan data (multi-user dengan manajemen peran), memberi **kontrol aktivasi fitur** konten, dan **kustomisasi branding** (warna, gambar, tombol hero, embed YouTube).
-=======
 3. Mengelola konten publik: halaman custom (page builder), **Majalah digital**, serta **News & Blog**.
 4. Membangun situs publik (welcome, profil, artikel, majalah) untuk membagikan data/konten kepada publik.
 5. Mempermudah pengelolaan data (multi-user dengan manajemen peran) dan memberi **kontrol aktivasi fitur** konten.
 6. Menyinkronkan master data dengan **Google Sheets** (manual & auto-sync) serta **ekspor/impor Excel (XLSX)**.
->>>>>>> 3c2a07d05e2a0974e6c3025de57ca0a7d33594e2
 
 ### Informasi Umum
 - **Situs produksi:** `https://fansight.labqitech.my.id`
@@ -54,23 +44,6 @@ Aplikasi dibangun berbasis web dengan arsitektur terpusat, sehingga seluruh data
 ## 3. Arsitektur Teknologi
 
 ### Stack Utama
-<<<<<<< HEAD
-- **Backend:** PHP ^8.3, Laravel Framework ^13
-- **Frontend:** Blade, Livewire ^4 (Volt single-file components), Flux UI ^2, Tailwind CSS ^4, Vite
-- **Rich Text Editor:** **Tiptap v3** untuk konten News & Blog
-- **Autentikasi:** Laravel Fortify (login, 2FA, reset password, verifikasi email). **Registrasi publik dinonaktifkan** — pengguna baru hanya dibuat oleh Super Admin.
-- **Database:** SQLite (default) / MySQL (produksi)
-- **Ekosistem:** Laravel Boost, Pint, Larastan/PHPStan, PHPUnit ^12, Sail, Pail, MCP
-- **Bahasa/Lokalisasi:** Indonesia (`id`)
-
-### Pola Arsitektur
-- **MVC Laravel** untuk CRUD domain data (controllers + Form Requests + blade views).
-- **Livewire Volt** single-file components untuk fitur interaktif (page builder, pengaturan, form).
-- **Enums + role-based authorization** (`UserRole`, `ContentSection`, `ConcertStatus`, `MeetGreetEventType`, `LiveStreamingPlatform`) + middleware kustom.
-- **Feature flags** berbasis setting (`SettingBag::featureEnabled()`) untuk mengaktifkan/menonaktifkan News, Blog, Majalah, Trivia, dan Photobooth.
-- **Support/Service classes** (`app/Support`): `DashboardAssembler`, `WelcomePageData`, `AboutPageData`, `EventTimeline`, `SettingBag`, `SettingsStore`, `BrandPalette`, `HeroLink`, `YoutubePlaylist`, `YoutubeRss`, `YoutubePlaylistPage`, `ListingQuery`, `ShowDate`, `TextLines`, `HeaderMenu`, `CheckMemberLive`, `IdolTheaterStats`, `MonthlySchedule`, `PhotoboothSchedule`, `CustomPageStatistic`, `GalleryVideoEmbed`.
-- **Soft deletes** pada `show_teater`, `meet_greet_events`, `concert_events`, `custom_pages`, dan `news_posts`/`blog_posts`.
-=======
 - **Backend:** PHP ^8.3, Laravel Framework ^13.7
 - **Frontend:** Blade, Livewire ^4.1, Flux UI ^2.13, Tailwind CSS ^4.0.7, Vite ^8
 - **Rich Text Editor:** **Tiptap v3** (`@tiptap/core`, `starter-kit`, `extension-link`, `extension-image`, `extension-placeholder`, `@tiptap/pm`) untuk konten News & Blog
@@ -84,10 +57,10 @@ Aplikasi dibangun berbasis web dengan arsitektur terpusat, sehingga seluruh data
 - **MVC Laravel** konvensional untuk CRUD domain data (controllers + Form Requests + blade views).
 - **Livewire Volt** single-file components untuk fitur interaktif (page builder, pengaturan, form pengaturan).
 - **Enums + role-based authorization** (`UserRole`, `ContentSection`, `ConcertStatus`, `MeetGreetEventType`, `LiveStreamingPlatform`, `MasterData`, `SyncMode`, `DiffStatus`) + middleware kustom.
+- **Policy konten** (`PostPolicy`, `MagazinePolicy`, `CustomPagePolicy` via trait `AuthorizesContent`) memusatkan matriks peran + aturan kepemilikan Content Creator, diterapkan di controller (Pages/Majalah/News/Blog) dan komponen Livewire page builder.
 - **Feature flags** berbasis setting (`SettingBag::featureEnabled()`) untuk mengaktifkan/menonaktifkan News, Blog, Majalah, Trivia, Photobooth, dan Sheet Integration.
 - **Support/Service classes** (`app/Support`): `DashboardAssembler`, `WelcomePageData`, `AboutPageData`, `EventTimeline`, `SettingBag`, `SettingsStore`, `ListingQuery`, `ShowDate`, `CustomPageStatistic`, `BrandPalette`, `HeroLink`, `HeaderMenu`, `YoutubeEmbed`/`YoutubeRss`/`YoutubePlaylist`, `Spreadsheet`, `Csv`.
 - **Soft deletes** pada `show_teater`, `meet_greet_events`, `concert_events`, `custom_pages`, `news_posts`/`blog_posts`, `magazines`, `gallery_photos`/`gallery_videos`, `timelines`, dan `trivias`, dengan penyaringan `deleted_at` di seluruh query (termasuk raw `DB::table`).
->>>>>>> 3c2a07d05e2a0974e6c3025de57ca0a7d33594e2
 - **Pipeline fetch data** dari API eksternal (JKT48 public API) via Artisan command.
 - **Zona waktu:** timestamp disimpan **UTC** di database; input pengguna dikonversi lokal → UTC saat disimpan dan UTC → lokal saat ditampilkan via `App\Support\Timezone` (zona tampilan dari `config('app.display_timezone')` / `APP_DISPLAY_TIMEZONE`, default `Asia/Jakarta`).
 
@@ -109,15 +82,9 @@ Enums: `App\Enums\UserRole`
 **Middleware kustom:**
 - `EnsureUserHasRole` (alias `role`) — membatasi akses route per peran.
 - `PreventViewOnlyWrites` (alias `block-view-only-writes`) — mencegah peran view-only melakukan operasi tulis.
-<<<<<<< HEAD
-- `EnsureNotViewOnly` (alias `block-view-only`) — memblokir akses view-only ke halaman tertentu.
-- `EnsureFeatureEnabled` (alias `feature`) — menolak request (404) bila fitur konten dinonaktifkan.
-- Middleware `verified` Laravel kini aktif (User mengimplementasikan `MustVerifyEmail`).
-=======
 - `EnsureNotViewOnly` (alias `block-view-only`) — memblokir akses peran view-only ke halaman tertentu (settings super admin).
 - `EnsureFeatureEnabled` (alias `feature`) — menolak request (404) bila fitur konten (`news`/`blog`/`magazines`) dinonaktifkan; menerima beberapa fitur (lolos bila salah satu aktif).
 - `EnsureSheetIntegrationEnabled` (alias `sheet-integration`) — menolak request (404) bila fitur Sheet Integration dinonaktifkan.
->>>>>>> 3c2a07d05e2a0974e6c3025de57ca0a7d33594e2
 
 **Aturan khusus:**
 - Pengguna tidak dapat mengubah role dirinya sendiri.
@@ -131,21 +98,12 @@ Enums: `App\Enums\UserRole`
 ## 5. Fitur-Fitur Utama
 
 ### 5.1 Autentikasi & Manajemen Akun (Fortify)
-<<<<<<< HEAD
-- **Login & logout** (custom `LoginResponse` mengarahkan ContentCreator ke halaman `/pages`).
-- **Registrasi publik dihapus** — pengguna baru hanya ditambahkan Super Admin melalui halaman **User Management**; sistem otomatis **mengirim email verifikasi** ke pengguna baru.
-- Verifikasi email, reset & konfirmasi password.
-- **Two-Factor Authentication (2FA)** dengan recovery codes — diaktifkan di halaman **Profile** dan **Security** (komponen bersama `pages::settings.two-factor`).
-- Halaman pengaturan akun: profil (nama, email), keamanan (password, 2FA), appearance, hapus akun.
-- **Halaman login split-screen** dengan panel gambar (`login_image`).
-=======
 - **Registrasi publik dihapus** — pengguna baru dibuat oleh Super Admin (`UserController`) dan dikirimi email verifikasi (`User implements MustVerifyEmail`).
 - Login & logout (custom `LoginResponse` mengarahkan ContentCreator ke halaman `/pages`).
 - Verifikasi email.
 - Reset & konfirmasi password.
 - **Two-Factor Authentication (2FA)** dengan tombol pemulihan (recovery codes).
 - Halaman pengaturan akun: profil (nama, email), keamanan (password, 2FA), hapus akun.
->>>>>>> 3c2a07d05e2a0974e6c3025de57ca0a7d33594e2
 
 ### 5.2 Dashboard (Analitik & Statistik)
 - Filter periode: semua / 7 hari / bulanan / kuartal / 6 bulan / tahunan / **kustom** + **mode perbandingan**.
@@ -191,41 +149,6 @@ Enums: `App\Enums\UserRole`
 - Kategori (`categories`, tipe `news`/`blog`); publik `/news` & `/blog` dengan featured + grid + detail.
 - Dikontrol feature flag `news` dan `blog`.
 
-<<<<<<< HEAD
-### 5.11 Content Management — Galeri, Timeline, Trivia
-- **Galeri** (`content/gallery`): foto & video (mode `photos`/`videos`/`both` dari setting `gallery_mode`).
-- **Timeline** (`content/timeline`): CRUD entri timeline.
-- **Trivia** (`content/trivia`): CRUD trivia, dikontrol feature flag `trivia`.
-
-### 5.12 Setting — Info Idola & Fanbase (About)
-- Halaman `content/about` (komponen `pages::about.manage`, tab **Idol Information** & **Fansite Information**).
-- **Idol:** nama, shortname, slug, foto, deskripsi, achievements, discography, jikoshoukai, tanggal/tempat lahir, golongan darah, zodiak, sosmed, tampil di welcome, **versi profil** (JKT48/General).
-  - **Kabesha**: toggle tampil, **default judul**, multi-foto dengan judul + durasi, drag-and-drop reorder.
-  - **Profile Details versi**: `JKT48` (Jikoshoukai & Golongan Darah; sebutan "Oshimen"; hero menampilkan `idol_name` ↔ `idol_shortname JKT48` bergantian dengan animasi skew) atau `General` (tanpa Jikoshoukai/Golongan Darah; sebutan "Idol/Bias").
-- **Fansite:** nama, logo, deskripsi, **struktur organisasi** (toggle), **kegiatan** (toggle), **galeri** (maks 20, caption), **Sejarah Fansite** (toggle; sumber Custom Page / Default Page dengan gambar+deskripsi), CTA (judul + 2 tombol + background).
-- Cache di-invalidate via `SettingsStore` (`Cache::forget('about_settings')`).
-
-### 5.13 Setting — Appearance (Branding Aplikasi)
-- **3 warna brand**: Primer, Sekunder, Tersier (masing-masing memetakan palet `indigo`/`violet`/`yellow` di seluruh UI, light & dark).
-- **Identitas**: app name / sidebar name, deskripsi, logo, **hero image**, **login image**.
-- **Hero Buttons**: 2 tombol hero welcome dapat di-custom label & tautan (Direct Custom Link / Custom Page / List Page bawaan, termasuk `/about/{idol_slug}` dan `/about/{fanbase_slug}`).
-- **Youtube Playlist**: toggle tampil + link playlist + mode tampilan **Cards (Carousel)** atau **Embed**.
-- Disimpan ke `app_settings` via `SettingsStore`.
-
-### 5.14 Setting — Features Activation, Header Menu, Photobooth, Security
-- **Features Activation** (`/settings/features`): toggle **News, Blog, Majalah, Trivia, Photobooth** + `gallery_mode` (photos/videos/both) + `welcome_feed_source` (news/blog/magazines/trivia). Default aktif.
-- **Header Menu** (`/settings/header-menu`): kelola menu header publik (default/custom), item + relasi parent, sort, hide sesuai feature flag.
-- **Photobooth** (`/settings/photobooth`): slug, jadwal (full-open/rentang), layout kolom/baris, frame, posisi slot foto, overlay transparan.
-- **Security** (`/settings/security`): update password + 2FA + passkeys (jika tersedia).
-
-### 5.15 Situs Publik
-- **Layout publik**: body `flex min-h-dvh flex-col`, `<main class="flex-1">` (footer menempel dasar), header sticky translucent + dark mode toggle (localStorage + `prefers-color-scheme`), ikon sosial.
-- **Header**: dropdown **About** (idola → `/about/{idol_slug}`, fanbase → `/about/{fanbase_slug}`) dan **Artikel** (News & Blog), plus Home, Majalah, Galeri, Trivia, Data, Schedule (sesuai fitur aktif).
-- **Welcome** (`/`): hero dengan **hero buttons** custom, **About idola** (tombol "Berkenalan dengan {shortname}"), **Berita Terbaru** (sumber dari `welcome_feed_source`), **Statistik**, **Schedule Event Mendatang**, **Status Live**, **Galeri foto**, dan **Youtube Playlist** (cards carousel / embed).
-- **About**: `/about/{slug}` menyajikan halaman idola atau fanbase (profil, kabesha, show teater, unit song, centers, sosmed / kegiatan, struktur, galeri, sejarah, CTA).
-- **Lainnya**: `/news`, `/blog`, `/majalah`, `/schedule`, `/galeri`, `/timeline`, `/trivia`, `/photobooth/{slug?}`, dan catch-all `/{customPage:slug}`.
-- **Halaman error** (403/404/500) bergaya fullscreen dengan gambar.
-=======
 ### 5.11 Setting — Info Idola & Fanbase (About)
 - Halaman standalone **About** (`/content/about`) dengan tab **Idol Information** dan **Fansite Information** (KV `about_settings`).
 - Idol: nama, slug, foto, deskripsi, achievements, discography, jikoshoukai, tanggal/tempat lahir, golongan darah, zodiak, sosmed, serta **versi profil** (`jkt48`/`general` — jikoshoukai & golongan darah hanya tampil pada versi JKT48, istilah Oshimen vs Idol/Bias).
@@ -268,7 +191,6 @@ Enums: `App\Enums\UserRole`
 - **Welcome** (`/`): hero foto produksi dengan **2 tombol hero** (label & tautan dari Appearance) + tombol **Berkenalan dengan {idol_shortname}**, bagian **About idola**, **Youtube Playlist** (cards carousel / embed), **Berita Terbaru** (dari `welcome_feed_source`, tampil bila fitur aktif), **Statistik** (jumlah show/setlist/partisipasi), **Schedule Event Mendatang** (dengan link pembelian), dan **Status Live**.
 - **About** (`/about/idol`, `/about/fansite`): halaman profil idola (foto, detail, pencapaian, diskografi, jikoshoukai, sosmed) dan profil fanbase (logo, deskripsi, kegiatan, galeri, CTA, struktur organisasi, dan **modal Sejarah Fansite**).
 - **News & Blog** publik (`/news`, `/blog`) serta **Majalah** (`/majalah`).
->>>>>>> 3c2a07d05e2a0974e6c3025de57ca0a7d33594e2
 
 ---
 
@@ -276,61 +198,31 @@ Enums: `App\Enums\UserRole`
 
 | Tabel | Model | Catatan |
 |---|---|---|
-<<<<<<< HEAD
-| `users` | `User` | `role` (enum), 2FA, `email_verified_at`, password-hash |
-| `show_teater` | `ShowTeater` | PK `show_id` non-increment, tanpa timestamp, soft deletes |
-| `show_teater_categories` | — (raw `DB::table`) | Self-FK `setlist_id`, tab setlist/unit song |
-=======
 | `users` | `User` | `role` (enum), 2FA columns, password-hash |
 | `show_teater` | `ShowTeater` | PK `show_id` non-increment, tanpa timestamp, **soft deletes**, FK `setlist_id` (nullable) |
 | `show_teater_categories` | `ShowTeaterCategories` | Self-FK `setlist_id`, tab setlist/unit song |
 | `show_teater_unit_song` | (pivot) | Pivot `show_id` ↔ `show_teater_categories.id` + `position` (unit song, mendukung double US) |
->>>>>>> 3c2a07d05e2a0974e6c3025de57ca0a7d33594e2
 | `meet_greet_events` | `MeetGreetEvents` | Soft deletes |
 | `concert_events` | `ConcertEvents` | Soft deletes, status enum |
 | `live_streaming` | `LiveStreaming` | — |
 | `categories` | `Category` | `type` = `news`/`blog`, slug unik per tipe |
-<<<<<<< HEAD
-| `news_posts` | `NewsPost` (extends `Post`) | Soft deletes, SEO, status, jadwal, featured |
-| `blog_posts` | `BlogPost` (extends `Post`) | Soft deletes, SEO, status, jadwal, featured |
-| `magazines` | `Magazine` | PDF + cover, `is_main`, `views`, `downloads` |
-| `gallery_photos` / `gallery_videos` | `GalleryPhoto` / `GalleryVideo` | Foto & video galeri |
-| `timeline` | `Timeline` | Entri timeline |
-| `trivia` | `Trivia` | Konten trivia |
-| `menu_items` | `MenuItem` | Menu header publik (custom) |
-| `photobooths` | `Photobooth` | Slug, frame, kolom/baris, slots, jadwal, aktif |
-=======
 | `news_posts` | `NewsPost` (extends `Post`) | Soft deletes, SEO, status, jadwal, featured, audit `created_by`/`updated_by`, FULLTEXT `(title, excerpt)` |
 | `blog_posts` | `BlogPost` (extends `Post`) | Soft deletes, SEO, status, jadwal, featured, audit `created_by`/`updated_by`, FULLTEXT `(title, excerpt)` |
 | `magazines` | `Magazine` | File PDF + cover, `is_main`, `views`, `downloads`, soft deletes, audit |
->>>>>>> 3c2a07d05e2a0974e6c3025de57ca0a7d33594e2
 | `about_settings` | `AboutSettings` | KV |
 | `app_settings` | `AppSettings` | KV (branding + feature flags + hero + youtube) |
 | `custom_pages` | `CustomPage` | JSON `blocks`, soft deletes |
 | `theater_references` | `TheaterReference` | Tracking kode referensi API |
-<<<<<<< HEAD
-| `cache`, `cache_locks`, `jobs`, `sessions` | — | Infrastruktur |
-=======
 | `sheet_integrations` | `SheetIntegration` | Konfigurasi per master (spreadsheet, sheet, header, mode, auto_sync) |
 | `menu_items` | `MenuItem` | Item menu custom header (parent, tipe, urutan) |
 | `cache`, `cache_locks` | — | Cache store default `database` |
 | `jobs` | — | Queue |
 | `password_reset_tokens`, `sessions` | — | — |
->>>>>>> 3c2a07d05e2a0974e6c3025de57ca0a7d33594e2
 
 ---
 
 ## 7. Desain & UI
 
-<<<<<<< HEAD
-- **Warna brand:** Primer `#6C7CE8`, Sekunder `#A5B4FC`, Tersier `#FFD166` (dapat di-custom; dipetakan ke palet indigo/violet/yellow secara runtime).
-- **Tipografi:** Poppins (heading) / Plus Jakarta Sans (body).
-- **Komponen UI:** Livewire Flux (v2).
-- **Layout admin:** sidebar + header, pola `admin-page`, `admin-table`, filter form, pagination, modal flyout (Flux).
-- **Layout publik:** header sticky translucent, dark mode, kartu `rounded-[2rem]`, aksen tersier pada hero.
-- **Editor konten:** `x-rich-text-editor` (Tiptap).
-- **Referensi penuh:** `docs/pages-feature-reference.md`, `docs/scheduler.md`, `docs/hostinger-cron-scheduler.md`.
-=======
 - **Primary color:** Indigo `#6C7CE8`; **Accent:** Emas `#FFD166`.
 - **Warna brand (3, runtime):** Primer `#6C7CE8`, Sekunder `#A5B4FC`, Tersier `#FFD166` — di-set via `partials/brand-colors.blade.php` (memetakan ulang `indigo`/`violet`/`yellow`, light & dark).
 - **Tipografi:** Poppins (heading) / Plus Jakarta Sans (body).
@@ -339,47 +231,20 @@ Enums: `App\Enums\UserRole`
 - **Layout publik:** header sticky translucent, dark mode, card `rounded-[2rem]`, aksen kuning pada hero.
 - **Editor konten:** komponen Blade `x-rich-text-editor` (Tiptap) dengan toolbar (bold/italic/underline/strike, H2/H3, list, quote, code, link, image, undo/redo).
 - **Referensi penuh:** `docs/pages-feature-reference.md`
->>>>>>> 3c2a07d05e2a0974e6c3025de57ca0a7d33594e2
 
 ---
 
 ## 8. Fitur Non-Fungsional
 
-<<<<<<< HEAD
-- **Performa:** statistik dashboard & setting di-cache; data eksternal di-fetch via command terjadwal.
-- **Keamanan:** 2FA, verifikasi email, RBAC, hash password, soft deletes, feature flags, API key server-side (YouTube tanpa API key).
-- **Idempotensi:** `TheaterReference` mencegah duplikasi fetch; soft delete menjaga `show_id`.
-- **Testing:** ±360 test PHPUnit (auth, settings, role access, feature toggle, soft delete, setiap domain data, seeder, integrasi YouTube).
-=======
 - **Performa:** Statistik dashboard & setting di-cache; pipeline fetch data mengurangi beban manual.
 - **Keamanan:** 2FA, verifikasi email, RBAC, hash password, **soft deletes** untuk recovery data, feature flags berbasis setting, serta **sanitasi HTML** (`App\Support\HtmlSanitizer`) untuk konten artikel (profil ketat) dan blok embed page builder (profil longgar) guna mencegah XSS.
 - **Idempotensi:** `TheaterReference` mencegah duplikasi saat fetch dari API JKT48; soft delete pada `show_teater` menjaga `show_id` tetap stabil.
-- **Testing:** 60 file test PHPUnit (feature) yang mencakup auth, settings, role access, feature toggle, soft delete, setiap domain data, Sheet Integration, ekspor/impor Excel, serta **HTML sanitizer** & `sort_order` konten.
->>>>>>> 3c2a07d05e2a0974e6c3025de57ca0a7d33594e2
+- **Testing:** 63 file test PHPUnit (feature) yang mencakup auth, settings, role access, feature toggle, soft delete, setiap domain data, Sheet Integration, ekspor/impor Excel, **HTML sanitizer**, `sort_order` konten, **Policy konten**, serta **mode tampilan & background page builder**.
 
 ---
 
 ## 9. Backlog & Area Perbaikan Potensial
 
-<<<<<<< HEAD
-Selesai (September 2026):
-- [x] Page builder (drag-and-drop nested, blok, background).
-- [x] Majalah digital, News & Blog, Galeri, Timeline, Trivia.
-- [x] Features Activation + middleware `feature`.
-- [x] Soft delete `show_teater`.
-- [x] Redesign publik + error page.
-- [x] Kustomisasi 3 warna brand, hero buttons, youtube playlist, login image.
-- [x] Sejarah Fansite, versi profil Idol (JKT48/General), kabesha toggle + default judul.
-- [x] Registrasi publik dihapus; pembuatan user via Super Admin + email verifikasi.
-
-Sisa backlog:
-1. **HTML sanitizer** untuk blok Embed (raw HTML) dan konten artikel (XSS).
-2. **Unifikasi** `block-preview.blade.php` vs `render-block.blade.php`.
-3. Model `ShowTeaterCategories` masih raw `DB::table` — kandidat refactor Eloquent.
-4. Konsistensi akses DB: campuran Eloquent & raw `DB::table`.
-5. Penerapan Policy untuk kepemilikan/modifikasi konten.
-6. Feed YouTube berbasis RSS tidak andal (fallback scrape `ytInitialData` tanpa API key; deskripsi hanya tersedia saat RSS hidup).
-=======
 Status selesai (September 2026):
 
 - [x] Drag-and-drop nested sorting & validasi rekursif pada page builder.
@@ -404,30 +269,22 @@ Status selesai (September 2026):
 - [x] **HTML Sanitizer** (`App\Support\HtmlSanitizer`, berbasis DOM) untuk konten artikel (profil `article`) dan blok embed page builder (profil `embed`).
 - [x] **Input `sort_order`** pada UI admin galeri (foto/video), timeline, dan trivia.
 - [x] **Konsolidasi migrasi:** 10 migrasi inkremental (change/add/optimize/adjust) digabung ke file `create` terkait → 35 menjadi **25 file** (baseline tetap berbasis migrasi; kompatibel MySQL & SQLite).
+- [x] **Unifikasi markup blok page builder:** satu komponen Blade `components/custom-page-block.blade.php` (prop `preview`) menggantikan `block-preview.blade.php` & `render-block.blade.php` (markup tunggal untuk editor & publik).
+- [x] **Policy konten:** `PostPolicy`/`MagazinePolicy`/`CustomPagePolicy` + trait `AuthorizesContent` (matriks peran & kepemilikan Content Creator), diterapkan di controller Pages/Majalah/News/Blog dan page builder Livewire; `restore`/`forceDelete` hanya Super Admin.
+- [x] **Konsistensi akses DB (sebagian):** `ShowTeaterCategoriesSeeder` memakai model Eloquent, dan view `custom-pages/show` memakai `SettingBag` (bukan raw `DB::table`).
+- [x] **Test tambahan page builder:** mode tampilan `full`/`welcome`, validasi mode tampilan, serta render background dan preview blok.
 
-Sisa backlog yang belum dikerjakan:
+Sisa backlog yang belum dikerjakan (sengaja ditunda, bukan blocker):
 
-1. **Unifikasi** markup `block-preview.blade.php` vs `render-block.blade.php`.
-2. Unifikasi tabel `news_posts`/`blog_posts` menjadi satu tabel `posts` + `type` (migrasi & query besar; dipertimbangkan bila jenis konten bertambah).
-3. Konsistensi akses DB: sisa raw `DB::table` (mis. `ShowTeaterCategoriesSeeder` bulk insert sengaja raw).
-4. Test tambahan untuk mode tampilan (full/welcome) & background color rendering page builder.
-5. Otorisasi tingkat-kebijakan: penerapan Policy untuk kepemilikan/modifikasi konten.
-6. Pertimbangkan penghapusan kolom teks `show_teater.setlist`/`unit_song` setelah seluruh jalur baca memakai normalisasi.
->>>>>>> 3c2a07d05e2a0974e6c3025de57ca0a7d33594e2
+1. Unifikasi tabel `news_posts`/`blog_posts` menjadi satu tabel `posts` + `type` — **ditunda** sampai jenis konten benar-benar bertambah (migrasi & penyesuaian query besar, risiko regresi tinggi).
+2. Penghapusan kolom teks `show_teater.setlist`/`unit_song` — **ditunda** selama jalur baca statistik/predictor dan jalur tulis scraper belum sepenuhnya memakai pivot `show_teater_unit_song`.
+3. Sisa raw `DB::table` pada `app/Support` (mis. `DashboardAssembler`, `CustomPageStatistic`, `EventTimeline`) — **dipertahankan** demi performa agregasi & penyaringan `deleted_at` eksplisit; refactor ke Eloquent tidak memberi nilai tambah yang sepadan.
+4. Perluasan Policy ke konten lain (Galeri, Timeline, Trivia, Photobooth) — saat ini Policy baru mencakup Pages, Majalah, dan News/Blog.
 
 ---
 
 ## 10. Keterangan
 
-<<<<<<< HEAD
-- **Route admin/master data:** `/dashboard`, `/show-teater`, `/show-teater/categories`, `/meet-greet-events`, `/concert-events`, `/live-streaming`, `/users`.
-- **Route Content Management:** `/pages`, `/magazines`, `/content/news`, `/content/blog`, `/content/categories`, `/content/gallery`, `/content/timeline`, `/content/trivia`.
-- **Route pengaturan:** `/settings/appearance`, `/settings/features`, `/settings/header-menu`, `/settings/photobooth`, `/settings/security`, `/content/about`, `/profile`.
-- **Route publik:** `/`, `/about/{slug}`, `/majalah`, `/news`, `/blog`, `/schedule`, `/galeri`, `/timeline`, `/trivia`, `/photobooth/{slug?}`, catch-all `/{customPage:slug}`.
-- **Console:** `app:fetch-theater-shows`, `app:fetch-streaming-info`, `app:check-member-live`, `app:backfill-live-ids`.
-- **Seeder:** `AppSettingsSeeder`, `AboutSeeder`, `ShowTeaterCategoriesSeeder`, `DatabaseSeeder`.
-- **Sumber API eksternal:** `https://jkt48.com/api/v1/schedules?lang=id&month=...&year=...&type=SHOW`.
-=======
 - **Route admin/master data:** `/dashboard`, `/show-teater`, `/show-teater/categories`, `/meet-greet-events`, `/concert-events`, `/live-streaming`, `/users`, plus ekspor `show-teater/export`, `meet-greet-events/export`, `concert-events/export`, `live-streaming/export` dan impor `show-teater/categories/import`.
 - **Route Content Management:** `/pages`, `/magazines`, `/content/news`, `/content/blog`, `/content/categories`.
 - **Route konfigurasi (standalone):** `/appearance`, `/features`, `/header-menu`, `/sheet-integration`, `/content/about`, `/users`; **Settings:** `/profile`, `/settings/security`, `/settings/photobooth`.
@@ -435,4 +292,3 @@ Sisa backlog yang belum dikerjakan:
 - **Console:** `app:fetch-theater-shows` (fetch jadwal), `app:fetch-streaming-info` (live streaming), `app:check-member-live`, `app:backfill-live-ids`, `app:sync-google-sheets` (auto-sync, hourly), `app:audit-show-teater-mapping`, `app:backfill-show-teater-normalization` + `inspire`.
 - **Seeder:** `AboutSeeder`, `AppSettingsSeeder`, `ShowTeaterCategoriesSeeder`, `DatabaseSeeder`.
 - **Sumber API eksternal:** `https://jkt48.com/api/v1/schedules?lang=id&month=...&year=...&type=SHOW` + Google Sheets API.
->>>>>>> 3c2a07d05e2a0974e6c3025de57ca0a7d33594e2

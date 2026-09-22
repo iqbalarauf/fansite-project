@@ -685,4 +685,66 @@ class CustomPageTest extends TestCase
             ->assertSee('Show Setlist A')
             ->assertSee('1');
     }
+
+    public function test_page_display_mode_is_saved_and_welcome_mode_renders_header_and_footer(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Welcome')
+            ->set('displayMode', 'welcome')
+            ->call('save', 'published')
+            ->assertHasNoErrors();
+
+        $page = CustomPage::query()->firstOrFail();
+
+        $this->assertSame('welcome', $page->display_mode);
+        $this->get(route('custom-pages.show', $page))
+            ->assertOk()
+            ->assertSee('#schedule', false)
+            ->assertSee('©', false);
+    }
+
+    public function test_page_display_mode_defaults_to_full_without_header_and_footer(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Full')
+            ->call('save', 'published')
+            ->assertHasNoErrors();
+
+        $page = CustomPage::query()->firstOrFail();
+
+        $this->assertSame('full', $page->display_mode);
+        $this->get(route('custom-pages.show', $page))
+            ->assertOk()
+            ->assertDontSee('#schedule', false)
+            ->assertDontSee('©', false);
+    }
+
+    public function test_invalid_page_display_mode_is_rejected(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Salah Mode')
+            ->set('displayMode', 'sidebar')
+            ->call('save', 'published')
+            ->assertHasErrors(['displayMode']);
+
+        $this->assertDatabaseCount('custom_pages', 0);
+    }
+
+    public function test_page_builder_preview_renders_container_background_and_image_placeholder(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Preview Blok')
+            ->set('blocks.0.data.background', '#F1F5F9')
+            ->assertSee('background-color: #F1F5F9', false)
+            ->call('addBlock', 'image')
+            ->assertSee('Tambahkan URL gambar atau upload');
+    }
 }

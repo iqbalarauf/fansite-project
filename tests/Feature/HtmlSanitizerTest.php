@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use App\Models\NewsPost;
 use App\Support\HtmlSanitizer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Blade;
 use Tests\TestCase;
 
 class HtmlSanitizerTest extends TestCase
@@ -74,12 +74,12 @@ class HtmlSanitizerTest extends TestCase
 
     public function test_embed_block_is_sanitized_when_rendered(): void
     {
-        $html = View::make('custom-pages.render-block', [
+        $html = Blade::render('<x-custom-page-block :block="$block" />', [
             'block' => [
                 'type' => 'embed',
                 'data' => ['html' => '<div onclick="evil()">Aman</div><script>alert(1)</script>'],
             ],
-        ])->render();
+        ]);
 
         $this->assertStringNotContainsString('<script', $html);
         $this->assertStringNotContainsString('onclick', $html);

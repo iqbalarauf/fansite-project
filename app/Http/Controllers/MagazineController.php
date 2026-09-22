@@ -10,6 +10,7 @@ use App\Support\ListingQuery;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
@@ -38,6 +39,8 @@ class MagazineController extends Controller
 
     public function store(MagazineStoreRequest $request): RedirectResponse
     {
+        Gate::authorize('create', Magazine::class);
+
         $validated = $request->validated();
         $isMain = $request->boolean('is_main');
 
@@ -63,6 +66,8 @@ class MagazineController extends Controller
 
     public function update(MagazineUpdateRequest $request, Magazine $magazine): RedirectResponse
     {
+        Gate::authorize('update', $magazine);
+
         $magazine->update($request->magazinePayload());
 
         return redirect()->route('magazines.index')
@@ -71,6 +76,8 @@ class MagazineController extends Controller
 
     public function setMain(Magazine $magazine): RedirectResponse
     {
+        Gate::authorize('update', $magazine);
+
         DB::transaction(function () use ($magazine): void {
             Magazine::query()->where('is_main', true)->update(['is_main' => false]);
             $magazine->update(['is_main' => true]);
@@ -82,6 +89,8 @@ class MagazineController extends Controller
 
     public function destroy(Magazine $magazine): RedirectResponse
     {
+        Gate::authorize('delete', $magazine);
+
         Storage::disk('public')->delete(array_filter([$magazine->cover, $magazine->file_path]));
 
         $magazine->delete();
