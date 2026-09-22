@@ -3,8 +3,12 @@
 namespace Tests\Feature;
 
 use App\Models\CustomPage;
+use App\Models\GalleryPhoto;
+use App\Models\GalleryVideo;
 use App\Models\Magazine;
 use App\Models\NewsPost;
+use App\Models\Timeline;
+use App\Models\Trivia;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
@@ -152,6 +156,44 @@ class ContentPolicyTest extends TestCase
             ->assertForbidden();
 
         $this->assertNotSoftDeleted($page);
+    }
+
+    public function test_content_creator_can_manage_gallery_timeline_and_trivia(): void
+    {
+        $creator = User::factory()->contentCreator()->create();
+        $viewer = User::factory()->viewOnly()->create();
+
+        foreach ([GalleryPhoto::class, GalleryVideo::class, Timeline::class, Trivia::class] as $model) {
+            $this->assertTrue(Gate::forUser($creator)->allows('create', $model), $model);
+            $this->assertFalse(Gate::forUser($viewer)->allows('create', $model), $model);
+        }
+    }
+
+    public function test_timeline_controller_allows_creator_to_delete_and_blocks_view_only(): void
+    {
+        $creator = User::factory()->contentCreator()->create();
+
+        $this->actingAs($creator);
+        $timeline = Timeline::query()->create([
+            'date' => '2026-01-01',
+            'description' => 'Peristiwa',
+        ]);
+
+        $this->actingAs($creator)
+            ->delete(route('content.timeline.destroy', $timeline))
+            ->assertRedirect(route('content.timeline.index'));
+
+        $this->assertSoftDeleted($timeline);
+
+        $viewer = User::factory()->viewOnly()->create();
+        $other = Timeline::query()->create([
+            'date' => '2026-02-01',
+            'description' => 'Peristiwa lain',
+        ]);
+
+        $this->actingAs($viewer)
+            ->delete(route('content.timeline.destroy', $other))
+            ->assertForbidden();
     }
 
     private function unclaimedPost(): NewsPost

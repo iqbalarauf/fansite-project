@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ShowTeater;
 use App\Models\ShowTeaterCategories;
+use App\Models\ShowTeaterUnitSong;
 use App\Support\SettingBag;
 use App\Support\SettingsStore;
 use App\Support\ShowTeaterNormalizer;
@@ -34,8 +36,7 @@ class ShowTeaterController extends Controller
         }
         $sortDir = $sortDir === 'asc' ? 'asc' : 'desc';
 
-        $query = DB::table('show_teater')
-            ->whereNull('show_teater.deleted_at')
+        $query = ShowTeater::query()
             ->leftJoin('show_teater_categories as setlist_cat', function ($join) {
                 $join->on('show_teater.setlist', '=', 'setlist_cat.name')
                     ->where('setlist_cat.type', '=', 'setlist');
@@ -87,7 +88,7 @@ class ShowTeaterController extends Controller
             return $show;
         });
 
-        $nextShowId = DB::table('show_teater')->max('show_id') + 1;
+        $nextShowId = ShowTeater::withTrashed()->max('show_id') + 1;
 
         // Get all unique setlists from categories for filter dropdown
         $allSetlists = ShowTeaterCategories::query()
@@ -119,9 +120,8 @@ class ShowTeaterController extends Controller
             });
 
         // Get last fetch timestamp
-        $lastFetchAt = DB::table('show_teater')
+        $lastFetchAt = ShowTeater::query()
             ->where('is_scraped_data', 1)
-            ->whereNull('deleted_at')
             ->max('last_fetch_at');
 
         // Prediksi unit song per setlist (dari show terakhir setlist yang sama).
@@ -152,8 +152,8 @@ class ShowTeaterController extends Controller
 
     public function export()
     {
-        $shows = DB::table('show_teater')
-            ->whereNull('deleted_at')
+        $shows = ShowTeater::query()
+            ->with('setlistCategory:id,name,jp_name')
             ->orderBy('show_id')
             ->get();
 
@@ -182,7 +182,7 @@ class ShowTeaterController extends Controller
             return [
                 $show->show_id,
                 $date,
-                $this->formatSetlistDisplay((string) $show->setlist, $setlistJpMap),
+                $this->formatSetlistDisplay((string) $show->setlistName(), $setlistJpMap),
                 $this->formatUnitSongDisplay($show, $unitSongByShow, $unitSongJpMap),
                 $show->is_global_center ? 'Yes' : '-',
                 $show->is_us_center ? 'Yes' : '-',
@@ -200,7 +200,8 @@ class ShowTeaterController extends Controller
      */
     private function unitSongByShow(Collection $showIds): Collection
     {
-        return DB::table('show_teater_unit_song as pivot')
+        return ShowTeaterUnitSong::query()
+            ->from('show_teater_unit_song as pivot')
             ->join('show_teater_categories as category', 'pivot.show_teater_categories_id', '=', 'category.id')
             ->whereIn('pivot.show_id', $showIds)
             ->orderBy('pivot.position')
@@ -319,7 +320,7 @@ class ShowTeaterController extends Controller
         // Convert date from YYYY-MM-DD (HTML input) to YYYY/MM/DD (DB format)
         $showDate = str_replace('-', '/', $validated['show_date']);
 
-        $existing = DB::table('show_teater')->where('show_id', $validated['show_id'])->first();
+        $existing = ShowTeater::withTrashed()->where('show_id', $validated['show_id'])->first();
 
         if ($existing && $existing->deleted_at === null) {
             return back()->withErrors(['show_id' => 'Show ID sudah digunakan.'])->withInput();
@@ -338,11 +339,11 @@ class ShowTeaterController extends Controller
 
         if ($existing) {
             // Baris yang sudah ter-soft delete: pulihkan dengan show_id yang sama.
-            DB::table('show_teater')
+            ShowTeater::withTrashed()
                 ->where('show_id', $validated['show_id'])
                 ->update($payload + ['deleted_at' => null]);
         } else {
-            DB::table('show_teater')->insert(['show_id' => $validated['show_id']] + $payload);
+            ShowTeater::query()->insert(['show_id' => $validated['show_id']] + $payload);
         }
 
         app(ShowTeaterNormalizer::class)->syncShow((int) $validated['show_id']);
@@ -373,9 +374,8 @@ class ShowTeaterController extends Controller
         // Convert date from YYYY-MM-DD (HTML input) to YYYY/MM/DD (DB format)
         $showDate = str_replace('-', '/', $validated['show_date']);
 
-        DB::table('show_teater')
+        ShowTeater::query()
             ->where('show_id', $id)
-            ->whereNull('deleted_at')
             ->update([
                 'show_date' => $showDate,
                 'setlist' => $validated['setlist'],
@@ -395,18 +395,16 @@ class ShowTeaterController extends Controller
 
     public function confirmMemberShow(Request $request, $id)
     {
-        $show = DB::table('show_teater')
+        $show = ShowTeater::query()
             ->where('show_id', $id)
-            ->whereNull('deleted_at')
             ->first();
 
         if (! $show) {
             return response()->json(['error' => 'Show not found'], 404);
         }
 
-        DB::table('show_teater')
+        ShowTeater::query()
             ->where('show_id', $id)
-            ->whereNull('deleted_at')
             ->update(['is_member_show' => 1]);
 
         Cache::flush();
@@ -416,16 +414,15 @@ class ShowTeaterController extends Controller
 
     public function rejectMemberShow(Request $request, $id)
     {
-        $show = DB::table('show_teater')
+        $show = ShowTeater::query()
             ->where('show_id', $id)
-            ->whereNull('deleted_at')
             ->first();
 
         if (! $show) {
             return response()->json(['error' => 'Show not found'], 404);
         }
 
-        DB::table('show_teater')
+        ShowTeater::query()
             ->where('show_id', $id)
             ->update(['deleted_at' => now()]);
 
@@ -448,9 +445,8 @@ class ShowTeaterController extends Controller
             }
 
             // Update last_fetch_at for scraped data
-            DB::table('show_teater')
+            ShowTeater::query()
                 ->where('is_scraped_data', 1)
-                ->whereNull('deleted_at')
                 ->update(['last_fetch_at' => now()]);
 
             Cache::flush();

@@ -9,6 +9,7 @@ use App\Support\ImageOptimizer;
 use App\Support\ListingQuery;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
@@ -37,6 +38,8 @@ class TriviaController extends Controller
 
     public function store(TriviaRequest $request): RedirectResponse
     {
+        Gate::authorize('create', Trivia::class);
+
         Trivia::query()->create([
             'title' => $request->validated('title'),
             'description' => $request->validated('description'),
@@ -50,6 +53,8 @@ class TriviaController extends Controller
 
     public function update(TriviaRequest $request, Trivia $trivia): RedirectResponse
     {
+        Gate::authorize('update', $trivia);
+
         $data = [
             'title' => $request->validated('title'),
             'description' => $request->validated('description'),
@@ -72,6 +77,8 @@ class TriviaController extends Controller
 
     public function destroy(Trivia $trivia): RedirectResponse
     {
+        Gate::authorize('delete', $trivia);
+
         if ($trivia->image) {
             Storage::disk('public')->delete($trivia->image);
         }

@@ -9,11 +9,12 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('blog_posts', function (Blueprint $table) {
+        Schema::create('posts', function (Blueprint $table) {
             $table->id();
+            $table->string('type', 20)->default('news');
             $table->foreignId('category_id')->nullable()->constrained('categories')->nullOnDelete();
             $table->string('title');
-            $table->string('slug')->unique();
+            $table->string('slug');
             $table->text('excerpt')->nullable();
             $table->longText('content')->nullable();
             $table->string('cover')->nullable();
@@ -28,7 +29,8 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->index(['status', 'published_at']);
+            $table->unique(['type', 'slug']);
+            $table->index(['type', 'status', 'published_at']);
 
             if (DB::getDriverName() === 'mysql') {
                 $table->fullText(['title', 'excerpt']);
@@ -38,6 +40,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('blog_posts');
+        Schema::dropIfExists('posts');
     }
 };

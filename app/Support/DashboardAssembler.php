@@ -2,6 +2,10 @@
 
 namespace App\Support;
 
+use App\Models\ConcertEvents;
+use App\Models\LiveStreaming;
+use App\Models\MeetGreetEvents;
+use App\Models\ShowTeater;
 use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -81,7 +85,7 @@ final class DashboardAssembler
 
         $charts = $this->chartSeries($dateFrom, $dateTo, $groupType);
 
-        $totalShows = Cache::remember('total_shows_count', self::STATS_CACHE_SECONDS, fn (): int => (int) DB::table('show_teater')->whereNull('deleted_at')->count());
+        $totalShows = Cache::remember('total_shows_count', self::STATS_CACHE_SECONDS, fn (): int => ShowTeater::query()->count());
         $nextMilestone = (int) (ceil($totalShows / self::MILESTONE_STEP) * self::MILESTONE_STEP);
         if ($nextMilestone === $totalShows) {
             $nextMilestone += self::MILESTONE_STEP;
@@ -91,12 +95,12 @@ final class DashboardAssembler
         $liveStreamingEvents = collect(Cache::remember(
             "recent_live_streaming_{$dateFrom->toDateString()}_{$dateTo->toDateString()}_{$eventDisplayLimit}",
             self::STATS_CACHE_SECONDS,
-            fn (): array => DB::table('live_streaming')
+            fn (): array => LiveStreaming::query()
                 ->when(! $isAllPeriod, fn ($query) => $query->whereBetween('live_date', [$dateFrom->toDateString(), $dateTo->toDateString()]))
                 ->orderByDesc('live_date')
                 ->limit($eventDisplayLimit)
                 ->get()
-                ->map(fn ($item) => (array) $item)
+                ->map(fn ($item) => $item->toArray())
                 ->all()
         ))->map(fn ($item) => (object) $item);
 
@@ -186,18 +190,18 @@ final class DashboardAssembler
     private function resolveAllPeriod(): array
     {
         $firstDate = collect([
-            DB::table('show_teater')->whereNull('deleted_at')->min('show_date'),
-            DB::table('concert_events')->whereNull('deleted_at')->min('event_date'),
-            DB::table('meet_greet_events')->whereNull('deleted_at')->min('event_date'),
-            DB::table('meet_greet_events')->whereNull('deleted_at')->min('event_date_2'),
-            DB::table('live_streaming')->min('live_date'),
+            ShowTeater::query()->min('show_date'),
+            ConcertEvents::query()->min('event_date'),
+            MeetGreetEvents::query()->min('event_date'),
+            MeetGreetEvents::query()->min('event_date_2'),
+            LiveStreaming::query()->min('live_date'),
         ])->filter()->map(fn (string $date): string => ShowDate::normalize($date))->min();
         $lastDate = collect([
-            DB::table('show_teater')->whereNull('deleted_at')->max('show_date'),
-            DB::table('concert_events')->whereNull('deleted_at')->max('event_date'),
-            DB::table('meet_greet_events')->whereNull('deleted_at')->max('event_date'),
-            DB::table('meet_greet_events')->whereNull('deleted_at')->max('event_date_2'),
-            DB::table('live_streaming')->max('live_date'),
+            ShowTeater::query()->max('show_date'),
+            ConcertEvents::query()->max('event_date'),
+            MeetGreetEvents::query()->max('event_date'),
+            MeetGreetEvents::query()->max('event_date_2'),
+            LiveStreaming::query()->max('live_date'),
         ])->filter()->map(fn (string $date): string => ShowDate::normalize($date))->max();
 
         return $firstDate && $lastDate
@@ -211,8 +215,7 @@ final class DashboardAssembler
     private function statsFor(CarbonInterface $from, CarbonInterface $to): array
     {
         return $this->mapShowStats(
-            DB::table('show_teater')
-                ->whereNull('deleted_at')
+            ShowTeater::query()
                 ->whereBetween(DB::raw(ShowDate::sqlExpression()), [$from->toDateString(), $to->toDateString()])
                 ->selectRaw($this->showStatsSelect())
                 ->first()
@@ -225,7 +228,7 @@ final class DashboardAssembler
     private function totalStats(): array
     {
         return $this->mapShowStats(
-            DB::table('show_teater')->whereNull('deleted_at')->selectRaw($this->showStatsSelect())->first()
+            ShowTeater::query()->selectRaw($this->showStatsSelect())->first()
         );
     }
 
@@ -254,8 +257,7 @@ final class DashboardAssembler
     private function eventCategoryTotals(): array
     {
         return $this->mapEventCategoryStats(
-            DB::table('concert_events')
-                ->whereNull('deleted_at')
+            ConcertEvents::query()
                 ->selectRaw($this->eventCategorySelect())
                 ->first()
         );
@@ -267,8 +269,7 @@ final class DashboardAssembler
     private function eventCategoryStatsFor(CarbonInterface $from, CarbonInterface $to): array
     {
         return $this->mapEventCategoryStats(
-            DB::table('concert_events')
-                ->whereNull('deleted_at')
+            ConcertEvents::query()
                 ->whereBetween('event_date', [$from->toDateString(), $to->toDateString()])
                 ->selectRaw($this->eventCategorySelect())
                 ->first()
@@ -323,8 +324,7 @@ final class DashboardAssembler
 
         $showDateExpression = ShowDate::sqlExpression();
         $showColExpr = str_replace('{col}', $showDateExpression, $groupExpression);
-        $showActivity = DB::table('show_teater')
-            ->whereNull('deleted_at')
+        $showActivity = ShowTeater::query()
             ->whereBetween(DB::raw($showDateExpression), [$dateFrom->toDateString(), $dateTo->toDateString()])
             ->selectRaw("{$showColExpr} as group_key, COUNT(*) as count")
             ->groupBy('group_key')
@@ -332,17 +332,15 @@ final class DashboardAssembler
             ->keyBy('group_key');
 
         $concertColExpr = str_replace('{col}', 'event_date', $groupExpression);
-        $concertActivity = DB::table('concert_events')
+        $concertActivity = ConcertEvents::query()
             ->whereBetween('event_date', [$dateFrom->toDateString(), $dateTo->toDateString()])
-            ->whereNull('deleted_at')
             ->selectRaw("{$concertColExpr} as group_key, COUNT(*) as count")
             ->groupBy('group_key')
             ->get()
             ->keyBy('group_key');
 
         $mgActivity = collect();
-        DB::table('meet_greet_events')
-            ->whereNull('deleted_at')
+        MeetGreetEvents::query()
             ->where(function ($query) use ($dateFrom, $dateTo): void {
                 $query->whereBetween('event_date', [$dateFrom->toDateString(), $dateTo->toDateString()])
                     ->orWhereBetween('event_date_2', [$dateFrom->toDateString(), $dateTo->toDateString()]);
@@ -368,7 +366,7 @@ final class DashboardAssembler
             });
 
         $lsColExpr = str_replace('{col}', 'live_date', $groupExpression);
-        $lsActivity = DB::table('live_streaming')
+        $lsActivity = LiveStreaming::query()
             ->whereBetween('live_date', [$dateFrom->toDateString(), $dateTo->toDateString()])
             ->selectRaw("{$lsColExpr} as group_key, COUNT(*) as count")
             ->groupBy('group_key')

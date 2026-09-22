@@ -82,7 +82,7 @@ class DatabaseHardeningTest extends TestCase
         $this->assertContains('parent_id', $menuIndexes);
         $this->assertContains('sort_order', $menuIndexes);
 
-        $postIndexes = collect(Schema::getIndexes('news_posts'))->pluck('columns')->flatten()->all();
+        $postIndexes = collect(Schema::getIndexes('posts'))->pluck('columns')->flatten()->all();
         $this->assertContains('published_at', $postIndexes);
 
         $photoboothIndexes = collect(Schema::getIndexes('photobooths'))->pluck('columns')->flatten()->all();

@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\ConcertEvents;
 use App\Models\MeetGreetEvents;
+use App\Models\ShowTeater;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -17,8 +18,8 @@ final class EventTimeline
         $past = $direction === 'past';
         $showDateExpression = ShowDate::sqlExpression();
 
-        $showQuery = DB::table('show_teater')
-            ->whereNull('deleted_at')
+        $showQuery = ShowTeater::query()
+            ->with('setlistCategory:id,name')
             ->when($from && $to, fn ($query) => $query->whereBetween(DB::raw($showDateExpression), [$from, $to]))
             ->when($past, function ($query) use ($today, $showDateExpression): void {
                 $query->whereRaw("{$showDateExpression} < ?", [$today]);
@@ -41,7 +42,7 @@ final class EventTimeline
         foreach ($showQuery->get() as $show) {
             $events->push([
                 'type' => 'Show Teater',
-                'name' => $show->setlist,
+                'name' => $show->setlistName(),
                 'date' => ShowDate::normalize($show->show_date),
                 'badge_color' => 'blue',
                 'purchase_link' => filled($show->reference_code)
@@ -87,8 +88,7 @@ final class EventTimeline
     {
         $expression = ShowDate::sqlExpression();
 
-        return DB::table('show_teater')
-            ->whereNull('deleted_at')
+        return ShowTeater::query()
             ->whereRaw("{$expression} > ?", [$today])
             ->when($until !== null, fn ($query) => $query->whereRaw("{$expression} <= ?", [$until]))
             ->count();

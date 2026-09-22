@@ -2,7 +2,7 @@
 
 namespace App\Support;
 
-use Illuminate\Support\Facades\DB;
+use App\Models\ShowTeater;
 
 /**
  * Prediksi unit song & center berdasarkan show terakhir dengan setlist yang sama.
@@ -16,16 +16,16 @@ final class ShowTeaterUnitSongPredictor
      */
     public function mapBySetlist(): array
     {
-        $rows = DB::table('show_teater')
-            ->whereNull('deleted_at')
+        $rows = ShowTeater::query()
+            ->with(['setlistCategory:id,name', 'unitSongCategories:id,name'])
             ->orderByRaw(ShowDate::sqlExpression().' asc')
             ->orderBy('show_id', 'asc')
-            ->get(['setlist', 'unit_song', 'is_global_center', 'is_us_center']);
+            ->get(['show_id', 'show_date', 'setlist', 'setlist_id', 'unit_song', 'is_global_center', 'is_us_center']);
 
         $map = [];
 
         foreach ($rows as $row) {
-            $setlist = trim((string) $row->setlist);
+            $setlist = trim((string) $row->setlistName());
 
             if ($setlist === '') {
                 continue;
@@ -39,7 +39,7 @@ final class ShowTeaterUnitSongPredictor
             ];
 
             // Unit song: pakai yang terakhir tidak kosong (show hasil scrape bisa kosong).
-            $unitSong = trim((string) ($row->unit_song ?? ''));
+            $unitSong = trim((string) $row->unitSongString());
 
             if ($unitSong !== '') {
                 $entry['unit_song'] = $unitSong;

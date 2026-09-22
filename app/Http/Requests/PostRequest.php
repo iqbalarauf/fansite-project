@@ -27,7 +27,7 @@ class PostRequest extends FormRequest
                 'string',
                 'max:255',
                 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
-                Rule::unique($section->table(), 'slug')->ignore($this->route('id')),
+                Rule::unique($section->table(), 'slug')->where('type', $section->value)->ignore($this->route('id')),
             ],
             'category_id' => [
                 'nullable',

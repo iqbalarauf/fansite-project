@@ -12,6 +12,7 @@ use App\Support\ImageOptimizer;
 use App\Support\ListingQuery;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
@@ -57,6 +58,8 @@ class GalleryController extends Controller
 
     public function storePhoto(GalleryPhotoRequest $request): RedirectResponse
     {
+        Gate::authorize('create', GalleryPhoto::class);
+
         GalleryPhoto::query()->create([
             'photo' => ImageOptimizer::store($request->file('photo'), 'gallery/photos'),
             'description' => $request->validated('description'),
@@ -70,6 +73,8 @@ class GalleryController extends Controller
 
     public function updatePhoto(GalleryPhotoRequest $request, GalleryPhoto $galleryPhoto): RedirectResponse
     {
+        Gate::authorize('update', $galleryPhoto);
+
         $data = [
             'description' => $request->validated('description'),
             'credit_photographer' => $request->validated('credit_photographer'),
@@ -89,6 +94,8 @@ class GalleryController extends Controller
 
     public function destroyPhoto(GalleryPhoto $galleryPhoto): RedirectResponse
     {
+        Gate::authorize('delete', $galleryPhoto);
+
         Storage::disk('public')->delete($galleryPhoto->photo);
         $galleryPhoto->delete();
 
@@ -98,6 +105,8 @@ class GalleryController extends Controller
 
     public function storeVideo(GalleryVideoRequest $request): RedirectResponse
     {
+        Gate::authorize('create', GalleryVideo::class);
+
         $url = (string) $request->validated('url');
 
         GalleryVideo::query()->create([
@@ -114,6 +123,8 @@ class GalleryController extends Controller
 
     public function updateVideo(GalleryVideoRequest $request, GalleryVideo $galleryVideo): RedirectResponse
     {
+        Gate::authorize('update', $galleryVideo);
+
         $url = (string) $request->validated('url');
 
         $galleryVideo->update([
@@ -130,6 +141,8 @@ class GalleryController extends Controller
 
     public function destroyVideo(GalleryVideo $galleryVideo): RedirectResponse
     {
+        Gate::authorize('delete', $galleryVideo);
+
         $galleryVideo->delete();
 
         return redirect()->route('content.gallery.index', ['tab' => 'videos'])

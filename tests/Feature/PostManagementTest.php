@@ -35,12 +35,12 @@ class PostManagementTest extends TestCase
             'status' => 'draft',
         ]);
 
-        $id = DB::table('blog_posts')->where('slug', 'untuk-edit')->value('id');
+        $id = DB::table('posts')->where('type', 'blog')->where('slug', 'untuk-edit')->value('id');
 
         $this->get(route('content.blog.edit', $id))->assertOk()->assertSee('data-rich-text', false);
     }
 
-    public function test_news_and_blog_posts_are_stored_in_separate_tables(): void
+    public function test_news_and_blog_posts_are_stored_with_type_in_a_single_table(): void
     {
         Storage::fake('public');
 
@@ -66,10 +66,10 @@ class PostManagementTest extends TestCase
             'category_id' => $blogCategory->id,
         ])->assertRedirect(route('content.blog.index'));
 
-        $this->assertDatabaseHas('news_posts', ['slug' => 'berita-utama', 'title' => 'Berita Utama']);
-        $this->assertDatabaseHas('blog_posts', ['slug' => 'tulisan-blog', 'title' => 'Tulisan Blog']);
-        $this->assertDatabaseMissing('news_posts', ['slug' => 'tulisan-blog']);
-        $this->assertDatabaseMissing('blog_posts', ['slug' => 'berita-utama']);
+        $this->assertDatabaseHas('posts', ['type' => 'news', 'slug' => 'berita-utama', 'title' => 'Berita Utama']);
+        $this->assertDatabaseHas('posts', ['type' => 'blog', 'slug' => 'tulisan-blog', 'title' => 'Tulisan Blog']);
+        $this->assertDatabaseMissing('posts', ['type' => 'news', 'slug' => 'tulisan-blog']);
+        $this->assertDatabaseMissing('posts', ['type' => 'blog', 'slug' => 'berita-utama']);
     }
 
     public function test_publishing_without_date_sets_published_at(): void
@@ -84,7 +84,7 @@ class PostManagementTest extends TestCase
             'status' => 'published',
         ])->assertRedirect(route('content.news.index'));
 
-        $this->assertNotNull(DB::table('news_posts')->where('slug', 'tanpa-tanggal')->value('published_at'));
+        $this->assertNotNull(DB::table('posts')->where('type', 'news')->where('slug', 'tanpa-tanggal')->value('published_at'));
     }
 
     public function test_post_can_be_updated_and_featured(): void
@@ -99,7 +99,7 @@ class PostManagementTest extends TestCase
             'status' => 'draft',
         ]);
 
-        $id = DB::table('blog_posts')->where('slug', 'judul-awal')->value('id');
+        $id = DB::table('posts')->where('type', 'blog')->where('slug', 'judul-awal')->value('id');
 
         $this->put(route('content.blog.update', $id), [
             'title' => 'Judul Baru',
@@ -108,8 +108,9 @@ class PostManagementTest extends TestCase
             'is_featured' => 1,
         ])->assertRedirect(route('content.blog.index'));
 
-        $this->assertDatabaseHas('blog_posts', [
+        $this->assertDatabaseHas('posts', [
             'id' => $id,
+            'type' => 'blog',
             'title' => 'Judul Baru',
             'slug' => 'judul-baru',
             'status' => 'published',
@@ -129,11 +130,11 @@ class PostManagementTest extends TestCase
             'status' => 'draft',
         ]);
 
-        $id = DB::table('news_posts')->where('slug', 'akan-dihapus')->value('id');
+        $id = DB::table('posts')->where('type', 'news')->where('slug', 'akan-dihapus')->value('id');
 
         $this->delete(route('content.news.destroy', $id))->assertRedirect(route('content.news.index'));
 
-        $this->assertSoftDeleted('news_posts', ['id' => $id]);
+        $this->assertSoftDeleted('posts', ['id' => $id]);
     }
 
     public function test_slug_must_be_unique_within_a_table_but_can_repeat_across_tables(): void

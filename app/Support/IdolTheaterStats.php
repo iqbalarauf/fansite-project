@@ -2,8 +2,8 @@
 
 namespace App\Support;
 
+use App\Models\ShowTeater;
 use App\Models\ShowTeaterCategories;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 final class IdolTheaterStats
@@ -23,9 +23,9 @@ final class IdolTheaterStats
     {
         $year = (int) Timezone::nowLocal()->year;
 
-        $shows = DB::table('show_teater')
-            ->whereNull('deleted_at')
-            ->get(['setlist', 'unit_song', 'show_date', 'is_member_show', 'is_global_center', 'is_us_center']);
+        $shows = ShowTeater::query()
+            ->with(['setlistCategory:id,name', 'unitSongCategories:id,name'])
+            ->get(['show_id', 'show_date', 'setlist', 'setlist_id', 'unit_song', 'is_member_show', 'is_global_center', 'is_us_center']);
 
         $setlistCategories = ShowTeaterCategories::query()
             ->setlists()
@@ -49,7 +49,7 @@ final class IdolTheaterStats
         $usCenter = ['count_all' => 0, 'count_year' => 0, 'setlists_all' => [], 'setlists_year' => []];
 
         foreach ($shows as $show) {
-            $setlist = trim((string) $show->setlist);
+            $setlist = trim((string) $show->setlistName());
             $key = $this->normalize($setlist);
             $date = ShowDate::normalize((string) $show->show_date);
             $isThisYear = (int) substr($date, 0, 4) === $year;
@@ -77,7 +77,7 @@ final class IdolTheaterStats
                 }
             }
 
-            foreach ($this->splitUnitSongs($show->unit_song) as $raw) {
+            foreach ($show->unitSongNames() as $raw) {
                 $resolved = $unitLookup[$this->normalize($raw)] ?? ['name' => $raw, 'jp_name' => null];
                 $songKey = $resolved['name'];
 
@@ -103,7 +103,7 @@ final class IdolTheaterStats
         // NULL `is_member_show`, fall back to the previous row of the same setlist.
         $activeShows = [];
         foreach ($shows as $show) {
-            $key = $this->normalize((string) $show->setlist);
+            $key = $this->normalize((string) $show->setlistName());
 
             if (isset($activeLookup[$key])) {
                 $activeShows[$key][] = $show;
@@ -119,7 +119,7 @@ final class IdolTheaterStats
                 continue;
             }
 
-            foreach ($this->splitUnitSongs($latest->unit_song) as $raw) {
+            foreach ($latest->unitSongNames() as $raw) {
                 $songKey = ($unitLookup[$this->normalize($raw)] ?? ['name' => $raw])['name'];
 
                 if (isset($unitCounts[$songKey])) {
@@ -182,18 +182,6 @@ final class IdolTheaterStats
         }
 
         return $lookup;
-    }
-
-    /**
-     * @return array<int, string>
-     */
-    private function splitUnitSongs(?string $value): array
-    {
-        return collect(preg_split('/\s*;\s*/', (string) $value) ?: [])
-            ->map(fn (string $song): string => trim($song))
-            ->filter(fn (string $song): bool => $song !== '')
-            ->values()
-            ->all();
     }
 
     private function normalize(string $value): string

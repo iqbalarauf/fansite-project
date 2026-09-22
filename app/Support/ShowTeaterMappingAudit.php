@@ -2,8 +2,8 @@
 
 namespace App\Support;
 
+use App\Models\ShowTeater;
 use App\Models\ShowTeaterCategories;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
@@ -64,8 +64,7 @@ final class ShowTeaterMappingAudit
             $unitSetlists[$nameKey][$setlistId] = true;
         }
 
-        $shows = DB::table('show_teater')
-            ->whereNull('deleted_at')
+        $shows = ShowTeater::query()
             ->get(['show_id', 'setlist', 'unit_song']);
 
         $setlistMatched = 0;

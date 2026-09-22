@@ -2,8 +2,9 @@
 
 namespace App\Support;
 
+use App\Models\AboutSettings;
+use App\Models\AppSettings;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Single place responsible for persisting application and about settings.
@@ -16,7 +17,7 @@ final class SettingsStore
     public static function setApp(array $settings): void
     {
         foreach ($settings as $key => $value) {
-            DB::table('app_settings')->updateOrInsert(
+            AppSettings::query()->updateOrInsert(
                 ['key' => $key],
                 ['value' => $value, 'updated_at' => now()],
             );
@@ -41,7 +42,7 @@ final class SettingsStore
             ->values()
             ->all();
 
-        DB::table('about_settings')->upsert($rows, ['key'], ['value', 'updated_at']);
+        AboutSettings::query()->upsert($rows, ['key'], ['value', 'updated_at']);
 
         Cache::forget('about_settings');
     }

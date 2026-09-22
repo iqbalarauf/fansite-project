@@ -56,4 +56,44 @@ class ShowTeater extends Model
             'show_teater_categories_id',
         )->withPivot('position')->withTimestamps()->orderByPivot('position');
     }
+
+    /**
+     * Nama setlist dari normalisasi (relasi/pivot), fallback ke kolom teks mirror.
+     */
+    public function setlistName(): ?string
+    {
+        $name = $this->setlistCategory?->name;
+
+        if (filled($name)) {
+            return (string) $name;
+        }
+
+        return filled($this->setlist) ? (string) $this->setlist : null;
+    }
+
+    /**
+     * Daftar nama unit song dari normalisasi (pivot), fallback ke kolom teks mirror.
+     *
+     * @return array<int, string>
+     */
+    public function unitSongNames(): array
+    {
+        $names = $this->unitSongCategories->pluck('name')->map('strval')->all();
+
+        if ($names !== []) {
+            return array_values($names);
+        }
+
+        return array_values(array_filter(array_map('trim', explode(';', (string) $this->unit_song))));
+    }
+
+    /**
+     * Unit song dalam satu string mirip kolom teks (dipisah "; ").
+     */
+    public function unitSongString(): ?string
+    {
+        $names = $this->unitSongNames();
+
+        return $names === [] ? null : implode('; ', $names);
+    }
 }
