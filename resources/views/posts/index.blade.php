@@ -22,7 +22,7 @@
             <a href="{{ $featured->publicUrl() }}" class="group mt-6 grid overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm transition hover:shadow-md dark:border-slate-800 dark:bg-slate-900 lg:grid-cols-2">
                 <div class="overflow-hidden bg-slate-100 dark:bg-slate-800">
                     @if ($featured->cover)
-                        <img src="{{ Storage::url($featured->cover) }}" alt="{{ $featured->title }}" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                        <img src="{{ Storage::url($featured->cover) }}" alt="{{ $featured->title }}" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="eager" fetchpriority="high" decoding="async" />
                     @else
                         <div class="flex aspect-video h-full items-center justify-center text-5xl font-black text-indigo-600 dark:text-indigo-400">{{ \Illuminate\Support\Str::of($featured->title)->substr(0, 1) }}</div>
                     @endif
@@ -53,7 +53,7 @@
                     <article class="flex flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
                         <a href="{{ $post->publicUrl() }}" class="overflow-hidden bg-slate-100 dark:bg-slate-800">
                             @if ($post->cover)
-                                <img src="{{ Storage::url($post->cover) }}" alt="{{ $post->title }}" class="aspect-video w-full object-cover" loading="lazy" />
+                                <img src="{{ Storage::url($post->cover) }}" alt="{{ $post->title }}" class="aspect-video w-full object-cover" loading="lazy" decoding="async" />
                             @else
                                 <div class="flex aspect-video w-full items-center justify-center text-4xl font-black text-indigo-600 dark:text-indigo-400">{{ \Illuminate\Support\Str::of($post->title)->substr(0, 1) }}</div>
                             @endif

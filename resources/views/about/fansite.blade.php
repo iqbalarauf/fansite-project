@@ -17,7 +17,7 @@
             <div class="mx-auto flex max-w-3xl flex-col items-center px-4 py-24 text-center sm:px-6 lg:py-28">
                 <span class="mb-4 inline-flex w-fit rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-indigo-50">About Fansite</span>
                 @if ($fanbaseLogo)
-                    <img src="{{ Storage::url($fanbaseLogo) }}" alt="{{ $fanbaseName }}" class="mb-6 h-20 w-20 rounded-2xl object-cover shadow-lg ring-4 ring-white/10" />
+                    <img src="{{ Storage::url($fanbaseLogo) }}" alt="{{ $fanbaseName }}" class="mb-6 h-20 w-20 rounded-2xl object-cover shadow-lg ring-4 ring-white/10" loading="eager" decoding="async" />
                 @endif
                 <h1 class="text-4xl font-black leading-tight text-white sm:text-5xl lg:text-6xl">{{ $fanbaseName }}</h1>
                 @if ($fanbaseDescription)
@@ -81,7 +81,7 @@
                     <div class="flex gap-4 transition-transform duration-500 ease-out" data-fanbase-track>
                         @foreach ($fanbaseGalleryItems as $index => $item)
                             <figure data-fanbase-item class="fanbase-gallery-item flex shrink-0 flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                                <img src="{{ Storage::url($item['photo']) }}" alt="{{ $item['caption'] ?: 'Galeri '.$fanbaseName.' '.($index + 1) }}" class="aspect-square w-full object-cover" loading="lazy" />
+                                <img src="{{ Storage::url($item['photo']) }}" alt="{{ $item['caption'] ?: 'Galeri '.$fanbaseName.' '.($index + 1) }}" class="aspect-square w-full object-cover" loading="lazy" decoding="async" />
                                 @if ($item['caption'])
                                     <figcaption class="p-4 text-sm text-slate-600 dark:text-slate-300">{{ $item['caption'] }}</figcaption>
                                 @endif
@@ -140,7 +140,7 @@
                     @foreach ($historyItems as $item)
                         @if ($item['photo'])
                             <article class="grid gap-4 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 sm:grid-cols-2 dark:border-slate-800 dark:bg-slate-800/50">
-                                <img src="{{ Storage::url($item['photo']) }}" alt="Sejarah {{ $fanbaseName }} {{ $loop->iteration }}" class="h-full w-full object-cover" loading="lazy" />
+                                <img src="{{ Storage::url($item['photo']) }}" alt="Sejarah {{ $fanbaseName }} {{ $loop->iteration }}" class="h-full w-full object-cover" loading="lazy" decoding="async" />
                                 <div class="flex items-center p-5">
                                     <p class="text-sm leading-7 text-slate-600 dark:text-slate-300">{{ $item['description'] }}</p>
                                 </div>

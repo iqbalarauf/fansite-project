@@ -34,7 +34,7 @@
 
                             <article class="mt-3 inline-block w-full overflow-hidden rounded-2xl border border-slate-200 bg-white text-left shadow-sm dark:border-slate-800 dark:bg-slate-900">
                                 @if ($timeline->image)
-                                    <img src="{{ Storage::url($timeline->image) }}" alt="Timeline {{ $timeline->id }}" class="max-h-80 w-full object-cover" loading="lazy" />
+                                    <img src="{{ Storage::url($timeline->image) }}" alt="Timeline {{ $timeline->id }}" class="max-h-80 w-full object-cover" loading="lazy" decoding="async" />
                                 @endif
                                 @if ($timeline->description)
                                     <p class="p-5 text-sm leading-7 text-slate-600 dark:text-slate-300">{{ $timeline->description }}</p>

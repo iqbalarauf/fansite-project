@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\CustomPage;
+use App\Support\ImageOptimizer;
 use App\Support\SettingBag;
 use App\Support\SettingsStore;
 use Flux\Flux;
@@ -223,13 +224,13 @@ new #[Title('About Settings')] class extends Component
                 Storage::disk('public')->delete($this->idolPhotoPath);
             }
 
-            $this->idolPhotoPath = $this->idolPhotoUpload->store('about/idol', 'public');
+            $this->idolPhotoPath = ImageOptimizer::store($this->idolPhotoUpload, 'about/idol');
             $this->idolPhotoUpload = null;
         }
 
         foreach ($this->kabeshaPhotoUploads as $kabeshaUpload) {
             $this->kabeshaItems[] = [
-                'photo' => $kabeshaUpload->store('about/kabesha', 'public'),
+                'photo' => ImageOptimizer::store($kabeshaUpload, 'about/kabesha'),
                 'title' => $this->kabeshaDefaultTitle,
                 'duration_from' => null,
                 'duration_to' => null,
@@ -300,7 +301,7 @@ new #[Title('About Settings')] class extends Component
                 Storage::disk('public')->delete($this->fanbaseLogoPath);
             }
 
-            $this->fanbaseLogoPath = $this->fanbaseLogoUpload->store('about/fansite', 'public');
+            $this->fanbaseLogoPath = ImageOptimizer::store($this->fanbaseLogoUpload, 'about/fansite');
             $this->fanbaseLogoUpload = null;
         }
 
@@ -308,7 +309,7 @@ new #[Title('About Settings')] class extends Component
 
         foreach (collect($this->fanbaseGalleryUploads)->take($remaining) as $upload) {
             $this->fanbaseGalleryItems[] = [
-                'photo' => $upload->store('about/fansite/gallery', 'public'),
+                'photo' => ImageOptimizer::store($upload, 'about/fansite/gallery'),
                 'caption' => '',
             ];
         }
@@ -320,7 +321,7 @@ new #[Title('About Settings')] class extends Component
 
         foreach (collect($this->fanbaseHistoryUploads)->take($remainingHistory) as $historyUpload) {
             $this->fanbaseHistoryItems[] = [
-                'photo' => $historyUpload->store('about/fansite/history', 'public'),
+                'photo' => ImageOptimizer::store($historyUpload, 'about/fansite/history'),
                 'description' => '',
             ];
         }
@@ -333,7 +334,7 @@ new #[Title('About Settings')] class extends Component
                 Storage::disk('public')->delete($this->fanbaseCtaBackgroundPath);
             }
 
-            $this->fanbaseCtaBackgroundPath = $this->fanbaseCtaBackgroundUpload->store('about/fansite/cta', 'public');
+            $this->fanbaseCtaBackgroundPath = ImageOptimizer::store($this->fanbaseCtaBackgroundUpload, 'about/fansite/cta');
             $this->fanbaseCtaBackgroundUpload = null;
         }
 

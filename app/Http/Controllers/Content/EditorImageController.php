@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Content;
 
 use App\Http\Controllers\Controller;
+use App\Support\ImageOptimizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -22,7 +23,7 @@ class EditorImageController extends Controller
             'image.max' => 'Ukuran gambar maksimal 5MB.',
         ]);
 
-        $path = $validated['image']->store('content/editor', 'public');
+        $path = ImageOptimizer::store($validated['image'], 'content/editor');
 
         return response()->json([
             'url' => Storage::disk('public')->url($path),

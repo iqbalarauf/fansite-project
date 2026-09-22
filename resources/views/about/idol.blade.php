@@ -47,7 +47,7 @@
         <div class="mt-10 grid gap-10 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
             <div class="flex flex-col gap-6">
                 @if ($idolPhoto)
-                    <img src="{{ Storage::url($idolPhoto) }}" alt="{{ $idolName }}" class="w-full rounded-[2rem] object-cover shadow-lg shadow-indigo-200/50 dark:shadow-none" />
+                    <img src="{{ Storage::url($idolPhoto) }}" alt="{{ $idolName }}" class="w-full rounded-[2rem] object-cover shadow-lg shadow-indigo-200/50 dark:shadow-none" loading="eager" fetchpriority="high" decoding="async" />
                 @else
                     <div class="flex aspect-[3/4] w-full items-center justify-center rounded-[2rem] border border-slate-200 bg-white text-2xl font-black text-indigo-600 dark:border-slate-800 dark:bg-slate-900 dark:text-indigo-400">{{ $idolName }}</div>
                 @endif

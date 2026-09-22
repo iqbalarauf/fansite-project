@@ -42,7 +42,7 @@
                             data-lightbox-description="{{ $trivia->description }}"
                             class="flex w-full cursor-zoom-in flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
                         @if ($trivia->image)
-                            <img src="{{ Storage::url($trivia->image) }}" alt="{{ $trivia->title }}" class="aspect-video w-full object-cover" loading="lazy" />
+                            <img src="{{ Storage::url($trivia->image) }}" alt="{{ $trivia->title }}" class="aspect-video w-full object-cover" loading="lazy" decoding="async" />
                         @endif
                         <div class="flex flex-1 flex-col p-5">
                             <h3 class="text-lg font-black text-slate-900 dark:text-white">{{ $trivia->title }}</h3>

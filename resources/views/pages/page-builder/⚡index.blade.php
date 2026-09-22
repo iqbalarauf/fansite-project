@@ -1,6 +1,7 @@
 ﻿<?php
 
 use App\Models\CustomPage;
+use App\Support\ImageOptimizer;
 use Flux\Flux;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -343,7 +344,7 @@ new #[Title('Custom Pages')] class extends Component {
             Storage::disk('public')->delete($data['storage_path']);
         }
 
-        $data['storage_path'] = $this->imageUpload->store('pages', 'public');
+        $data['storage_path'] = ImageOptimizer::store($this->imageUpload, 'pages');
         $data['url'] = '';
         $this->updateSelectedImageData($data);
         $this->imageUpload = null;

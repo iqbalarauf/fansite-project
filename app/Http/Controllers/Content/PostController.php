@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\PostRequest;
 use App\Models\Category;
 use App\Models\Post;
+use App\Support\ImageOptimizer;
 use App\Support\ListingQuery;
 use App\Support\Timezone;
 use Illuminate\Http\RedirectResponse;
@@ -140,7 +141,7 @@ class PostController extends Controller
                 Storage::disk('public')->delete($post->cover);
             }
 
-            $post->cover = $validated['cover']->store('content/covers', 'public');
+            $post->cover = ImageOptimizer::store($validated['cover'], 'content/covers');
         }
 
         if (isset($validated['og_image'])) {
@@ -148,7 +149,7 @@ class PostController extends Controller
                 Storage::disk('public')->delete($post->og_image);
             }
 
-            $post->og_image = $validated['og_image']->store('content/og', 'public');
+            $post->og_image = ImageOptimizer::store($validated['og_image'], 'content/og');
         }
     }
 

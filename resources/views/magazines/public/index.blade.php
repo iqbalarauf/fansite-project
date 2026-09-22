@@ -24,7 +24,7 @@
             <div class="mt-6 grid gap-8 overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
                 <div class="overflow-hidden rounded-[1.5rem] bg-slate-100 dark:bg-slate-800">
                     @if ($mainCover)
-                        <img src="{{ $mainCover }}" alt="{{ $main->title }}" class="h-full w-full object-cover" />
+                        <img src="{{ $mainCover }}" alt="{{ $main->title }}" class="h-full w-full object-cover" loading="eager" fetchpriority="high" decoding="async" />
                     @else
                         <div class="flex aspect-[3/4] items-center justify-center text-4xl font-black text-indigo-600 dark:text-indigo-400">{{ \Illuminate\Support\Str::of($main->title)->substr(0, 1) }}</div>
                     @endif
@@ -90,7 +90,7 @@
                                         <div class="flex items-center gap-4">
                                             <div class="h-16 w-12 shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
                                                 @if ($cover)
-                                                    <img src="{{ $cover }}" alt="{{ $magazine->title }}" class="h-full w-full object-cover" loading="lazy" />
+                                                    <img src="{{ $cover }}" alt="{{ $magazine->title }}" class="h-full w-full object-cover" loading="lazy" decoding="async" />
                                                 @else
                                                     <div class="flex h-full w-full items-center justify-center text-lg font-black text-indigo-600 dark:text-indigo-400">{{ \Illuminate\Support\Str::of($magazine->title)->substr(0, 1) }}</div>
                                                 @endif

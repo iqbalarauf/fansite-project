@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Content;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TriviaRequest;
 use App\Models\Trivia;
+use App\Support\ImageOptimizer;
 use App\Support\ListingQuery;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -39,7 +40,7 @@ class TriviaController extends Controller
         Trivia::query()->create([
             'title' => $request->validated('title'),
             'description' => $request->validated('description'),
-            'image' => $request->hasFile('image') ? $request->file('image')->store('trivia', 'public') : null,
+            'image' => $request->hasFile('image') ? ImageOptimizer::store($request->file('image'), 'trivia') : null,
             'sort_order' => (int) ($request->validated('sort_order') ?? 0),
         ]);
 
@@ -60,7 +61,7 @@ class TriviaController extends Controller
                 Storage::disk('public')->delete($trivia->image);
             }
 
-            $data['image'] = $request->file('image')->store('trivia', 'public');
+            $data['image'] = ImageOptimizer::store($request->file('image'), 'trivia');
         }
 
         $trivia->update($data);

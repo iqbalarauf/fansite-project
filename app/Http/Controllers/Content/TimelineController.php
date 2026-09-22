@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Content;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TimelineRequest;
 use App\Models\Timeline;
+use App\Support\ImageOptimizer;
 use App\Support\ListingQuery;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -37,7 +38,7 @@ class TimelineController extends Controller
         Timeline::query()->create([
             'date' => $request->validated('date'),
             'description' => $request->validated('description'),
-            'image' => $request->hasFile('image') ? $request->file('image')->store('timeline', 'public') : null,
+            'image' => $request->hasFile('image') ? ImageOptimizer::store($request->file('image'), 'timeline') : null,
             'sort_order' => (int) ($request->validated('sort_order') ?? 0),
         ]);
 
@@ -58,7 +59,7 @@ class TimelineController extends Controller
                 Storage::disk('public')->delete($timeline->image);
             }
 
-            $data['image'] = $request->file('image')->store('timeline', 'public');
+            $data['image'] = ImageOptimizer::store($request->file('image'), 'timeline');
         }
 
         $timeline->update($data);

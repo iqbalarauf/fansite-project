@@ -29,7 +29,7 @@
                                     data-lightbox-image="{{ Storage::url($photo->photo) }}"
                                     data-lightbox-description="{{ $photo->description }}"
                                     data-lightbox-credit="{{ $photo->credit_photographer ? 'Credit: '.$photo->credit_photographer : '' }}">
-                                <img src="{{ Storage::url($photo->photo) }}" alt="{{ $photo->description ?: 'Gallery photo' }}" class="aspect-[4/3] w-full object-cover transition duration-500 hover:opacity-95" loading="lazy" />
+                                <img src="{{ Storage::url($photo->photo) }}" alt="{{ $photo->description ?: 'Gallery photo' }}" class="aspect-[4/3] w-full object-cover transition duration-500 hover:opacity-95" loading="lazy" decoding="async" />
                             </button>
                             @if ($photo->description || $photo->credit_photographer)
                                 <figcaption class="p-5">
