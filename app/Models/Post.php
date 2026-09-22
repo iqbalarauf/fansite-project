@@ -45,6 +45,22 @@ abstract class Post extends Model
     abstract public function section(): ContentSection;
 
     /**
+     * Nilai kolom `type` untuk model ini.
+     */
+    abstract public static function sectionType(): string;
+
+    protected static function booted(): void
+    {
+        static::addGlobalScope('section', function (Builder $query): void {
+            $query->where('posts.type', static::sectionType());
+        });
+
+        static::creating(function (self $post): void {
+            $post->type ??= static::sectionType();
+        });
+    }
+
+    /**
      * Sanitasi konten HTML saat disimpan (mencegah XSS).
      */
     protected function content(): Attribute

@@ -9,6 +9,7 @@ use App\Support\ImageOptimizer;
 use App\Support\ListingQuery;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
@@ -35,6 +36,8 @@ class TimelineController extends Controller
 
     public function store(TimelineRequest $request): RedirectResponse
     {
+        Gate::authorize('create', Timeline::class);
+
         Timeline::query()->create([
             'date' => $request->validated('date'),
             'description' => $request->validated('description'),
@@ -48,6 +51,8 @@ class TimelineController extends Controller
 
     public function update(TimelineRequest $request, Timeline $timeline): RedirectResponse
     {
+        Gate::authorize('update', $timeline);
+
         $data = [
             'date' => $request->validated('date'),
             'description' => $request->validated('description'),
@@ -70,6 +75,8 @@ class TimelineController extends Controller
 
     public function destroy(Timeline $timeline): RedirectResponse
     {
+        Gate::authorize('delete', $timeline);
+
         if ($timeline->image) {
             Storage::disk('public')->delete($timeline->image);
         }

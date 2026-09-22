@@ -6,7 +6,12 @@ use App\Enums\ContentSection;
 
 class NewsPost extends Post
 {
-    protected $table = 'news_posts';
+    protected $table = 'posts';
+
+    public static function sectionType(): string
+    {
+        return ContentSection::News->value;
+    }
 
     public function section(): ContentSection
     {

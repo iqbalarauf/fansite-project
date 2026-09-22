@@ -2,7 +2,8 @@
 
 namespace App\Support;
 
-use Illuminate\Support\Facades\DB;
+use App\Models\ShowTeater;
+use App\Models\ShowTeaterUnitSong;
 
 /**
  * Backfill & sinkronisasi `show_teater.setlist_id` dan pivot `show_teater_unit_song`
@@ -24,7 +25,7 @@ final class ShowTeaterNormalizer
 
         $totals = ['setlist_id_updated' => 0, 'unit_song_rows' => 0, 'unmatched_setlists' => 0, 'unmatched_unit_songs' => 0];
 
-        foreach (DB::table('show_teater')->get(['show_id', 'setlist', 'unit_song']) as $show) {
+        foreach (ShowTeater::query()->get(['show_id', 'setlist', 'unit_song']) as $show) {
             $this->syncRow($resolver, $show, $dryRun, $totals);
         }
 
@@ -33,7 +34,7 @@ final class ShowTeaterNormalizer
 
     public function syncShow(int $showId): void
     {
-        $show = DB::table('show_teater')->where('show_id', $showId)->first(['show_id', 'setlist', 'unit_song']);
+        $show = ShowTeater::query()->where('show_id', $showId)->first(['show_id', 'setlist', 'unit_song']);
 
         if ($show === null) {
             return;
@@ -81,11 +82,11 @@ final class ShowTeaterNormalizer
             return;
         }
 
-        DB::table('show_teater')
+        ShowTeater::query()
             ->where('show_id', $show->show_id)
             ->update(['setlist_id' => $setlistId]);
 
-        DB::table('show_teater_unit_song')->where('show_id', $show->show_id)->delete();
+        ShowTeaterUnitSong::query()->where('show_id', $show->show_id)->delete();
 
         if ($resolved !== []) {
             $rows = [];
@@ -101,7 +102,7 @@ final class ShowTeaterNormalizer
                 ];
             }
 
-            DB::table('show_teater_unit_song')->insert($rows);
+            ShowTeaterUnitSong::query()->insert($rows);
         }
     }
 }

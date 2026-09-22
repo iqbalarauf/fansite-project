@@ -52,6 +52,6 @@ enum ContentSection: string
 
     public function table(): string
     {
-        return $this->value.'_posts';
+        return 'posts';
     }
 }

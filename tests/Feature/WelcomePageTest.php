@@ -156,7 +156,8 @@ class WelcomePageTest extends TestCase
 
     public function test_homepage_lists_latest_news_when_enabled(): void
     {
-        DB::table('news_posts')->insert([
+        DB::table('posts')->insert([
+            'type' => 'news',
             'title' => 'Berita Terkini',
             'slug' => 'berita-terkini',
             'status' => 'published',
@@ -165,7 +166,8 @@ class WelcomePageTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        DB::table('news_posts')->insert([
+        DB::table('posts')->insert([
+            'type' => 'news',
             'title' => 'Berita Draft',
             'slug' => 'berita-draft',
             'status' => 'draft',

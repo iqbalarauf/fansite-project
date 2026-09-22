@@ -1,7 +1,7 @@
 # PRD — FANSIGHT (Fansite Platform)
 
 **Dokumen:** Product Requirements Document
-**Versi:** 1.3
+**Versi:** 1.4
 **Tanggal:** 22 September 2026
 **Author:** Analisis Otomatis dari Codebase
 
@@ -57,7 +57,7 @@ Aplikasi dibangun berbasis web dengan arsitektur terpusat, sehingga seluruh data
 - **MVC Laravel** konvensional untuk CRUD domain data (controllers + Form Requests + blade views).
 - **Livewire Volt** single-file components untuk fitur interaktif (page builder, pengaturan, form pengaturan).
 - **Enums + role-based authorization** (`UserRole`, `ContentSection`, `ConcertStatus`, `MeetGreetEventType`, `LiveStreamingPlatform`, `MasterData`, `SyncMode`, `DiffStatus`) + middleware kustom.
-- **Policy konten** (`PostPolicy`, `MagazinePolicy`, `CustomPagePolicy` via trait `AuthorizesContent`) memusatkan matriks peran + aturan kepemilikan Content Creator, diterapkan di controller (Pages/Majalah/News/Blog) dan komponen Livewire page builder.
+- **Policy konten** (`PostPolicy`, `MagazinePolicy`, `CustomPagePolicy`, `GalleryPhotoPolicy`, `GalleryVideoPolicy`, `TimelinePolicy`, `TriviaPolicy` via trait `AuthorizesContent`) memusatkan matriks peran + aturan kepemilikan Content Creator, diterapkan di controller (Pages/Majalah/News/Blog/Galeri/Timeline/Trivia) dan komponen Livewire page builder.
 - **Feature flags** berbasis setting (`SettingBag::featureEnabled()`) untuk mengaktifkan/menonaktifkan News, Blog, Majalah, Trivia, Photobooth, dan Sheet Integration.
 - **Support/Service classes** (`app/Support`): `DashboardAssembler`, `WelcomePageData`, `AboutPageData`, `EventTimeline`, `SettingBag`, `SettingsStore`, `ListingQuery`, `ShowDate`, `CustomPageStatistic`, `BrandPalette`, `HeroLink`, `HeaderMenu`, `YoutubeEmbed`/`YoutubeRss`/`YoutubePlaylist`, `Spreadsheet`, `Csv`.
 - **Soft deletes** pada `show_teater`, `meet_greet_events`, `concert_events`, `custom_pages`, `news_posts`/`blog_posts`, `magazines`, `gallery_photos`/`gallery_videos`, `timelines`, dan `trivias`, dengan penyaringan `deleted_at` di seluruh query (termasuk raw `DB::table`).
@@ -201,13 +201,12 @@ Enums: `App\Enums\UserRole`
 | `users` | `User` | `role` (enum), 2FA columns, password-hash |
 | `show_teater` | `ShowTeater` | PK `show_id` non-increment, tanpa timestamp, **soft deletes**, FK `setlist_id` (nullable) |
 | `show_teater_categories` | `ShowTeaterCategories` | Self-FK `setlist_id`, tab setlist/unit song |
-| `show_teater_unit_song` | (pivot) | Pivot `show_id` ↔ `show_teater_categories.id` + `position` (unit song, mendukung double US) |
+| `show_teater_unit_song` | `ShowTeaterUnitSong` | Pivot `show_id` ↔ `show_teater_categories.id` + `position` (unit song, mendukung double US) |
 | `meet_greet_events` | `MeetGreetEvents` | Soft deletes |
 | `concert_events` | `ConcertEvents` | Soft deletes, status enum |
 | `live_streaming` | `LiveStreaming` | — |
 | `categories` | `Category` | `type` = `news`/`blog`, slug unik per tipe |
-| `news_posts` | `NewsPost` (extends `Post`) | Soft deletes, SEO, status, jadwal, featured, audit `created_by`/`updated_by`, FULLTEXT `(title, excerpt)` |
-| `blog_posts` | `BlogPost` (extends `Post`) | Soft deletes, SEO, status, jadwal, featured, audit `created_by`/`updated_by`, FULLTEXT `(title, excerpt)` |
+| `posts` | `NewsPost`/`BlogPost` (extends `Post`) | Tabel tunggal + kolom `type` (`news`/`blog`), unik `(type, slug)`; soft deletes, SEO, status, jadwal, featured, audit `created_by`/`updated_by`, FULLTEXT `(title, excerpt)` |
 | `magazines` | `Magazine` | File PDF + cover, `is_main`, `views`, `downloads`, soft deletes, audit |
 | `about_settings` | `AboutSettings` | KV |
 | `app_settings` | `AppSettings` | KV (branding + feature flags + hero + youtube) |
@@ -239,7 +238,7 @@ Enums: `App\Enums\UserRole`
 - **Performa:** Statistik dashboard & setting di-cache; pipeline fetch data mengurangi beban manual.
 - **Keamanan:** 2FA, verifikasi email, RBAC, hash password, **soft deletes** untuk recovery data, feature flags berbasis setting, serta **sanitasi HTML** (`App\Support\HtmlSanitizer`) untuk konten artikel (profil ketat) dan blok embed page builder (profil longgar) guna mencegah XSS.
 - **Idempotensi:** `TheaterReference` mencegah duplikasi saat fetch dari API JKT48; soft delete pada `show_teater` menjaga `show_id` tetap stabil.
-- **Testing:** 63 file test PHPUnit (feature) yang mencakup auth, settings, role access, feature toggle, soft delete, setiap domain data, Sheet Integration, ekspor/impor Excel, **HTML sanitizer**, `sort_order` konten, **Policy konten**, serta **mode tampilan & background page builder**.
+- **Testing:** 64 file test PHPUnit (feature) yang mencakup auth, settings, role access, feature toggle, soft delete, setiap domain data, Sheet Integration, ekspor/impor Excel, **HTML sanitizer**, `sort_order` konten, **Policy konten**, **mode tampilan & background page builder**, serta **baca `show_teater` via pivot**.
 
 ---
 
@@ -273,13 +272,16 @@ Status selesai (September 2026):
 - [x] **Policy konten:** `PostPolicy`/`MagazinePolicy`/`CustomPagePolicy` + trait `AuthorizesContent` (matriks peran & kepemilikan Content Creator), diterapkan di controller Pages/Majalah/News/Blog dan page builder Livewire; `restore`/`forceDelete` hanya Super Admin.
 - [x] **Konsistensi akses DB (sebagian):** `ShowTeaterCategoriesSeeder` memakai model Eloquent, dan view `custom-pages/show` memakai `SettingBag` (bukan raw `DB::table`).
 - [x] **Test tambahan page builder:** mode tampilan `full`/`welcome`, validasi mode tampilan, serta render background dan preview blok.
+- [x] **Unifikasi tabel posts:** `news_posts` & `blog_posts` digabung menjadi satu tabel **`posts`** + kolom `type` (`news`/`blog`), unik `(type, slug)`; `NewsPost`/`BlogPost` kini sub-kelas `Post` dengan global scope `type` sehingga seluruh query/route publik tetap bekerja.
+- [x] **Baca `show_teater` via normalisasi (mirror):** seluruh jalur baca per-baris (daftar & ekspor admin, jadwal bulanan, statistik profil idola, predictor unit song, timeline) memakai relasi/pivot `show_teater_unit_song` & `setlist_id` melalui accessor `ShowTeater::setlistName()`/`unitSongNames()`/`unitSongString()`; kolom teks `setlist`/`unit_song` **dipertahankan sebagai mirror** (fallback + agregat) agar kontrak Sheet Integration & form input lama tetap utuh.
+- [x] **Konsistensi akses DB:** seluruh raw `DB::table` pada `app/` diubah ke Eloquent (`ShowTeater`, `ConcertEvents`, `MeetGreetEvents`, `LiveStreaming`, `AppSettings`, `AboutSettings`, `ShowTeaterUnitSong`, dst.) — `DB::raw` tetap dipakai untuk ekspresi tanggal/agregasi. Model pivot baru: `ShowTeaterUnitSong`.
+- [x] **Perluasan Policy konten:** `GalleryPhotoPolicy`, `GalleryVideoPolicy`, `TimelinePolicy`, `TriviaPolicy` ditambahkan & diterapkan di controller (Photobooth tetap khusus Super Admin melalui middleware route).
 
-Sisa backlog yang belum dikerjakan (sengaja ditunda, bukan blocker):
+Backlog tersisa (opsional, tidak memblokir):
 
-1. Unifikasi tabel `news_posts`/`blog_posts` menjadi satu tabel `posts` + `type` — **ditunda** sampai jenis konten benar-benar bertambah (migrasi & penyesuaian query besar, risiko regresi tinggi).
-2. Penghapusan kolom teks `show_teater.setlist`/`unit_song` — **ditunda** selama jalur baca statistik/predictor dan jalur tulis scraper belum sepenuhnya memakai pivot `show_teater_unit_song`.
-3. Sisa raw `DB::table` pada `app/Support` (mis. `DashboardAssembler`, `CustomPageStatistic`, `EventTimeline`) — **dipertahankan** demi performa agregasi & penyaringan `deleted_at` eksplisit; refactor ke Eloquent tidak memberi nilai tambah yang sepadan.
-4. Perluasan Policy ke konten lain (Galeri, Timeline, Trivia, Photobooth) — saat ini Policy baru mencakup Pages, Majalah, dan News/Blog.
+1. Mengubah form input admin Show Teater dari teks menjadi pemilih setlist/unit song berbasis kategori (agar `setlist_id`/pivot menjadi sumber data, bukan hanya hasil normalisasi).
+2. Menghapus fisik kolom teks `show_teater.setlist`/`unit_song` setelah mirror tidak lagi dibutuhkan oleh Sheet Integration & agregat.
+3. Enkapsulasi lebih lanjut agregat dashboard/statistik ke query Eloquent murni (saat ini memakai `selectRaw` di atas model).
 
 ---
 

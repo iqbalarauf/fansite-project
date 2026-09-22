@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\ConcertEvents;
 use App\Models\LiveStreaming;
 use App\Models\MeetGreetEvents;
+use App\Models\ShowTeater;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -88,12 +89,12 @@ final class MonthlySchedule
         $events = collect();
 
         $showDate = ShowDate::sqlExpression();
-        foreach (DB::table('show_teater')
-            ->whereNull('deleted_at')
+        foreach (ShowTeater::query()
+            ->with(['setlistCategory:id,name', 'unitSongCategories:id,name'])
             ->whereBetween(DB::raw($showDate), [$from, $to])
             ->orderBy('show_date')
-            ->get(['setlist', 'unit_song', 'show_date']) as $show) {
-            $events->push($this->event('Show Teater', 'blue', $show->setlist, ShowDate::normalize($show->show_date), $show->unit_song ?: null));
+            ->get(['show_id', 'show_date', 'setlist', 'setlist_id', 'unit_song']) as $show) {
+            $events->push($this->event('Show Teater', 'blue', $show->setlistName(), ShowDate::normalize((string) $show->show_date), $show->unitSongString()));
         }
 
         foreach (ConcertEvents::query()

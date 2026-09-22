@@ -5,12 +5,20 @@ namespace App\Providers;
 use App\Contracts\GoogleSheetsClient;
 use App\Models\BlogPost;
 use App\Models\CustomPage;
+use App\Models\GalleryPhoto;
+use App\Models\GalleryVideo;
 use App\Models\Magazine;
 use App\Models\NewsPost;
 use App\Models\Post;
+use App\Models\Timeline;
+use App\Models\Trivia;
 use App\Policies\CustomPagePolicy;
+use App\Policies\GalleryPhotoPolicy;
+use App\Policies\GalleryVideoPolicy;
 use App\Policies\MagazinePolicy;
 use App\Policies\PostPolicy;
+use App\Policies\TimelinePolicy;
+use App\Policies\TriviaPolicy;
 use App\Services\Google\GoogleApiSheetsClient;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
@@ -48,6 +56,10 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(BlogPost::class, PostPolicy::class);
         Gate::policy(Magazine::class, MagazinePolicy::class);
         Gate::policy(CustomPage::class, CustomPagePolicy::class);
+        Gate::policy(GalleryPhoto::class, GalleryPhotoPolicy::class);
+        Gate::policy(GalleryVideo::class, GalleryVideoPolicy::class);
+        Gate::policy(Timeline::class, TimelinePolicy::class);
+        Gate::policy(Trivia::class, TriviaPolicy::class);
     }
 
     /**

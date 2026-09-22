@@ -5,7 +5,6 @@ namespace App\Models;
 use App\Support\ShowDate;
 use App\Support\Timezone;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\DB;
 
 class TheaterReference extends Model
 {
@@ -22,8 +21,7 @@ class TheaterReference extends Model
         $showDateExpression = ShowDate::sqlExpression();
         $today = Timezone::today();
 
-        $protectedCodes = DB::table('show_teater')
-            ->whereNull('deleted_at')
+        $protectedCodes = ShowTeater::query()
             ->whereNotNull('reference_code')
             ->whereRaw("{$showDateExpression} >= ?", [$today])
             ->pluck('reference_code');
