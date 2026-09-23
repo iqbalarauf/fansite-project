@@ -54,7 +54,11 @@ class CustomPageController extends Controller
     {
         abort_unless($customPage->status === 'published', 404);
 
-        return view('custom-pages.show', [
+        $view = ($customPage->display_mode ?? 'full') === 'welcome'
+            ? 'custom-pages.show-welcome'
+            : 'custom-pages.show';
+
+        return view($view, [
             'page' => $customPage,
         ]);
     }

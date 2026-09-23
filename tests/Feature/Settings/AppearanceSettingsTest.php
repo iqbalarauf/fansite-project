@@ -172,4 +172,53 @@ class AppearanceSettingsTest extends TestCase
             ->assertDontSee(route('features.edit'))
             ->assertDontSee(route('header-menu.edit'));
     }
+
+    public function test_appearance_page_shows_hide_app_name_toggle(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        $this->get(route('appearance.edit'))
+            ->assertOk()
+            ->assertSee('Sembunyikan App Name di header');
+    }
+
+    public function test_appearance_can_toggle_hiding_the_header_app_name(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::appearance.index')
+            ->set('appName', 'Onielity')
+            ->set('hideAppName', true)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertSame('true', DB::table('app_settings')->where('key', 'header_hide_app_name')->value('value'));
+    }
+
+    public function test_site_header_hides_app_name_when_enabled(): void
+    {
+        DB::table('app_settings')->upsert([
+            ['key' => 'app_name', 'value' => 'FansightApp', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'sidebar_name', 'value' => 'FansightSidebar', 'created_at' => now(), 'updated_at' => now()],
+        ], ['key'], ['value', 'updated_at']);
+
+        Cache::forget('app_settings');
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('FansightSidebar')
+            ->assertSee('FansightApp');
+
+        DB::table('app_settings')->updateOrInsert(
+            ['key' => 'header_hide_app_name'],
+            ['value' => 'true', 'updated_at' => now()],
+        );
+
+        Cache::forget('app_settings');
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertDontSee('FansightSidebar')
+            ->assertSee('FansightApp');
+    }
 }

@@ -135,8 +135,11 @@ Enums: `App\Enums\UserRole`
 
 ### 5.8 Content Management — Page Builder (Custom Pages)
 - Editor Livewire Volt untuk membangun halaman publik; blok: container, text, statistic, image, video (YouTube), button, embed (raw HTML).
-- Blok image mendukung URL eksternal **atau upload file**; mode `full`/`welcome`; background preset + hex; drag-and-drop nested sorting; validasi rekursif.
+- **Kontrol blok lanjutan:** *text* (heading H1–H4/paragraf, font size SM–4XL, alignment, warna, bold/italic/underline); *button* (alignment kiri/tengah/kanan, warna tombol & warna label); *image* (sumber via radio **URL/Upload**, mode tampilan **Fit/Contain/Auto height/Original**); *container* (background preset/hex/**transparan**, padding, vertical alignment, 1–2 kolom).
+- Blok image mendukung URL eksternal **atau upload file** (tombol Upload muncul setelah file dipilih); mode halaman `full`/`welcome`; background preset + hex + transparan; drag-and-drop nested sorting; validasi rekursif.
+- **Preview sebelum Publish:** tombol **Preview** menampilkan overlay berisi judul + seluruh blok dengan render publik (tanpa perlu menyimpan).
 - Render publik di `/{customPage:slug}` (404 jika belum published); `CustomPageStatistic` untuk blok statistik; soft deletes.
+- **Page display** `full` (dokumen mandiri) atau `welcome` (memakai **header & footer publik** `partials.site-header`/`site-footer` yang sama dengan beranda, termasuk opsi sembunyikan App Name).
 
 ### 5.9 Content Management — Majalah Digital
 - Admin: list (cover, judul, slug, deskripsi, viewers, downloads, badge Main), upload PDF + cover, **Set Main**, delete (hapus file).
@@ -168,7 +171,7 @@ Enums: `App\Enums\UserRole`
 ### 5.13 Setting — Appearance (Branding)
 - Halaman standalone **Appearance** (`/appearance`, komponen `pages::appearance.index`) untuk branding (`app_settings`):
   - **Brand Color**: 3 warna — Primer (`brand_color`), Sekunder (`brand_color_secondary`), Tersier (`brand_color_tertiary`) — dipetakan ke `indigo`/`violet`/`yellow` via `partials/brand-colors.blade.php` (light & dark).
-  - **App Identity**: App Name/Sidebar Name, deskripsi, **App Logo**, **Login Image** (upload + preview).
+  - **App Identity**: App Name/Sidebar Name, deskripsi, **App Logo**, **Login Image** (upload + preview), serta opsi **Sembunyikan App Name di header** (`header_hide_app_name`).
 - Cache di-invalidate (`Cache::forget('app_settings')`) saat disimpan.
 
 ### 5.14 Setting — Features Activation
@@ -282,6 +285,8 @@ Status selesai (September 2026):
 - [x] **Baca `show_teater` via normalisasi (mirror):** seluruh jalur baca per-baris (daftar & ekspor admin, jadwal bulanan, statistik profil idola, predictor unit song, timeline) memakai relasi/pivot `show_teater_unit_song` & `setlist_id` melalui accessor `ShowTeater::setlistName()`/`unitSongNames()`/`unitSongString()`; kolom teks `setlist`/`unit_song` **dipertahankan sebagai mirror** (fallback + agregat) agar kontrak Sheet Integration & form input lama tetap utuh.
 - [x] **Konsistensi akses DB:** seluruh raw `DB::table` pada `app/` diubah ke Eloquent (`ShowTeater`, `ConcertEvents`, `MeetGreetEvents`, `LiveStreaming`, `AppSettings`, `AboutSettings`, `ShowTeaterUnitSong`, dst.) — `DB::raw` tetap dipakai untuk ekspresi tanggal/agregasi. Model pivot baru: `ShowTeaterUnitSong`.
 - [x] **Perluasan Policy konten:** `GalleryPhotoPolicy`, `GalleryVideoPolicy`, `TimelinePolicy`, `TriviaPolicy` ditambahkan & diterapkan di controller (Photobooth tetap khusus Super Admin melalui middleware route).
+- [x] **Halaman Landing Page:** kustomisasi judul & nama hero (teks + warna), Hero Image (mode Fit/Contain/Adjustable Height/Original), Hero Buttons, Youtube Playlist, Galeri & Konten Landing Page; opsi **sembunyikan App Name** di header (Appearance) dan **page display `welcome`** pada custom page memakai header/footer publik yang sama dengan beranda.
+- [x] **Penyempurnaan Page Builder:** alignment & warna (background/label) tombol, font size & opsi heading pada teks, mode tampilan gambar (Fit/Contain/Auto height/Original), background elemen/halaman **transparan**, **Preview sebelum Publish**, tombol Upload tersembunyi sampai file dipilih, serta radio **URL/Upload** untuk blok gambar.
 
 Backlog tersisa (opsional, tidak memblokir):
 

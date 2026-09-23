@@ -153,6 +153,8 @@ Kelas utilitas bersama di `app.css` (`@layer components`):
 | Sync Choice | `components/sync-choice.blade.php` | Pemilih sumber nilai (Database/Sheet/Lewati) dengan ikon + tooltip (Sheet Integration) |
 | Admin Table Toolbar | `components/admin/table-toolbar.blade.php` | Toolbar filter + aksi tabel |
 | Admin Search | `components/admin-search.blade.php` | Pencarian global admin |
+| Custom Page Block | `components/custom-page-block.blade.php` | Render blok page builder (prop `preview`) — markup tunggal editor & publik |
+| Element Fields | `custom-pages/{text,button,image,background}-fields.blade.php` | Kontrol editor blok: heading/font size, alignment & warna tombol, sumber & mode tampilan gambar, background (termasuk transparan) |
 
 ### 7.4 Konten Artikel (`.rich-content`)
 Style untuk konten editor & render publik (`app.css`): heading, paragraf, list, blockquote, `pre`/`code`, tautan, gambar, `hr` — dengan varian `dark:`.

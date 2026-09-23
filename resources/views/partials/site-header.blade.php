@@ -8,6 +8,7 @@
     $__appName = $__app['app_name'] ?? config('app.name', 'Laravel');
     $__sidebarName = $__app['sidebar_name'] ?? config('app.name', 'Laravel');
     $__appLogo = $__app['app_logo'] ?? null;
+    $__hideAppName = filter_var($__app['header_hide_app_name'] ?? 'false', FILTER_VALIDATE_BOOLEAN);
 
     $__instagramUrl = $__about['instagram_url'] ?? $__about['idol_social_media_instagram'] ?? null;
     $__twitterUrl = $__about['twitter_url'] ?? $__about['idol_social_media_twitter'] ?? null;
@@ -51,7 +52,9 @@
                     <span class="flex h-full w-full items-center justify-center rounded-xl bg-indigo-600 text-slate-900">{{ strtoupper(substr($__sidebarName, 0, 1)) ?: 'F' }}</span>
                 @endif
             </div>
-            <span class="text-xl font-black text-slate-900 dark:text-white">{{ $__sidebarName }}</span>
+            @unless ($__hideAppName)
+                <span class="text-xl font-black text-slate-900 dark:text-white">{{ $__sidebarName }}</span>
+            @endunless
         </a>
 
         <nav class="hidden items-center gap-1 text-sm font-medium md:flex">
