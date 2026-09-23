@@ -99,6 +99,45 @@ class SchedulePageTest extends TestCase
             ->assertDontSee('Ulang Tahun Freya');
     }
 
+    public function test_schedule_show_teater_renders_purchase_link_from_reference_code(): void
+    {
+        DB::table('theater_references')->insert([
+            'reference_code' => 'ABC123',
+            'month' => 9,
+            'year' => 2026,
+            'processed_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('show_teater')->insert([
+            'show_id' => 1,
+            'show_date' => '2026/09/10',
+            'setlist' => 'Pajama Drive',
+            'reference_code' => 'ABC123',
+        ]);
+
+        $this->get(route('schedule.index', ['month' => 9, 'year' => 2026]))
+            ->assertOk()
+            ->assertSee('https://jkt48.com/purchase/schedule/show?code=ABC123', false);
+    }
+
+    public function test_schedule_list_show_teater_meta_uses_is_the_show_has_event(): void
+    {
+        DB::table('show_teater')->insert([
+            'show_id' => 1,
+            'show_date' => '2026/09/10',
+            'setlist' => 'Pajama Drive',
+            'unit_song' => 'Tenshi no Shippo',
+            'is_the_show_has_event' => 'Handshake Sesi 1',
+        ]);
+
+        $this->get(route('schedule.index', ['month' => 9, 'year' => 2026]))
+            ->assertOk()
+            ->assertSee('Handshake Sesi 1')
+            ->assertDontSee('Tenshi no Shippo');
+    }
+
     private function seedMonth(): void
     {
         DB::table('show_teater')->insert([

@@ -2,10 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
 use App\Support\IdolTheaterStats;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class AboutPageTest extends TestCase
@@ -409,5 +411,50 @@ class AboutPageTest extends TestCase
         $this->get(route('about.show', 'freya'))
             ->assertOk()
             ->assertSee('Momen Spesial');
+    }
+
+    public function test_idol_theater_sections_are_shown_by_default(): void
+    {
+        DB::table('about_settings')->upsert([
+            ['key' => 'idol_name', 'value' => 'Freya'],
+            ['key' => 'idol_slug', 'value' => 'freya'],
+        ], ['key'], ['value', 'updated_at']);
+
+        $this->get(route('about.show', 'freya'))
+            ->assertOk()
+            ->assertSee('id="show-teater"', false)
+            ->assertSee('id="unit-song"', false)
+            ->assertSee('data-collapse-key="idol-centers"', false);
+    }
+
+    public function test_idol_theater_sections_can_be_hidden_from_fansite_settings(): void
+    {
+        DB::table('about_settings')->upsert([
+            ['key' => 'idol_name', 'value' => 'Freya'],
+            ['key' => 'idol_slug', 'value' => 'freya'],
+        ], ['key'], ['value', 'updated_at']);
+
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::about.manage')
+            ->set('activeTab', 'fansite')
+            ->set('fanbaseName', 'Fanbase Freya')
+            ->set('idolShowTeaterEnabled', false)
+            ->set('idolUnitSongEnabled', false)
+            ->set('idolCentersEnabled', false)
+            ->call('saveFansite')
+            ->assertHasNoErrors();
+
+        $settings = DB::table('about_settings')->pluck('value', 'key');
+
+        $this->assertSame('false', $settings['idol_show_teater_enabled']);
+        $this->assertSame('false', $settings['idol_unit_song_enabled']);
+        $this->assertSame('false', $settings['idol_centers_enabled']);
+
+        $this->get(route('about.show', 'freya'))
+            ->assertOk()
+            ->assertDontSee('id="show-teater"', false)
+            ->assertDontSee('id="unit-song"', false)
+            ->assertDontSee('data-collapse-key="idol-centers"', false);
     }
 }

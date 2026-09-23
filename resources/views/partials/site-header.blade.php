@@ -45,7 +45,7 @@
 <header class="sticky top-0 z-50 border-b border-slate-200/60 bg-white/50 shadow-sm backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/50" data-site-header>
     <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         <a href="{{ route('home') }}" class="flex items-center gap-3">
-            <div class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl text-lg font-bold text-white shadow-sm">
+            <div class="flex h-10 w-10 items-center justify-center overflow-hidden text-lg font-bold text-white">
                 @if ($__appLogo)
                     <img src="{{ Storage::url($__appLogo) }}" alt="{{ $__sidebarName }}" class="h-full w-full object-cover" />
                 @else
