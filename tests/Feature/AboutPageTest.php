@@ -457,4 +457,41 @@ class AboutPageTest extends TestCase
             ->assertDontSee('id="unit-song"', false)
             ->assertDontSee('data-collapse-key="idol-centers"', false);
     }
+
+    public function test_unit_song_stats_use_setlists_from_performed_shows(): void
+    {
+        $originSetlistId = DB::table('show_teater_categories')->insertGetId([
+            'name' => 'Setlist Asal',
+            'jp_name' => null,
+            'type' => 'setlist',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('show_teater_categories')->insert([
+            'name' => 'Tenshi no Shippo',
+            'jp_name' => '天使のしっぽ',
+            'type' => 'unit_song',
+            'setlist_id' => $originSetlistId,
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Show tempat unit song ini benar-benar dibawakan berada di setlist yang berbeda.
+        DB::table('show_teater')->insert([
+            'show_id' => 1,
+            'show_date' => '2026/09/10',
+            'setlist' => 'Setlist Tampil',
+            'unit_song' => 'Tenshi no Shippo',
+            'is_member_show' => 1,
+        ]);
+
+        $song = collect(app(IdolTheaterStats::class)->build()['unit_songs'])->firstWhere('name', 'Tenshi no Shippo');
+
+        $this->assertNotNull($song);
+        $this->assertContains('Setlist Tampil', $song['setlists']);
+        $this->assertNotContains('Setlist Asal', $song['setlists']);
+    }
 }

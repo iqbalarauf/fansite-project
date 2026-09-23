@@ -14,7 +14,7 @@ final class IdolTheaterStats
      * @return array{
      *     year: int,
      *     setlists: array<int, array{name: string, jp_name: ?string, count: int, is_active: bool}>,
-     *     unit_songs: array<int, array{name: string, jp_name: ?string, count_all: int, count_year: int, on_going: bool}>,
+     *     unit_songs: array<int, array{name: string, jp_name: ?string, setlists: array<int, string>, count_all: int, count_year: int, on_going: bool}>,
      *     global_center: array{count_all: int, count_year: int, setlists_all: array<int, string>, setlists_year: array<int, string>},
      *     us_center: array{count_all: int, count_year: int, setlists_all: array<int, string>, setlists_year: array<int, string>}
      * }
@@ -85,10 +85,16 @@ final class IdolTheaterStats
                     $unitCounts[$songKey] = [
                         'name' => $resolved['name'],
                         'jp_name' => $resolved['jp_name'],
+                        'setlists' => [],
                         'count_all' => 0,
                         'count_year' => 0,
                         'on_going' => false,
                     ];
+                }
+
+                // Setlist tempat unit song ini benar-benar dibawakan (dari data show).
+                if ($setlist !== '') {
+                    $unitCounts[$songKey]['setlists'][$setlist] = true;
                 }
 
                 $unitCounts[$songKey]['count_all']++;
@@ -140,6 +146,11 @@ final class IdolTheaterStats
             ->all();
 
         $unitSongs = collect($unitCounts)
+            ->map(function (array $song): array {
+                $song['setlists'] = array_values(array_keys($song['setlists']));
+
+                return $song;
+            })
             ->sortBy([['on_going', 'desc'], ['count_all', 'desc']])
             ->values()
             ->all();
