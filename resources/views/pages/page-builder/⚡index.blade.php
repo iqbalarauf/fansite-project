@@ -184,27 +184,35 @@ new #[Title('Custom Pages')] class extends Component {
         $this->selectedBlockIndex = $position;
     }
 
-    public function sortNestedBlock(int $containerIndex, int $columnIndex, string $item, int $position): void
+    public function sortNestedBlock(string $item, int $position): void
     {
-        $nestedBlocks = $this->blocks[$containerIndex]['data']['columns'][$columnIndex]['blocks'] ?? null;
+        foreach ($this->blocks as $containerIndex => $block) {
+            if (($block['type'] ?? null) !== 'container') {
+                continue;
+            }
 
-        if (! is_array($nestedBlocks)) {
-            return;
+            foreach (($block['data']['columns'] ?? []) as $columnIndex => $column) {
+                $nestedBlocks = $column['blocks'] ?? [];
+                $from = collect($nestedBlocks)->search(fn (array $nestedBlock): bool => ($nestedBlock['id'] ?? null) === $item);
+
+                if ($from === false) {
+                    continue;
+                }
+
+                if ($from !== $position) {
+                    $moved = $nestedBlocks[$from];
+                    array_splice($nestedBlocks, $from, 1);
+                    array_splice($nestedBlocks, $position, 0, [$moved]);
+                    $this->blocks[$containerIndex]['data']['columns'][$columnIndex]['blocks'] = $nestedBlocks;
+                }
+
+                $this->selectedBlockIndex = $containerIndex;
+                $this->selectedColumnIndex = $columnIndex;
+                $this->selectedNestedBlockIndex = $position;
+
+                return;
+            }
         }
-
-        $from = collect($nestedBlocks)->search(fn (array $block): bool => $block['id'] === $item);
-
-        if ($from === false || $from === $position) {
-            return;
-        }
-
-        $block = $nestedBlocks[$from];
-        array_splice($nestedBlocks, $from, 1);
-        array_splice($nestedBlocks, $position, 0, [$block]);
-        $this->blocks[$containerIndex]['data']['columns'][$columnIndex]['blocks'] = $nestedBlocks;
-        $this->selectedBlockIndex = $containerIndex;
-        $this->selectedColumnIndex = $columnIndex;
-        $this->selectedNestedBlockIndex = $position;
     }
 
     public function removeNestedBlock(int $containerIndex, int $columnIndex, int $blockIndex): void
@@ -680,7 +688,7 @@ new #[Title('Custom Pages')] class extends Component {
 
             <aside class="space-y-5 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
                 <div>
-                    <button type="button" wire:click="toggleAside('pageInfo')" :aria-expanded="$pageInfoOpen" class="flex w-full items-center justify-between gap-2 px-1 py-0.5 text-left">
+                    <button type="button" wire:click="toggleAside('pageInfo')" aria-expanded="{{ $pageInfoOpen ? 'true' : 'false' }}" class="flex w-full items-center justify-between gap-2 px-1 py-0.5 text-left">
                         <flux:heading size="sm">{{ __('Page Information') }}</flux:heading>
                         <flux:icon name="chevron-down" class="{{ $pageInfoOpen ? '' : '-rotate-90' }} size-4 shrink-0 text-zinc-400 transition-transform" />
                     </button>
@@ -711,12 +719,12 @@ new #[Title('Custom Pages')] class extends Component {
 
                 @if (isset($blocks[$selectedBlockIndex]))
                     <div>
-                        <button type="button" wire:click="toggleAside('editElement')" :aria-expanded="$editElementOpen" class="flex w-full items-center justify-between gap-2 px-1 py-0.5 text-left">
+                        <button type="button" wire:click="toggleAside('editElement')" aria-expanded="{{ $editElementOpen ? 'true' : 'false' }}" class="flex w-full items-center justify-between gap-2 px-1 py-0.5 text-left">
                             <flux:heading size="sm">{{ __('Edit element') }}</flux:heading>
                             <flux:icon name="chevron-down" class="{{ $editElementOpen ? '' : '-rotate-90' }} size-4 shrink-0 text-zinc-400 transition-transform" />
                         </button>
                         @if ($editElementOpen)
-                            <div class="mt-4 space-y-4 border-t border-zinc-200 pt-4 dark:border-zinc-700">
+                            <div wire:key="edit-element-{{ $selectedBlockIndex }}-{{ $selectedColumnIndex ?? 'top' }}-{{ $selectedNestedBlockIndex ?? 'top' }}" class="mt-4 space-y-4 border-t border-zinc-200 pt-4 dark:border-zinc-700">
                         @if ($selectedColumnIndex !== null && $selectedNestedBlockIndex !== null && isset($blocks[$selectedBlockIndex]['data']['columns'][$selectedColumnIndex]['blocks'][$selectedNestedBlockIndex]))
                             @php
                                 $nestedPath = "blocks.{$selectedBlockIndex}.data.columns.{$selectedColumnIndex}.blocks.{$selectedNestedBlockIndex}";
@@ -767,7 +775,7 @@ new #[Title('Custom Pages')] class extends Component {
                             @foreach ($blocks[$selectedBlockIndex]['data']['columns'] ?? [] as $columnIndex => $column)
                                 <div class="space-y-2 rounded-xl border border-dashed border-zinc-300 p-3 dark:border-zinc-600">
                                     <flux:text class="font-semibold">{{ __('Column :number', ['number' => $columnIndex + 1]) }}</flux:text>
-                                    <div wire:sort="sortNestedBlock({{ $selectedBlockIndex }}, {{ $columnIndex }})" class="space-y-1">
+                                    <div wire:sort="sortNestedBlock" class="space-y-1">
                                         @foreach ($column['blocks'] ?? [] as $nestedIndex => $nestedBlock)
                                             <div wire:sort:item="{{ $nestedBlock['id'] }}" wire:key="nested-block-{{ $nestedBlock['id'] }}" class="flex items-center gap-1">
                                                 <flux:icon wire:sort:handle name="bars-3" class="size-4 cursor-grab text-zinc-400" />
@@ -799,7 +807,7 @@ new #[Title('Custom Pages')] class extends Component {
                 @endif
 
                 <div>
-                    <button type="button" wire:click="toggleAside('addElement')" :aria-expanded="$addElementOpen" class="flex w-full items-center justify-between gap-2 px-1 py-0.5 text-left">
+                    <button type="button" wire:click="toggleAside('addElement')" aria-expanded="{{ $addElementOpen ? 'true' : 'false' }}" class="flex w-full items-center justify-between gap-2 px-1 py-0.5 text-left">
                         <flux:heading size="sm">{{ __('Add element') }}</flux:heading>
                         <flux:icon name="chevron-down" class="{{ $addElementOpen ? '' : '-rotate-90' }} size-4 shrink-0 text-zinc-400 transition-transform" />
                     </button>

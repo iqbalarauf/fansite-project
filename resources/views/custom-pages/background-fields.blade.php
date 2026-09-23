@@ -10,7 +10,7 @@
     <div class="flex items-center gap-2">
         <input type="color" wire:change="{{ $onChange }}($event.target.value)" value="{{ $resolvedHex }}"
             class="h-10 w-14 shrink-0 cursor-pointer rounded-lg border border-zinc-300 bg-transparent p-1 dark:border-zinc-600"
-            :aria-label="$label">
+            aria-label="{{ $label }}">
         <input type="text" wire:change="{{ $onChange }}($event.target.value)" value="{{ $resolvedHex }}"
             placeholder="#FFFFFF" class="block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800">
     </div>

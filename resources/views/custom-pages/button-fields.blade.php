@@ -1,4 +1,6 @@
-@php($base = $path)
+@php
+    $base = $path;
+@endphp
 
 <flux:input wire:model.live="{{ $base }}.data.label" :label="__('Label')" />
 <flux:input wire:model.live="{{ $base }}.data.url" :label="__('Link URL')" type="url" />
