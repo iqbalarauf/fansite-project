@@ -235,6 +235,13 @@
                                 <span class="shrink-0 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-900 dark:text-amber-300">On Going</span>
                             @endif
                         </div>
+                        @if (! empty($song['setlists']))
+                            <div class="mt-2 flex flex-wrap gap-1.5">
+                                @foreach ($song['setlists'] as $setlistName)
+                                    <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">{{ $setlistName }}</span>
+                                @endforeach
+                            </div>
+                        @endif
                         <div class="mt-4 grid grid-cols-2 gap-3">
                             <div class="rounded-xl bg-slate-50 p-3 text-center dark:bg-slate-800/50">
                                 <p class="text-2xl font-black text-slate-900 dark:text-white">{{ $song['count_all'] }}</p>
