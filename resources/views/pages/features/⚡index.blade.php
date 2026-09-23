@@ -20,10 +20,6 @@ new #[Title('Features Activation')] class extends Component
 
     public bool $sheetIntegrationEnabled = false;
 
-    public string $galleryMode = 'photos';
-
-    public string $welcomeFeedSource = 'news';
-
     public function mount(): void
     {
         abort_unless(auth()->user()?->isSuperAdmin(), 403);
@@ -36,21 +32,10 @@ new #[Title('Features Activation')] class extends Component
         $this->triviaEnabled = filter_var($settings['trivia_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
         $this->photoboothEnabled = filter_var($settings['photobooth_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
         $this->sheetIntegrationEnabled = filter_var($settings['sheet_integration_enabled'] ?? 'false', FILTER_VALIDATE_BOOLEAN);
-
-        $galleryMode = (string) ($settings['gallery_mode'] ?? 'photos');
-        $this->galleryMode = in_array($galleryMode, ['photos', 'videos', 'both'], true) ? $galleryMode : 'photos';
-
-        $feedSource = (string) ($settings['welcome_feed_source'] ?? 'news');
-        $this->welcomeFeedSource = in_array($feedSource, ['news', 'blog', 'magazines', 'trivia'], true) ? $feedSource : 'news';
     }
 
     public function save(): void
     {
-        $this->validate([
-            'galleryMode' => ['required', 'in:photos,videos,both'],
-            'welcomeFeedSource' => ['required', 'in:news,blog,magazines,trivia'],
-        ]);
-
         SettingsStore::setApp([
             'news_enabled' => $this->newsEnabled ? 'true' : 'false',
             'blog_enabled' => $this->blogEnabled ? 'true' : 'false',
@@ -58,8 +43,6 @@ new #[Title('Features Activation')] class extends Component
             'trivia_enabled' => $this->triviaEnabled ? 'true' : 'false',
             'photobooth_enabled' => $this->photoboothEnabled ? 'true' : 'false',
             'sheet_integration_enabled' => $this->sheetIntegrationEnabled ? 'true' : 'false',
-            'gallery_mode' => $this->galleryMode,
-            'welcome_feed_source' => $this->welcomeFeedSource,
         ]);
 
         Flux::toast(variant: 'success', text: __('Features updated.'));
@@ -74,8 +57,8 @@ new #[Title('Features Activation')] class extends Component
 
     <div class="mt-5 w-full">
         <form wire:submit="save" class="space-y-6">
-            <div class="grid items-stretch gap-6 lg:grid-cols-2">
-                <div class="h-full space-y-4 rounded-xl border border-zinc-200 p-4 dark:border-zinc-700">
+            <div class="grid gap-6">
+                <div class="space-y-4 rounded-xl border border-zinc-200 p-4 dark:border-zinc-700">
                     <label class="flex items-start gap-3">
                         <input type="checkbox" wire:model="newsEnabled" value="1" class="mt-0.5 rounded border-zinc-300 text-blue-600">
                         <span class="text-sm text-zinc-700 dark:text-zinc-200">
@@ -123,40 +106,6 @@ new #[Title('Features Activation')] class extends Component
                             <span class="block text-xs text-zinc-500 dark:text-zinc-400">{{ __('Tampilkan menu Sheet Integration (sinkronisasi Master Data dengan Google Sheet). Nonaktif secara default.') }}</span>
                         </span>
                     </label>
-                </div>
-
-                <div class="space-y-6">
-                    <div class="space-y-4 rounded-xl border border-zinc-200 p-4 dark:border-zinc-700">
-                        <div>
-                            <p class="text-sm font-semibold text-zinc-700 dark:text-zinc-200">{{ __('Galeri di Landing Page') }}</p>
-                            <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Pilih konten yang ditampilkan di halaman Landing Page.') }}</p>
-                        </div>
-
-                        @foreach (['photos' => 'Foto', 'videos' => 'Video', 'both' => 'Keduanya'] as $value => $label)
-                            <label class="flex items-start gap-3">
-                                <input type="radio" wire:model="galleryMode" value="{{ $value }}" class="mt-0.5 rounded border-zinc-300 text-blue-600">
-                                <span class="text-sm text-zinc-700 dark:text-zinc-200">{{ __($label) }}</span>
-                            </label>
-                        @endforeach
-
-                        @error('galleryMode') <p class="text-xs text-red-500">{{ $message }}</p> @enderror
-                    </div>
-
-                    <div class="space-y-4 rounded-xl border border-zinc-200 p-4 dark:border-zinc-700">
-                        <div>
-                            <p class="text-sm font-semibold text-zinc-700 dark:text-zinc-200">{{ __('Konten yang ditampilkan di Landing Page') }}</p>
-                            <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Pilih konten yang ditampilkan di Landing Page.') }}</p>
-                        </div>
-
-                        @foreach (['news' => 'News', 'blog' => 'Blog', 'magazines' => 'Majalah', 'trivia' => 'Trivia'] as $value => $label)
-                            <label class="flex items-start gap-3">
-                                <input type="radio" wire:model="welcomeFeedSource" value="{{ $value }}" class="mt-0.5 rounded border-zinc-300 text-blue-600">
-                                <span class="text-sm text-zinc-700 dark:text-zinc-200">{{ __($label) }}</span>
-                            </label>
-                        @endforeach
-
-                        @error('welcomeFeedSource') <p class="text-xs text-red-500">{{ $message }}</p> @enderror
-                    </div>
                 </div>
             </div>
 

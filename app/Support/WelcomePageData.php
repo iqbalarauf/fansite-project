@@ -46,8 +46,20 @@ final class WelcomePageData
         $idolVersionValue = (string) ($about['idol_profile_version'] ?? 'jkt48');
         $idolProfileVersion = in_array($idolVersionValue, ['jkt48', 'general'], true) ? $idolVersionValue : 'jkt48';
 
+        $idolName = (string) ($about['idol_name'] ?? 'Oshimen');
+        $idolShortname = trim((string) ($about['idol_shortname'] ?? ''));
+        $heroName1Text = trim((string) ($app['welcome_name_1_text'] ?? '')) ?: $idolName;
+        $heroName2Text = trim((string) ($app['welcome_name_2_text'] ?? '')) ?: ($idolShortname !== '' ? $idolShortname.' JKT48' : $idolName);
+
         return [
-            'idolName' => $about['idol_name'] ?? 'Oshimen',
+            'welcomeTitle' => (string) ($app['welcome_title_text'] ?? 'Selamat Datang di Fansite'),
+            'welcomeTitleColor' => $this->color($app['welcome_title_color'] ?? null, '#FFFFFF'),
+            'heroNameAnimate' => filter_var($app['welcome_name_animate'] ?? 'true', FILTER_VALIDATE_BOOLEAN),
+            'heroName1Text' => $heroName1Text,
+            'heroName1Color' => $this->color($app['welcome_name_1_color'] ?? null, '#FDE047'),
+            'heroName2Text' => $heroName2Text,
+            'heroName2Color' => $this->color($app['welcome_name_2_color'] ?? null, '#FDE047'),
+            'idolName' => $idolName,
             'idolSlug' => $idolSlug,
             'idolShortname' => $idolMemberName,
             'idolProfileVersion' => $idolProfileVersion,
@@ -60,6 +72,7 @@ final class WelcomePageData
             'idolTwitterUrl' => $about['idol_social_media_twitter'] ?? null,
             'idolTiktokUrl' => $about['idol_social_media_tiktok'] ?? null,
             'heroImage' => $app['hero_image'] ?? null,
+            'heroImageDisplay' => $this->heroImageDisplay($app),
             'appLogo' => $app['app_logo'] ?? null,
             'heroButtons' => $this->heroButtons($app),
             'youtubeEnabled' => $youtubeEnabled,
@@ -203,5 +216,22 @@ final class WelcomePageData
         $lastEvent = $this->timeline->events('past', null, null, $today, 1)->first();
 
         return $lastEvent['date'] ?? null;
+    }
+
+    private function color(?string $value, string $default): string
+    {
+        return preg_match('/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/', (string) $value) === 1
+            ? (string) $value
+            : $default;
+    }
+
+    /**
+     * @param  array<string, mixed>  $app
+     */
+    private function heroImageDisplay(array $app): string
+    {
+        $value = (string) ($app['hero_image_display'] ?? 'fit');
+
+        return in_array($value, ['fit', 'contain', 'adjustable', 'original'], true) ? $value : 'fit';
     }
 }

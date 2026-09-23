@@ -103,6 +103,9 @@
 
                 @if (auth()->user()->isSuperAdmin())
                     <flux:sidebar.group :heading="__('Configuration')" class="grid">
+                        <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="home-modern" :href="route('landing-page.edit')" :current="request()->routeIs('landing-page.edit')" wire:navigate>
+                            {{ __('Landing Page') }}
+                        </flux:sidebar.item>
                         <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="paint-brush" :href="route('appearance.edit')" :current="request()->routeIs('appearance.edit')" wire:navigate>
                             {{ __('Appearance') }}
                         </flux:sidebar.item>

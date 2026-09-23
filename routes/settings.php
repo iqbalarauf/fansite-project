@@ -11,6 +11,7 @@ Route::middleware(['auth', 'block-view-only'])->group(function () {
         Route::livewire('appearance', 'pages::appearance.index')->name('appearance.edit');
 
         Route::middleware(['role:super_admin'])->group(function () {
+            Route::livewire('landing-page', 'pages::landing-page.index')->name('landing-page.edit');
             Route::livewire('features', 'pages::features.index')->name('features.edit');
             Route::livewire('header-menu', 'pages::header-menu.index')->name('header-menu.edit');
             Route::livewire('settings/photobooth', 'pages::photobooth.manage')->name('photobooth.edit');

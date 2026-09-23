@@ -101,7 +101,7 @@ Helper class: `.brand-primary`, `.brand-primary-bg`, `.brand-primary-strong-bg`,
 - **Gerak:**
   - Transisi `transition`/`transition-transform` dengan `duration-500 ease-out` untuk carousel.
   - Hover kartu: `hover:-translate-y-0.5 hover:shadow-md`, `group-hover:scale-105` untuk gambar.
-  - **Hero idol name swap** (JKT48 version): teks bergantian antara `idol_name` dan `idol_shortname JKT48` memakai animasi skew `@keyframes hero-swap` (`.hero-swap-animate`).
+  - **Hero idol name swap** (JKT48 version): teks bergantian antara dua opsi nama (default `idol_name` dan `idol_shortname JKT48`) memakai animasi skew `@keyframes hero-swap` (`.hero-swap-animate`); teks & warna tiap nama dikustomisasi dari halaman **Landing Page** (`welcome_name_1_*`/`welcome_name_2_*`).
   - Prinsip: transisi pada `transform`/`opacity`, tidak berlebihan.
 
 ---
@@ -110,7 +110,7 @@ Helper class: `.brand-primary`, `.brand-primary-bg`, `.brand-primary-strong-bg`,
 
 - **Kontainer:** `mx-auto max-w-7xl px-4 sm:px-6 lg:px-8` (publik) dan `max-w-6xl` (header/footer). Admin dibungkus layout sidebar Flux.
 - **Struktur publik** (`layouts/public.blade.php`): `body` = `flex min-h-dvh flex-col`, `<main class="flex-1">`, footer di akhir — **footer menempel dasar layar** saat konten pendek.
-- **Hero publik:** `min-h-svh`, gambar `background-image` + overlay gradien gelap (`from-indigo-950 via-slate-950 to-violet-950`), konten rata kiri.
+- **Hero publik:** `min-h-svh` + gambar hero (`hero_image`) dengan mode `hero_image_display` (**Fit** `bg-cover`, **Contain** `bg-contain`, **Adjustable Height** tinggi mengikuti rasio gambar, **Original** `bg-auto`), overlay gelap, konten rata kiri, aksen kuning pada nama.
 - **Login split-screen** (`layouts/auth/login.blade.php`): kiri form, kanan panel gambar `login_image` (fallback gradien brand) dengan logo + nama aplikasi di atas.
 - **Error page** (`layouts/error.blade.php`): fullscreen, grid latar (`error-grid-bg`), ilustrasi SVG 404/500/503 (403 tanpa gambar), footer nama aplikasi dari `app_settings`.
 - **Grid:** `grid` + `gap-4`/`gap-8`; dua kolom asimetris (`lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]`).

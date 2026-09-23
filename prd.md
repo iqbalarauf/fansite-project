@@ -156,26 +156,32 @@ Enums: `App\Enums\UserRole`
 - Fansite: nama, logo, deskripsi, aktivitas, galeri (maks. 5), CTA (judul + 2 tombol + background), toggle **Struktur Organisasi** & **Kegiatan Fanbase**, serta **Sejarah Fansite** (enable + sumber default/custom page + daftar foto & deskripsi).
 - Cache setting di-invalidate (`Cache::forget('about_settings')`) saat disimpan.
 
-### 5.12 Setting — Appearance (Branding)
-- Halaman standalone **Appearance** (`/appearance`, komponen `pages::appearance.index`) untuk branding & tampilan (`app_settings`), layout multi-kolom:
-  - **Brand Color**: 3 warna — Primer (`brand_color`), Sekunder (`brand_color_secondary`), Tersier (`brand_color_tertiary`) — dipetakan ke `indigo`/`violet`/`yellow` via `partials/brand-colors.blade.php` (light & dark).
-  - **App Identity**: App Name/Sidebar Name, deskripsi, **App Logo**, **Hero Image**, **Login Image** (upload + preview).
+### 5.12 Setting — Landing Page
+- Halaman standalone **Landing Page** (`/landing-page`, komponen `pages::landing-page.index`) untuk seluruh kustomisasi beranda (`app_settings`):
+  - **Hero**: teks judul (`welcome_title_text`) + warna (`welcome_title_color`), serta **animasi nama** (`welcome_name_animate`) dengan 2 opsi nama + warna masing-masing (`welcome_name_1_text`/`_color`, `welcome_name_2_text`/`_color`).
+  - **Hero Image** (upload + preview, `hero_image`) dengan opsi tampilan `hero_image_display`: **Fit** (`fit`, `cover`), **Contain** (`contain`), **Adjustable Height** (`adjustable`, tinggi hero mengikuti rasio gambar), **Original** (`original`, ukuran asli).
   - **Hero Buttons**: 2 tombol hero (aktif/nonaktif, label, tipe tautan `url`/`page`/`list`, nilai).
-  - **Youtube Playlist**: aktif/nonaktif, link playlist, mode tampilan `cards` (RSS carousel, tanpa API key) / `embed` (player playlist).
+  - **Youtube Playlist**: aktif/nonaktif, link playlist, mode `cards` (RSS carousel) / `embed`.
+  - **Galeri — Tampilan Publik** (`gallery_mode`: `photos`/`videos`/`both`) dan **Konten Landing Page** (`welcome_feed_source`: `news`/`blog`/`magazines`/`trivia`).
+- Nilai tampilan dibaca via `SettingBag`/`WelcomePageData` (fallback ke nama idol & "Selamat Datang di Fansite"); cache `app_settings` di-invalidate saat disimpan.
+
+### 5.13 Setting — Appearance (Branding)
+- Halaman standalone **Appearance** (`/appearance`, komponen `pages::appearance.index`) untuk branding (`app_settings`):
+  - **Brand Color**: 3 warna — Primer (`brand_color`), Sekunder (`brand_color_secondary`), Tersier (`brand_color_tertiary`) — dipetakan ke `indigo`/`violet`/`yellow` via `partials/brand-colors.blade.php` (light & dark).
+  - **App Identity**: App Name/Sidebar Name, deskripsi, **App Logo**, **Login Image** (upload + preview).
 - Cache di-invalidate (`Cache::forget('app_settings')`) saat disimpan.
 
-### 5.13 Setting — Features Activation
-- Halaman standalone **Features Activation** (`/features`, komponen `pages::features.index`), layout 2 kolom:
+### 5.14 Setting — Features Activation
+- Halaman standalone **Features Activation** (`/features`, komponen `pages::features.index`):
   - **Fitur konten**: News (`news_enabled`), Blog (`blog_enabled`), Majalah (`magazines_enabled`), Trivia (`trivia_enabled`), Photobooth (`photobooth_enabled`), Sheet Integration (`sheet_integration_enabled`).
-  - **Galeri — Tampilan Publik** (`gallery_mode`: `photos`/`videos`/`both`) dan **Kartu "Berita Terbaru" (Welcome)** (`welcome_feed_source`: `news`/`blog`/`magazines`/`trivia`).
 - Default aktif (kecuali Sheet Integration default nonaktif). `SettingBag::featureEnabled()` membaca nilai ini; `SettingBag::sheetIntegrationEnabled()` untuk Sheet Integration. Menonaktifkan fitur → route publik & admin 404 serta menu terkait disembunyikan.
 
-### 5.14 Setting — Header Menu
+### 5.15 Setting — Header Menu
 - Halaman standalone **Header Menu** (`/header-menu`, komponen `pages::header-menu.index`).
 - Mode **Default Menu** (bawaan) atau **Custom Menu** (`menu_items`: label, tipe `link`/`group`/`page`/`page_list`/`blog`/`news`, parent & urutan; validasi siklus dan group minimal 1 submenu).
 - Preview menu default & custom real-time.
 
-### 5.15 Sheet Integration — Sinkronisasi Google Sheets
+### 5.16 Sheet Integration — Sinkronisasi Google Sheets
 - Sinkronisasi master data (Show Teater, Live Streaming, Concert & Event, Meet & Greet) dengan Google Sheets; **nonaktif secara default** (`sheet_integration_enabled`).
 - Halaman **Sheet Integration** (`/sheet-integration`, komponen `pages::sheet-integration.comparison`): konfigurasi per master (Spreadsheet ID, Nama Sheet, Header First Cell, Aktif, **Auto-Sync**), perbandingan baris/kolom DB vs Sheet, resolusi per kolom/baris (Database/Sheet/Lewati via ikon), penerapan manual dua arah.
 - **Auto-Sync**: `fillMissing()` mengisi baris yang hanya ada di satu sisi ke sisi lain; terjadwal lewat command `app:sync-google-sheets` (hourly, `withoutOverlapping`).
@@ -188,7 +194,7 @@ Enums: `App\Enums\UserRole`
 ### 5.17 Situs Publik
 - **Layout publik** (`layouts/public.blade.php`): body flex kolom `min-h-dvh` + `<main class="flex-1">` sehingga **footer otomatis menempel dasar layar** saat konten pendek; header sticky, dark mode toggle (localStorage + `prefers-color-scheme`), ikon sosial media.
 - **Header** memiliki dropdown **About** (nama idola & nama fanbase → `/about/idol`, `/about/fansite`) dan **Artikel** (News & Blog), plus link Home, Majalah, Data, Schedule (menyesuaikan fitur yang aktif).
-- **Welcome** (`/`): hero foto produksi dengan **2 tombol hero** (label & tautan dari Appearance) + tombol **Berkenalan dengan {idol_shortname}**, bagian **About idola**, **Youtube Playlist** (cards carousel / embed), **Berita Terbaru** (dari `welcome_feed_source`, tampil bila fitur aktif), **Statistik** (jumlah show/setlist/partisipasi), **Schedule Event Mendatang** (dengan link pembelian), dan **Status Live**.
+- **Welcome** (`/`): hero foto produksi dengan **judul hero** (teks & warna) + **nama beranimasi** (2 opsi teks & warna) + **2 tombol hero** (label & tautan dari Landing Page) + tombol **Berkenalan dengan {idol_shortname}**, bagian **About idola**, **Youtube Playlist** (cards carousel / embed), **Berita Terbaru** (dari `welcome_feed_source`, tampil bila fitur aktif), **Statistik** (jumlah show/setlist/partisipasi), **Schedule Event Mendatang** (dengan link pembelian), dan **Status Live**.
 - **About** (`/about/idol`, `/about/fansite`): halaman profil idola (foto, detail, pencapaian, diskografi, jikoshoukai, sosmed) dan profil fanbase (logo, deskripsi, kegiatan, galeri, CTA, struktur organisasi, dan **modal Sejarah Fansite**).
 - **News & Blog** publik (`/news`, `/blog`) serta **Majalah** (`/majalah`).
 
@@ -238,7 +244,7 @@ Enums: `App\Enums\UserRole`
 - **Performa:** Statistik dashboard & setting di-cache; pipeline fetch data mengurangi beban manual.
 - **Keamanan:** 2FA, verifikasi email, RBAC, hash password, **soft deletes** untuk recovery data, feature flags berbasis setting, serta **sanitasi HTML** (`App\Support\HtmlSanitizer`) untuk konten artikel (profil ketat) dan blok embed page builder (profil longgar) guna mencegah XSS.
 - **Idempotensi:** `TheaterReference` mencegah duplikasi saat fetch dari API JKT48; soft delete pada `show_teater` menjaga `show_id` tetap stabil.
-- **Testing:** 64 file test PHPUnit (feature) yang mencakup auth, settings, role access, feature toggle, soft delete, setiap domain data, Sheet Integration, ekspor/impor Excel, **HTML sanitizer**, `sort_order` konten, **Policy konten**, **mode tampilan & background page builder**, serta **baca `show_teater` via pivot**.
+- **Testing:** 65 file test PHPUnit (feature) yang mencakup auth, settings, role access, feature toggle, soft delete, setiap domain data, Sheet Integration, ekspor/impor Excel, **HTML sanitizer**, `sort_order` konten, **Policy konten**, **mode tampilan & background page builder**, serta **baca `show_teater` via pivot**.
 
 ---
 
@@ -289,7 +295,7 @@ Backlog tersisa (opsional, tidak memblokir):
 
 - **Route admin/master data:** `/dashboard`, `/show-teater`, `/show-teater/categories`, `/meet-greet-events`, `/concert-events`, `/live-streaming`, `/users`, plus ekspor `show-teater/export`, `meet-greet-events/export`, `concert-events/export`, `live-streaming/export` dan impor `show-teater/categories/import`.
 - **Route Content Management:** `/pages`, `/magazines`, `/content/news`, `/content/blog`, `/content/categories`.
-- **Route konfigurasi (standalone):** `/appearance`, `/features`, `/header-menu`, `/sheet-integration`, `/content/about`, `/users`; **Settings:** `/profile`, `/settings/security`, `/settings/photobooth`.
+- **Route konfigurasi (standalone):** `/landing-page`, `/appearance`, `/features`, `/header-menu`, `/sheet-integration`, `/content/about`, `/users`; **Settings:** `/profile`, `/settings/security`, `/settings/photobooth`.
 - **Route publik:** `/`, `/about/idol`, `/about/fansite`, `/majalah`, `/majalah/{slug}`, `/majalah/{slug}/download`, `/news`, `/news/{slug}`, `/blog`, `/blog/{slug}`, serta catch-all `/{customPage:slug}`.
 - **Console:** `app:fetch-theater-shows` (fetch jadwal), `app:fetch-streaming-info` (live streaming), `app:check-member-live`, `app:backfill-live-ids`, `app:sync-google-sheets` (auto-sync, hourly), `app:audit-show-teater-mapping`, `app:backfill-show-teater-normalization` + `inspire`.
 - **Seeder:** `AboutSeeder`, `AppSettingsSeeder`, `ShowTeaterCategoriesSeeder`, `DatabaseSeeder`.
