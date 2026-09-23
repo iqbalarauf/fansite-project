@@ -1,11 +1,8 @@
 <?php
 
-use App\Models\CustomPage;
 use App\Support\BrandPalette;
-use App\Support\HeroLink;
 use App\Support\ImageOptimizer;
 use App\Support\SettingsStore;
-use App\Support\YoutubeEmbed;
 use Flux\Flux;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -31,35 +28,9 @@ new #[Title('Appearance settings')] class extends Component
 
     public mixed $appLogoUpload = null;
 
-    public ?string $heroImagePath = null;
-
-    public mixed $heroImageUpload = null;
-
     public ?string $loginImagePath = null;
 
     public mixed $loginImageUpload = null;
-
-    public bool $heroButton1Enabled = true;
-
-    public string $heroButton1Label = 'Lihat Profil';
-
-    public string $heroButton1LinkType = 'url';
-
-    public string $heroButton1LinkValue = '#about';
-
-    public bool $heroButton2Enabled = true;
-
-    public string $heroButton2Label = 'Jadwal Terbaru';
-
-    public string $heroButton2LinkType = 'url';
-
-    public string $heroButton2LinkValue = '#schedule';
-
-    public bool $youtubeEmbedEnabled = false;
-
-    public string $youtubePlaylistUrl = '';
-
-    public string $youtubeDisplayMode = 'cards';
 
     public function mount(): void
     {
@@ -71,25 +42,7 @@ new #[Title('Appearance settings')] class extends Component
         $this->appName = (string) ($settings['app_name'] ?? '');
         $this->descApp = (string) ($settings['desc_app'] ?? '');
         $this->appLogoPath = $settings['app_logo'] ?? null;
-        $this->heroImagePath = $settings['hero_image'] ?? null;
         $this->loginImagePath = $settings['login_image'] ?? null;
-
-        $this->heroButton1Enabled = filter_var($settings['hero_button_1_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
-        $this->heroButton1Label = (string) ($settings['hero_button_1_label'] ?? 'Lihat Profil');
-        $button1Type = (string) ($settings['hero_button_1_link_type'] ?? 'url');
-        $this->heroButton1LinkType = in_array($button1Type, HeroLink::TYPES, true) ? $button1Type : 'url';
-        $this->heroButton1LinkValue = (string) ($settings['hero_button_1_link_value'] ?? '#about');
-
-        $this->heroButton2Enabled = filter_var($settings['hero_button_2_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
-        $this->heroButton2Label = (string) ($settings['hero_button_2_label'] ?? 'Jadwal Terbaru');
-        $button2Type = (string) ($settings['hero_button_2_link_type'] ?? 'url');
-        $this->heroButton2LinkType = in_array($button2Type, HeroLink::TYPES, true) ? $button2Type : 'url';
-        $this->heroButton2LinkValue = (string) ($settings['hero_button_2_link_value'] ?? '#schedule');
-
-        $this->youtubeEmbedEnabled = filter_var($settings['youtube_embed_enabled'] ?? 'false', FILTER_VALIDATE_BOOLEAN);
-        $this->youtubePlaylistUrl = (string) ($settings['youtube_playlist_url'] ?? '');
-        $youtubeMode = (string) ($settings['youtube_display_mode'] ?? 'cards');
-        $this->youtubeDisplayMode = in_array($youtubeMode, ['cards', 'embed'], true) ? $youtubeMode : 'cards';
     }
 
     public function save(): void
@@ -103,19 +56,7 @@ new #[Title('Appearance settings')] class extends Component
             'appName' => ['required', 'string', 'max:255'],
             'descApp' => ['nullable', 'string'],
             'appLogoUpload' => ['nullable', 'image', 'max:3072'],
-            'heroImageUpload' => ['nullable', 'image', 'max:3072'],
             'loginImageUpload' => ['nullable', 'image', 'max:3072'],
-            'heroButton1Enabled' => ['boolean'],
-            'heroButton1Label' => ['nullable', 'string', 'max:255'],
-            'heroButton1LinkType' => ['required', 'in:url,page,list'],
-            'heroButton1LinkValue' => ['nullable', 'string', 'max:2048'],
-            'heroButton2Enabled' => ['boolean'],
-            'heroButton2Label' => ['nullable', 'string', 'max:255'],
-            'heroButton2LinkType' => ['required', 'in:url,page,list'],
-            'heroButton2LinkValue' => ['nullable', 'string', 'max:2048'],
-            'youtubeEmbedEnabled' => ['boolean'],
-            'youtubePlaylistUrl' => ['nullable', 'string', 'max:2048'],
-            'youtubeDisplayMode' => ['required', 'in:cards,embed'],
         ]);
 
         if ($this->appLogoUpload) {
@@ -125,15 +66,6 @@ new #[Title('Appearance settings')] class extends Component
 
             $this->appLogoPath = ImageOptimizer::store($this->appLogoUpload, 'app', maxWidth: 512);
             $this->appLogoUpload = null;
-        }
-
-        if ($this->heroImageUpload) {
-            if ($this->heroImagePath) {
-                Storage::disk('public')->delete($this->heroImagePath);
-            }
-
-            $this->heroImagePath = ImageOptimizer::store($this->heroImageUpload, 'app/hero');
-            $this->heroImageUpload = null;
         }
 
         if ($this->loginImageUpload) {
@@ -153,19 +85,7 @@ new #[Title('Appearance settings')] class extends Component
             'sidebar_name' => $this->appName,
             'desc_app' => $this->descApp,
             'app_logo' => $this->appLogoPath,
-            'hero_image' => $this->heroImagePath,
             'login_image' => $this->loginImagePath,
-            'hero_button_1_enabled' => $this->heroButton1Enabled ? 'true' : 'false',
-            'hero_button_1_label' => $this->heroButton1Label,
-            'hero_button_1_link_type' => $this->heroButton1LinkType,
-            'hero_button_1_link_value' => $this->heroButton1LinkValue,
-            'hero_button_2_enabled' => $this->heroButton2Enabled ? 'true' : 'false',
-            'hero_button_2_label' => $this->heroButton2Label,
-            'hero_button_2_link_type' => $this->heroButton2LinkType,
-            'hero_button_2_link_value' => $this->heroButton2LinkValue,
-            'youtube_embed_enabled' => $this->youtubeEmbedEnabled ? 'true' : 'false',
-            'youtube_playlist_url' => $this->youtubePlaylistUrl,
-            'youtube_display_mode' => $this->youtubeDisplayMode,
         ]);
 
         $this->brandColor = strtoupper($this->brandColor);
@@ -188,19 +108,6 @@ new #[Title('Appearance settings')] class extends Component
         return null;
     }
 
-    public function heroImagePreviewUrl(): ?string
-    {
-        if ($this->heroImageUpload) {
-            return $this->heroImageUpload->temporaryUrl();
-        }
-
-        if ($this->heroImagePath) {
-            return Storage::disk('public')->url($this->heroImagePath);
-        }
-
-        return null;
-    }
-
     public function loginImagePreviewUrl(): ?string
     {
         if ($this->loginImageUpload) {
@@ -212,41 +119,6 @@ new #[Title('Appearance settings')] class extends Component
         }
 
         return null;
-    }
-
-    public function youtubePreviewEmbedUrl(): ?string
-    {
-        return YoutubeEmbed::embedUrl($this->youtubePlaylistUrl);
-    }
-
-    public function updatedHeroButton1LinkType(): void
-    {
-        $this->heroButton1LinkValue = '';
-    }
-
-    public function updatedHeroButton2LinkType(): void
-    {
-        $this->heroButton2LinkValue = '';
-    }
-
-    /**
-     * @return array<int, array{slug: string, title: string}>
-     */
-    public function customPages(): array
-    {
-        return CustomPage::query()
-            ->orderBy('title')
-            ->get(['slug', 'title'])
-            ->map(fn (CustomPage $page): array => ['slug' => $page->slug, 'title' => $page->title])
-            ->all();
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    public function listPages(): array
-    {
-        return HeroLink::listPages();
     }
 }; ?>
 
@@ -303,7 +175,7 @@ new #[Title('Appearance settings')] class extends Component
 
                     <flux:textarea wire:model="descApp" :label="__('Desc App')" rows="4" />
 
-                    <div class="grid gap-4 md:grid-cols-3">
+                    <div class="grid gap-4 md:grid-cols-2">
                         <div class="flex flex-col gap-2">
                             <flux:label>{{ __('App Logo') }}</flux:label>
                             @if ($this->appLogoPreviewUrl())
@@ -315,21 +187,6 @@ new #[Title('Appearance settings')] class extends Component
                             @endif
                             <input type="file" wire:model="appLogoUpload" accept="image/*" class="block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800">
                             @error('appLogoUpload')
-                                <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <div class="flex flex-col gap-2">
-                            <flux:label>{{ __('Hero Image') }}</flux:label>
-                            @if ($this->heroImagePreviewUrl())
-                                <img src="{{ $this->heroImagePreviewUrl() }}" alt="Hero Image" class="h-auto w-full rounded-lg border border-zinc-200 object-cover dark:border-zinc-700">
-                            @else
-                                <div class="flex aspect-video w-full items-center justify-center rounded-lg border border-dashed border-zinc-300 text-xs text-zinc-400 dark:border-zinc-600">
-                                    <flux:icon.photo variant="micro" />
-                                </div>
-                            @endif
-                            <input type="file" wire:model="heroImageUpload" accept="image/*" class="block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800">
-                            @error('heroImageUpload')
                                 <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                             @enderror
                         </div>
@@ -350,141 +207,6 @@ new #[Title('Appearance settings')] class extends Component
                             @enderror
                         </div>
                     </div>
-                </div>
-
-                <div class="space-y-6 rounded-xl border border-zinc-200 p-5 dark:border-zinc-700">
-                    <div>
-                        <flux:heading size="sm">{{ __('Hero Buttons') }}</flux:heading>
-                        <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Kustomisasi label dan tautan dua tombol pada bagian hero beranda.') }}</flux:text>
-                    </div>
-
-                    <div class="grid gap-4 md:grid-cols-2">
-                        @foreach ([1, 2] as $buttonIndex)
-                        @php
-                            $enabledKey = "heroButton{$buttonIndex}Enabled";
-                            $labelKey = "heroButton{$buttonIndex}Label";
-                            $typeKey = "heroButton{$buttonIndex}LinkType";
-                            $valueKey = "heroButton{$buttonIndex}LinkValue";
-                        @endphp
-
-                        <div class="space-y-4 rounded-lg border border-dashed border-zinc-300 p-4 dark:border-zinc-600">
-                            <label class="inline-flex items-center gap-2 text-sm font-medium">
-                                <input type="checkbox" wire:model.live="{{ $enabledKey }}" class="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800">
-                                {{ __('Tampilkan Button :n', ['n' => $buttonIndex]) }}
-                            </label>
-
-                            @if ($this->{$enabledKey})
-                                <flux:input wire:model="{{ $labelKey }}" :label="__('Label Button :n', ['n' => $buttonIndex])" type="text" />
-
-                                <div class="space-y-2">
-                                    <label class="text-sm font-medium">{{ __('Tipe Tautan') }}</label>
-                                    <select wire:model.live="{{ $typeKey }}" class="block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800">
-                                        <option value="url">{{ __('Direct Custom Link') }}</option>
-                                        <option value="page">{{ __('Custom Page') }}</option>
-                                        <option value="list">{{ __('List Page Bawaan') }}</option>
-                                    </select>
-                                </div>
-
-                                @if ($this->{$typeKey} === 'url')
-                                    <flux:input wire:model="{{ $valueKey }}" :label="__('URL / Anchor')" type="text" placeholder="https://... atau #about" />
-                                @elseif ($this->{$typeKey} === 'page')
-                                    <div class="space-y-2">
-                                        <label class="text-sm font-medium">{{ __('Pilih Custom Page') }}</label>
-                                        <select wire:model="{{ $valueKey }}" class="block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800">
-                                            <option value="">{{ __('-- Pilih Page --') }}</option>
-                                            @foreach ($this->customPages() as $pageOption)
-                                                <option value="{{ $pageOption['slug'] }}">{{ $pageOption['title'] }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                @else
-                                    <div class="space-y-2">
-                                        <label class="text-sm font-medium">{{ __('Pilih List Page') }}</label>
-                                        <select wire:model="{{ $valueKey }}" class="block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800">
-                                            <option value="">{{ __('-- Pilih Halaman --') }}</option>
-                                            @foreach ($this->listPages() as $routeName => $routeLabel)
-                                                <option value="{{ $routeName }}">{{ $routeLabel }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                @endif
-                            @endif
-                        </div>
-                    @endforeach
-                    </div>
-                </div>
-
-                <div class="space-y-4 rounded-xl border border-zinc-200 p-5 dark:border-zinc-700">
-                    <flux:heading size="sm">{{ __('Youtube Playlist') }}</flux:heading>
-
-                    <label class="inline-flex items-center gap-2 text-sm font-medium">
-                        <input type="checkbox" wire:model.live="youtubeEmbedEnabled" class="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800">
-                        {{ __('Tampilkan Youtube Playlist') }}
-                    </label>
-
-                    @if ($youtubeEmbedEnabled)
-                        <div class="grid gap-4 md:grid-cols-2">
-                            <div class="space-y-4">
-                                <flux:input wire:model.blur="youtubePlaylistUrl" :label="__('Link Playlist Youtube')" type="text" placeholder="https://www.youtube.com/playlist?list=..." />
-
-                                <div class="space-y-2">
-                                    <label class="text-sm font-medium">{{ __('Mode Tampilan') }}</label>
-                                    <select wire:model.live="youtubeDisplayMode" class="block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800">
-                                        <option value="cards">{{ __('Cards (Carousel)') }}</option>
-                                        <option value="embed">{{ __('Embed Playlist') }}</option>
-                                    </select>
-                                    <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">
-                                        @if ($youtubeDisplayMode === 'cards')
-                                            {{ __('Menampilkan 7 video terbaru dari RSS YouTube (3 tampil, dapat digeser). Tidak memerlukan API Key.') }}
-                                        @else
-                                            {{ __('Menampilkan player playlist langsung dari link yang diberikan.') }}
-                                        @endif
-                                    </flux:text>
-                                </div>
-                            </div>
-
-                            <div class="space-y-2">
-                                <flux:label>{{ __('Preview Tampilan') }}</flux:label>
-
-                                @if ($youtubeDisplayMode === 'embed')
-                                    @if ($this->youtubePreviewEmbedUrl())
-                                        <div class="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700">
-                                            <div class="relative aspect-video">
-                                                <iframe
-                                                    src="{{ $this->youtubePreviewEmbedUrl() }}"
-                                                    title="Youtube Playlist Preview"
-                                                    class="absolute inset-0 h-full w-full"
-                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                                    referrerpolicy="strict-origin-when-cross-origin"
-                                                    allowfullscreen
-                                                    loading="lazy"
-                                                ></iframe>
-                                            </div>
-                                        </div>
-                                    @else
-                                        <div class="flex aspect-video w-full items-center justify-center rounded-xl border border-dashed border-zinc-300 text-xs text-zinc-400 dark:border-zinc-600">
-                                            {{ __('Isi Link Playlist untuk melihat preview.') }}
-                                        </div>
-                                    @endif
-                                @else
-                                    <div class="grid grid-cols-3 gap-3">
-                                        @foreach (range(1, 3) as $card)
-                                            <div class="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700">
-                                                <div class="flex aspect-video w-full items-center justify-center bg-zinc-100 dark:bg-zinc-800">
-                                                    <flux:icon.play-circle variant="solid" class="size-6 text-zinc-400" />
-                                                </div>
-                                                <div class="space-y-1.5 p-3">
-                                                    <div class="h-2 w-full rounded bg-zinc-200 dark:bg-zinc-700"></div>
-                                                    <div class="h-2 w-2/3 rounded bg-zinc-200 dark:bg-zinc-700"></div>
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                    <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Kartu menampilkan 3 video terbaru, dapat digeser untuk melihat sisanya.') }}</flux:text>
-                                @endif
-                            </div>
-                        </div>
-                    @endif
                 </div>
 
                 <div class="flex items-center justify-end">

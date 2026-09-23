@@ -20,15 +20,16 @@ class FeaturesSettingsTest extends TestCase
         $this->get(route('features.edit'))->assertOk()->assertSee('Features Activation')->assertSee('Sheet Integration');
     }
 
-    public function test_features_page_uses_two_column_layout(): void
+    public function test_features_page_lists_feature_toggles_without_landing_cards(): void
     {
         $this->actingAs(User::factory()->create());
 
         $this->get(route('features.edit'))
             ->assertOk()
-            ->assertSeeHtml('lg:grid-cols-2')
-            ->assertSeeHtml('items-stretch')
-            ->assertSeeHtml('h-full');
+            ->assertSee('News')
+            ->assertSee('Photobooth')
+            ->assertDontSee('Galeri di Landing Page')
+            ->assertDontSee('Konten yang ditampilkan di Landing Page');
     }
 
     public function test_features_are_enabled_by_default(): void

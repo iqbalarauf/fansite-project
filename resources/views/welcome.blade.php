@@ -6,42 +6,63 @@
         use Illuminate\Support\Carbon;
 
         $heroUrl = $heroImage ? Storage::url($heroImage) : null;
-        $heroStyle = $heroUrl ? "background-image: url('".$heroUrl."');" : '';
+        $heroDisplay = in_array($heroImageDisplay ?? 'fit', ['fit', 'contain', 'adjustable', 'original'], true) ? ($heroImageDisplay ?? 'fit') : 'fit';
+        $heroAdjustable = $heroUrl !== null && $heroDisplay === 'adjustable';
+        $heroBackgroundClass = match ($heroDisplay) {
+            'contain' => 'bg-contain bg-center bg-no-repeat',
+            'original' => 'bg-auto bg-center bg-no-repeat',
+            default => 'bg-cover bg-center',
+        };
+        $heroStyle = ($heroUrl !== null && ! $heroAdjustable) ? "background-image: url('".$heroUrl."');" : '';
 
         $liveIcons = collect([
             'showroom' => 'icon-app/showroom.webp',
             'idn' => 'icon-app/idn.webp',
         ])->map(fn (string $path): ?string => Storage::disk('public')->exists($path) ? Storage::url($path) : null)->all();
+
+        $heroSwapData = [
+            ['text' => $heroName1Text, 'color' => $heroName1Color],
+            ['text' => $heroName2Text, 'color' => $heroName2Color],
+        ];
     @endphp
 
-    <section id="home" class="relative flex min-h-svh items-center overflow-hidden bg-slate-950 bg-cover bg-center"
+    <section id="home"
+             class="relative overflow-hidden bg-slate-950 {{ $heroAdjustable ? '' : 'flex min-h-svh items-center' }} {{ ($heroUrl !== null && ! $heroAdjustable) ? $heroBackgroundClass : '' }}"
              style="{{ $heroStyle }}">
-        <div class="absolute inset-0"></div>
+        @if ($heroAdjustable)
+            <img src="{{ $heroUrl }}" alt="" class="block h-auto w-full" loading="eager" fetchpriority="high" decoding="async" />
+            <div class="absolute inset-0 bg-slate-950/50"></div>
+        @else
+            <div class="absolute inset-0"></div>
+        @endif
 
-        <div class="relative z-10 mx-auto flex w-full max-w-7xl flex-col items-start px-4 py-24 text-left sm:px-6 lg:px-8 lg:py-28">
-            <h1 class="text-4xl font-black leading-tight sm:text-5xl lg:text-6xl">
-                <span class="inline-block">Selamat Datang di Fansite</span>
-                @if (($idolProfileVersion ?? 'jkt48') === 'jkt48' && filled($idolShortname))
-                    <span
-                        class="mt-2 block text-yellow-300"
-                        data-hero-swap='@json([$idolName, $idolShortname.' JKT48'])'
-                        data-hero-swap-interval="4000"
-                    >{{ $idolName }}</span>
-                @else
-                    <span class="mt-2 block text-yellow-300">{{ $idolName }}</span>
+        <div class="{{ $heroAdjustable ? 'absolute inset-0 flex items-center' : 'relative z-10 w-full' }}">
+            <div class="mx-auto flex w-full max-w-7xl flex-col items-start px-4 py-24 text-left sm:px-6 lg:px-8 lg:py-28">
+                <h1 class="text-4xl font-black leading-tight sm:text-5xl lg:text-6xl" style="color: {{ $welcomeTitleColor }}">
+                    <span class="inline-block">{{ $welcomeTitle }}</span>
+                    @if ($heroNameAnimate && $idolProfileVersion === 'jkt48' && filled($idolShortname) && $heroName2Text !== '' && $heroName2Text !== $heroName1Text)
+                        <span
+                            class="mt-2 block"
+                            style="color: {{ $heroName1Color }}"
+                            data-hero-swap='@json($heroSwapData)'
+                            data-hero-swap-interval="4000"
+                        >{{ $heroName1Text }}</span>
+                    @else
+                        <span class="mt-2 block" style="color: {{ $heroName1Color }}">{{ $heroName1Text }}</span>
+                    @endif
+                </h1>
+                <p class="mt-5 max-w-xl text-base text-indigo-100 sm:text-lg">Temukan aktivitas terbaru, jadwal, dan momen favorit dari {{ $idolName }} dalam satu halaman yang selalu diperbarui.</p>
+
+                @if (! empty($heroButtons))
+                    <div class="mt-8 flex flex-wrap justify-start gap-4">
+                        @foreach ($heroButtons as $index => $button)
+                            <a href="{{ $button['url'] }}" class="{{ $index === 0
+                                ? 'rounded-full bg-yellow-300 px-6 py-3 text-sm font-bold text-slate-900 shadow-lg shadow-yellow-200/50 transition hover:bg-yellow-200'
+                                : 'rounded-full border border-white/40 bg-white/10 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/15' }}">{{ $button['label'] }}</a>
+                        @endforeach
+                    </div>
                 @endif
-            </h1>
-            <p class="mt-5 max-w-xl text-base text-indigo-100 sm:text-lg">Temukan aktivitas terbaru, jadwal, dan momen favorit dari {{ $idolName }} dalam satu halaman yang selalu diperbarui.</p>
-
-            @if (! empty($heroButtons))
-                <div class="mt-8 flex flex-wrap justify-start gap-4">
-                    @foreach ($heroButtons as $index => $button)
-                        <a href="{{ $button['url'] }}" class="{{ $index === 0
-                            ? 'rounded-full bg-yellow-300 px-6 py-3 text-sm font-bold text-slate-900 shadow-lg shadow-yellow-200/50 transition hover:bg-yellow-200'
-                            : 'rounded-full border border-white/40 bg-white/10 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/15' }}">{{ $button['label'] }}</a>
-                    @endforeach
-                </div>
-            @endif
+            </div>
         </div>
     </section>
 
@@ -410,26 +431,40 @@
             });
 
             document.querySelectorAll('[data-hero-swap]').forEach(function (el) {
-                var texts = [];
+                var items = [];
 
                 try {
-                    texts = JSON.parse(el.getAttribute('data-hero-swap')) || [];
+                    items = JSON.parse(el.getAttribute('data-hero-swap')) || [];
                 } catch (error) {
                     return;
                 }
 
-                if (!Array.isArray(texts) || texts.length < 2) {
+                if (!Array.isArray(items) || items.length < 2) {
                     return;
                 }
+
+                var applyItem = function (item) {
+                    if (item && typeof item === 'object') {
+                        el.textContent = item.text || '';
+
+                        if (item.color) {
+                            el.style.color = item.color;
+                        }
+
+                        return;
+                    }
+
+                    el.textContent = item || '';
+                };
 
                 var index = 0;
                 var interval = parseInt(el.getAttribute('data-hero-swap-interval') || '4000', 10);
 
                 setInterval(function () {
-                    index = (index + 1) % texts.length;
+                    index = (index + 1) % items.length;
                     el.classList.remove('hero-swap-animate');
                     void el.offsetWidth;
-                    el.textContent = texts[index];
+                    applyItem(items[index]);
                     el.classList.add('hero-swap-animate');
                 }, interval);
             });
