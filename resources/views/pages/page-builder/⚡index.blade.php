@@ -34,6 +34,9 @@ new #[Title('Custom Pages')] class extends Component {
     public ?int $selectedNestedBlockIndex = null;
     public mixed $imageUpload = null;
     public bool $showPreview = false;
+    public bool $heroEnabled = false;
+    public ?string $heroImagePath = null;
+    public mixed $heroImageUpload = null;
 
     public function mount(?int $pageId = null): void
     {
@@ -60,6 +63,9 @@ new #[Title('Custom Pages')] class extends Component {
         $this->selectedColumnIndex = null;
         $this->selectedNestedBlockIndex = null;
         $this->imageUpload = null;
+        $this->heroEnabled = false;
+        $this->heroImagePath = null;
+        $this->heroImageUpload = null;
         $this->addBlock('container');
     }
 
@@ -300,6 +306,15 @@ new #[Title('Custom Pages')] class extends Component {
             return;
         }
 
+        if ($this->heroImageUpload) {
+            if ($this->heroImagePath) {
+                Storage::disk('public')->delete($this->heroImagePath);
+            }
+
+            $this->heroImagePath = ImageOptimizer::store($this->heroImageUpload, 'pages/hero');
+            $this->heroImageUpload = null;
+        }
+
         $page = CustomPage::query()->updateOrCreate(
             ['id' => $this->pageId],
             [
@@ -309,6 +324,8 @@ new #[Title('Custom Pages')] class extends Component {
                 'display_mode' => $this->displayMode,
                 'background_color' => $this->backgroundColor,
                 'title_alignment' => $this->titleAlignment,
+                'hero_enabled' => $this->heroEnabled,
+                'hero_image' => $this->heroImagePath,
                 'blocks' => array_values($this->blocks),
             ],
         );
@@ -329,6 +346,10 @@ new #[Title('Custom Pages')] class extends Component {
 
             foreach ($page->blocks ?? [] as $block) {
                 $this->deleteBlockFile($block);
+            }
+
+            if (filled($page->hero_image)) {
+                Storage::disk('public')->delete($page->hero_image);
             }
 
             $page->delete();
@@ -411,6 +432,19 @@ new #[Title('Custom Pages')] class extends Component {
         }
 
         return filled($data['url'] ?? null) ? $data['url'] : null;
+    }
+
+    public function heroImagePreviewUrl(): ?string
+    {
+        if ($this->heroImageUpload && $this->heroImageUpload->isPreviewable()) {
+            return $this->heroImageUpload->temporaryUrl();
+        }
+
+        if (filled($this->heroImagePath)) {
+            return Storage::disk('public')->url($this->heroImagePath);
+        }
+
+        return null;
     }
 
     private function isSelectedBlockImage(): bool
@@ -499,6 +533,9 @@ new #[Title('Custom Pages')] class extends Component {
         $this->displayMode = $page->display_mode ?? 'full';
         $this->backgroundColor = $page->background_color ?? 'slate';
         $this->titleAlignment = $page->title_alignment ?? 'left';
+        $this->heroEnabled = (bool) ($page->hero_enabled ?? false);
+        $this->heroImagePath = $page->hero_image;
+        $this->heroImageUpload = null;
         $this->blocks = array_values($page->blocks ?? []);
         $this->selectedBlockIndex = 0;
         $this->selectedColumnIndex = null;
@@ -527,6 +564,8 @@ new #[Title('Custom Pages')] class extends Component {
             'displayMode' => ['required', 'in:full,welcome'],
             'backgroundColor' => ['required', 'regex:/^(?:white|slate|indigo|transparent|#[0-9A-Fa-f]{6})$/'],
             'titleAlignment' => ['required', 'in:left,center,right'],
+            'heroEnabled' => ['boolean'],
+            'heroImageUpload' => ['nullable', 'image', 'max:3072'],
             'blocks' => ['array', 'min:1'],
             'blocks.*.id' => ['required', 'string', 'max:80'],
             'blocks.*.type' => ['required', 'in:container,text,statistic,image,video,button,embed'],
@@ -713,6 +752,27 @@ new #[Title('Custom Pages')] class extends Component {
                                 'onChange' => 'applyPageBackground',
                                 'onPreset' => 'setPageBackground',
                             ])
+
+                            <div class="space-y-3 border-t border-zinc-200 pt-4 dark:border-zinc-700">
+                                <label class="inline-flex items-center gap-2 text-sm font-medium">
+                                    <input type="checkbox" wire:model.live="heroEnabled" class="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800">
+                                    {{ __('Tampilkan Hero') }}
+                                </label>
+                                <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Judul halaman ditampilkan di atas gambar hero.') }}</flux:text>
+
+                                @if ($heroEnabled)
+                                    <div class="space-y-2">
+                                        <flux:label>{{ __('Hero Image') }}</flux:label>
+                                        @if ($this->heroImagePreviewUrl())
+                                            <img src="{{ $this->heroImagePreviewUrl() }}" alt="Hero preview" class="h-auto w-full rounded-lg border border-zinc-200 object-cover dark:border-zinc-700">
+                                        @endif
+                                        <input type="file" wire:model="heroImageUpload" accept="image/*" class="block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800">
+                                        @error('heroImageUpload')
+                                            <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                @endif
+                            </div>
                         </div>
                     @endif
                 </div>

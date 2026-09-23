@@ -138,6 +138,7 @@ Enums: `App\Enums\UserRole`
 - **Kontrol blok lanjutan:** *text* (heading H1–H4/paragraf, font size SM–4XL, alignment, warna, bold/italic/underline); *button* (alignment kiri/tengah/kanan, warna tombol & warna label); *image* (sumber via radio **URL/Upload**, mode tampilan **Fit/Contain/Auto height/Original**); *container* (background preset/hex/**transparan**, padding, vertical alignment, 1–2 kolom).
 - Blok image mendukung URL eksternal **atau upload file** (tombol Upload muncul setelah file dipilih); mode halaman `full`/`welcome`; background preset + hex + transparan; drag-and-drop nested sorting; validasi rekursif.
 - **Preview sebelum Publish:** tombol **Preview** menampilkan overlay berisi judul + seluruh blok dengan render publik (tanpa perlu menyimpan).
+- **Hero opsional:** toggle `hero_enabled` + upload `hero_image` (kolom baru `custom_pages`); **Page Title tampil di atas hero**. Warna judul menyesuaikan dark/light mode dan background halaman (`App\Support\CustomPageTheme::titleColor()`) agar kontras.
 - Render publik di `/{customPage:slug}` (404 jika belum published); `CustomPageStatistic` untuk blok statistik; soft deletes.
 - **Page display** `full` (dokumen mandiri) atau `welcome` (memakai **header & footer publik** `partials.site-header`/`site-footer` yang sama dengan beranda, termasuk opsi sembunyikan App Name).
 

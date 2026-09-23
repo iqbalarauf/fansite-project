@@ -111,6 +111,7 @@ Helper class: `.brand-primary`, `.brand-primary-bg`, `.brand-primary-strong-bg`,
 - **Kontainer:** `mx-auto max-w-7xl px-4 sm:px-6 lg:px-8` (publik) dan `max-w-6xl` (header/footer). Admin dibungkus layout sidebar Flux.
 - **Struktur publik** (`layouts/public.blade.php`): `body` = `flex min-h-dvh flex-col`, `<main class="flex-1">`, footer di akhir — **footer menempel dasar layar** saat konten pendek.
 - **Hero publik:** `min-h-svh` + gambar hero (`hero_image`) dengan mode `hero_image_display` (**Fit** `bg-cover`, **Contain** `bg-contain`, **Adjustable Height** tinggi mengikuti rasio gambar, **Original** `bg-auto`), overlay gelap, konten rata kiri, aksen kuning pada nama.
+- **Halaman publik non-beranda** (artikel, galeri, majalah, trivia, timeline): tanpa hero gradient; judul memakai gaya tema (`text-slate-900 dark:text-white`). **Custom Page**: hero opsional (`hero_enabled` + `hero_image`) dengan Page Title di atas hero; warna judul menyesuaikan dark/light mode & background halaman.
 - **Login split-screen** (`layouts/auth/login.blade.php`): kiri form, kanan panel gambar `login_image` (fallback gradien brand) dengan logo + nama aplikasi di atas.
 - **Error page** (`layouts/error.blade.php`): fullscreen, grid latar (`error-grid-bg`), ilustrasi SVG 404/500/503 (403 tanpa gambar), footer nama aplikasi dari `app_settings`.
 - **Grid:** `grid` + `gap-4`/`gap-8`; dua kolom asimetris (`lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]`).
