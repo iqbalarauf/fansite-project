@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Support\CustomPageStatistic;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
@@ -701,7 +702,7 @@ class CustomPageTest extends TestCase
         $this->assertSame('welcome', $page->display_mode);
         $this->get(route('custom-pages.show', $page))
             ->assertOk()
-            ->assertSee('#schedule', false)
+            ->assertSee('data-site-header', false)
             ->assertSee('©', false);
     }
 
@@ -719,7 +720,7 @@ class CustomPageTest extends TestCase
         $this->assertSame('full', $page->display_mode);
         $this->get(route('custom-pages.show', $page))
             ->assertOk()
-            ->assertDontSee('#schedule', false)
+            ->assertDontSee('data-site-header', false)
             ->assertDontSee('©', false);
     }
 
@@ -746,5 +747,119 @@ class CustomPageTest extends TestCase
             ->assertSee('background-color: #F1F5F9', false)
             ->call('addBlock', 'image')
             ->assertSee('Tambahkan URL gambar atau upload');
+    }
+
+    public function test_button_alignment_and_colors_are_rendered(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Tombol')
+            ->call('addBlock', 'button')
+            ->set('blocks.1.data.label', 'Klik Saya')
+            ->set('blocks.1.data.url', 'https://example.com')
+            ->set('blocks.1.data.alignment', 'center')
+            ->set('blocks.1.data.bg_color', '#112233')
+            ->set('blocks.1.data.text_color', '#445566')
+            ->call('save', 'published')
+            ->assertHasNoErrors();
+
+        $page = CustomPage::query()->firstOrFail();
+
+        $this->get(route('custom-pages.show', $page))
+            ->assertOk()
+            ->assertSee('text-center', false)
+            ->assertSee('background-color: #112233', false)
+            ->assertSee('color: #445566', false)
+            ->assertSee('Klik Saya');
+    }
+
+    public function test_image_display_modes_render_expected_classes(): void
+    {
+        $render = fn (string $display): string => Blade::render('<x-custom-page-block :block="$block" />', [
+            'block' => ['type' => 'image', 'data' => ['url' => 'https://example.com/a.jpg', 'source' => 'url', 'display' => $display]],
+        ]);
+
+        $this->assertStringContainsString('object-cover', $render('fit'));
+        $this->assertStringContainsString('object-contain', $render('contain'));
+        $this->assertStringContainsString('h-auto w-full', $render('auto'));
+        $this->assertStringContainsString('max-w-none', $render('original'));
+    }
+
+    public function test_text_heading_and_font_size_are_rendered(): void
+    {
+        $html = Blade::render('<x-custom-page-block :block="$block" />', [
+            'block' => ['type' => 'text', 'data' => ['text' => 'Judul Halaman', 'heading' => 'h2', 'font_size' => '3xl']],
+        ]);
+
+        $this->assertStringContainsString('<h2', $html);
+        $this->assertStringContainsString('text-3xl', $html);
+        $this->assertStringContainsString('Judul Halaman', $html);
+    }
+
+    public function test_transparent_element_background_renders_without_background_class(): void
+    {
+        $html = Blade::render('<x-custom-page-block :block="$block" />', [
+            'block' => ['type' => 'container', 'data' => ['background' => 'transparent', 'padding' => 'medium', 'columns' => [['blocks' => []]]]],
+        ]);
+
+        $this->assertStringNotContainsString('bg-white', $html);
+    }
+
+    public function test_transparent_page_background_can_be_saved(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Transparan')
+            ->set('backgroundColor', 'transparent')
+            ->call('save', 'published')
+            ->assertHasNoErrors();
+
+        $page = CustomPage::query()->firstOrFail();
+
+        $this->assertSame('transparent', $page->background_color);
+        $this->get(route('custom-pages.show', $page))->assertOk();
+    }
+
+    public function test_preview_toggle_renders_the_page_blocks(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Pratinjau')
+            ->set('blocks.0.type', 'text')
+            ->set('blocks.0.data.text', 'Konten pratinjau')
+            ->assertDontSee('Close')
+            ->set('showPreview', true)
+            ->assertSee('Close')
+            ->assertSee('Konten pratinjau');
+    }
+
+    public function test_upload_button_is_hidden_until_a_file_is_selected(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->call('addBlock', 'image')
+            ->set('blocks.1.data.source', 'upload')
+            ->assertDontSee('wire:click="uploadImage"', false)
+            ->set('imageUpload', UploadedFile::fake()->image('foto.jpg', 50, 50))
+            ->assertSee('wire:click="uploadImage"', false);
+    }
+
+    public function test_image_source_radio_switches_between_url_and_upload(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->call('addBlock', 'image')
+            ->set('blocks.1.data.source', 'url')
+            ->assertSee('Image URL')
+            ->set('blocks.1.data.source', 'upload')
+            ->assertDontSee('Image URL')
+            ->assertSee('type="file"', false);
     }
 }

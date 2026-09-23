@@ -33,6 +33,7 @@ new #[Title('Custom Pages')] class extends Component {
     public ?int $selectedColumnIndex = null;
     public ?int $selectedNestedBlockIndex = null;
     public mixed $imageUpload = null;
+    public bool $showPreview = false;
 
     public function mount(?int $pageId = null): void
     {
@@ -78,11 +79,11 @@ new #[Title('Custom Pages')] class extends Component {
             'type' => $type,
             'data' => match ($type) {
                 'container' => ['background' => 'white', 'padding' => 'medium', 'vertical_alignment' => 'top', 'columns' => [['id' => (string) Str::uuid(), 'blocks' => []]]],
-                'text' => ['text' => 'Tulis isi halaman di sini.', 'alignment' => 'left', 'color' => '#2E2F3E', 'bold' => false, 'italic' => false, 'underline' => false],
+                'text' => ['text' => 'Tulis isi halaman di sini.', 'alignment' => 'left', 'color' => '#2E2F3E', 'font_size' => 'base', 'heading' => 'none', 'bold' => false, 'italic' => false, 'underline' => false],
                 'statistic' => ['metric' => 'show_teater_all', 'label' => 'Total Show Teater'],
-                'image' => ['url' => '', 'alt' => ''],
+                'image' => ['url' => '', 'alt' => '', 'source' => 'url', 'display' => 'fit'],
                 'video' => ['url' => '', 'title' => ''],
-                'button' => ['label' => 'Buka tautan', 'url' => 'https://'],
+                'button' => ['label' => 'Buka tautan', 'url' => 'https://', 'alignment' => 'left', 'bg_color' => '#4F46E5', 'text_color' => '#FFFFFF'],
                 'embed' => ['html' => '<div>Masukkan HTML embed di sini.</div>'],
             },
         ];
@@ -103,11 +104,11 @@ new #[Title('Custom Pages')] class extends Component {
             'id' => (string) Str::uuid(),
             'type' => $type,
             'data' => match ($type) {
-                'text' => ['text' => 'Tulis isi halaman di sini.', 'alignment' => 'left', 'color' => '#2E2F3E', 'bold' => false, 'italic' => false, 'underline' => false],
+                'text' => ['text' => 'Tulis isi halaman di sini.', 'alignment' => 'left', 'color' => '#2E2F3E', 'font_size' => 'base', 'heading' => 'none', 'bold' => false, 'italic' => false, 'underline' => false],
                 'statistic' => ['metric' => 'show_teater_all', 'label' => 'Total Show Teater'],
-                'image' => ['url' => '', 'alt' => ''],
+                'image' => ['url' => '', 'alt' => '', 'source' => 'url', 'display' => 'fit'],
                 'video' => ['url' => '', 'title' => ''],
-                'button' => ['label' => 'Buka tautan', 'url' => 'https://'],
+                'button' => ['label' => 'Buka tautan', 'url' => 'https://', 'alignment' => 'left', 'bg_color' => '#4F46E5', 'text_color' => '#FFFFFF'],
                 'embed' => ['html' => '<div>Masukkan HTML embed di sini.</div>'],
             },
         ];
@@ -354,6 +355,7 @@ new #[Title('Custom Pages')] class extends Component {
         }
 
         $data['storage_path'] = ImageOptimizer::store($this->imageUpload, 'pages');
+        $data['source'] = 'upload';
         $data['url'] = '';
         $this->updateSelectedImageData($data);
         $this->imageUpload = null;
@@ -376,6 +378,7 @@ new #[Title('Custom Pages')] class extends Component {
         }
 
         $data['storage_path'] = null;
+        $data['source'] = 'url';
         $data['url'] = '';
         $this->updateSelectedImageData($data);
         $this->imageUpload = null;
@@ -514,16 +517,22 @@ new #[Title('Custom Pages')] class extends Component {
             'title' => ['required', 'string', 'max:120'],
             'slug' => ['nullable', 'string', 'max:120', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/', Rule::unique('custom_pages', 'slug')->ignore($this->pageId)],
             'displayMode' => ['required', 'in:full,welcome'],
-            'backgroundColor' => ['required', 'regex:/^(?:white|slate|indigo|#[0-9A-Fa-f]{6})$/'],
+            'backgroundColor' => ['required', 'regex:/^(?:white|slate|indigo|transparent|#[0-9A-Fa-f]{6})$/'],
             'titleAlignment' => ['required', 'in:left,center,right'],
             'blocks' => ['array', 'min:1'],
             'blocks.*.id' => ['required', 'string', 'max:80'],
             'blocks.*.type' => ['required', 'in:container,text,statistic,image,video,button,embed'],
             'blocks.*.data' => ['array'],
-            'blocks.*.data.background' => ['nullable', 'regex:/^(?:white|soft|accent|#[0-9A-Fa-f]{6})$/'],
+            'blocks.*.data.background' => ['nullable', 'regex:/^(?:white|soft|accent|transparent|#[0-9A-Fa-f]{6})$/'],
             'blocks.*.data.vertical_alignment' => ['nullable', 'in:top,middle,bottom'],
             'blocks.*.data.alignment' => ['nullable', 'in:left,center,right,justify'],
             'blocks.*.data.color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'blocks.*.data.font_size' => ['nullable', 'in:sm,base,lg,xl,2xl,3xl,4xl'],
+            'blocks.*.data.heading' => ['nullable', 'in:none,h1,h2,h3,h4'],
+            'blocks.*.data.bg_color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'blocks.*.data.text_color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'blocks.*.data.source' => ['nullable', 'in:url,upload'],
+            'blocks.*.data.display' => ['nullable', 'in:fit,contain,auto,original'],
             'blocks.*.data.bold' => ['nullable', 'boolean'],
             'blocks.*.data.italic' => ['nullable', 'boolean'],
             'blocks.*.data.underline' => ['nullable', 'boolean'],
@@ -533,6 +542,12 @@ new #[Title('Custom Pages')] class extends Component {
             'blocks.*.data.columns.*.blocks.*.data' => ['array'],
             'blocks.*.data.columns.*.blocks.*.data.alignment' => ['nullable', 'in:left,center,right,justify'],
             'blocks.*.data.columns.*.blocks.*.data.color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'blocks.*.data.columns.*.blocks.*.data.font_size' => ['nullable', 'in:sm,base,lg,xl,2xl,3xl,4xl'],
+            'blocks.*.data.columns.*.blocks.*.data.heading' => ['nullable', 'in:none,h1,h2,h3,h4'],
+            'blocks.*.data.columns.*.blocks.*.data.bg_color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'blocks.*.data.columns.*.blocks.*.data.text_color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'blocks.*.data.columns.*.blocks.*.data.source' => ['nullable', 'in:url,upload'],
+            'blocks.*.data.columns.*.blocks.*.data.display' => ['nullable', 'in:fit,contain,auto,original'],
             'blocks.*.data.columns.*.blocks.*.data.bold' => ['nullable', 'boolean'],
             'blocks.*.data.columns.*.blocks.*.data.italic' => ['nullable', 'boolean'],
             'blocks.*.data.columns.*.blocks.*.data.underline' => ['nullable', 'boolean'],
@@ -578,13 +593,21 @@ new #[Title('Custom Pages')] class extends Component {
 
         if ($type === 'image') {
             $hasStoredFile = ! blank($data['storage_path'] ?? null);
-            $url = $data['url'] ?? null;
+            $source = $data['source'] ?? ($hasStoredFile ? 'upload' : 'url');
 
-            if (! $hasStoredFile && blank($url)) {
-                $this->addError("{$path}.data.url", __('This block field is required.'));
+            if ($source === 'upload') {
+                if (! $hasStoredFile) {
+                    $this->addError("{$path}.data.storage_path", __('Upload an image.'));
+                }
+
+                return;
             }
 
-            if (! $hasStoredFile && ! blank($url) && ! filter_var($url, FILTER_VALIDATE_URL)) {
+            $url = $data['url'] ?? null;
+
+            if (blank($url)) {
+                $this->addError("{$path}.data.url", __('This block field is required.'));
+            } elseif (! filter_var($url, FILTER_VALIDATE_URL)) {
                 $this->addError("{$path}.data.url", __('Enter a valid URL.'));
             }
 
@@ -629,6 +652,7 @@ new #[Title('Custom Pages')] class extends Component {
                 <flux:subheading>{{ __('Buat halaman publik dengan blok yang dapat dipindahkan.') }}</flux:subheading>
             </div>
             <div class="flex flex-wrap gap-2">
+                <flux:button wire:click="$toggle('showPreview')" icon="eye" :disabled="auth()->user()?->isViewOnly()">{{ __('Preview') }}</flux:button>
                 <flux:button wire:click="save" icon="archive-box" :disabled="auth()->user()?->isViewOnly()">{{ __('Save draft') }}</flux:button>
                 <flux:button wire:click="save('published')" variant="primary" icon="globe-alt" :disabled="auth()->user()?->isViewOnly()">{{ __('Publish') }}</flux:button>
             </div>
@@ -694,63 +718,27 @@ new #[Title('Custom Pages')] class extends Component {
                         @if ($editElementOpen)
                             <div class="mt-4 space-y-4 border-t border-zinc-200 pt-4 dark:border-zinc-700">
                         @if ($selectedColumnIndex !== null && $selectedNestedBlockIndex !== null && isset($blocks[$selectedBlockIndex]['data']['columns'][$selectedColumnIndex]['blocks'][$selectedNestedBlockIndex]))
-                            @php($nestedPath = "blocks.{$selectedBlockIndex}.data.columns.{$selectedColumnIndex}.blocks.{$selectedNestedBlockIndex}")
-                            @php($nestedType = $blocks[$selectedBlockIndex]['data']['columns'][$selectedColumnIndex]['blocks'][$selectedNestedBlockIndex]['type'])
+                            @php
+                                $nestedPath = "blocks.{$selectedBlockIndex}.data.columns.{$selectedColumnIndex}.blocks.{$selectedNestedBlockIndex}";
+                                $nestedType = $blocks[$selectedBlockIndex]['data']['columns'][$selectedColumnIndex]['blocks'][$selectedNestedBlockIndex]['type'];
+                            @endphp
                             <flux:text class="text-xs font-semibold uppercase tracking-wide text-zinc-500">{{ __('Editing nested :type', ['type' => $nestedType]) }}</flux:text>
                             @if ($nestedType === 'text')
-                                <flux:textarea wire:model.live="{{ $nestedPath }}.data.text" :label="__('Text')" rows="6" />
-                                <flux:select wire:model.live="{{ $nestedPath }}.data.alignment" :label="__('Text alignment')">
-                                    @foreach (['left' => 'Left', 'center' => 'Center', 'right' => 'Right', 'justify' => 'Justify'] as $value => $label)
-                                        <flux:select.option value="{{ $value }}">{{ __($label) }}</flux:select.option>
-                                    @endforeach
-                                </flux:select>
-                                <flux:input wire:model.live="{{ $nestedPath }}.data.color" :label="__('Text color')" type="color" />
-                                <div class="flex flex-wrap gap-3">
-                                    <flux:checkbox wire:model.live="{{ $nestedPath }}.data.bold" :label="__('Bold')" />
-                                    <flux:checkbox wire:model.live="{{ $nestedPath }}.data.italic" :label="__('Italic')" />
-                                    <flux:checkbox wire:model.live="{{ $nestedPath }}.data.underline" :label="__('Underline')" />
-                                </div>
+                                @include('custom-pages.text-fields', ['path' => $nestedPath])
                             @elseif ($nestedType === 'statistic')
                                 @include('custom-pages.statistic-fields', ['path' => $nestedPath])
                             @elseif ($nestedType === 'image')
-                                <flux:input wire:model.live="{{ $nestedPath }}.data.url" :label="__('Image URL')" type="url" placeholder="https://..." />
-                                <flux:input wire:model.live="{{ $nestedPath }}.data.alt" :label="__('Alt text')" />
-                                <div class="space-y-2 border-t border-zinc-200 pt-4 dark:border-zinc-700">
-                                    <flux:text class="text-xs font-semibold uppercase tracking-wide text-zinc-500">{{ __('Upload image') }}</flux:text>
-                                    @if ($this->selectedImagePreviewUrl())
-                                        <img src="{{ $this->selectedImagePreviewUrl() }}" alt="" class="max-h-40 w-full rounded-xl object-cover">
-                                    @endif
-                                    <input type="file" wire:model="imageUpload" accept="image/*" class="block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800">
-                                    <div class="flex flex-wrap gap-2">
-                                        <flux:button wire:click="uploadImage" size="sm" variant="primary" icon="arrow-up-tray">{{ __('Upload') }}</flux:button>
-                                        @if (! empty($blocks[$selectedBlockIndex]['data']['columns'][$selectedColumnIndex]['blocks'][$selectedNestedBlockIndex]['data']['storage_path'] ?? null))
-                                            <flux:button wire:click="removeImage" size="sm" variant="danger" icon="trash">{{ __('Remove image') }}</flux:button>
-                                        @endif
-                                    </div>
-                                    <flux:error name="imageUpload" />
-                                </div>
+                                @include('custom-pages.image-fields', ['path' => $nestedPath])
                             @elseif ($nestedType === 'video')
                                 <flux:input wire:model.live="{{ $nestedPath }}.data.url" :label="__('YouTube URL')" type="url" />
                                 <flux:input wire:model.live="{{ $nestedPath }}.data.title" :label="__('Video title')" />
                             @elseif ($nestedType === 'button')
-                                <flux:input wire:model.live="{{ $nestedPath }}.data.label" :label="__('Label')" />
-                                <flux:input wire:model.live="{{ $nestedPath }}.data.url" :label="__('Link URL')" type="url" />
+                                @include('custom-pages.button-fields', ['path' => $nestedPath])
                             @elseif ($nestedType === 'embed')
                                 <flux:textarea wire:model.live="{{ $nestedPath }}.data.html" :label="__('Embed HTML')" rows="8" />
                             @endif
                         @elseif (in_array($blocks[$selectedBlockIndex]['type'], ['text'], true))
-                            <flux:textarea wire:model.live="blocks.{{ $selectedBlockIndex }}.data.text" :label="__('Text')" rows="6" />
-                            <flux:select wire:model.live="blocks.{{ $selectedBlockIndex }}.data.alignment" :label="__('Text alignment')">
-                                @foreach (['left' => 'Left', 'center' => 'Center', 'right' => 'Right', 'justify' => 'Justify'] as $value => $label)
-                                    <flux:select.option value="{{ $value }}">{{ __($label) }}</flux:select.option>
-                                @endforeach
-                            </flux:select>
-                            <flux:input wire:model.live="blocks.{{ $selectedBlockIndex }}.data.color" :label="__('Text color')" type="color" />
-                            <div class="flex flex-wrap gap-3">
-                                <flux:checkbox wire:model.live="blocks.{{ $selectedBlockIndex }}.data.bold" :label="__('Bold')" />
-                                <flux:checkbox wire:model.live="blocks.{{ $selectedBlockIndex }}.data.italic" :label="__('Italic')" />
-                                <flux:checkbox wire:model.live="blocks.{{ $selectedBlockIndex }}.data.underline" :label="__('Underline')" />
-                            </div>
+                            @include('custom-pages.text-fields', ['path' => "blocks.{$selectedBlockIndex}"])
                         @elseif ($blocks[$selectedBlockIndex]['type'] === 'statistic')
                             @include('custom-pages.statistic-fields', ['path' => "blocks.{$selectedBlockIndex}"])
                         @elseif ($blocks[$selectedBlockIndex]['type'] === 'container')
@@ -796,28 +784,12 @@ new #[Title('Custom Pages')] class extends Component {
                                 </div>
                             @endforeach
                         @elseif ($blocks[$selectedBlockIndex]['type'] === 'image')
-                            <flux:input wire:model.live="blocks.{{ $selectedBlockIndex }}.data.url" :label="__('Image URL')" type="url" placeholder="https://..." />
-                            <flux:input wire:model.live="blocks.{{ $selectedBlockIndex }}.data.alt" :label="__('Alt text')" />
-                            <div class="space-y-2 border-t border-zinc-200 pt-4 dark:border-zinc-700">
-                                <flux:text class="text-xs font-semibold uppercase tracking-wide text-zinc-500">{{ __('Upload image') }}</flux:text>
-                                @if ($this->selectedImagePreviewUrl())
-                                    <img src="{{ $this->selectedImagePreviewUrl() }}" alt="" class="max-h-40 w-full rounded-xl object-cover">
-                                @endif
-                                <input type="file" wire:model="imageUpload" accept="image/*" class="block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800">
-                                <div class="flex flex-wrap gap-2">
-                                    <flux:button wire:click="uploadImage" size="sm" variant="primary" icon="arrow-up-tray">{{ __('Upload') }}</flux:button>
-                                    @if (! empty($blocks[$selectedBlockIndex]['data']['storage_path'] ?? null))
-                                        <flux:button wire:click="removeImage" size="sm" variant="danger" icon="trash">{{ __('Remove image') }}</flux:button>
-                                    @endif
-                                </div>
-                                <flux:error name="imageUpload" />
-                            </div>
+                            @include('custom-pages.image-fields', ['path' => "blocks.{$selectedBlockIndex}"])
                         @elseif ($blocks[$selectedBlockIndex]['type'] === 'video')
                             <flux:input wire:model.live="blocks.{{ $selectedBlockIndex }}.data.url" :label="__('YouTube URL')" type="url" placeholder="https://youtube.com/watch?v=..." />
                             <flux:input wire:model.live="blocks.{{ $selectedBlockIndex }}.data.title" :label="__('Video title')" />
                         @elseif ($blocks[$selectedBlockIndex]['type'] === 'button')
-                            <flux:input wire:model.live="blocks.{{ $selectedBlockIndex }}.data.label" :label="__('Label')" />
-                            <flux:input wire:model.live="blocks.{{ $selectedBlockIndex }}.data.url" :label="__('Link URL')" type="url" />
+                            @include('custom-pages.button-fields', ['path' => "blocks.{$selectedBlockIndex}"])
                         @elseif ($blocks[$selectedBlockIndex]['type'] === 'embed')
                             <flux:textarea wire:model.live="blocks.{{ $selectedBlockIndex }}.data.html" :label="__('Embed HTML')" rows="8" />
                         @endif
@@ -847,4 +819,38 @@ new #[Title('Custom Pages')] class extends Component {
                 @endif
             </aside>
         </div>
+
+        @if ($showPreview)
+            <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 p-4 sm:p-8" wire:key="page-preview">
+                <div class="mx-auto w-full max-w-4xl">
+                    <div class="mb-3 flex items-center justify-between gap-4">
+                        <flux:heading size="lg" class="text-white">{{ __('Preview') }}</flux:heading>
+                        <flux:button wire:click="$set('showPreview', false)" variant="filled" icon="x-mark">{{ __('Close') }}</flux:button>
+                    </div>
+
+                    @php
+                        $previewHasInline = (bool) preg_match('/^#[0-9A-Fa-f]{6}$/', (string) $backgroundColor);
+                        $previewBackground = $previewHasInline ? '' : match ($backgroundColor) {
+                            'white', 'transparent' => 'bg-white',
+                            'indigo' => 'bg-indigo-50',
+                            default => 'bg-slate-100',
+                        };
+                        $previewTitleAlignment = match ($titleAlignment) {
+                            'center' => 'text-center',
+                            'right' => 'text-right',
+                            default => 'text-left',
+                        };
+                    @endphp
+
+                    <div class="overflow-hidden rounded-2xl shadow-2xl {{ $previewBackground }}" @if ($previewHasInline) style="background-color: {{ $backgroundColor }}" @endif>
+                        <div class="space-y-6 px-6 py-10 sm:px-10">
+                            <h1 class="text-4xl font-black tracking-tight text-slate-900 {{ $previewTitleAlignment }} sm:text-5xl">{{ $title ?: __('Untitled page') }}</h1>
+                            @foreach ($blocks as $previewBlock)
+                                <x-custom-page-block :block="$previewBlock" />
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
 </section>

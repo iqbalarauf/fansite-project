@@ -32,6 +32,8 @@ new #[Title('Appearance settings')] class extends Component
 
     public mixed $loginImageUpload = null;
 
+    public bool $hideAppName = false;
+
     public function mount(): void
     {
         $settings = DB::table('app_settings')->pluck('value', 'key')->all();
@@ -43,6 +45,7 @@ new #[Title('Appearance settings')] class extends Component
         $this->descApp = (string) ($settings['desc_app'] ?? '');
         $this->appLogoPath = $settings['app_logo'] ?? null;
         $this->loginImagePath = $settings['login_image'] ?? null;
+        $this->hideAppName = filter_var($settings['header_hide_app_name'] ?? 'false', FILTER_VALIDATE_BOOLEAN);
     }
 
     public function save(): void
@@ -57,6 +60,7 @@ new #[Title('Appearance settings')] class extends Component
             'descApp' => ['nullable', 'string'],
             'appLogoUpload' => ['nullable', 'image', 'max:3072'],
             'loginImageUpload' => ['nullable', 'image', 'max:3072'],
+            'hideAppName' => ['boolean'],
         ]);
 
         if ($this->appLogoUpload) {
@@ -86,6 +90,7 @@ new #[Title('Appearance settings')] class extends Component
             'desc_app' => $this->descApp,
             'app_logo' => $this->appLogoPath,
             'login_image' => $this->loginImagePath,
+            'header_hide_app_name' => $this->hideAppName ? 'true' : 'false',
         ]);
 
         $this->brandColor = strtoupper($this->brandColor);
@@ -172,6 +177,17 @@ new #[Title('Appearance settings')] class extends Component
 
                     <flux:input wire:model="appName" :label="__('App Name / Sidebar Name')" type="text" required />
                     <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Nilai ini dipakai sebagai App Name sekaligus Sidebar Name.') }}</flux:text>
+
+                    <label class="flex items-start gap-3 rounded-lg border border-dashed border-zinc-300 p-3 dark:border-zinc-600">
+                        <input type="checkbox" wire:model.live="hideAppName" class="mt-0.5 rounded border-zinc-300 text-blue-600">
+                        <span class="text-sm text-zinc-700 dark:text-zinc-200">
+                            <span class="font-medium">{{ __('Sembunyikan App Name di header') }}</span>
+                            <span class="block text-xs text-zinc-500 dark:text-zinc-400">{{ __('Logo tetap tampil, hanya teks nama aplikasi pada header yang disembunyikan.') }}</span>
+                        </span>
+                    </label>
+                    @error('hideAppName')
+                        <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
 
                     <flux:textarea wire:model="descApp" :label="__('Desc App')" rows="4" />
 
