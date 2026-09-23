@@ -17,7 +17,7 @@
             <div class="mx-auto flex max-w-3xl flex-col items-center px-4 py-24 text-center sm:px-6 lg:py-28">
                 <span class="mb-4 inline-flex w-fit rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-indigo-50">About Fansite</span>
                 @if ($fanbaseLogo)
-                    <img src="{{ Storage::url($fanbaseLogo) }}" alt="{{ $fanbaseName }}" class="mb-6 h-20 w-20 rounded-2xl object-cover shadow-lg ring-4 ring-white/10" loading="eager" decoding="async" />
+                    <img src="{{ Storage::url($fanbaseLogo) }}" alt="{{ $fanbaseName }}" class="mb-6 w-32 object-cover" loading="eager" decoding="async" />
                 @endif
                 <h1 class="text-4xl font-black leading-tight text-white sm:text-5xl lg:text-6xl">{{ $fanbaseName }}</h1>
                 @if ($fanbaseDescription)

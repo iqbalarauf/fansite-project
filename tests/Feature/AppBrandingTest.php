@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -51,5 +52,26 @@ class AppBrandingTest extends TestCase
             ->assertSee('Dashboard - FANSITE KUSTOM', false)
             ->assertSee('storage/app/logo-kustom.png', false)
             ->assertDontSee('/favicon.ico', false);
+    }
+
+    public function test_site_footer_shows_logo_with_fanbase_name_and_copyright_below(): void
+    {
+        DB::table('app_settings')->upsert([
+            ['key' => 'app_name', 'value' => 'FANSITE KUSTOM', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'app_logo', 'value' => 'app/logo-kustom.png', 'created_at' => now(), 'updated_at' => now()],
+        ], ['key'], ['value', 'updated_at']);
+
+        DB::table('about_settings')->upsert([
+            ['key' => 'fanbase_name', 'value' => 'Wota Nusantara', 'created_at' => now(), 'updated_at' => now()],
+        ], ['key'], ['value', 'updated_at']);
+
+        Cache::forget('app_settings');
+        Cache::forget('about_settings');
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('storage/app/logo-kustom.png', false)
+            ->assertSee('Wota Nusantara')
+            ->assertSee('©', false);
     }
 }

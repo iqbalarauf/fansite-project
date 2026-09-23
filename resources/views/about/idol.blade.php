@@ -171,6 +171,7 @@
         </section>
     @endif
 
+    @if ($showTeaterEnabled)
     {{-- Show Teater --}}
     <section id="show-teater" class="mx-auto max-w-7xl px-4 pt-16 sm:px-6 lg:px-8">
         <h2 class="text-2xl font-black text-slate-900 dark:text-white sm:text-3xl">Show Teater</h2>
@@ -200,7 +201,9 @@
             <p class="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">Belum ada data show teater.</p>
         @endif
     </section>
+    @endif
 
+    @if ($unitSongEnabled)
     {{-- Unit Song --}}
     <section id="unit-song" class="mx-auto max-w-7xl px-4 pt-16 sm:px-6 lg:px-8">
         <details class="group" data-collapse-key="idol-unit-song">
@@ -251,7 +254,9 @@
             </div>
         </details>
     </section>
+    @endif
 
+    @if ($centersEnabled)
     {{-- Centers --}}
     <section class="mx-auto max-w-7xl px-4 pt-16 sm:px-6 lg:px-8">
         @php
@@ -337,6 +342,7 @@
         </div>
         </details>
     </section>
+    @endif
 
     {{-- Social media embeds --}}
     @if ($idolInstagramUrl || $idolTwitterUrl || $idolTiktokUrl)

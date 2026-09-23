@@ -95,6 +95,12 @@ new #[Title('About Settings')] class extends Component
 
     public bool $fanbaseCtaEnabled = false;
 
+    public bool $idolShowTeaterEnabled = true;
+
+    public bool $idolUnitSongEnabled = true;
+
+    public bool $idolCentersEnabled = true;
+
     public ?string $fanbaseCtaBackgroundPath = null;
 
     public mixed $fanbaseCtaBackgroundUpload = null;
@@ -179,6 +185,10 @@ new #[Title('About Settings')] class extends Component
         $this->fanbaseCtaButton1Link = (string) ($settings['fanbase_cta_button1_link'] ?? '');
         $this->fanbaseCtaButton2Text = (string) ($settings['fanbase_cta_button2_text'] ?? '');
         $this->fanbaseCtaButton2Link = (string) ($settings['fanbase_cta_button2_link'] ?? '');
+
+        $this->idolShowTeaterEnabled = filter_var($settings['idol_show_teater_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
+        $this->idolUnitSongEnabled = filter_var($settings['idol_unit_song_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
+        $this->idolCentersEnabled = filter_var($settings['idol_centers_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
     }
 
     public function setActiveTab(string $tab): void
@@ -294,6 +304,9 @@ new #[Title('About Settings')] class extends Component
             'fanbaseCtaButton1Link' => ['nullable', 'url', 'max:255'],
             'fanbaseCtaButton2Text' => ['nullable', 'string', 'max:255'],
             'fanbaseCtaButton2Link' => ['nullable', 'url', 'max:255'],
+            'idolShowTeaterEnabled' => ['boolean'],
+            'idolUnitSongEnabled' => ['boolean'],
+            'idolCentersEnabled' => ['boolean'],
         ]);
 
         if ($this->fanbaseLogoUpload) {
@@ -360,6 +373,9 @@ new #[Title('About Settings')] class extends Component
             'fanbase_cta_button1_link' => $this->fanbaseCtaEnabled ? $this->fanbaseCtaButton1Link : null,
             'fanbase_cta_button2_text' => $this->fanbaseCtaEnabled ? $this->fanbaseCtaButton2Text : null,
             'fanbase_cta_button2_link' => $this->fanbaseCtaEnabled ? $this->fanbaseCtaButton2Link : null,
+            'idol_show_teater_enabled' => $this->idolShowTeaterEnabled ? 'true' : 'false',
+            'idol_unit_song_enabled' => $this->idolUnitSongEnabled ? 'true' : 'false',
+            'idol_centers_enabled' => $this->idolCentersEnabled ? 'true' : 'false',
         ]);
 
         Flux::toast(variant: 'success', text: __('Fansite information updated.'));
@@ -1035,6 +1051,33 @@ new #[Title('About Settings')] class extends Component
                                 </div>
                             </div>
                         @endif
+                    </div>
+
+                    <div class="space-y-4 rounded-xl border border-zinc-200 p-5 dark:border-zinc-700">
+                        <flux:heading size="lg">Tampilan Show Teater</flux:heading>
+                        <label class="inline-flex items-center gap-2 text-sm font-medium">
+                            <input type="checkbox" wire:model="idolShowTeaterEnabled" class="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800">
+                            Tampilkan card Show Teater
+                        </label>
+                        <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Menampilkan atau menyembunyikan bagian "Show Teater" pada halaman About Idol.') }}</flux:text>
+                    </div>
+
+                    <div class="space-y-4 rounded-xl border border-zinc-200 p-5 dark:border-zinc-700">
+                        <flux:heading size="lg">Tampilan Unit Song</flux:heading>
+                        <label class="inline-flex items-center gap-2 text-sm font-medium">
+                            <input type="checkbox" wire:model="idolUnitSongEnabled" class="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800">
+                            Tampilkan card Unit Song
+                        </label>
+                        <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Menampilkan atau menyembunyikan bagian "Unit Song" pada halaman About Idol.') }}</flux:text>
+                    </div>
+
+                    <div class="space-y-4 rounded-xl border border-zinc-200 p-5 dark:border-zinc-700">
+                        <flux:heading size="lg">Tampilan Centers</flux:heading>
+                        <label class="inline-flex items-center gap-2 text-sm font-medium">
+                            <input type="checkbox" wire:model="idolCentersEnabled" class="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800">
+                            Tampilkan card Centers
+                        </label>
+                        <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Menampilkan atau menyembunyikan bagian "Centers" pada halaman About Idol.') }}</flux:text>
                     </div>
 
                     <div class="flex justify-end">

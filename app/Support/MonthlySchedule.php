@@ -90,11 +90,17 @@ final class MonthlySchedule
 
         $showDate = ShowDate::sqlExpression();
         foreach (ShowTeater::query()
-            ->with(['setlistCategory:id,name', 'unitSongCategories:id,name'])
+            ->with(['setlistCategory:id,name'])
             ->whereBetween(DB::raw($showDate), [$from, $to])
             ->orderBy('show_date')
-            ->get(['show_id', 'show_date', 'setlist', 'setlist_id', 'unit_song']) as $show) {
-            $events->push($this->event('Show Teater', 'blue', $show->setlistName(), ShowDate::normalize((string) $show->show_date), $show->unitSongString()));
+            ->get(['show_id', 'show_date', 'setlist', 'setlist_id', 'reference_code', 'is_the_show_has_event']) as $show) {
+            $purchaseLink = filled($show->reference_code)
+                ? 'https://jkt48.com/purchase/schedule/show?code='.rawurlencode((string) $show->reference_code)
+                : null;
+
+            $meta = filled($show->is_the_show_has_event) ? (string) $show->is_the_show_has_event : null;
+
+            $events->push($this->event('Show Teater', 'blue', $show->setlistName(), ShowDate::normalize((string) $show->show_date), $meta, $purchaseLink));
         }
 
         foreach (ConcertEvents::query()

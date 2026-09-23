@@ -43,6 +43,9 @@ final class AboutPageData
             'idolTwitterUrl' => $about['idol_social_media_twitter'] ?? null,
             'idolTiktokUrl' => $about['idol_social_media_tiktok'] ?? null,
             'theater' => $this->stats->build(),
+            'showTeaterEnabled' => filter_var($about['idol_show_teater_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN),
+            'unitSongEnabled' => filter_var($about['idol_unit_song_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN),
+            'centersEnabled' => filter_var($about['idol_centers_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN),
         ];
     }
 

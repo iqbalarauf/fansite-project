@@ -156,7 +156,7 @@ Enums: `App\Enums\UserRole`
 - Halaman standalone **About** (`/content/about`) dengan tab **Idol Information** dan **Fansite Information** (KV `about_settings`).
 - Idol: nama, slug, foto, deskripsi, achievements, discography, jikoshoukai, tanggal/tempat lahir, golongan darah, zodiak, sosmed, serta **versi profil** (`jkt48`/`general` — jikoshoukai & golongan darah hanya tampil pada versi JKT48, istilah Oshimen vs Idol/Bias).
 - **Kabesha** (toggle tampil/tidak) + judul default.
-- Fansite: nama, logo, deskripsi, aktivitas, galeri (maks. 5), CTA (judul + 2 tombol + background), toggle **Struktur Organisasi** & **Kegiatan Fanbase**, serta **Sejarah Fansite** (enable + sumber default/custom page + daftar foto & deskripsi).
+- Fansite: nama, logo, deskripsi, aktivitas, galeri (maks. 5), CTA (judul + 2 tombol + background), toggle **Struktur Organisasi** & **Kegiatan Fanbase**, **Sejarah Fansite** (enable + sumber default/custom page + daftar foto & deskripsi), serta card terpisah **Tampilan Show Teater / Unit Song / Centers** (`idol_show_teater_enabled`, `idol_unit_song_enabled`, `idol_centers_enabled`) untuk menampilkan/menyembunyikan bagian terkait pada halaman About Idol.
 - Cache setting di-invalidate (`Cache::forget('about_settings')`) saat disimpan.
 
 ### 5.12 Setting — Landing Page
