@@ -5,12 +5,10 @@
         use Illuminate\Support\Facades\Storage;
     @endphp
 
-    <section class="bg-gradient-to-br from-indigo-950 via-slate-950 to-violet-950">
-        <div class="mx-auto flex max-w-7xl flex-col items-start px-4 py-20 text-left sm:px-6 lg:px-8 lg:py-24">
-            <span class="mb-4 inline-flex w-fit rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-indigo-50">Timeline</span>
-            <h1 class="max-w-2xl text-4xl font-black leading-tight text-white sm:text-5xl">Timeline</h1>
-            <p class="mt-4 max-w-xl text-base text-indigo-100 sm:text-lg">Perjalanan dan momen penting.</p>
-        </div>
+    <section class="mx-auto max-w-7xl px-4 pt-12 sm:px-6 lg:px-8">
+        <span class="inline-flex w-fit rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-300">Timeline</span>
+        <h1 class="mt-4 max-w-2xl text-4xl font-black leading-tight text-slate-900 dark:text-white sm:text-5xl">Timeline</h1>
+        <p class="mt-4 max-w-xl text-base text-slate-600 dark:text-slate-300 sm:text-lg">Perjalanan dan momen penting.</p>
     </section>
 
     <section class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">

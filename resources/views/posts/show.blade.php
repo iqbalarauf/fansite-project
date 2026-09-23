@@ -13,27 +13,25 @@
     @endphp
 
     <article>
-        <section class="bg-gradient-to-br from-indigo-950 via-slate-950 to-violet-950">
-            <div class="mx-auto max-w-3xl px-4 py-16 text-left sm:px-6 lg:px-8">
-                <a href="{{ route($section->publicIndexRoute()) }}" class="inline-flex items-center gap-2 text-sm font-semibold text-indigo-100 transition hover:text-white">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="size-4"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/></svg>
-                    Semua {{ $section->label() }}
-                </a>
+        <div class="mx-auto max-w-3xl px-4 pt-12 sm:px-6 lg:px-8">
+            <a href="{{ route($section->publicIndexRoute()) }}" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="size-4"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/></svg>
+                Semua {{ $section->label() }}
+            </a>
 
-                @if ($post->category)
-                    <span class="mt-6 inline-flex w-fit rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-semibold text-indigo-50">{{ $post->category->name }}</span>
-                @endif
+            @if ($post->category)
+                <span class="mt-6 inline-flex w-fit rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-300">{{ $post->category->name }}</span>
+            @endif
 
-                <h1 class="mt-4 text-3xl font-black leading-tight text-white sm:text-5xl">{{ $post->title }}</h1>
+            <h1 class="mt-4 text-3xl font-black leading-tight text-slate-900 dark:text-white sm:text-5xl">{{ $post->title }}</h1>
 
-                <p class="mt-5 text-sm text-indigo-100">
-                    {{ $post->published_at?->timezone(\App\Support\Timezone::display())?->locale('id')->isoFormat('D MMMM YYYY') }}
-                </p>
-            </div>
-        </section>
+            <p class="mt-5 text-sm text-slate-500 dark:text-slate-400">
+                {{ $post->published_at?->timezone(\App\Support\Timezone::display())?->locale('id')->isoFormat('D MMMM YYYY') }}
+            </p>
+        </div>
 
         @if ($post->cover)
-            <div class="mx-auto -mt-8 max-w-3xl px-4 sm:px-6 lg:px-8">
+            <div class="mx-auto mt-8 max-w-3xl px-4 sm:px-6 lg:px-8">
                 <img src="{{ Storage::url($post->cover) }}" alt="{{ $post->title }}" class="aspect-video w-full rounded-[2rem] border border-slate-200 object-cover shadow-lg dark:border-slate-800" loading="eager" fetchpriority="high" decoding="async" />
             </div>
         @endif

@@ -887,4 +887,56 @@ class CustomPageTest extends TestCase
         $this->assertSame('Teks Kedua', $page->blocks[1]['data']['text']);
         $this->assertSame('3xl', $page->blocks[1]['data']['font_size']);
     }
+
+    public function test_custom_page_can_save_a_hero_image_below_the_title(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Hero')
+            ->set('heroEnabled', true)
+            ->set('heroImageUpload', UploadedFile::fake()->image('hero.jpg', 1200, 600))
+            ->call('save', 'published')
+            ->assertHasNoErrors();
+
+        $page = CustomPage::query()->firstOrFail();
+
+        $this->assertTrue($page->hero_enabled);
+        $this->assertNotNull($page->hero_image);
+        Storage::disk('public')->assertExists($page->hero_image);
+
+        $this->get(route('custom-pages.show', $page))
+            ->assertOk()
+            ->assertSee('Halaman Hero')
+            ->assertSee('/storage/'.$page->hero_image, false);
+    }
+
+    public function test_custom_page_title_color_adapts_to_background(): void
+    {
+        $darkPage = CustomPage::query()->create([
+            'title' => 'Halaman Gelap',
+            'slug' => 'halaman-gelap',
+            'status' => 'published',
+            'background_color' => '#111827',
+            'blocks' => [],
+        ]);
+
+        $lightPage = CustomPage::query()->create([
+            'title' => 'Halaman Terang',
+            'slug' => 'halaman-terang',
+            'status' => 'published',
+            'background_color' => '#F8FAFC',
+            'blocks' => [],
+        ]);
+
+        $this->get(route('custom-pages.show', $darkPage))
+            ->assertOk()
+            ->assertSee('color: #F8FAFC', false);
+
+        $this->get(route('custom-pages.show', $lightPage))
+            ->assertOk()
+            ->assertSee('color: #0F172A', false);
+    }
 }
