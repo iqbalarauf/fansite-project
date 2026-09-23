@@ -204,7 +204,7 @@ class CustomPageTest extends TestCase
             ->set('blocks.0.data.columns.0.blocks.0.id', 'nested-first')
             ->call('addBlockToContainer', 0, 0, 'text')
             ->set('blocks.0.data.columns.0.blocks.1.id', 'nested-second')
-            ->call('sortNestedBlock', 0, 0, 'nested-second', 0)
+            ->call('sortNestedBlock', 'nested-second', 0)
             ->call('save', 'published')
             ->assertHasNoErrors();
 
@@ -483,7 +483,7 @@ class CustomPageTest extends TestCase
             ->call('addBlockToContainer', 0, 1, 'text')
             ->set('blocks.0.data.columns.1.blocks.1.id', 'col2-second')
             ->set('blocks.0.data.columns.1.blocks.1.data.text', 'Kedua')
-            ->call('sortNestedBlock', 0, 1, 'col2-second', 0)
+            ->call('sortNestedBlock', 'col2-second', 0)
             ->call('save', 'published')
             ->assertHasNoErrors();
 
@@ -512,7 +512,7 @@ class CustomPageTest extends TestCase
             ->set('blocks.0.data.columns.0.blocks.1.id', 'second')
             ->set('blocks.0.data.columns.0.blocks.2.id', 'third')
             ->set('blocks.0.data.columns.0.blocks.2.data.text', 'Ketiga')
-            ->call('sortNestedBlock', 0, 0, 'first', 1)
+            ->call('sortNestedBlock', 'first', 1)
             ->call('save', 'published')
             ->assertHasNoErrors();
 
@@ -861,5 +861,30 @@ class CustomPageTest extends TestCase
             ->set('blocks.1.data.source', 'upload')
             ->assertDontSee('Image URL')
             ->assertSee('type="file"', false);
+    }
+
+    public function test_multiple_text_blocks_keep_independent_content_and_format(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Dua Teks')
+            ->set('blocks.0.type', 'text')
+            ->set('blocks.0.data.text', 'Teks Pertama')
+            ->set('blocks.0.data.font_size', 'lg')
+            ->call('addBlock', 'text')
+            ->assertSee('wire:model.live="blocks.1.data.text"', false)
+            ->assertSee('wire:model.live="blocks.1.data.font_size"', false)
+            ->set('blocks.1.data.text', 'Teks Kedua')
+            ->set('blocks.1.data.font_size', '3xl')
+            ->call('save', 'draft')
+            ->assertHasNoErrors();
+
+        $page = CustomPage::query()->firstOrFail();
+
+        $this->assertSame('Teks Pertama', $page->blocks[0]['data']['text']);
+        $this->assertSame('lg', $page->blocks[0]['data']['font_size']);
+        $this->assertSame('Teks Kedua', $page->blocks[1]['data']['text']);
+        $this->assertSame('3xl', $page->blocks[1]['data']['font_size']);
     }
 }

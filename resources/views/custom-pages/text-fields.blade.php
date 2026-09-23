@@ -1,4 +1,6 @@
-@php($base = $path)
+@php
+    $base = $path;
+@endphp
 
 <flux:textarea wire:model.live="{{ $base }}.data.text" :label="__('Text')" rows="6" />
 <flux:select wire:model.live="{{ $base }}.data.heading" :label="__('Heading')">
