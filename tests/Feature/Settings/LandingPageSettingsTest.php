@@ -41,9 +41,9 @@ class LandingPageSettingsTest extends TestCase
         $this->actingAs(User::factory()->create());
 
         $modes = [
-            'fit' => ['bg-cover', false],
-            'contain' => ['bg-contain', false],
-            'original' => ['bg-auto', false],
+            'fit' => ['object-cover', false],
+            'contain' => ['object-contain', false],
+            'original' => ['max-w-none', false],
             'adjustable' => ['h-auto w-full', false],
         ];
 
