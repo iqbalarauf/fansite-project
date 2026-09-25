@@ -7,13 +7,12 @@
 
         $heroUrl = $heroImage ? Storage::url($heroImage) : null;
         $heroDisplay = in_array($heroImageDisplay ?? 'fit', ['fit', 'contain', 'adjustable', 'original'], true) ? ($heroImageDisplay ?? 'fit') : 'fit';
-        $heroAdjustable = $heroUrl !== null && $heroDisplay === 'adjustable';
-        $heroBackgroundClass = match ($heroDisplay) {
-            'contain' => 'bg-contain bg-center bg-no-repeat',
-            'original' => 'bg-auto bg-center bg-no-repeat',
-            default => 'bg-cover bg-center',
+        $heroImageClass = match ($heroDisplay) {
+            'contain' => 'block h-auto w-full object-contain',
+            'original' => 'block h-auto w-auto max-w-none',
+            'adjustable' => 'block h-auto w-full',
+            default => 'block h-auto max-h-[85svh] w-full object-cover sm:max-h-[90svh]',
         };
-        $heroStyle = ($heroUrl !== null && ! $heroAdjustable) ? "background-image: url('".$heroUrl."');" : '';
 
         $liveIcons = collect([
             'showroom' => 'icon-app/showroom.webp',
@@ -26,37 +25,33 @@
         ];
     @endphp
 
-    <section id="home"
-             class="relative overflow-hidden bg-slate-950 {{ $heroAdjustable ? '' : 'flex min-h-svh items-center' }} {{ ($heroUrl !== null && ! $heroAdjustable) ? $heroBackgroundClass : '' }}"
-             style="{{ $heroStyle }}">
-        @if ($heroAdjustable)
-            <img src="{{ $heroUrl }}" alt="" class="block h-auto w-full" loading="eager" fetchpriority="high" decoding="async" />
-            <div class="absolute inset-0 bg-slate-950/50"></div>
-        @else
-            <div class="absolute inset-0"></div>
+    <section id="home" class="relative overflow-hidden bg-slate-950">
+        @if ($heroUrl !== null)
+            <img src="{{ $heroUrl }}" alt="" class="{{ $heroImageClass }}" loading="eager" fetchpriority="high" decoding="async" />
+            <div class="absolute inset-0 bg-slate-950/40"></div>
         @endif
 
-        <div class="{{ $heroAdjustable ? 'absolute inset-0 flex items-center' : 'relative z-10 w-full' }}">
-            <div class="mx-auto flex w-full max-w-7xl flex-col items-start px-5 py-16 text-left sm:px-6 sm:py-24 lg:px-8 lg:py-28">
-                <h1 class="text-balance break-words text-3xl font-black leading-tight tracking-tight sm:text-4xl md:text-5xl lg:text-6xl" style="color: {{ $welcomeTitleColor }}">
+        <div class="{{ $heroUrl !== null ? 'absolute inset-0 flex items-center' : 'relative z-10 flex min-h-svh w-full items-center' }}">
+            <div class="mx-auto flex w-full max-w-7xl flex-col items-start px-5 py-6 text-left sm:px-6 sm:py-12 lg:px-8 lg:py-28">
+                <h1 class="text-balance break-words text-xl font-black leading-tight tracking-tight sm:text-3xl md:text-5xl lg:text-6xl" style="color: {{ $welcomeTitleColor }}">
                     <span class="inline-block">{{ $welcomeTitle }}</span>
                     @if ($heroNameAnimate && $idolProfileVersion === 'jkt48' && filled($idolShortname) && $heroName2Text !== '' && $heroName2Text !== $heroName1Text)
                         <span
-                            class="mt-2 block break-words"
+                            class="mt-1 block break-words sm:mt-2"
                             style="color: {{ $heroName1Color }}"
                             data-hero-swap='@json($heroSwapData)'
                             data-hero-swap-interval="4000"
                         >{{ $heroName1Text }}</span>
                     @else
-                        <span class="mt-2 block break-words" style="color: {{ $heroName1Color }}">{{ $heroName1Text }}</span>
+                        <span class="mt-1 block break-words sm:mt-2" style="color: {{ $heroName1Color }}">{{ $heroName1Text }}</span>
                     @endif
                 </h1>
-                <p class="mt-4 max-w-xl text-sm leading-7 text-indigo-100 sm:mt-5 sm:text-base sm:leading-8 lg:text-lg">Temukan aktivitas terbaru, jadwal, dan momen favorit dari {{ $idolName }} dalam satu halaman yang selalu diperbarui.</p>
+                <p class="mt-3 line-clamp-2 max-w-xl text-xs leading-6 text-indigo-100 sm:mt-4 sm:line-clamp-none sm:text-base sm:leading-8 lg:text-lg">Temukan aktivitas terbaru, jadwal, dan momen favorit dari {{ $idolName }} dalam satu halaman yang selalu diperbarui.</p>
 
                 @if (! empty($heroButtons))
-                    <div class="mt-6 flex w-full flex-col gap-3 sm:mt-8 sm:w-auto sm:flex-row sm:flex-wrap sm:gap-4">
+                    <div class="mt-4 flex w-full flex-col gap-2 sm:mt-8 sm:w-auto sm:flex-row sm:flex-wrap sm:gap-4">
                         @foreach ($heroButtons as $index => $button)
-                            <a href="{{ $button['url'] }}" class="inline-flex w-full items-center justify-center rounded-full px-6 py-3 text-center text-sm font-bold transition sm:w-auto {{ $index === 0
+                            <a href="{{ $button['url'] }}" class="inline-flex w-full items-center justify-center rounded-full px-5 py-2 text-center text-xs font-bold transition sm:w-auto sm:px-6 sm:py-3 sm:text-sm {{ $index === 0
                                 ? 'bg-yellow-300 text-slate-900 shadow-lg shadow-yellow-200/50 hover:bg-yellow-200'
                                 : 'border border-white/40 bg-white/10 text-white hover:bg-white/15' }}">{{ $button['label'] }}</a>
                         @endforeach

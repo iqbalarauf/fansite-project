@@ -344,12 +344,12 @@ new #[Title('Landing Page')] class extends Component
                                     <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Pilih cara gambar hero ditampilkan pada beranda.') }}</p>
                                 </div>
 
-                                @foreach ([
-                                    'fit' => ['label' => 'Fit', 'hint' => 'Memenuhi seluruh area hero, potong bila perlu.'],
-                                    'contain' => ['label' => 'Contain', 'hint' => 'Seluruh gambar terlihat, ada ruang kosong.'],
-                                    'adjustable' => ['label' => 'Adjustable Height', 'hint' => 'Tinggi hero mengikuti rasio gambar.'],
-                                    'original' => ['label' => 'Original', 'hint' => 'Ukuran asli gambar, tanpa diperbesar.'],
-                                ] as $value => $option)
+                        @foreach ([
+                            'fit' => ['label' => 'Fit', 'hint' => 'Memenuhi seluruh area hero, potong bila perlu.'],
+                            'contain' => ['label' => 'Contain', 'hint' => 'Seluruh gambar terlihat, ada ruang kosong.'],
+                            'adjustable' => ['label' => 'Adjustable Height', 'hint' => 'Tinggi hero mengikuti rasio gambar.'],
+                            'original' => ['label' => 'Original', 'hint' => 'Ukuran asli gambar, tanpa diperbesar.'],
+                        ] as $value => $option)
                                     <label class="flex items-start gap-3">
                                         <input type="radio" wire:model.live="heroImageDisplay" value="{{ $value }}" class="mt-0.5 rounded border-zinc-300 text-blue-600">
                                         <span class="text-sm text-zinc-700 dark:text-zinc-200">
