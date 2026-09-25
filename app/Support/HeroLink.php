@@ -29,6 +29,7 @@ final class HeroLink
             'magazine.index' => 'Majalah',
             'trivia.index' => 'Trivia',
             'photobooth.show' => 'Photobooth',
+            'merchandise.index' => 'Merchandise',
         ];
     }
 
