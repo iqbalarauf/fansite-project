@@ -37,28 +37,28 @@
         @endif
 
         <div class="{{ $heroAdjustable ? 'absolute inset-0 flex items-center' : 'relative z-10 w-full' }}">
-            <div class="mx-auto flex w-full max-w-7xl flex-col items-start px-4 py-24 text-left sm:px-6 lg:px-8 lg:py-28">
-                <h1 class="text-4xl font-black leading-tight sm:text-5xl lg:text-6xl" style="color: {{ $welcomeTitleColor }}">
+            <div class="mx-auto flex w-full max-w-7xl flex-col items-start px-5 py-16 text-left sm:px-6 sm:py-24 lg:px-8 lg:py-28">
+                <h1 class="text-balance break-words text-3xl font-black leading-tight tracking-tight sm:text-4xl md:text-5xl lg:text-6xl" style="color: {{ $welcomeTitleColor }}">
                     <span class="inline-block">{{ $welcomeTitle }}</span>
                     @if ($heroNameAnimate && $idolProfileVersion === 'jkt48' && filled($idolShortname) && $heroName2Text !== '' && $heroName2Text !== $heroName1Text)
                         <span
-                            class="mt-2 block"
+                            class="mt-2 block break-words"
                             style="color: {{ $heroName1Color }}"
                             data-hero-swap='@json($heroSwapData)'
                             data-hero-swap-interval="4000"
                         >{{ $heroName1Text }}</span>
                     @else
-                        <span class="mt-2 block" style="color: {{ $heroName1Color }}">{{ $heroName1Text }}</span>
+                        <span class="mt-2 block break-words" style="color: {{ $heroName1Color }}">{{ $heroName1Text }}</span>
                     @endif
                 </h1>
-                <p class="mt-5 max-w-xl text-base text-indigo-100 sm:text-lg">Temukan aktivitas terbaru, jadwal, dan momen favorit dari {{ $idolName }} dalam satu halaman yang selalu diperbarui.</p>
+                <p class="mt-4 max-w-xl text-sm leading-7 text-indigo-100 sm:mt-5 sm:text-base sm:leading-8 lg:text-lg">Temukan aktivitas terbaru, jadwal, dan momen favorit dari {{ $idolName }} dalam satu halaman yang selalu diperbarui.</p>
 
                 @if (! empty($heroButtons))
-                    <div class="mt-8 flex flex-wrap justify-start gap-4">
+                    <div class="mt-6 flex w-full flex-col gap-3 sm:mt-8 sm:w-auto sm:flex-row sm:flex-wrap sm:gap-4">
                         @foreach ($heroButtons as $index => $button)
-                            <a href="{{ $button['url'] }}" class="{{ $index === 0
-                                ? 'rounded-full bg-yellow-300 px-6 py-3 text-sm font-bold text-slate-900 shadow-lg shadow-yellow-200/50 transition hover:bg-yellow-200'
-                                : 'rounded-full border border-white/40 bg-white/10 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/15' }}">{{ $button['label'] }}</a>
+                            <a href="{{ $button['url'] }}" class="inline-flex w-full items-center justify-center rounded-full px-6 py-3 text-center text-sm font-bold transition sm:w-auto {{ $index === 0
+                                ? 'bg-yellow-300 text-slate-900 shadow-lg shadow-yellow-200/50 hover:bg-yellow-200'
+                                : 'border border-white/40 bg-white/10 text-white hover:bg-white/15' }}">{{ $button['label'] }}</a>
                         @endforeach
                     </div>
                 @endif
