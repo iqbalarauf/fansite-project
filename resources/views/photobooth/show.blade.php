@@ -17,11 +17,11 @@
                     <div id="photobooth-countdown" class="mt-6 text-4xl font-black text-indigo-400">—</div>
                     <div data-countdown-target="{{ $schedule['opens_at']?->toIso8601String() }}" class="hidden"></div>
                 @elseif ($schedule['state'] === 'closed')
-                    <p class="text-sm font-bold uppercase tracking-[0.22em] text-red-400">Ditutup</p>
-                    <h2 class="mt-3 text-2xl font-black text-white">Photobooth sudah ditutup</h2>
+                    <p class="text-sm font-bold uppercase tracking-[0.22em] text-red-400">Mohon Maaf</p>
+                    <h2 class="mt-3 text-2xl font-black text-white">Photobooth sudah ditutup, sampai bertemu di event berikutnya!</h2>
                 @else
-                    <p class="text-sm font-bold uppercase tracking-[0.22em] text-slate-400">Nonaktif</p>
-                    <h2 class="mt-3 text-2xl font-black text-white">Photobooth sedang tidak aktif</h2>
+                    <p class="text-sm font-bold uppercase tracking-[0.22em] text-slate-400">Mohon Maaf</p>
+                    <h2 class="mt-3 text-2xl font-black text-white">Photobooth saat ini tidak aktif, sampai bertemu di event berikutnya!</h2>
                 @endif
             </div>
         </div>
