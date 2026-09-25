@@ -13,5 +13,7 @@
         @include('partials.site-footer')
 
         @include('partials.media-lightbox')
+
+        <x-alert-modal />
     </body>
 </html>

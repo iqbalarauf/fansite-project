@@ -39,7 +39,11 @@
                             <td class="admin-table-cell text-right">
                                 <div class="flex items-center justify-end gap-2">
                                     <flux:button :href="route('pages.edit', $page)" icon="pencil-square" size="sm" square :aria-label="__('Edit page')" wire:navigate />
-                                    <form method="POST" action="{{ route('pages.destroy', $page) }}" onsubmit="return confirm('{{ __('Delete this page?') }}')">
+                                    <form method="POST" action="{{ route('pages.destroy', $page) }}"
+                                          x-data
+                                          data-confirm-message="{{ __('Delete this page?') }}"
+                                          data-confirm-label="{{ __('Hapus') }}"
+                                          x-on:submit.prevent="window.appConfirm($el.dataset.confirmMessage, { variant: 'error', confirmText: $el.dataset.confirmLabel }).then(ok => ok && $el.submit())">
                                         @csrf
                                         @method('DELETE')
                                         <flux:button type="submit" variant="danger" icon="trash" size="sm" square :aria-label="__('Delete page')" :disabled="auth()->user()?->isViewOnly()" />

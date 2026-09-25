@@ -17,15 +17,17 @@
 
     <div class="flex flex-wrap items-center gap-2">
         @foreach ($presetHexes as $presetValue => $presetHex)
-            <button type="button" wire:click="{{ $onPreset }}('{{ $presetValue }}')"
-                title="{{ __($presetLabels[$presetValue]) }}"
-                class="{{ $current === $presetValue ? 'ring-2 ring-indigo-500 ring-offset-2' : 'hover:ring-2 hover:ring-indigo-300 ring-offset-1' }} h-7 w-7 rounded-full border border-black/10 transition"
-                style="background-color: {{ $presetHex }}"></button>
+            <flux:tooltip content="{{ __($presetLabels[$presetValue]) }}">
+                <button type="button" wire:click="{{ $onPreset }}('{{ $presetValue }}')"
+                    class="{{ $current === $presetValue ? 'ring-2 ring-indigo-500 ring-offset-2' : 'hover:ring-2 hover:ring-indigo-300 ring-offset-1' }} h-7 w-7 rounded-full border border-black/10 transition"
+                    style="background-color: {{ $presetHex }}"></button>
+            </flux:tooltip>
         @endforeach
 
-        <button type="button" wire:click="{{ $onPreset }}('transparent')"
-            title="{{ __('Transparent') }}"
-            class="{{ $current === 'transparent' ? 'ring-2 ring-indigo-500 ring-offset-2' : 'hover:ring-2 hover:ring-indigo-300 ring-offset-1' }} h-7 w-7 shrink-0 rounded-full border border-black/10 bg-[length:10px_10px] bg-[position:0_0,5px_5px] transition"
-            style="background-color: #ffffff; background-image: linear-gradient(45deg, #d4d4d8 25%, transparent 25%, transparent 75%, #d4d4d8 75%), linear-gradient(45deg, #d4d4d8 25%, transparent 25%, transparent 75%, #d4d4d8 75%)"></button>
+        <flux:tooltip content="{{ __('Transparent') }}">
+            <button type="button" wire:click="{{ $onPreset }}('transparent')"
+                class="{{ $current === 'transparent' ? 'ring-2 ring-indigo-500 ring-offset-2' : 'hover:ring-2 hover:ring-indigo-300 ring-offset-1' }} h-7 w-7 shrink-0 rounded-full border border-black/10 bg-[length:10px_10px] bg-[position:0_0,5px_5px] transition"
+                style="background-color: #ffffff; background-image: linear-gradient(45deg, #d4d4d8 25%, transparent 25%, transparent 75%, #d4d4d8 75%), linear-gradient(45deg, #d4d4d8 25%, transparent 25%, transparent 75%, #d4d4d8 75%)"></button>
+        </flux:tooltip>
     </div>
 </div>
