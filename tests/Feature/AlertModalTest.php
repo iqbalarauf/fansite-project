@@ -18,7 +18,7 @@ class AlertModalTest extends TestCase
         $this->get(route('pages.index'))
             ->assertOk()
             ->assertSee('data-alert-modal', false)
-            ->assertSee('openConfirm', false);
+            ->assertSee('appAlertDialog', false);
     }
 
     public function test_public_layout_includes_modal_based_alert_component(): void

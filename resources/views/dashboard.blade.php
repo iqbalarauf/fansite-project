@@ -6,7 +6,7 @@
         ================================================================ --}}
         <div class="flex flex-col gap-1">
             <flux:heading size="xl" class="font-bold text-zinc-900 dark:text-white">
-                Selamat Datang, {{ auth()->user()->name }}
+                Selamat Datang, {{ auth()->user()->name }} 👋
             </flux:heading>
             <flux:subheading class="text-zinc-500 dark:text-zinc-400">
                 Berikut adalah statistik oshimen: <span class="font-semibold text-blue-600 dark:text-blue-400">{{ $idolName }}</span>
