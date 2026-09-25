@@ -17,10 +17,6 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Percayai proxy di depan (Hostinger/Cloudflare/LiteSpeed/Nginx) agar
-        // skema HTTPS (X-Forwarded-Proto) dan IP klien terbaca dengan benar.
-        $middleware->trustProxies(at: '*');
-
         $middleware->alias([
             'role' => EnsureUserHasRole::class,
             'block-view-only-writes' => PreventViewOnlyWrites::class,

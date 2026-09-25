@@ -24,7 +24,6 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -44,20 +43,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
-        $this->configureUrlScheme();
         $this->registerContentPolicies();
-    }
-
-    /**
-     * Paksa skema HTTPS di production agar URL yang di-generate aplikasi
-     * (aset, route, endpoint Livewire/Flux) tidak menjadi mixed content
-     * ketika berada di belakang proxy.
-     */
-    protected function configureUrlScheme(): void
-    {
-        if ($this->app->environment('production')) {
-            URL::forceScheme('https');
-        }
     }
 
     /**

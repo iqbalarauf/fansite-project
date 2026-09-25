@@ -3,64 +3,7 @@
 ])
 
 <div
-    x-data="{
-        open: false,
-        mode: 'alert',
-        variant: 'info',
-        title: '',
-        message: '',
-        confirmText: 'OK',
-        cancelText: 'Batal',
-        resolver: null,
-        openAlert(detail = {}) {
-            this.setup(Object.assign({}, detail, { mode: 'alert', confirmText: detail.confirmText || 'OK', variant: detail.variant || 'info' }));
-        },
-        openConfirm(detail = {}) {
-            this.setup(Object.assign({}, detail, { mode: 'confirm', confirmText: detail.confirmText || 'Ya', cancelText: detail.cancelText || 'Batal', variant: detail.variant || 'warning' }));
-        },
-        setup(detail) {
-            this.mode = detail.mode;
-            this.variant = ['success', 'error', 'warning', 'info'].includes(detail.variant) ? detail.variant : 'info';
-            this.title = detail.title || '';
-            this.message = detail.message || '';
-            this.confirmText = detail.confirmText;
-            this.cancelText = detail.cancelText || 'Batal';
-            this.resolver = typeof detail.resolver === 'function' ? detail.resolver : null;
-            this.open = true;
-            document.body.style.overflow = 'hidden';
-        },
-        accept() {
-            this.close(true);
-        },
-        cancel() {
-            this.close(false);
-        },
-        close(result) {
-            this.open = false;
-            document.body.style.overflow = '';
-            const resolver = this.resolver;
-            this.resolver = null;
-            if (resolver) {
-                resolver(result);
-            }
-        },
-        iconWrapperClass() {
-            return {
-                success: 'bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400',
-                error: 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400',
-                warning: 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400',
-                info: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400',
-            }[this.variant];
-        },
-        confirmButtonClass() {
-            return {
-                success: 'bg-green-600 text-white hover:bg-green-500',
-                error: 'bg-red-600 text-white hover:bg-red-500',
-                warning: 'bg-amber-500 text-white hover:bg-amber-400',
-                info: 'bg-indigo-600 text-white hover:bg-indigo-500',
-            }[this.variant];
-        },
-    }"
+    x-data="appAlertDialog()"
     x-on:app-alert.window="openAlert($event.detail)"
     x-on:app-confirm.window="openConfirm($event.detail)"
     x-show="open"
