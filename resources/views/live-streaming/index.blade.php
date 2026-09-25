@@ -59,18 +59,19 @@
                     </select>
 
                     <input type="hidden" name="sort_dir" value="{{ $filters['sort_dir'] }}" id="sort-dir-input" />
-                    <button
-                        type="button"
-                        title="{{ $filters['sort_dir'] === 'asc' ? 'Ascending' : 'Descending' }}"
-                        onclick="document.getElementById('sort-dir-input').value = '{{ $filters['sort_dir'] === 'asc' ? 'desc' : 'asc' }}'; document.getElementById('filter-form').submit();"
-                        class="admin-filter-sort"
-                    >
-                        @if ($filters['sort_dir'] === 'asc')
-                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
-                        @else
-                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"/></svg>
-                        @endif
-                    </button>
+                    <flux:tooltip content="{{ $filters['sort_dir'] === 'asc' ? 'Ascending' : 'Descending' }}">
+                        <button
+                            type="button"
+                            onclick="document.getElementById('sort-dir-input').value = '{{ $filters['sort_dir'] === 'asc' ? 'desc' : 'asc' }}'; document.getElementById('filter-form').submit();"
+                            class="admin-filter-sort"
+                        >
+                            @if ($filters['sort_dir'] === 'asc')
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
+                            @else
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"/></svg>
+                            @endif
+                        </button>
+                    </flux:tooltip>
 
                     <flux:button type="submit" variant="outline">{{ __('Terapkan') }}</flux:button>
 
@@ -243,10 +244,10 @@
             })
             .then(r => r.json())
             .then(data => {
-                alert(data.message || (data.success ? 'Data berhasil di-fetch!' : 'Terjadi kesalahan saat fetch data.'));
-                if (data.success) location.reload();
+                window.appAlert(data.message || (data.success ? 'Data berhasil di-fetch!' : 'Terjadi kesalahan saat fetch data.'), { variant: data.success ? 'success' : 'error' })
+                    .then(() => { if (data.success) location.reload(); });
             })
-            .catch(() => alert('Terjadi kesalahan saat fetch data.'))
+            .catch(() => window.appAlert('Terjadi kesalahan saat fetch data.', { variant: 'error' }))
             .finally(() => { btn.disabled = false; btn.innerHTML = originalContent; });
         }
 

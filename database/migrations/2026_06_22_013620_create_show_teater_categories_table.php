@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('type', 20); // 'setlist' or 'unit_song'
             $table->string('name', 100);
             $table->string('jp_name', 100)->nullable();
+            $table->string('romaji_name', 100)->nullable();
             $table->unsignedBigInteger('setlist_id')->nullable(); // only for unit_song
             $table->tinyInteger('is_active')->default(1);
             $table->timestamps();

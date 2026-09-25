@@ -56,18 +56,30 @@
                 <form method="POST" action="{{ route('show-teater.predictor') }}">
                     @csrf
                     <input type="hidden" name="enabled" value="0">
-                    <label class="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                        <input
-                            type="checkbox"
-                            name="enabled"
-                            value="1"
-                            onchange="this.form.submit()"
-                            @checked($predictorEnabled)
-                            @disabled(auth()->user()?->isViewOnly())
-                            class="h-4 w-4 rounded border-zinc-300 text-blue-600 dark:border-zinc-600 dark:bg-zinc-800"
-                        >
-                        {{ __('Predictor Unit Song') }}
-                    </label>
+                    <div class="flex items-center gap-1.5">
+                        <label class="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                            <input
+                                type="checkbox"
+                                name="enabled"
+                                value="1"
+                                onchange="this.form.submit()"
+                                @checked($predictorEnabled)
+                                @disabled(auth()->user()?->isViewOnly())
+                                class="h-4 w-4 rounded border-zinc-300 text-blue-600 dark:border-zinc-600 dark:bg-zinc-800"
+                            >
+                            {{ __('Predictor Unit Song') }}
+                        </label>
+
+                        <x-info-popover title="Cara Kerja Predictor Unit Song" align="end" width="w-96">
+                            <ul class="list-disc space-y-1.5 pl-4">
+                                <li>Untuk tiap <strong>setlist</strong>, sistem membaca riwayat show diurutkan dari yang terlama ke terbaru (lalu berdasarkan Show ID).</li>
+                                <li><strong>Unit Song</strong> diisi dari nilai terakhir yang <strong>tidak kosong</strong>. Jika show terbaru tidak memiliki unit song (mis. hasil scrape kosong), nilai dari show sebelumnya yang dipakai.</li>
+                                <li><strong>Global Center</strong> &amp; <strong>US Center</strong> mengikuti nilai terakhir yang terisi; nilai kosong (NULL) dari data scrape tidak menimpa nilai sebelumnya.</li>
+                                <li>Saat <strong>Tambah Show</strong>, memilih Setlist otomatis mengisi Unit Song (termasuk menyalakan <em>Double US</em> bila ada dua lagu) dan mencentang Global/US Center sesuai prediksi.</li>
+                                <li>Prediksi hanya berjalan bila opsi ini dalam keadaan aktif.</li>
+                            </ul>
+                        </x-info-popover>
+                    </div>
                 </form>
             </div>
 
@@ -92,18 +104,19 @@
                     </select>
 
                     <input type="hidden" name="sort_dir" value="{{ $filters['sort_dir'] }}" id="sort-dir-input" />
-                    <button
-                        type="button"
-                        title="{{ $filters['sort_dir'] === 'asc' ? 'Ascending' : 'Descending' }}"
-                        onclick="document.getElementById('sort-dir-input').value = '{{ $filters['sort_dir'] === 'asc' ? 'desc' : 'asc' }}'; document.getElementById('filter-form').submit();"
-                        class="admin-filter-sort"
-                    >
-                        @if ($filters['sort_dir'] === 'asc')
-                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
-                        @else
-                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"/></svg>
-                        @endif
-                    </button>
+                    <flux:tooltip content="{{ $filters['sort_dir'] === 'asc' ? 'Ascending' : 'Descending' }}">
+                        <button
+                            type="button"
+                            onclick="document.getElementById('sort-dir-input').value = '{{ $filters['sort_dir'] === 'asc' ? 'desc' : 'asc' }}'; document.getElementById('filter-form').submit();"
+                            class="admin-filter-sort"
+                        >
+                            @if ($filters['sort_dir'] === 'asc')
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
+                            @else
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"/></svg>
+                            @endif
+                        </button>
+                    </flux:tooltip>
 
                     <flux:button type="submit" variant="outline">{{ __('Terapkan') }}</flux:button>
 
@@ -168,28 +181,30 @@
                                     @if (is_null($show->is_member_show))
                                         {{-- Unconfirmed: show confirm/reject icon buttons --}}
                                         <div class="flex items-center justify-end gap-2">
-                                            <button
-                                                type="button"
-                                                title="Konfirmasi Member Tampil"
-                                                onclick="confirmMemberShow({{ $show->show_id }})"
-                                                class="rounded-lg p-1.5 text-green-600 hover:bg-green-50 hover:text-green-700 dark:hover:bg-green-950/40"
-                                                @disabled(auth()->user()?->isViewOnly())
-                                            >
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-                                                </svg>
-                                            </button>
-                                            <button
-                                                type="button"
-                                                title="Member Tidak Tampil"
-                                                onclick="rejectMemberShow({{ $show->show_id }})"
-                                                class="rounded-lg p-1.5 text-red-500 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/40"
-                                                @disabled(auth()->user()?->isViewOnly())
-                                            >
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                                                </svg>
-                                            </button>
+                                            <flux:tooltip content="Konfirmasi Member Tampil">
+                                                <button
+                                                    type="button"
+                                                    onclick="confirmMemberShow({{ $show->show_id }})"
+                                                    class="rounded-lg p-1.5 text-green-600 hover:bg-green-50 hover:text-green-700 dark:hover:bg-green-950/40"
+                                                    @disabled(auth()->user()?->isViewOnly())
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                                                    </svg>
+                                                </button>
+                                            </flux:tooltip>
+                                            <flux:tooltip content="Member Tidak Tampil">
+                                                <button
+                                                    type="button"
+                                                    onclick="rejectMemberShow({{ $show->show_id }})"
+                                                    class="rounded-lg p-1.5 text-red-500 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/40"
+                                                    @disabled(auth()->user()?->isViewOnly())
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                                                    </svg>
+                                                </button>
+                                            </flux:tooltip>
                                         </div>
                                     @else
                                         {{-- Confirmed: show Edit button --}}
@@ -565,19 +580,20 @@
             .then(r => r.json())
             .then(data => {
                 if (data.success) {
-                    alert(data.message || 'Data berhasil di-fetch!');
-                    location.reload();
+                    window.appAlert(data.message || 'Data berhasil di-fetch!', { variant: 'success', title: 'Berhasil' })
+                        .then(() => location.reload());
                 } else {
-                    alert('Error: ' + data.message);
+                    window.appAlert('Error: ' + data.message, { variant: 'error', title: 'Gagal' });
                 }
             })
-            .catch(() => alert('Terjadi kesalahan saat fetch data.'))
+            .catch(() => window.appAlert('Terjadi kesalahan saat fetch data.', { variant: 'error' }))
             .finally(() => { btn.disabled = false; btn.textContent = 'Fetch Data'; });
         }
 
         // ------ Confirm Member Show ------
-        function confirmMemberShow(showId) {
-            if (!confirm('Konfirmasi show #' + showId + ' sebagai Member Show?')) return;
+        async function confirmMemberShow(showId) {
+            const confirmed = await window.appConfirm('Apakah kamu sudah memastikan oshimen tampil di show #' + showId + '?', { variant: 'warning', confirmText: 'Konfirmasi' });
+            if (!confirmed) return;
 
             fetch(`{{ url('show-teater') }}/${showId}/confirm`, {
                 method: 'POST',
@@ -586,14 +602,15 @@
             .then(r => r.json())
             .then(data => {
                 if (data.success) location.reload();
-                else alert('Error: ' + data.message);
+                else window.appAlert('Error: ' + data.message, { variant: 'error' });
             })
-            .catch(() => alert('Terjadi kesalahan.'));
+            .catch(() => window.appAlert('Terjadi kesalahan.', { variant: 'error' }));
         }
 
         // ------ Reject Member Show ------
-        function rejectMemberShow(showId) {
-            if (!confirm('Hapus show #' + showId + '? Show akan dipindahkan ke arsip (soft delete) dan tidak ditampilkan lagi.')) return;
+        async function rejectMemberShow(showId) {
+            const confirmed = await window.appConfirm('Apakah kamu sudah memastikan oshimen batal tampil di show #' + showId + '?', { variant: 'error', confirmText: 'Hapus' });
+            if (!confirmed) return;
 
             fetch(`{{ url('show-teater') }}/${showId}/reject`, {
                 method: 'POST',
@@ -602,9 +619,9 @@
             .then(r => r.json())
             .then(data => {
                 if (data.success) location.reload();
-                else alert('Error: ' + data.message);
+                else window.appAlert('Error: ' + data.message, { variant: 'error' });
             })
-            .catch(() => alert('Terjadi kesalahan.'));
+            .catch(() => window.appAlert('Terjadi kesalahan.', { variant: 'error' }));
         }
 
         // ------ Open Edit Modal ------

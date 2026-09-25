@@ -23,20 +23,21 @@
 <div data-rich-text data-image-upload-url="{{ route('content.editor.image') }}" data-csrf-token="{{ csrf_token() }}" class="overflow-hidden admin-card">
     <div class="flex flex-wrap items-center gap-1 border-b border-zinc-200 bg-zinc-50 p-2 dark:border-zinc-700 dark:bg-zinc-800/50">
         @foreach ($tools as $tool)
-            <button
-                type="button"
-                data-rich-text-command="{{ $tool['command'] }}"
-                title="{{ $tool['label'] }}"
-                aria-label="{{ $tool['label'] }}"
-                class="rich-text-toolbar-btn inline-flex size-8 items-center justify-center p-0"
-            >
-                <span class="relative inline-flex">
-                    <flux:icon :icon="$tool['icon']" variant="mini" />
-                    @if (! empty($tool['badge']))
-                        <span class="absolute -right-1.5 -top-1 text-[9px] font-bold leading-none">{{ $tool['badge'] }}</span>
-                    @endif
-                </span>
-            </button>
+            <flux:tooltip content="{{ $tool['label'] }}">
+                <button
+                    type="button"
+                    data-rich-text-command="{{ $tool['command'] }}"
+                    aria-label="{{ $tool['label'] }}"
+                    class="rich-text-toolbar-btn inline-flex size-8 items-center justify-center p-0"
+                >
+                    <span class="relative inline-flex">
+                        <flux:icon :icon="$tool['icon']" variant="mini" />
+                        @if (! empty($tool['badge']))
+                            <span class="absolute -right-1.5 -top-1 text-[9px] font-bold leading-none">{{ $tool['badge'] }}</span>
+                        @endif
+                    </span>
+                </button>
+            </flux:tooltip>
         @endforeach
     </div>
 

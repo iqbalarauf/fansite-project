@@ -1,4 +1,4 @@
-<x-layouts::app :title="__('Daftar User')">
+﻿<x-layouts::app :title="__('Daftar User')">
     <div class="admin-page">
         <div class="admin-page-header">
             <div>
@@ -50,18 +50,19 @@
                     </select>
 
                     <input type="hidden" name="sort_dir" value="{{ $filters['sort_dir'] }}" id="sort-dir-input" />
-                    <button
-                        type="button"
-                        title="{{ $filters['sort_dir'] === 'asc' ? 'Ascending' : 'Descending' }}"
-                        onclick="document.getElementById('sort-dir-input').value = '{{ $filters['sort_dir'] === 'asc' ? 'desc' : 'asc' }}'; document.getElementById('filter-form').submit();"
-                        class="admin-filter-sort"
-                    >
-                        @if ($filters['sort_dir'] === 'asc')
-                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
-                        @else
-                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"/></svg>
-                        @endif
-                    </button>
+                    <flux:tooltip content="{{ $filters['sort_dir'] === 'asc' ? 'Ascending' : 'Descending' }}">
+                        <button
+                            type="button"
+                            onclick="document.getElementById('sort-dir-input').value = '{{ $filters['sort_dir'] === 'asc' ? 'desc' : 'asc' }}'; document.getElementById('filter-form').submit();"
+                            class="admin-filter-sort"
+                        >
+                            @if ($filters['sort_dir'] === 'asc')
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
+                            @else
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"/></svg>
+                            @endif
+                        </button>
+                    </flux:tooltip>
 
                     <flux:button type="submit" variant="outline">{{ __('Terapkan') }}</flux:button>
 
@@ -149,9 +150,11 @@
                                         </button>
 
                                         @if ($user->id === auth()->id())
-                                            <span class="text-xs text-zinc-400 dark:text-zinc-600" title="{{ __('Anda tidak dapat menghapus akun Anda sendiri') }}">
-                                                -
-                                            </span>
+                                            <flux:tooltip content="{{ __('Anda tidak dapat menghapus akun Anda sendiri') }}">
+                                                <span class="text-xs text-zinc-400 dark:text-zinc-600">
+                                                    -
+                                                </span>
+                                            </flux:tooltip>
                                         @else
                                             <button
                                                 type="button"
