@@ -7,11 +7,20 @@
 
         $heroUrl = $heroImage ? Storage::url($heroImage) : null;
         $heroDisplay = in_array($heroImageDisplay ?? 'fit', ['fit', 'contain', 'adjustable', 'original'], true) ? ($heroImageDisplay ?? 'fit') : 'fit';
-        $heroImageClass = match ($heroDisplay) {
-            'contain' => 'block h-auto w-full object-contain',
-            'original' => 'block h-auto w-auto max-w-none',
-            'adjustable' => 'block h-auto w-full',
-            default => 'block h-auto max-h-[85svh] w-full object-cover sm:max-h-[90svh]',
+        $heroAdjustable = $heroDisplay === 'adjustable';
+        $heroBackgroundClass = match ($heroDisplay) {
+            'contain', 'adjustable' => 'absolute inset-0 h-full w-full object-contain',
+            'original' => 'absolute inset-0 h-full w-full object-none object-center',
+            default => 'absolute inset-0 h-full w-full object-cover',
+        };
+
+        // Adjustable: tinggi hero mengikuti rasio gambar (gambar tidak dipotong).
+        // Mobile/tablet tetap punya tinggi minimum agar judul, deskripsi, dan tombol muat;
+        // desktop (lg) mengikuti rasio gambar.
+        $heroSectionClass = match (true) {
+            $heroUrl === null => 'relative flex min-h-[420px] flex-col justify-center overflow-hidden bg-indigo-950 sm:min-h-[520px] lg:min-h-[600px]',
+            $heroAdjustable => 'relative flex min-h-[420px] flex-col justify-center overflow-hidden bg-indigo-950 sm:min-h-[520px] lg:min-h-0',
+            default => 'relative flex min-h-[420px] flex-col justify-center overflow-hidden bg-indigo-950 sm:min-h-[520px] lg:min-h-[600px]',
         };
 
         $liveIcons = collect([
@@ -25,15 +34,15 @@
         ];
     @endphp
 
-    <section id="home" class="relative overflow-hidden bg-slate-950">
+    <section id="home" class="{{ $heroSectionClass }}">
         @if ($heroUrl !== null)
-            <img src="{{ $heroUrl }}" alt="" class="{{ $heroImageClass }}" loading="eager" fetchpriority="high" decoding="async" />
+            <img src="{{ $heroUrl }}" alt="" class="{{ $heroBackgroundClass }}" loading="eager" fetchpriority="high" decoding="async" />
             <div class="absolute inset-0 bg-slate-950/40"></div>
         @endif
 
-        <div class="{{ $heroUrl !== null ? 'absolute inset-0 flex items-center' : 'relative z-10 flex min-h-svh w-full items-center' }}">
-            <div class="mx-auto flex w-full max-w-7xl flex-col items-start px-5 py-6 text-left sm:px-6 sm:py-12 lg:px-8 lg:py-28">
-                <h1 class="text-balance break-words text-xl font-black leading-tight tracking-tight sm:text-3xl md:text-5xl lg:text-6xl" style="color: {{ $welcomeTitleColor }}">
+        <div class="relative z-10 flex w-full items-center">
+            <div class="mx-auto flex w-full max-w-7xl flex-col items-start px-5 py-12 text-left sm:px-6 sm:py-16 lg:px-8 lg:py-20">
+                <h1 class="text-balance break-words text-xl font-black leading-tight tracking-tight sm:text-2xl md:text-3xl lg:text-4xl" style="color: {{ $welcomeTitleColor }}">
                     <span class="inline-block">{{ $welcomeTitle }}</span>
                     @if ($heroNameAnimate && $idolProfileVersion === 'jkt48' && filled($idolShortname) && $heroName2Text !== '' && $heroName2Text !== $heroName1Text)
                         <span
@@ -46,7 +55,7 @@
                         <span class="mt-1 block break-words sm:mt-2" style="color: {{ $heroName1Color }}">{{ $heroName1Text }}</span>
                     @endif
                 </h1>
-                <p class="mt-3 line-clamp-2 max-w-xl text-xs leading-6 text-indigo-100 sm:mt-4 sm:line-clamp-none sm:text-base sm:leading-8 lg:text-lg">Temukan aktivitas terbaru, jadwal, dan momen favorit dari {{ $idolName }} dalam satu halaman yang selalu diperbarui.</p>
+                <p class="mt-3 line-clamp-2 max-w-xl text-xs leading-6 text-indigo-100 sm:mt-4 sm:line-clamp-none sm:text-base sm:leading-8 lg:text-md">Temukan aktivitas terbaru, jadwal, dan momen favorit dari {{ $idolName }} dalam satu halaman yang selalu diperbarui.</p>
 
                 @if (! empty($heroButtons))
                     <div class="mt-4 flex w-full flex-col gap-2 sm:mt-8 sm:w-auto sm:flex-row sm:flex-wrap sm:gap-4">
@@ -268,7 +277,7 @@
                 <div class="overflow-hidden">
                     <div class="flex gap-4 transition-transform duration-500 ease-out" data-gallery-track>
                         @foreach ($galleryPhotos as $photo)
-                            <a href="{{ route('gallery.index') }}" data-gallery-item class="group w-[calc((100%-2rem)/3)] shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                            <a href="{{ route('gallery.index') }}" data-gallery-item class="group w-full shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-2rem)/3)]">
                                 <img src="{{ Storage::url($photo->photo) }}" alt="{{ $photo->description ?: 'Gallery photo' }}" class="aspect-square w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" decoding="async" />
                             </a>
                         @endforeach
@@ -332,7 +341,7 @@
                             <div class="flex gap-4 transition-transform duration-500 ease-out" data-youtube-track>
                                 @foreach ($youtubeVideos as $video)
                                     <a href="{{ $video['url'] }}" target="_blank" rel="noopener" data-youtube-item
-                                       class="group flex w-[calc((100%-2rem)/3)] shrink-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-indigo-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-700">
+                                       class="group flex w-full shrink-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-indigo-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-700 sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-2rem)/3)]">
                                         <div class="aspect-video w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
                                             @if ($video['thumbnail'])
                                                 <img src="{{ $video['thumbnail'] }}" alt="{{ $video['title'] }}" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" decoding="async" />
@@ -367,22 +376,46 @@
 
     <script>
         (function () {
-            function setupCarousel(root, selectors, visible) {
+            function visibleCount() {
+                if (window.matchMedia('(min-width: 1024px)').matches) {
+                    return 3;
+                }
+
+                if (window.matchMedia('(min-width: 640px)').matches) {
+                    return 2;
+                }
+
+                return 1;
+            }
+
+            function setupCarousel(root, selectors) {
                 var track = root.querySelector(selectors.track);
                 var items = Array.prototype.slice.call(root.querySelectorAll(selectors.item));
                 var prev = root.querySelector(selectors.prev);
                 var next = root.querySelector(selectors.next);
                 var navs = Array.prototype.slice.call(root.querySelectorAll(selectors.nav));
                 var index = 0;
-                var maxIndex = Math.max(0, items.length - visible);
 
                 if (!track || items.length === 0) {
                     return;
                 }
 
-                if (items.length <= visible) {
-                    navs.forEach(function (nav) { nav.classList.add('hidden'); });
-                    return;
+                var count = visibleCount();
+                var maxIndex = Math.max(0, items.length - count);
+
+                function syncCount() {
+                    count = visibleCount();
+                    maxIndex = Math.max(0, items.length - count);
+
+                    if (index > maxIndex) {
+                        index = maxIndex;
+                    }
+
+                    if (items.length <= count) {
+                        navs.forEach(function (nav) { nav.classList.add('hidden'); });
+                    } else {
+                        navs.forEach(function (nav) { nav.classList.remove('hidden'); });
+                    }
                 }
 
                 function step() {
@@ -399,9 +432,23 @@
                     if (next) next.disabled = index >= maxIndex;
                 }
 
+                function refresh() {
+                    syncCount();
+                    update();
+                }
+
                 if (prev) prev.addEventListener('click', function () { if (index > 0) { index--; update(); } });
                 if (next) next.addEventListener('click', function () { if (index < maxIndex) { index++; update(); } });
-                window.addEventListener('resize', update);
+
+                syncCount();
+
+                if (items.length <= count) {
+                    update();
+
+                    return;
+                }
+
+                window.addEventListener('resize', refresh);
                 update();
             }
 
@@ -412,7 +459,7 @@
                     prev: '[data-gallery-prev]',
                     next: '[data-gallery-next]',
                     nav: '[data-gallery-nav]',
-                }, 3);
+                });
             });
 
             document.querySelectorAll('[data-youtube-carousel]').forEach(function (root) {
@@ -422,7 +469,7 @@
                     prev: '[data-youtube-prev]',
                     next: '[data-youtube-next]',
                     nav: '[data-youtube-nav]',
-                }, 3);
+                });
             });
 
             document.querySelectorAll('[data-hero-swap]').forEach(function (el) {
