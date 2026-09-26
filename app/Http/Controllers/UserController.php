@@ -9,12 +9,15 @@ use App\Models\User;
 use App\Support\ListingQuery;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 class UserController extends Controller
 {
     public function index(Request $request): View
     {
+        Gate::authorize('viewAny', User::class);
+
         $filters = ListingQuery::from($request, ['name', 'email', 'role', 'created_at'], 'created_at', [
             'role' => '',
         ]);
@@ -42,6 +45,8 @@ class UserController extends Controller
 
     public function store(StoreUserRequest $request): RedirectResponse
     {
+        Gate::authorize('create', User::class);
+
         $validated = $request->validated();
 
         $user = User::create([
@@ -59,10 +64,19 @@ class UserController extends Controller
 
     public function update(UpdateUserRequest $request, User $user): RedirectResponse
     {
+        Gate::authorize('update', $user);
+        Gate::authorize('changeRole', $user);
+
         $validated = $request->validated();
 
-        if ($user->id === auth()->id() && $validated['role'] !== UserRole::SuperAdmin->value) {
+        $isSelf = $user->is(auth()->user());
+
+        if ($isSelf && $validated['role'] !== UserRole::SuperAdmin->value) {
             return back()->withErrors(['role' => 'Anda tidak dapat mengubah role akun Anda sendiri.']);
+        }
+
+        if ($this->isLastSuperAdmin($user) && $validated['role'] !== UserRole::SuperAdmin->value) {
+            return back()->withErrors(['role' => 'Super Admin terakhir tidak dapat diturunkan rolenya.']);
         }
 
         $user->name = $validated['name'];
@@ -81,8 +95,10 @@ class UserController extends Controller
 
     public function destroy(User $user): RedirectResponse
     {
-        if ($user->id === auth()->id()) {
-            return back()->withErrors(['error' => 'Anda tidak dapat menghapus akun Anda sendiri.']);
+        Gate::authorize('delete', $user);
+
+        if ($this->isLastSuperAdmin($user)) {
+            return back()->withErrors(['error' => 'Super Admin terakhir tidak dapat dihapus.']);
         }
 
         $userName = $user->name;
@@ -90,5 +106,17 @@ class UserController extends Controller
 
         return redirect()->route('users.index')
             ->with('success', 'User '.$userName.' berhasil dihapus.');
+    }
+
+    /**
+     * Cegah hilangnya akses Super Admin terakhir.
+     */
+    private function isLastSuperAdmin(User $user): bool
+    {
+        if (! $user->isSuperAdmin()) {
+            return false;
+        }
+
+        return User::query()->where('role', UserRole::SuperAdmin)->count() <= 1;
     }
 }

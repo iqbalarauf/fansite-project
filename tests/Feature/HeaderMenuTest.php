@@ -22,6 +22,53 @@ class HeaderMenuTest extends TestCase
             ->assertSee('data-site-header', false);
     }
 
+    public function test_public_header_has_mobile_hamburger_menu_with_social_and_theme_switch(): void
+    {
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('data-mobile-menu-toggle', false)
+            ->assertSee('data-mobile-menu', false)
+            ->assertSee('site-mobile-menu', false)
+            ->assertSee('window.toggleTheme()', false);
+    }
+
+    public function test_public_header_shows_social_media_icons_for_fanbase(): void
+    {
+        DB::table('about_settings')->upsert([
+            ['key' => 'instagram_url', 'value' => 'https://instagram.com/fansite', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'twitter_url', 'value' => 'https://x.com/fansite', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'tiktok_url', 'value' => 'https://tiktok.com/@fansite', 'created_at' => now(), 'updated_at' => now()],
+        ], ['key'], ['value', 'updated_at']);
+
+        Cache::forget('about_settings');
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('aria-label="Instagram"', false)
+            ->assertSee('aria-label="X (Twitter)"', false)
+            ->assertSee('aria-label="TikTok"', false)
+            ->assertSee('https://instagram.com/fansite', false)
+            ->assertSee('https://x.com/fansite', false)
+            ->assertSee('https://tiktok.com/@fansite', false);
+    }
+
+    public function test_public_header_falls_back_to_idol_social_media_keys(): void
+    {
+        DB::table('about_settings')->upsert([
+            ['key' => 'idol_social_media_instagram', 'value' => 'https://instagram.com/idol', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'idol_social_media_twitter', 'value' => 'https://x.com/idol', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'idol_social_media_tiktok', 'value' => 'https://tiktok.com/@idol', 'created_at' => now(), 'updated_at' => now()],
+        ], ['key'], ['value', 'updated_at']);
+
+        Cache::forget('about_settings');
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('https://instagram.com/idol', false)
+            ->assertSee('https://x.com/idol', false)
+            ->assertSee('https://tiktok.com/@idol', false);
+    }
+
     public function test_default_mode_renders_the_default_navigation(): void
     {
         MenuItem::query()->create(['label' => 'Menu Rahasia', 'type' => 'link', 'url' => '/rahasia']);
@@ -103,6 +150,43 @@ class HeaderMenuTest extends TestCase
         $this->get(route('home'))
             ->assertOk()
             ->assertSee('href="'.route('custom-pages.show', 'profil').'"', false);
+    }
+
+    public function test_super_admin_can_reorder_menu_items_by_drag_and_drop(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        $first = MenuItem::query()->create(['label' => 'Satu', 'type' => 'link', 'url' => '/satu', 'sort_order' => 0]);
+        $second = MenuItem::query()->create(['label' => 'Dua', 'type' => 'link', 'url' => '/dua', 'sort_order' => 1]);
+        $third = MenuItem::query()->create(['label' => 'Tiga', 'type' => 'link', 'url' => '/tiga', 'sort_order' => 2]);
+
+        // Pindahkan item pertama ke posisi terakhir.
+        Livewire::test('pages::header-menu.index')
+            ->call('sortItem', (string) $first->id, 2);
+
+        $this->assertSame(0, $second->fresh()->sort_order);
+        $this->assertSame(1, $third->fresh()->sort_order);
+        $this->assertSame(2, $first->fresh()->sort_order);
+    }
+
+    public function test_reordering_only_affects_items_with_the_same_parent(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        $group = MenuItem::query()->create(['label' => 'Group', 'type' => 'group', 'sort_order' => 0]);
+        $rootA = MenuItem::query()->create(['label' => 'Root A', 'type' => 'link', 'url' => '/a', 'sort_order' => 1]);
+        $childA = MenuItem::query()->create(['label' => 'Child A', 'type' => 'link', 'url' => '/ca', 'parent_id' => $group->id, 'sort_order' => 0]);
+        $childB = MenuItem::query()->create(['label' => 'Child B', 'type' => 'link', 'url' => '/cb', 'parent_id' => $group->id, 'sort_order' => 1]);
+
+        Livewire::test('pages::header-menu.index')
+            ->call('sortItem', (string) $childA->id, 1);
+
+        // Root tidak terpengaruh.
+        $this->assertSame(1, $rootA->fresh()->sort_order);
+
+        // Anak tertukar di dalam group-nya.
+        $this->assertSame(0, $childB->fresh()->sort_order);
+        $this->assertSame(1, $childA->fresh()->sort_order);
     }
 
     public function test_header_menu_settings_page_is_restricted_to_super_admin(): void

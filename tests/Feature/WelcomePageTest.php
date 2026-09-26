@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Support\Timezone;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -230,7 +231,7 @@ class WelcomePageTest extends TestCase
     {
         DB::table('concert_events')->insert([
             'event_name' => 'Konser Hari Ini',
-            'event_date' => now()->toDateString(),
+            'event_date' => Timezone::today(),
             'location' => 'Jakarta',
             'status' => 'on-air',
             'created_at' => now(),

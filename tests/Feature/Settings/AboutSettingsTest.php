@@ -158,6 +158,45 @@ class AboutSettingsTest extends TestCase
         $this->assertSame(['C', 'A', 'B'], array_column($stored, 'title'));
     }
 
+    public function test_fansite_social_media_links_are_saved_with_fanbase_keys(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::about.manage')
+            ->set('activeTab', 'fansite')
+            ->set('fanbaseName', 'Wota Nusantara')
+            ->set('fanbaseInstagram', 'https://instagram.com/wota')
+            ->set('fanbaseTwitter', 'https://x.com/wota')
+            ->set('fanbaseTiktok', 'https://tiktok.com/@wota')
+            ->call('saveFansite')
+            ->assertHasNoErrors();
+
+        $settings = DB::table('about_settings')->pluck('value', 'key');
+
+        $this->assertSame('https://instagram.com/wota', $settings['instagram_url']);
+        $this->assertSame('https://x.com/wota', $settings['twitter_url']);
+        $this->assertSame('https://tiktok.com/@wota', $settings['tiktok_url']);
+
+        // Tampil di header publik.
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('https://instagram.com/wota', false)
+            ->assertSee('https://x.com/wota', false)
+            ->assertSee('https://tiktok.com/@wota', false);
+    }
+
+    public function test_fansite_social_media_links_must_be_valid_urls(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::about.manage')
+            ->set('activeTab', 'fansite')
+            ->set('fanbaseName', 'Wota Nusantara')
+            ->set('fanbaseInstagram', 'bukan-url')
+            ->call('saveFansite')
+            ->assertHasErrors(['fanbaseInstagram']);
+    }
+
     public function test_fansite_information_can_be_updated_with_gallery_captions_and_structure(): void
     {
         Storage::fake('public');

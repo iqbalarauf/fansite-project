@@ -67,6 +67,12 @@ new #[Title('About Settings')] class extends Component
 
     public mixed $fanbaseLogoUpload = null;
 
+    public string $fanbaseInstagram = '';
+
+    public string $fanbaseTwitter = '';
+
+    public string $fanbaseTiktok = '';
+
     public string $fanbaseDescription = '';
 
     public string $fanbaseStructure = '';
@@ -163,6 +169,9 @@ new #[Title('About Settings')] class extends Component
 
         $this->fanbaseName = (string) ($settings['fanbase_name'] ?? '');
         $this->fanbaseLogoPath = $settings['fanbase_logo'] ?? null;
+        $this->fanbaseInstagram = (string) ($settings['instagram_url'] ?? '');
+        $this->fanbaseTwitter = (string) ($settings['twitter_url'] ?? '');
+        $this->fanbaseTiktok = (string) ($settings['tiktok_url'] ?? '');
         $this->fanbaseDescription = (string) ($settings['fanbase_description'] ?? '');
         $this->fanbaseStructure = (string) ($settings['fanbase_structure'] ?? '');
         $this->fanbaseStructureEnabled = filter_var($settings['fanbase_structure_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
@@ -281,6 +290,9 @@ new #[Title('About Settings')] class extends Component
         $this->validate([
             'fanbaseName' => ['required', 'string', 'max:255'],
             'fanbaseLogoUpload' => ['nullable', 'image', 'max:3072'],
+            'fanbaseInstagram' => ['nullable', 'url', 'max:255'],
+            'fanbaseTwitter' => ['nullable', 'url', 'max:255'],
+            'fanbaseTiktok' => ['nullable', 'url', 'max:255'],
             'fanbaseDescription' => ['nullable', 'string'],
             'fanbaseStructure' => ['nullable', 'string'],
             'fanbaseStructureEnabled' => ['boolean'],
@@ -355,6 +367,9 @@ new #[Title('About Settings')] class extends Component
             'fanbase_name' => $this->fanbaseName,
             'fanbase_slug' => Str::slug($this->fanbaseName),
             'fanbase_logo' => $this->fanbaseLogoPath,
+            'instagram_url' => $this->fanbaseInstagram,
+            'twitter_url' => $this->fanbaseTwitter,
+            'tiktok_url' => $this->fanbaseTiktok,
             'fanbase_description' => $this->fanbaseDescription,
             'fanbase_structure' => $this->fanbaseStructure,
             'fanbase_structure_enabled' => $this->fanbaseStructureEnabled ? 'true' : 'false',
@@ -859,6 +874,17 @@ new #[Title('About Settings')] class extends Component
                         </div>
 
                         <flux:textarea wire:model="fanbaseDescription" :label="__('Tentang Fanbase')" rows="4" />
+
+                        <div class="space-y-4 rounded-lg border border-dashed border-zinc-300 p-4 dark:border-zinc-600">
+                            <div>
+                                <p class="text-sm font-semibold text-zinc-700 dark:text-zinc-200">{{ __('Social Media Links') }}</p>
+                                <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Tautan sosial media fanbase yang tampil pada header situs.') }}</p>
+                            </div>
+
+                            <flux:input wire:model="fanbaseInstagram" :label="__('URL Instagram')" type="url" placeholder="https://instagram.com/..." />
+                            <flux:input wire:model="fanbaseTwitter" :label="__('URL Twitter/X')" type="url" placeholder="https://x.com/..." />
+                            <flux:input wire:model="fanbaseTiktok" :label="__('URL Tiktok')" type="url" placeholder="https://tiktok.com/@..." />
+                        </div>
 
                         <label class="inline-flex items-center gap-2 text-sm font-medium">
                             <input type="checkbox" wire:model="fanbaseStructureEnabled" class="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800">
