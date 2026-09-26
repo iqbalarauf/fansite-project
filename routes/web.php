@@ -15,8 +15,10 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LiveStreamingController;
 use App\Http\Controllers\MagazineController;
 use App\Http\Controllers\MeetGreetEventsController;
+use App\Http\Controllers\MerchandiseController;
 use App\Http\Controllers\PublicGalleryController;
 use App\Http\Controllers\PublicMagazineController;
+use App\Http\Controllers\PublicMerchandiseController;
 use App\Http\Controllers\PublicPhotoboothController;
 use App\Http\Controllers\PublicPostController;
 use App\Http\Controllers\PublicTimelineController;
@@ -49,6 +51,9 @@ Route::get('galeri', [PublicGalleryController::class, 'index'])->name('gallery.i
 Route::get('timeline', [PublicTimelineController::class, 'index'])->name('timeline.index');
 
 Route::get('trivia', [PublicTriviaController::class, 'index'])->middleware('feature:trivia')->name('trivia.index');
+
+Route::get('merchandise', [PublicMerchandiseController::class, 'index'])->middleware('feature:merchandise')->name('merchandise.index');
+Route::get('merchandise/{merchandiseProduct:slug}', [PublicMerchandiseController::class, 'show'])->middleware('feature:merchandise')->name('merchandise.show');
 
 Route::get('photobooth/{slug?}', [PublicPhotoboothController::class, 'show'])
     ->middleware(['feature:photobooth', 'throttle:30,1'])
@@ -168,6 +173,14 @@ Route::middleware(['auth', 'verified', 'block-view-only-writes'])->group(functio
         Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 
         Route::livewire('content/about', 'pages::about.manage')->name('about.edit');
+
+        // Merchandise (katalog produk)
+        Route::prefix('merch/manage')->name('merchandise.admin.')->middleware('feature:merchandise')->group(function (): void {
+            Route::get('/', [MerchandiseController::class, 'index'])->name('index');
+            Route::post('/', [MerchandiseController::class, 'store'])->name('store');
+            Route::put('{merchandiseProduct}', [MerchandiseController::class, 'update'])->name('update');
+            Route::delete('{merchandiseProduct}', [MerchandiseController::class, 'destroy'])->name('destroy');
+        });
 
         Route::livewire('sheet-integration', 'pages::sheet-integration.comparison')->middleware('sheet-integration')->name('sheet-integration.comparison');
     });

@@ -41,10 +41,10 @@ class LandingPageSettingsTest extends TestCase
         $this->actingAs(User::factory()->create());
 
         $modes = [
-            'fit' => ['bg-cover', false],
-            'contain' => ['bg-contain', false],
-            'original' => ['bg-auto', false],
-            'adjustable' => ['h-auto w-full', false],
+            'fit' => ['object-cover', false],
+            'contain' => ['object-contain', false],
+            'original' => ['object-none', false],
+            'adjustable' => ['object-contain', false],
         ];
 
         foreach ($modes as $mode => [$expected, $escaped]) {

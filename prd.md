@@ -1,7 +1,7 @@
 # PRD — FANSIGHT (Fansite Platform)
 
 **Dokumen:** Product Requirements Document
-**Versi:** 1.4
+**Versi:** 1.5
 **Tanggal:** 22 September 2026
 **Author:** Analisis Otomatis dari Codebase
 
@@ -37,7 +37,7 @@ Aplikasi dibangun berbasis web dengan arsitektur terpusat, sehingga seluruh data
 | **Bank Data Admin** | Anggota fanbase pengelola data statistik | Dashboard + master data (teater, konser, meet & greet, live streaming) |
 | **Content Creator** | Anggota fanbase pengelola konten | Content Management: Pages, Majalah, News, Blog, Kategori, Galeri, Timeline, Trivia |
 | **View Only** | Pengamat/kontributor pasif | Akses baca-saja ke dashboard, master data, dan content management (tanpa kemampuan menulis) |
-| **Publik** | Pengunjung umum | Membaca halaman publik (welcome, about, news, blog, majalah, custom pages, jadwal, galeri, timeline, trivia, photobooth) |
+| **Publik** | Pengunjung umum | Membaca halaman publik (welcome, about, news, blog, majalah, custom pages, jadwal, galeri, timeline, trivia, photobooth, merchandise) |
 
 ---
 
@@ -58,7 +58,7 @@ Aplikasi dibangun berbasis web dengan arsitektur terpusat, sehingga seluruh data
 - **Livewire Volt** single-file components untuk fitur interaktif (page builder, pengaturan, form pengaturan).
 - **Enums + role-based authorization** (`UserRole`, `ContentSection`, `ConcertStatus`, `MeetGreetEventType`, `LiveStreamingPlatform`, `MasterData`, `SyncMode`, `DiffStatus`) + middleware kustom.
 - **Policy konten** (`PostPolicy`, `MagazinePolicy`, `CustomPagePolicy`, `GalleryPhotoPolicy`, `GalleryVideoPolicy`, `TimelinePolicy`, `TriviaPolicy` via trait `AuthorizesContent`) memusatkan matriks peran + aturan kepemilikan Content Creator, diterapkan di controller (Pages/Majalah/News/Blog/Galeri/Timeline/Trivia) dan komponen Livewire page builder.
-- **Feature flags** berbasis setting (`SettingBag::featureEnabled()`) untuk mengaktifkan/menonaktifkan News, Blog, Majalah, Trivia, Photobooth, dan Sheet Integration.
+- **Feature flags** berbasis setting (`SettingBag::featureEnabled()`) untuk mengaktifkan/menonaktifkan News, Blog, Majalah, Trivia, Photobooth, Merchandise, dan Sheet Integration.
 - **Support/Service classes** (`app/Support`): `DashboardAssembler`, `WelcomePageData`, `AboutPageData`, `EventTimeline`, `SettingBag`, `SettingsStore`, `ListingQuery`, `ShowDate`, `CustomPageStatistic`, `BrandPalette`, `HeroLink`, `HeaderMenu`, `YoutubeEmbed`/`YoutubeRss`/`YoutubePlaylist`, `Spreadsheet`, `Csv`.
 - **Soft deletes** pada `show_teater`, `meet_greet_events`, `concert_events`, `custom_pages`, `news_posts`/`blog_posts`, `magazines`, `gallery_photos`/`gallery_videos`, `timelines`, dan `trivias`, dengan penyaringan `deleted_at` di seluruh query (termasuk raw `DB::table`).
 - **Pipeline fetch data** dari API eksternal (JKT48 public API) via Artisan command.
@@ -177,7 +177,7 @@ Enums: `App\Enums\UserRole`
 
 ### 5.14 Setting — Features Activation
 - Halaman standalone **Features Activation** (`/features`, komponen `pages::features.index`):
-  - **Fitur konten**: News (`news_enabled`), Blog (`blog_enabled`), Majalah (`magazines_enabled`), Trivia (`trivia_enabled`), Photobooth (`photobooth_enabled`), Sheet Integration (`sheet_integration_enabled`).
+  - **Fitur konten**: News (`news_enabled`), Blog (`blog_enabled`), Majalah (`magazines_enabled`), Trivia (`trivia_enabled`), Photobooth (`photobooth_enabled`), Merchandise (`merchandise_enabled`), Sheet Integration (`sheet_integration_enabled`).
 - Default aktif (kecuali Sheet Integration default nonaktif). `SettingBag::featureEnabled()` membaca nilai ini; `SettingBag::sheetIntegrationEnabled()` untuk Sheet Integration. Menonaktifkan fitur → route publik & admin 404 serta menu terkait disembunyikan.
 
 ### 5.15 Setting — Header Menu
@@ -201,6 +201,7 @@ Enums: `App\Enums\UserRole`
 - **Welcome** (`/`): hero foto produksi dengan **judul hero** (teks & warna) + **nama beranimasi** (2 opsi teks & warna) + **2 tombol hero** (label & tautan dari Landing Page) + tombol **Berkenalan dengan {idol_shortname}**, bagian **About idola**, **Youtube Playlist** (cards carousel / embed), **Berita Terbaru** (dari `welcome_feed_source`, tampil bila fitur aktif), **Statistik** (jumlah show/setlist/partisipasi), **Schedule Event Mendatang** (dengan link pembelian), dan **Status Live**.
 - **About** (`/about/idol`, `/about/fansite`): halaman profil idola (foto, detail, pencapaian, diskografi, jikoshoukai, sosmed) dan profil fanbase (logo, deskripsi, kegiatan, galeri, CTA, struktur organisasi, dan **modal Sejarah Fansite**).
 - **News & Blog** publik (`/news`, `/blog`) serta **Majalah** (`/majalah`).
+- **Merchandise** (`/merchandise`): katalog produk dalam bentuk cards (cover, nama, harga, deskripsi singkat) dengan tombol **Detail** & **Belanja**; halaman detail (`/merchandise/{slug}`) menampilkan **kolase foto** (klik untuk lightbox), deskripsi, dan tombol Belanja. Link Belanja memakai `shop_url` produk, fallback ke link global. Dikontrol feature flag `merchandise`.
 
 ---
 
@@ -218,6 +219,7 @@ Enums: `App\Enums\UserRole`
 | `categories` | `Category` | `type` = `news`/`blog`, slug unik per tipe |
 | `posts` | `NewsPost`/`BlogPost` (extends `Post`) | Tabel tunggal + kolom `type` (`news`/`blog`), unik `(type, slug)`; soft deletes, SEO, status, jadwal, featured, audit `created_by`/`updated_by`, FULLTEXT `(title, excerpt)` |
 | `magazines` | `Magazine` | File PDF + cover, `is_main`, `views`, `downloads`, soft deletes, audit |
+| `merchandise_products` | `MerchandiseProduct` | Katalog produk: `name`, `slug`, `description`, `price`, JSON `images`, `shop_url`, `is_active`, `sort_order`, audit, soft deletes |
 | `about_settings` | `AboutSettings` | KV |
 | `app_settings` | `AppSettings` | KV (branding + feature flags + hero + youtube) |
 | `custom_pages` | `CustomPage` | JSON `blocks`, soft deletes |
@@ -248,7 +250,7 @@ Enums: `App\Enums\UserRole`
 - **Performa:** Statistik dashboard & setting di-cache; pipeline fetch data mengurangi beban manual.
 - **Keamanan:** 2FA, verifikasi email, RBAC, hash password, **soft deletes** untuk recovery data, feature flags berbasis setting, serta **sanitasi HTML** (`App\Support\HtmlSanitizer`) untuk konten artikel (profil ketat) dan blok embed page builder (profil longgar) guna mencegah XSS.
 - **Idempotensi:** `TheaterReference` mencegah duplikasi saat fetch dari API JKT48; soft delete pada `show_teater` menjaga `show_id` tetap stabil.
-- **Testing:** 65 file test PHPUnit (feature) yang mencakup auth, settings, role access, feature toggle, soft delete, setiap domain data, Sheet Integration, ekspor/impor Excel, **HTML sanitizer**, `sort_order` konten, **Policy konten**, **mode tampilan & background page builder**, serta **baca `show_teater` via pivot**.
+- **Testing:** 66 file test PHPUnit (feature) yang mencakup auth, settings, role access, feature toggle, soft delete, setiap domain data, Sheet Integration, ekspor/impor Excel, **HTML sanitizer**, `sort_order` konten, **Policy konten**, **mode tampilan & background page builder**, serta **baca `show_teater` via pivot**.
 
 ---
 
@@ -286,6 +288,7 @@ Status selesai (September 2026):
 - [x] **Baca `show_teater` via normalisasi (mirror):** seluruh jalur baca per-baris (daftar & ekspor admin, jadwal bulanan, statistik profil idola, predictor unit song, timeline) memakai relasi/pivot `show_teater_unit_song` & `setlist_id` melalui accessor `ShowTeater::setlistName()`/`unitSongNames()`/`unitSongString()`; kolom teks `setlist`/`unit_song` **dipertahankan sebagai mirror** (fallback + agregat) agar kontrak Sheet Integration & form input lama tetap utuh.
 - [x] **Konsistensi akses DB:** seluruh raw `DB::table` pada `app/` diubah ke Eloquent (`ShowTeater`, `ConcertEvents`, `MeetGreetEvents`, `LiveStreaming`, `AppSettings`, `AboutSettings`, `ShowTeaterUnitSong`, dst.) — `DB::raw` tetap dipakai untuk ekspresi tanggal/agregasi. Model pivot baru: `ShowTeaterUnitSong`.
 - [x] **Perluasan Policy konten:** `GalleryPhotoPolicy`, `GalleryVideoPolicy`, `TimelinePolicy`, `TriviaPolicy` ditambahkan & diterapkan di controller (Photobooth tetap khusus Super Admin melalui middleware route).
+- [x] **Fitur Merchandise:** katalog produk (cards) + halaman detail (kolase foto, deskripsi, tombol Belanja), link belanja global (Landing Page) dengan override per produk, dikontrol feature flag `merchandise` + Policy `MerchandiseProductPolicy` (Super Admin).
 - [x] **Halaman Landing Page:** kustomisasi judul & nama hero (teks + warna), Hero Image (mode Fit/Contain/Adjustable Height/Original), Hero Buttons, Youtube Playlist, Galeri & Konten Landing Page; opsi **sembunyikan App Name** di header (Appearance) dan **page display `welcome`** pada custom page memakai header/footer publik yang sama dengan beranda.
 - [x] **Penyempurnaan Page Builder:** alignment & warna (background/label) tombol, font size & opsi heading pada teks, mode tampilan gambar (Fit/Contain/Auto height/Original), background elemen/halaman **transparan**, **Preview sebelum Publish**, tombol Upload tersembunyi sampai file dipilih, serta radio **URL/Upload** untuk blok gambar.
 
@@ -302,7 +305,8 @@ Backlog tersisa (opsional, tidak memblokir):
 - **Route admin/master data:** `/dashboard`, `/show-teater`, `/show-teater/categories`, `/meet-greet-events`, `/concert-events`, `/live-streaming`, `/users`, plus ekspor `show-teater/export`, `meet-greet-events/export`, `concert-events/export`, `live-streaming/export` dan impor `show-teater/categories/import`.
 - **Route Content Management:** `/pages`, `/magazines`, `/content/news`, `/content/blog`, `/content/categories`.
 - **Route konfigurasi (standalone):** `/landing-page`, `/appearance`, `/features`, `/header-menu`, `/sheet-integration`, `/content/about`, `/users`; **Settings:** `/profile`, `/settings/security`, `/settings/photobooth`.
-- **Route publik:** `/`, `/about/idol`, `/about/fansite`, `/majalah`, `/majalah/{slug}`, `/majalah/{slug}/download`, `/news`, `/news/{slug}`, `/blog`, `/blog/{slug}`, serta catch-all `/{customPage:slug}`.
+- **Route publik:** `/`, `/about/idol`, `/about/fansite`, `/majalah`, `/majalah/{slug}`, `/majalah/{slug}/download`, `/news`, `/news/{slug}`, `/blog`, `/blog/{slug}`, `/trivia`, `/merchandise`, `/merchandise/{slug}`, serta catch-all `/{customPage:slug}`.
+- **Route admin Merchandise:** `/merch/manage` (index/store/update/destroy, Super Admin + feature flag `merchandise`).
 - **Console:** `app:fetch-theater-shows` (fetch jadwal), `app:fetch-streaming-info` (live streaming), `app:check-member-live`, `app:backfill-live-ids`, `app:sync-google-sheets` (auto-sync, hourly), `app:audit-show-teater-mapping`, `app:backfill-show-teater-normalization` + `inspire`.
 - **Seeder:** `AboutSeeder`, `AppSettingsSeeder`, `ShowTeaterCategoriesSeeder`, `DatabaseSeeder`.
 - **Sumber API eksternal:** `https://jkt48.com/api/v1/schedules?lang=id&month=...&year=...&type=SHOW` + Google Sheets API.

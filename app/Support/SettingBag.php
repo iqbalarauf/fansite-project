@@ -127,6 +127,16 @@ final class SettingBag
     }
 
     /**
+     * Link toko global untuk tombol "Belanja" merchandise.
+     */
+    public static function merchandiseShopUrl(): ?string
+    {
+        $url = trim(self::string('merchandise_shop_url'));
+
+        return $url !== '' ? $url : null;
+    }
+
+    /**
      * @param  array<string, mixed>  $about
      * @return array<int, array{photo: string|null, title: string, duration_from: string|null, duration_to: string|null}>
      */

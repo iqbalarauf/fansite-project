@@ -62,6 +62,8 @@ new #[Title('Landing Page')] class extends Component
 
     public string $youtubeDisplayMode = 'cards';
 
+    public string $merchandiseShopUrl = '';
+
     public function mount(): void
     {
         abort_unless(auth()->user()?->isSuperAdmin(), 403);
@@ -102,6 +104,8 @@ new #[Title('Landing Page')] class extends Component
         $this->youtubePlaylistUrl = (string) ($settings['youtube_playlist_url'] ?? '');
         $youtubeMode = (string) ($settings['youtube_display_mode'] ?? 'cards');
         $this->youtubeDisplayMode = in_array($youtubeMode, ['cards', 'embed'], true) ? $youtubeMode : 'cards';
+
+        $this->merchandiseShopUrl = (string) ($settings['merchandise_shop_url'] ?? '');
     }
 
     public function save(): void
@@ -131,6 +135,7 @@ new #[Title('Landing Page')] class extends Component
             'youtubeEmbedEnabled' => ['boolean'],
             'youtubePlaylistUrl' => ['nullable', 'string', 'max:2048'],
             'youtubeDisplayMode' => ['required', 'in:cards,embed'],
+            'merchandiseShopUrl' => ['nullable', 'url', 'max:500'],
         ]);
 
         if ($this->heroImageUpload) {
@@ -165,6 +170,7 @@ new #[Title('Landing Page')] class extends Component
             'youtube_embed_enabled' => $this->youtubeEmbedEnabled ? 'true' : 'false',
             'youtube_playlist_url' => $this->youtubePlaylistUrl,
             'youtube_display_mode' => $this->youtubeDisplayMode,
+            'merchandise_shop_url' => $this->merchandiseShopUrl,
         ]);
 
         $this->titleColor = strtoupper($this->titleColor);
@@ -344,12 +350,12 @@ new #[Title('Landing Page')] class extends Component
                                     <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Pilih cara gambar hero ditampilkan pada beranda.') }}</p>
                                 </div>
 
-                                @foreach ([
-                                    'fit' => ['label' => 'Fit', 'hint' => 'Memenuhi seluruh area hero, potong bila perlu.'],
-                                    'contain' => ['label' => 'Contain', 'hint' => 'Seluruh gambar terlihat, ada ruang kosong.'],
-                                    'adjustable' => ['label' => 'Adjustable Height', 'hint' => 'Tinggi hero mengikuti rasio gambar.'],
-                                    'original' => ['label' => 'Original', 'hint' => 'Ukuran asli gambar, tanpa diperbesar.'],
-                                ] as $value => $option)
+                        @foreach ([
+                            'fit' => ['label' => 'Fit', 'hint' => 'Memenuhi seluruh area hero, potong bila perlu.'],
+                            'contain' => ['label' => 'Contain', 'hint' => 'Seluruh gambar terlihat, ada ruang kosong.'],
+                            'adjustable' => ['label' => 'Adjustable Height', 'hint' => 'Tinggi hero mengikuti rasio gambar.'],
+                            'original' => ['label' => 'Original', 'hint' => 'Ukuran asli gambar, tanpa diperbesar.'],
+                        ] as $value => $option)
                                     <label class="flex items-start gap-3">
                                         <input type="radio" wire:model.live="heroImageDisplay" value="{{ $value }}" class="mt-0.5 rounded border-zinc-300 text-blue-600">
                                         <span class="text-sm text-zinc-700 dark:text-zinc-200">
@@ -498,6 +504,16 @@ new #[Title('Landing Page')] class extends Component
                             </div>
                         </div>
                     @endif
+                </div>
+
+                <div class="space-y-4 rounded-xl border border-zinc-200 p-5 dark:border-zinc-700">
+                    <div>
+                        <flux:heading size="sm">{{ __('Merchandise') }}</flux:heading>
+                        <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Link toko untuk tombol "Belanja" yang dipakai bila produk tidak punya link sendiri.') }}</flux:text>
+                    </div>
+
+                    <flux:input wire:model="merchandiseShopUrl" :label="__('Link Belanja (Global)')" type="url" placeholder="https://shopee.co.id/..." />
+                    @error('merchandiseShopUrl') <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="flex items-center justify-end">

@@ -18,6 +18,8 @@ new #[Title('Features Activation')] class extends Component
 
     public bool $photoboothEnabled = true;
 
+    public bool $merchandiseEnabled = true;
+
     public bool $sheetIntegrationEnabled = false;
 
     public function mount(): void
@@ -31,6 +33,7 @@ new #[Title('Features Activation')] class extends Component
         $this->magazineEnabled = filter_var($settings['magazines_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
         $this->triviaEnabled = filter_var($settings['trivia_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
         $this->photoboothEnabled = filter_var($settings['photobooth_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
+        $this->merchandiseEnabled = filter_var($settings['merchandise_enabled'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
         $this->sheetIntegrationEnabled = filter_var($settings['sheet_integration_enabled'] ?? 'false', FILTER_VALIDATE_BOOLEAN);
     }
 
@@ -42,6 +45,7 @@ new #[Title('Features Activation')] class extends Component
             'magazines_enabled' => $this->magazineEnabled ? 'true' : 'false',
             'trivia_enabled' => $this->triviaEnabled ? 'true' : 'false',
             'photobooth_enabled' => $this->photoboothEnabled ? 'true' : 'false',
+            'merchandise_enabled' => $this->merchandiseEnabled ? 'true' : 'false',
             'sheet_integration_enabled' => $this->sheetIntegrationEnabled ? 'true' : 'false',
         ]);
 
@@ -96,6 +100,14 @@ new #[Title('Features Activation')] class extends Component
                         <span class="text-sm text-zinc-700 dark:text-zinc-200">
                             <span class="font-medium">{{ __('Photobooth') }}</span>
                             <span class="block text-xs text-zinc-500 dark:text-zinc-400">{{ __('Tampilkan menu dan halaman publik Photobooth.') }}</span>
+                        </span>
+                    </label>
+
+                    <label class="flex items-start gap-3">
+                        <input type="checkbox" wire:model="merchandiseEnabled" value="1" class="mt-0.5 rounded border-zinc-300 text-blue-600">
+                        <span class="text-sm text-zinc-700 dark:text-zinc-200">
+                            <span class="font-medium">{{ __('Merchandise') }}</span>
+                            <span class="block text-xs text-zinc-500 dark:text-zinc-400">{{ __('Tampilkan menu dan halaman katalog Merchandise.') }}</span>
                         </span>
                     </label>
 

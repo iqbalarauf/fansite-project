@@ -92,6 +92,11 @@
                                     {{ __('Trivia') }}
                                 </flux:sidebar.item>
                             @endif
+                            @if (\App\Support\SettingBag::featureEnabled('merchandise') && auth()->user()?->isSuperAdmin())
+                                <flux:sidebar.item icon="shopping-bag" :href="route('merchandise.admin.index')" :current="request()->routeIs('merchandise.admin.*')" wire:navigate>
+                                    {{ __('Merchandise') }}
+                                </flux:sidebar.item>
+                            @endif
                             @if (auth()->user()?->isSuperAdmin())
                                 <flux:sidebar.item icon="camera" :href="route('photobooth.edit')" :current="request()->routeIs('photobooth.edit')" wire:navigate>
                                     {{ __('Photobooth') }}
