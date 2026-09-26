@@ -43,8 +43,8 @@ class LandingPageSettingsTest extends TestCase
         $modes = [
             'fit' => ['object-cover', false],
             'contain' => ['object-contain', false],
-            'original' => ['max-w-none', false],
-            'adjustable' => ['h-auto w-full', false],
+            'original' => ['object-none', false],
+            'adjustable' => ['object-contain', false],
         ];
 
         foreach ($modes as $mode => [$expected, $escaped]) {
