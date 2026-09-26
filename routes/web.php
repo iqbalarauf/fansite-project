@@ -168,9 +168,9 @@ Route::middleware(['auth', 'verified', 'block-view-only-writes'])->group(functio
 
     Route::middleware('role:super_admin')->group(function () {
         Route::get('users', [UserController::class, 'index'])->name('users.index');
-        Route::post('users', [UserController::class, 'store'])->name('users.store');
-        Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
-        Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+        Route::post('users', [UserController::class, 'store'])->middleware('throttle:30,1')->name('users.store');
+        Route::put('users/{user}', [UserController::class, 'update'])->middleware('throttle:30,1')->name('users.update');
+        Route::delete('users/{user}', [UserController::class, 'destroy'])->middleware('throttle:30,1')->name('users.destroy');
 
         Route::livewire('content/about', 'pages::about.manage')->name('about.edit');
 

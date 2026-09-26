@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Support\Timezone;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -108,20 +109,20 @@ class DashboardTest extends TestCase
 
     public function test_default_dashboard_timelines_include_all_event_sources_before_and_after_today(): void
     {
-        $today = now()->toDateString();
+        $base = Carbon::parse(Timezone::today());
 
         DB::table('show_teater')->insert([
-            ['show_id' => 1, 'show_date' => now()->subDay()->toDateString(), 'setlist' => 'Past Show'],
-            ['show_id' => 2, 'show_date' => now()->addDay()->toDateString(), 'setlist' => 'Upcoming Show'],
-            ['show_id' => 3, 'show_date' => $today, 'setlist' => 'Today Show'],
+            ['show_id' => 1, 'show_date' => $base->copy()->subDay()->toDateString(), 'setlist' => 'Past Show'],
+            ['show_id' => 2, 'show_date' => $base->copy()->addDay()->toDateString(), 'setlist' => 'Upcoming Show'],
+            ['show_id' => 3, 'show_date' => $base->toDateString(), 'setlist' => 'Today Show'],
         ]);
         DB::table('concert_events')->insert([
-            ['event_name' => 'Past Concert', 'event_date' => now()->subDays(2)->toDateString(), 'location' => 'Jakarta', 'status' => 'on-air', 'created_at' => now(), 'updated_at' => now()],
-            ['event_name' => 'Upcoming Concert', 'event_date' => now()->addDays(2)->toDateString(), 'location' => 'Jakarta', 'status' => 'on-air', 'created_at' => now(), 'updated_at' => now()],
+            ['event_name' => 'Past Concert', 'event_date' => $base->copy()->subDays(2)->toDateString(), 'location' => 'Jakarta', 'status' => 'on-air', 'created_at' => now(), 'updated_at' => now()],
+            ['event_name' => 'Upcoming Concert', 'event_date' => $base->copy()->addDays(2)->toDateString(), 'location' => 'Jakarta', 'status' => 'on-air', 'created_at' => now(), 'updated_at' => now()],
         ]);
         DB::table('meet_greet_events')->insert([
-            ['event_name' => 'Past Meet', 'event_date' => now()->subDays(3)->toDateString(), 'event_type' => 'meet-greet', 'created_at' => now(), 'updated_at' => now()],
-            ['event_name' => 'Upcoming Meet', 'event_date' => now()->addDays(3)->toDateString(), 'event_type' => 'meet-greet', 'created_at' => now(), 'updated_at' => now()],
+            ['event_name' => 'Past Meet', 'event_date' => $base->copy()->subDays(3)->toDateString(), 'event_type' => 'meet-greet', 'created_at' => now(), 'updated_at' => now()],
+            ['event_name' => 'Upcoming Meet', 'event_date' => $base->copy()->addDays(3)->toDateString(), 'event_type' => 'meet-greet', 'created_at' => now(), 'updated_at' => now()],
         ]);
 
         $response = $this->actingAs(User::factory()->create())->get(route('dashboard'));
@@ -196,10 +197,12 @@ class DashboardTest extends TestCase
 
     public function test_dashboard_exposes_upcoming_show_count(): void
     {
+        $today = Timezone::today();
+
         DB::table('show_teater')->insert([
-            ['show_id' => 1, 'show_date' => now()->subDay()->toDateString(), 'setlist' => 'Past Show'],
-            ['show_id' => 2, 'show_date' => now()->addDay()->toDateString(), 'setlist' => 'Upcoming Show A'],
-            ['show_id' => 3, 'show_date' => now()->addDay()->toDateString(), 'setlist' => 'Upcoming Show B'],
+            ['show_id' => 1, 'show_date' => Carbon::parse($today)->subDay()->toDateString(), 'setlist' => 'Past Show'],
+            ['show_id' => 2, 'show_date' => Carbon::parse($today)->addDay()->toDateString(), 'setlist' => 'Upcoming Show A'],
+            ['show_id' => 3, 'show_date' => Carbon::parse($today)->addDay()->toDateString(), 'setlist' => 'Upcoming Show B'],
         ]);
 
         $response = $this->actingAs(User::factory()->create())->get(route('dashboard'));

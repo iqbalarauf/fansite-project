@@ -126,6 +126,41 @@ new #[Title('Header Menu')] class extends Component
         Flux::toast(variant: 'success', text: __('Item menu berhasil dihapus.'));
     }
 
+    /**
+     * Ubah urutan item menu (drag and drop) di dalam parent yang sama.
+     */
+    public function sortItem(string $item, int $position): void
+    {
+        $moved = MenuItem::query()->find($item);
+
+        if ($moved === null) {
+            return;
+        }
+
+        $siblings = MenuItem::query()
+            ->where('parent_id', $moved->parent_id)
+            ->ordered()
+            ->get();
+
+        $reordered = $siblings->reject(fn (MenuItem $sibling): bool => $sibling->id === $moved->id)->values();
+
+        if ($position < 0) {
+            $position = 0;
+        }
+
+        if ($position > $reordered->count()) {
+            $position = $reordered->count();
+        }
+
+        $reordered->splice($position, 0, [$moved]);
+
+        foreach ($reordered as $index => $sibling) {
+            MenuItem::query()->whereKey($sibling->id)->update(['sort_order' => $index]);
+        }
+
+        Flux::toast(variant: 'success', text: __('Urutan menu diperbarui.'));
+    }
+
     public function cancel(): void
     {
         $this->resetForm();
@@ -161,10 +196,51 @@ new #[Title('Header Menu')] class extends Component
     }
 
     /**
+     * Daftar item menu dikelompokkan per parent (untuk drag and drop per grup).
+     *
+     * @return array<int, array{parent: string|null, depth: int, rows: array<int, array<string, mixed>>}>
+     */
+    public function menuRowsGrouped(): array
+    {
+        $all = MenuItem::query()->with('page')->ordered()->get();
+        $groups = [];
+
+        $walk = function (?int $parentId, int $depth, ?string $parentLabel) use (&$walk, &$groups, $all): void {
+            $items = $all->where('parent_id', $parentId);
+
+            if ($items->isEmpty()) {
+                return;
+            }
+
+            $rows = [];
+
+            foreach ($items as $item) {
+                $rows[] = [
+                    'id' => $item->id,
+                    'label' => $item->label,
+                    'type' => $item->type,
+                    'depth' => $depth,
+                    'url' => $item->resolvedUrl(),
+                    'page' => $item->page?->title,
+                ];
+            }
+
+            $groups[] = ['parent' => $parentLabel, 'depth' => $depth, 'rows' => $rows];
+
+            foreach ($items as $item) {
+                $walk($item->id, $depth + 1, $item->label);
+            }
+        };
+
+        $walk(null, 0, null);
+
+        return $groups;
+    }
+
+    /**
      * @return array<int, string>
      */
-    public function parentOptions(): array
-    {
+    public function parentOptions(): array    {
         $all = MenuItem::query()->ordered()->get(['id', 'label', 'parent_id']);
         $rows = [];
 
@@ -213,8 +289,7 @@ new #[Title('Header Menu')] class extends Component
     }
 
     /**
-     * Read-only preview of the built-in default header menu.
-     *
+     * Read-only preview of the built-in default header menu.     *
      * @return array<int, array{label: string, children: array<int, array{label: string}>}>
      */
     public function defaultMenuPreview(): array
@@ -446,25 +521,44 @@ new #[Title('Header Menu')] class extends Component
                     </div>
 
                     @if ($mode === 'custom')
-                        <div class="divide-y divide-zinc-100 dark:divide-zinc-800">
-                            @forelse ($rows as $row)
-                                <div class="flex items-center gap-2 py-3 pr-4" style="padding-left: {{ 16 + $row['depth'] * 22 }}px">
-                                    <div class="min-w-0 flex-1">
-                                        <p class="truncate text-sm font-medium text-zinc-800 dark:text-zinc-200">
-                                            {{ $row['label'] }}
-                                            <span class="ml-1 text-xs font-normal text-zinc-400">{{ $typeLabels[$row['type']] ?? $row['type'] }}</span>
-                                        </p>
-                                        @if ($row['url'])
-                                            <p class="truncate text-xs text-zinc-500 dark:text-zinc-400">{{ $row['url'] }}</p>
-                                        @endif
-                                    </div>
+                        <div class="p-3">
+                            @forelse ($this->menuRowsGrouped() as $group)
+                                <div @if (! $loop->first) class="mt-4" @endif>
+                                    @if ($group['depth'] > 0)
+                                        <p class="mb-1 px-1 text-xs font-semibold uppercase tracking-wide text-zinc-400">{{ __('Submenu dari :label', ['label' => $group['parent']]) }}</p>
+                                    @endif
 
-                                    <flux:button type="button" wire:click="edit({{ $row['id'] }})" size="sm" variant="ghost" icon="pencil-square" :aria-label="__('Edit')" square />
-                                    <flux:button type="button" wire:click="delete({{ $row['id'] }})" wire:confirm="Hapus item ini beserta submenunya?" size="sm" variant="danger" icon="trash" :aria-label="__('Delete')" square />
+                                    <div wire:sort="sortItem" class="space-y-2">
+                                        @foreach ($group['rows'] as $row)
+                                            <div
+                                                wire:sort:item="{{ $row['id'] }}"
+                                                wire:key="menu-item-{{ $row['id'] }}"
+                                                class="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white py-2 pr-3 dark:border-zinc-700 dark:bg-zinc-900"
+                                            >
+                                                <flux:icon wire:sort:handle name="bars-3" class="ms-2 size-4 shrink-0 cursor-grab text-zinc-400" />
+                                                <div class="min-w-0 flex-1">
+                                                    <p class="truncate text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                                                        {{ $row['label'] }}
+                                                        <span class="ml-1 text-xs font-normal text-zinc-400">{{ $typeLabels[$row['type']] ?? $row['type'] }}</span>
+                                                    </p>
+                                                    @if ($row['url'])
+                                                        <p class="truncate text-xs text-zinc-500 dark:text-zinc-400">{{ $row['url'] }}</p>
+                                                    @endif
+                                                </div>
+
+                                                <flux:button type="button" wire:click="edit({{ $row['id'] }})" size="sm" variant="ghost" icon="pencil-square" :aria-label="__('Edit')" square />
+                                                <flux:button type="button" wire:click="delete({{ $row['id'] }})" wire:confirm="Hapus item ini beserta submenunya?" size="sm" variant="danger" icon="trash" :aria-label="__('Delete')" square />
+                                            </div>
+                                        @endforeach
+                                    </div>
                                 </div>
                             @empty
                                 <p class="p-6 text-center text-sm text-zinc-500 dark:text-zinc-400">{{ __('Belum ada item menu.') }}</p>
                             @endforelse
+
+                            @if (count($this->menuRowsGrouped()) > 0)
+                                <p class="mt-4 px-1 text-xs text-zinc-500 dark:text-zinc-400">{{ __('Tarik ikon gagang untuk mengubah urutan menu dalam grup yang sama.') }}</p>
+                            @endif
                         </div>
                     @else
                         <ul class="space-y-3 p-4">

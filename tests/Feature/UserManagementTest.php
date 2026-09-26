@@ -140,13 +140,72 @@ class UserManagementTest extends TestCase
     {
         $superAdmin = User::factory()->create();
 
-        $response = $this->actingAs($superAdmin)->delete(route('users.destroy', $superAdmin));
-
-        $response->assertSessionHasErrors(['error']);
+        $this->actingAs($superAdmin)
+            ->delete(route('users.destroy', $superAdmin))
+            ->assertForbidden();
 
         $this->assertDatabaseHas('users', [
             'id' => $superAdmin->id,
         ]);
+    }
+
+    public function test_super_admin_cannot_demote_himself(): void
+    {
+        $superAdmin = User::factory()->create();
+
+        $this->actingAs($superAdmin)
+            ->put(route('users.update', $superAdmin), [
+                'name' => $superAdmin->name,
+                'email' => $superAdmin->email,
+                'role' => UserRole::ViewOnly->value,
+            ])
+            ->assertSessionHasErrors(['role']);
+
+        $this->assertSame(UserRole::SuperAdmin, $superAdmin->fresh()->role);
+    }
+
+    public function test_last_super_admin_cannot_be_demoted_or_deleted(): void
+    {
+        // Hanya ada satu Super Admin (bertindak sebagai dirinya sendiri).
+        $superAdmin = User::factory()->create();
+
+        // Turunkan role sendiri tidak diizinkan.
+        $this->actingAs($superAdmin)
+            ->put(route('users.update', $superAdmin), [
+                'name' => $superAdmin->name,
+                'email' => $superAdmin->email,
+                'role' => UserRole::ViewOnly->value,
+            ])
+            ->assertSessionHasErrors(['role']);
+
+        // Hapus diri sendiri ditolak oleh Policy.
+        $this->actingAs($superAdmin)
+            ->delete(route('users.destroy', $superAdmin))
+            ->assertForbidden();
+
+        $this->assertSame(UserRole::SuperAdmin, $superAdmin->fresh()->role);
+    }
+
+    public function test_second_to_last_super_admin_is_protected_from_demotion(): void
+    {
+        $superAdmin = User::factory()->create();
+        $otherSuperAdmin = User::factory()->create();
+
+        // Menurunkan salah satu Super Admin saat tersisa dua → masih boleh.
+        $this->actingAs($otherSuperAdmin)
+            ->put(route('users.update', $superAdmin), [
+                'name' => $superAdmin->name,
+                'email' => $superAdmin->email,
+                'role' => UserRole::ViewOnly->value,
+            ])
+            ->assertRedirect(route('users.index'));
+
+        $this->assertSame(UserRole::ViewOnly, $superAdmin->fresh()->role);
+
+        // Sekarang tinggal satu Super Admin; tidak boleh dihapus oleh dirinya sendiri.
+        $this->actingAs($otherSuperAdmin)
+            ->delete(route('users.destroy', $otherSuperAdmin))
+            ->assertForbidden();
     }
 
     public function test_non_super_admin_roles_cannot_access_user_management(): void

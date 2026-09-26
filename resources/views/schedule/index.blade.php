@@ -117,12 +117,10 @@
         <div id="schedule-list" class="mt-6 hidden">
             @forelse ($events as $event)
                 <div class="mb-3 flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                    <div class="w-28 shrink-0">
+                    <div class="w-24 shrink-0 sm:w-28">
                         <p class="text-sm font-bold text-slate-900 dark:text-white">{{ Carbon::parse($event['date'])->locale('id')->isoFormat('D MMM YYYY') }}</p>
                         <p class="text-xs text-slate-500 dark:text-slate-400">{{ Carbon::parse($event['date'])->locale('id')->isoFormat('dddd') }}</p>
-                    </div>
-                    <div class="w-32 shrink-0">
-                        <span class="inline-block whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium {{ $badgeClasses[$event['badge']] }}">{{ $event['type'] }}</span>
+                        <span class="mt-1.5 inline-block whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium {{ $badgeClasses[$event['badge']] }}">{{ $event['type'] }}</span>
                     </div>
                     <div class="min-w-0 flex-1">
                         @if ($event['purchase_link'])
