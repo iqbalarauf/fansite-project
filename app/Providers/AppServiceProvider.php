@@ -13,6 +13,7 @@ use App\Models\NewsPost;
 use App\Models\Post;
 use App\Models\Timeline;
 use App\Models\Trivia;
+use App\Models\User;
 use App\Policies\CustomPagePolicy;
 use App\Policies\GalleryPhotoPolicy;
 use App\Policies\GalleryVideoPolicy;
@@ -21,6 +22,7 @@ use App\Policies\MerchandiseProductPolicy;
 use App\Policies\PostPolicy;
 use App\Policies\TimelinePolicy;
 use App\Policies\TriviaPolicy;
+use App\Policies\UserPolicy;
 use App\Services\Google\GoogleApiSheetsClient;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
@@ -63,6 +65,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Timeline::class, TimelinePolicy::class);
         Gate::policy(Trivia::class, TriviaPolicy::class);
         Gate::policy(MerchandiseProduct::class, MerchandiseProductPolicy::class);
+        Gate::policy(User::class, UserPolicy::class);
     }
 
     /**
