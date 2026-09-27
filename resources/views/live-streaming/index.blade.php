@@ -102,18 +102,40 @@
                                 </td>
                                 <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $liveStream->additional_info ?: '–' }}</td>
                                 <td class="px-4 py-3 text-right">
-                                    <button
-                                        type="button"
-                                        class="admin-action-link"
-                                        data-id="{{ $liveStream->id }}"
-                                        data-platform="{{ $liveStream->platform }}"
-                                        data-live-date="{{ $liveStream->live_date?->format('Y-m-d') }}"
-                                        data-duration="{{ $liveStream->duration }}"
-                                        data-additional-info="{{ $liveStream->additional_info }}"
-                                        onclick="openEditLiveStreamModal(this)"
-                                    >
-                                        Edit
-                                    </button>
+                                    <div class="flex items-center justify-end gap-3">
+                                        <button
+                                            type="button"
+                                            class="admin-action-link"
+                                            data-detail="{{ json_encode([
+                                                'platform' => $liveStream->platform,
+                                                'live_date' => $liveStream->live_date?->translatedFormat('d F Y'),
+                                                'start_time' => $liveStream->start_time?->translatedFormat('d F Y, H:i'),
+                                                'end_time' => $liveStream->end_time?->translatedFormat('d F Y, H:i'),
+                                                'duration' => $liveStream->duration,
+                                                'max_viewers' => $liveStream->max_viewers,
+                                                'comment_count' => $liveStream->comment_count,
+                                                'gift_count' => $liveStream->gift_count,
+                                                'total_gold' => $liveStream->total_gold,
+                                                'gifts' => $liveStream->gifts ?? [],
+                                                'top_senders' => $liveStream->top_senders ?? [],
+                                            ]) }}"
+                                            onclick="openDetailLiveStreamModal(this)"
+                                        >
+                                            Detail
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="admin-action-link"
+                                            data-id="{{ $liveStream->id }}"
+                                            data-platform="{{ $liveStream->platform }}"
+                                            data-live-date="{{ $liveStream->live_date?->format('Y-m-d') }}"
+                                            data-duration="{{ $liveStream->duration }}"
+                                            data-additional-info="{{ $liveStream->additional_info }}"
+                                            onclick="openEditLiveStreamModal(this)"
+                                        >
+                                            Edit
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -227,6 +249,94 @@
         </div>
     </flux:modal>
 
+    <flux:modal name="modal-detail-live-stream" class="max-w-6xl">
+        <div id="detail-capture-area" class="space-y-6">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <flux:heading size="lg">Detail Live Streaming</flux:heading>
+                    <flux:subheading id="detail-subtitle">–</flux:subheading>
+                </div>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-3">
+                {{-- Kolom kiri: info sesi --}}
+                <div class="space-y-3 rounded-xl border border-zinc-200 p-4 dark:border-zinc-700">
+                    <p class="text-sm font-semibold text-zinc-700 dark:text-zinc-200">Informasi Sesi</p>
+
+                    <dl class="space-y-3 text-sm">
+                        <div class="flex items-center justify-between gap-3">
+                            <dt class="text-zinc-500 dark:text-zinc-400">Platform</dt>
+                            <dd id="detail-platform" class="font-semibold text-zinc-800 dark:text-zinc-200">–</dd>
+                        </div>
+                        <div class="flex items-center justify-between gap-3">
+                            <dt class="text-zinc-500 dark:text-zinc-400">Start Time</dt>
+                            <dd id="detail-start" class="font-semibold text-zinc-800 dark:text-zinc-200">–</dd>
+                        </div>
+                        <div class="flex items-center justify-between gap-3">
+                            <dt class="text-zinc-500 dark:text-zinc-400">End Time</dt>
+                            <dd id="detail-end" class="font-semibold text-zinc-800 dark:text-zinc-200">–</dd>
+                        </div>
+                        <div class="flex items-center justify-between gap-3">
+                            <dt class="text-zinc-500 dark:text-zinc-400">Duration</dt>
+                            <dd id="detail-duration" class="font-semibold text-zinc-800 dark:text-zinc-200">–</dd>
+                        </div>
+                        <div class="flex items-center justify-between gap-3">
+                            <dt class="text-zinc-500 dark:text-zinc-400">Jumlah Penonton</dt>
+                            <dd id="detail-viewers" class="font-semibold text-zinc-800 dark:text-zinc-200">–</dd>
+                        </div>
+                    </dl>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="rounded-lg bg-amber-50 p-3 text-center dark:bg-amber-950/30">
+                            <p id="detail-gift-count" class="text-2xl font-black text-amber-600 dark:text-amber-400">0</p>
+                            <p class="text-xs text-zinc-500 dark:text-zinc-400">Gift</p>
+                        </div>
+                        <div class="rounded-lg bg-emerald-50 p-3 text-center dark:bg-emerald-950/30">
+                            <p id="detail-total-gold" class="text-2xl font-black text-emerald-600 dark:text-emerald-400">0</p>
+                            <p class="text-xs text-zinc-500 dark:text-zinc-400">Total Gold</p>
+                        </div>
+                        <div class="col-span-2 rounded-lg bg-sky-50 p-3 text-center dark:bg-sky-950/30">
+                            <p id="detail-comment-count" class="text-2xl font-black text-sky-600 dark:text-sky-400">0</p>
+                            <p class="text-xs text-zinc-500 dark:text-zinc-400">Komentar</p>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Kolom tengah: gift & komentar --}}
+                <div class="space-y-4 rounded-xl border border-zinc-200 p-4 dark:border-zinc-700">
+                    <div>
+                        <p class="mb-2 text-sm font-semibold text-zinc-700 dark:text-zinc-200">Gift List</p>
+                        <div id="detail-gifts" class="grid max-h-72 grid-cols-2 gap-2 overflow-y-auto pr-1"></div>
+                    </div>
+                </div>
+
+                {{-- Kolom kanan: top gifter --}}
+                <div class="space-y-3 rounded-xl border border-zinc-200 p-4 dark:border-zinc-700">
+                    <p class="text-sm font-semibold text-zinc-700 dark:text-zinc-200">Top Gifter</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div id="detail-senders-left" class="space-y-2"></div>
+                        <div id="detail-senders-right" class="space-y-2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4 flex items-center justify-end gap-3">
+            <button
+                type="button"
+                id="btn-capture-detail"
+                onclick="captureDetailLiveStreamModal(this)"
+                class="inline-flex items-center gap-2 rounded-xl bg-zinc-800 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-zinc-700 dark:bg-zinc-700 dark:hover:bg-zinc-600"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+                </svg>
+                Capture
+            </button>
+        </div>
+    </flux:modal>
+
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas-pro@1.5.11/dist/html2canvas-pro.min.js"></script>
     <script>
         const CSRF_TOKEN = '{{ csrf_token() }}';
 
@@ -267,6 +377,143 @@
             document.getElementById('edit-additional-info').value = streamData.additional_info || '';
 
             Flux.modal('modal-edit-live-stream').show();
+        }
+
+        function formatDuration(minutes) {
+            if (minutes === null || minutes === undefined || minutes === '' || isNaN(minutes)) {
+                return '–';
+            }
+
+            const total = Number(minutes);
+            const h = Math.floor(total / 60);
+            const m = total % 60;
+
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        }
+
+        function escapeHtml(value) {
+            const div = document.createElement('div');
+            div.textContent = value ?? '';
+
+            return div.innerHTML;
+        }
+
+        function openDetailLiveStreamModal(target) {
+            let data = {};
+
+            try {
+                data = JSON.parse(target.dataset.detail || '{}');
+            } catch (error) {
+                data = {};
+            }
+
+            document.getElementById('detail-subtitle').textContent =
+                `${data.platform || '–'} • ${data.live_date || '–'}`;
+            document.getElementById('detail-platform').textContent = data.platform || '–';
+            document.getElementById('detail-start').textContent = data.start_time || '–';
+            document.getElementById('detail-end').textContent = data.end_time || '–';
+            document.getElementById('detail-duration').textContent = formatDuration(data.duration);
+            document.getElementById('detail-viewers').textContent = Number(data.max_viewers || 0).toLocaleString('id-ID');
+            document.getElementById('detail-gift-count').textContent = Number(data.gift_count || 0).toLocaleString('id-ID');
+            document.getElementById('detail-total-gold').textContent = Number(data.total_gold || 0).toLocaleString('id-ID');
+            document.getElementById('detail-comment-count').textContent = Number(data.comment_count || 0).toLocaleString('id-ID');
+
+            const giftsEl = document.getElementById('detail-gifts');
+            const gifts = Array.isArray(data.gifts) ? data.gifts : [];
+
+            giftsEl.innerHTML = gifts.length === 0
+                ? '<p class="col-span-2 py-6 text-center text-xs text-zinc-400">Tidak ada gift.</p>'
+                : gifts.map((gift) => `
+                    <div class="flex items-center gap-2 rounded-lg border border-zinc-100 bg-zinc-50 p-2 dark:border-zinc-800 dark:bg-zinc-800/50">
+                        ${gift.image_url
+                            ? `<img src="${escapeHtml(gift.image_url)}" alt="${escapeHtml(gift.name)}" class="size-8 shrink-0 rounded object-contain" loading="lazy">`
+                            : '<span class="flex size-8 shrink-0 items-center justify-center rounded bg-zinc-200 text-xs dark:bg-zinc-700">?</span>'}
+                        <div class="min-w-0 flex-1">
+                            <p class="truncate text-xs font-semibold text-zinc-800 dark:text-zinc-200">${escapeHtml(gift.name)}</p>
+                            <p class="text-[11px] text-zinc-500 dark:text-zinc-400">${Number(gift.gold_per_unit || 0).toLocaleString('id-ID')} gold × ${Number(gift.count || 0).toLocaleString('id-ID')}</p>
+                            <p class="text-[11px] font-semibold text-amber-600 dark:text-amber-400">${Number(gift.total_gold || 0).toLocaleString('id-ID')} gold</p>
+                        </div>
+                    </div>
+                `).join('');
+
+            const senderColumns = [
+                document.getElementById('detail-senders-left'),
+                document.getElementById('detail-senders-right'),
+            ];
+
+            senderColumns.forEach((column) => { column.innerHTML = ''; });
+
+            const senders = Array.isArray(data.top_senders) ? data.top_senders : [];
+            const topSenders = senders.slice(0, 10);
+
+            if (topSenders.length === 0) {
+                senderColumns[0].innerHTML = '<p class="col-span-2 py-6 text-center text-xs text-zinc-400">Tidak ada data.</p>';
+            } else {
+                topSenders.forEach((sender, index) => {
+                    const card = document.createElement('div');
+                    card.className = 'flex items-center gap-2 rounded-lg border border-zinc-100 bg-zinc-50 p-2 dark:border-zinc-800 dark:bg-zinc-800/50';
+                    card.innerHTML = `
+                        ${sender.avatar
+                            ? `<img src="${escapeHtml(sender.avatar)}" alt="${escapeHtml(sender.name)}" class="size-8 shrink-0 rounded-full object-cover" loading="lazy">`
+                            : '<span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs dark:bg-zinc-700">?</span>'}
+                        <div class="min-w-0 flex-1">
+                            <p class="truncate text-xs font-semibold text-zinc-800 dark:text-zinc-200">${escapeHtml(sender.name)}</p>
+                            <p class="text-[11px] font-semibold text-amber-600 dark:text-amber-400">${Number(sender.total_gold || 0).toLocaleString('id-ID')} gold</p>
+                        </div>
+                    `;
+                    senderColumns[index < 5 ? 0 : 1].appendChild(card);
+                });
+            }
+
+            Flux.modal('modal-detail-live-stream').show();
+        }
+
+        async function captureDetailLiveStreamModal(button) {
+            const area = document.getElementById('detail-capture-area');
+            const originalButtonContent = button.innerHTML;
+            button.disabled = true;
+            button.textContent = 'Capturing...';
+
+            const isDark = document.documentElement.classList.contains('dark');
+            const captureEdge = 24;
+            const previousPadding = area.style.padding;
+            const previousBoxSizing = area.style.boxSizing;
+
+            try {
+                if (typeof html2canvas !== 'function') {
+                    throw new Error('Capture library is unavailable.');
+                }
+
+                area.style.padding = `${captureEdge}px`;
+                area.style.boxSizing = 'content-box';
+
+                const capturedCanvas = await html2canvas(area, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: isDark ? '#18181b' : '#ffffff',
+                    logging: false,
+                });
+
+                const link = document.createElement('a');
+                const now = new Date();
+                const ts = now.getFullYear()
+                    + String(now.getMonth() + 1).padStart(2, '0')
+                    + String(now.getDate()).padStart(2, '0') + '-'
+                    + String(now.getHours()).padStart(2, '0')
+                    + String(now.getMinutes()).padStart(2, '0')
+                    + String(now.getSeconds()).padStart(2, '0');
+                link.download = `live-streaming-detail-${ts}.png`;
+                link.href = capturedCanvas.toDataURL('image/png');
+                link.click();
+            } catch (error) {
+                console.error('Capture failed:', error);
+                alert('Gagal meng-capture detail live streaming.\n\nDetail: ' + (error && error.message ? error.message : String(error)));
+            } finally {
+                area.style.padding = previousPadding;
+                area.style.boxSizing = previousBoxSizing;
+                button.disabled = false;
+                button.innerHTML = originalButtonContent;
+            }
         }
     </script>
 </x-layouts::app>
