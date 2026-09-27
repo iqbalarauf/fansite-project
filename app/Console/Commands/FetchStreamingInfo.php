@@ -23,7 +23,7 @@ class FetchStreamingInfo extends Command
      *
      * @var string
      */
-    protected $description = 'Fetch recent live streaming data from JKT48Connect API';
+    protected $description = 'Fetch recent live streaming detail from JKT48Connect API';
 
     /**
      * Execute the console command.
@@ -46,43 +46,45 @@ class FetchStreamingInfo extends Command
             return self::FAILURE;
         }
 
-        $payload = $this->fetchFromApi("{$baseUrl}/api/v1/recent", $apiKey);
+        $shortname = trim((string) $idolShortname);
+        $url = "{$baseUrl}/api/v1/recent/detail?name=".rawurlencode($shortname);
+
+        $payload = $this->fetchFromApi($url, $apiKey);
         if ($payload === null) {
             $this->error('Failed to fetch streaming data from JKT48Connect API.');
 
             return self::FAILURE;
         }
 
-        $displayName = trim((string) $idolShortname).' JKT48';
-        $targetName = $this->normalizeName($displayName);
-
-        $items = $payload['data'] ?? [];
+        $items = $payload['data']['items'] ?? $payload['items'] ?? $payload['data'] ?? [];
         if (! is_array($items) || $items === []) {
-            $this->info("Tidak ada live streaming dari {$displayName} hari ini");
+            $this->info("Tidak ada live streaming dari {$shortname} JKT48 hari ini");
             $this->info('Fetch completed.');
 
             return self::SUCCESS;
         }
 
-        $matched = 0;
         $saved = 0;
+        $updated = 0;
 
         foreach ($items as $item) {
-            if (! is_array($item) || ! $this->memberMatches($item, $targetName)) {
+            if (! is_array($item)) {
                 continue;
             }
 
-            $matched++;
+            $result = $this->saveItem($item);
 
-            if ($this->saveItem($item)) {
+            if ($result === 'created') {
                 $saved++;
+            } elseif ($result === 'updated') {
+                $updated++;
             }
         }
 
-        if ($matched === 0) {
-            $this->info("Tidak ada live streaming dari {$displayName} hari ini");
+        if ($saved === 0 && $updated === 0) {
+            $this->info("Tidak ada data baru dari {$shortname} JKT48");
         } else {
-            $this->info("{$saved} data live streaming ditambahkan.");
+            $this->info("{$saved} data live streaming ditambahkan, {$updated} diperbarui.");
         }
 
         $this->info('Fetch completed.');
@@ -92,31 +94,16 @@ class FetchStreamingInfo extends Command
 
     /**
      * @param  array<string, mixed>  $item
+     * @return 'created'|'updated'|'skipped'
      */
-    private function memberMatches(array $item, string $targetName): bool
+    private function saveItem(array $item): string
     {
-        $memberName = $item['member']['name'] ?? null;
-
-        return $memberName !== null && $this->normalizeName((string) $memberName) === $targetName;
-    }
-
-    /**
-     * @param  array<string, mixed>  $item
-     */
-    private function saveItem(array $item): bool
-    {
-        $liveId = $item['_id'] ?? $item['data_id'] ?? null;
+        $liveId = $item['id'] ?? $item['_id'] ?? $item['data_id'] ?? null;
         if (! $liveId) {
-            return false;
+            return 'skipped';
         }
 
         $liveId = (string) $liveId;
-
-        if (LiveStreaming::query()->where('live_id', $liveId)->exists()) {
-            $this->error('Data Live sudah tersimpan sebelumnya');
-
-            return false;
-        }
 
         $platform = match (strtolower((string) ($item['type'] ?? ''))) {
             'idn' => 'IDN App',
@@ -125,35 +112,124 @@ class FetchStreamingInfo extends Command
         };
 
         if ($platform === null) {
-            return false;
+            return 'skipped';
         }
 
-        $durationMs = $item['live_info']['duration'] ?? null;
-        $duration = is_numeric($durationMs) ? (int) round(((float) $durationMs) / 60000) : null;
+        $startTime = $this->timestampToLocal($item['start_time'] ?? null);
+        $endTime = $this->timestampToLocal($item['end_time'] ?? null);
 
-        $start = $item['live_info']['date']['start'] ?? null;
-        $liveDate = $start
-            ? Carbon::parse($start)->timezone('Asia/Jakarta')->toDateString()
-            : Timezone::nowLocal()->toDateString();
+        $liveDate = $startTime?->toDateString() ?? Timezone::nowLocal()->toDateString();
 
-        $title = $item['idn']['title'] ?? null;
+        $duration = null;
+        if ($startTime !== null && $endTime !== null) {
+            $duration = (int) round($startTime->diffInMinutes($endTime));
+        }
 
-        LiveStreaming::query()->create([
-            'live_id' => $liveId,
+        $existing = LiveStreaming::query()->where('live_id', $liveId)->first();
+
+        $attributes = [
             'platform' => $platform,
             'live_date' => $liveDate,
+            'start_time' => $startTime,
+            'end_time' => $endTime,
             'duration' => $duration,
-            'additional_info' => $title !== null ? trim((string) $title) : null,
-        ]);
+            'max_viewers' => isset($item['max_viewers']) ? (int) $item['max_viewers'] : null,
+            'comment_count' => isset($item['comment_count']) ? (int) $item['comment_count'] : null,
+            'gift_count' => isset($item['gift_count']) ? (int) $item['gift_count'] : null,
+            'total_gold' => isset($item['total_gold']) ? (int) $item['total_gold'] : null,
+            'youtube_url' => $item['youtube_url'] ?? null,
+            'gifts' => $this->mapGifts($item['gifts_summary'] ?? []),
+            'top_senders' => $this->mapTopSenders($item['top_senders'] ?? []),
+            'additional_info' => $this->title($item),
+        ];
+
+        if ($existing !== null) {
+            $existing->update($attributes);
+
+            return 'updated';
+        }
+
+        LiveStreaming::query()->create(['live_id' => $liveId] + $attributes);
 
         $this->info("Saved live streaming: {$platform} - {$liveDate}");
 
-        return true;
+        return 'created';
     }
 
-    private function normalizeName(string $name): string
+    /**
+     * @param  mixed  $value  epoch milliseconds
+     */
+    private function timestampToLocal(mixed $value): ?Carbon
     {
-        return strtolower(preg_replace('/\s+/', '', $name) ?? '');
+        if (! is_numeric($value)) {
+            return null;
+        }
+
+        return Carbon::createFromTimestampMs((int) $value, 'UTC')->timezone('Asia/Jakarta');
+    }
+
+    /**
+     * @param  array<string, mixed>  $item
+     */
+    private function title(array $item): ?string
+    {
+        $title = $item['title'] ?? $item['idn']['title'] ?? null;
+
+        return filled($title) ? trim((string) $title) : null;
+    }
+
+    /**
+     * @return array<int, array{name: string, image_url: string|null, gold_per_unit: int, count: int, total_gold: int}>
+     */
+    private function mapGifts(mixed $gifts): array
+    {
+        if (! is_array($gifts)) {
+            return [];
+        }
+
+        $mapped = [];
+
+        foreach ($gifts as $gift) {
+            if (! is_array($gift)) {
+                continue;
+            }
+
+            $mapped[] = [
+                'name' => (string) ($gift['name'] ?? ''),
+                'image_url' => $gift['image_url'] ?? null,
+                'gold_per_unit' => (int) ($gift['gold_per_unit'] ?? 0),
+                'count' => (int) ($gift['count'] ?? 0),
+                'total_gold' => (int) ($gift['total_gold'] ?? 0),
+            ];
+        }
+
+        return $mapped;
+    }
+
+    /**
+     * @return array<int, array{name: string, avatar: string|null, total_gold: int}>
+     */
+    private function mapTopSenders(mixed $senders): array
+    {
+        if (! is_array($senders)) {
+            return [];
+        }
+
+        $mapped = [];
+
+        foreach (array_slice($senders, 0, 10) as $sender) {
+            if (! is_array($sender)) {
+                continue;
+            }
+
+            $mapped[] = [
+                'name' => (string) ($sender['name'] ?? ''),
+                'avatar' => $sender['avatar'] ?? null,
+                'total_gold' => (int) ($sender['total_gold'] ?? 0),
+            ];
+        }
+
+        return $mapped;
     }
 
     /**

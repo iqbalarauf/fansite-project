@@ -238,6 +238,42 @@ new #[Title('Header Menu')] class extends Component
     }
 
     /**
+     * Struktur menu bertingkat untuk render rekursif (drag and drop per grup).
+     *
+     * @return array{roots: array<int, array<string, mixed>>, children: array<int, array<int, array<string, mixed>>>}
+     */
+    public function menuTree(): array
+    {
+        $all = MenuItem::query()->with('page')->ordered()->get();
+
+        $toRow = fn (MenuItem $item): array => [
+            'id' => $item->id,
+            'label' => $item->label,
+            'type' => $item->type,
+            'url' => $item->resolvedUrl(),
+            'page' => $item->page?->title,
+        ];
+
+        $children = [];
+
+        foreach ($all as $item) {
+            $children[$item->parent_id ?? 0][] = $toRow($item);
+        }
+
+        // Normalisasi kunci map: id parent => daftar anak.
+        $childrenMap = [];
+
+        foreach ($all as $item) {
+            $childrenMap[$item->id] = $children[$item->id] ?? [];
+        }
+
+        return [
+            'roots' => $children[0] ?? [],
+            'children' => $childrenMap,
+        ];
+    }
+
+    /**
      * @return array<int, string>
      */
     public function parentOptions(): array    {
@@ -522,41 +558,25 @@ new #[Title('Header Menu')] class extends Component
 
                     @if ($mode === 'custom')
                         <div class="p-3">
-                            @forelse ($this->menuRowsGrouped() as $group)
-                                <div @if (! $loop->first) class="mt-4" @endif>
-                                    @if ($group['depth'] > 0)
-                                        <p class="mb-1 px-1 text-xs font-semibold uppercase tracking-wide text-zinc-400">{{ __('Submenu dari :label', ['label' => $group['parent']]) }}</p>
-                                    @endif
+                            @php
+                                $tree = $this->menuTree();
+                            @endphp
 
-                                    <div wire:sort="sortItem" class="space-y-2">
-                                        @foreach ($group['rows'] as $row)
-                                            <div
-                                                wire:sort:item="{{ $row['id'] }}"
-                                                wire:key="menu-item-{{ $row['id'] }}"
-                                                class="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white py-2 pr-3 dark:border-zinc-700 dark:bg-zinc-900"
-                                            >
-                                                <flux:icon wire:sort:handle name="bars-3" class="ms-2 size-4 shrink-0 cursor-grab text-zinc-400" />
-                                                <div class="min-w-0 flex-1">
-                                                    <p class="truncate text-sm font-medium text-zinc-800 dark:text-zinc-200">
-                                                        {{ $row['label'] }}
-                                                        <span class="ml-1 text-xs font-normal text-zinc-400">{{ $typeLabels[$row['type']] ?? $row['type'] }}</span>
-                                                    </p>
-                                                    @if ($row['url'])
-                                                        <p class="truncate text-xs text-zinc-500 dark:text-zinc-400">{{ $row['url'] }}</p>
-                                                    @endif
-                                                </div>
-
-                                                <flux:button type="button" wire:click="edit({{ $row['id'] }})" size="sm" variant="ghost" icon="pencil-square" :aria-label="__('Edit')" square />
-                                                <flux:button type="button" wire:click="delete({{ $row['id'] }})" wire:confirm="Hapus item ini beserta submenunya?" size="sm" variant="danger" icon="trash" :aria-label="__('Delete')" square />
-                                            </div>
-                                        @endforeach
-                                    </div>
+                            @forelse ($tree['roots'] as $root)
+                                <div wire:sort="sortItem" class="space-y-2">
+                                    @include('pages.header-menu.item-tree', [
+                                        'rows' => [$root],
+                                        'childrenMap' => $tree['children'],
+                                        'typeLabels' => $typeLabels,
+                                        'depth' => 0,
+                                        'parentLabel' => null,
+                                    ])
                                 </div>
                             @empty
                                 <p class="p-6 text-center text-sm text-zinc-500 dark:text-zinc-400">{{ __('Belum ada item menu.') }}</p>
                             @endforelse
 
-                            @if (count($this->menuRowsGrouped()) > 0)
+                            @if (count($tree['roots']) > 0)
                                 <p class="mt-4 px-1 text-xs text-zinc-500 dark:text-zinc-400">{{ __('Tarik ikon gagang untuk mengubah urutan menu dalam grup yang sama.') }}</p>
                             @endif
                         </div>
