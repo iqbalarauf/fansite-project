@@ -435,7 +435,8 @@
 
     {{-- Scripts --}}
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    {{-- html2canvas-pro: fork yang mendukung warna oklch()/color-mix() (Tailwind v4). --}}
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas-pro@1.5.11/dist/html2canvas-pro.min.js"></script>
     <script>
         // --- Activity Chart ---
         const isDark = document.documentElement.classList.contains('dark');
@@ -479,17 +480,27 @@
         }
 
         // --- Capture ---
+        // html2canvas-pro mendukung oklch()/color-mix() (Tailwind v4), sehingga
+        // sanitasi warna manual tidak lagi diperlukan.
+
         async function captureDashboard(button) {
             const el = document.getElementById('dashboard-capture-area');
             const originalButtonContent = button.innerHTML;
             button.disabled = true;
             button.textContent = 'Capturing...';
             const originals = [];
+            // Beri margin pada hasil capture (padding sementara saat render).
+            const captureEdge = 24;
+            const previousPadding = el.style.padding;
+            const previousBoxSizing = el.style.boxSizing;
 
             try {
                 if (typeof html2canvas !== 'function') {
                     throw new Error('Capture library is unavailable.');
                 }
+
+                el.style.padding = `${captureEdge}px`;
+                el.style.boxSizing = 'content-box';
 
                 el.querySelectorAll('canvas').forEach(canvas => {
                     const image = document.createElement('img');
@@ -519,11 +530,13 @@
                 link.click();
             } catch (error) {
                 console.error('Capture failed:', error);
-                alert('Gagal meng-capture dashboard.');
+                alert('Gagal meng-capture dashboard.\n\nDetail: ' + (error && error.message ? error.message : String(error)));
             } finally {
                 originals.forEach(({ canvas, image, parent }) => {
                     parent.replaceChild(canvas, image);
                 });
+                el.style.padding = previousPadding;
+                el.style.boxSizing = previousBoxSizing;
                 button.disabled = false;
                 button.innerHTML = originalButtonContent;
             }
