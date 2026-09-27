@@ -190,4 +190,51 @@ class LiveStreamingTest extends TestCase
             ->assertDontSee('LIVE ID')
             ->assertDontSee('hidden-live-id-123');
     }
+
+    public function test_index_exposes_the_detail_action_and_modal(): void
+    {
+        $user = User::factory()->create();
+
+        $stream = LiveStreaming::create([
+            'live_id' => 'saya-kembali-260924180957',
+            'platform' => 'IDN App',
+            'live_date' => '2026-09-24',
+            'start_time' => '2026-09-24 18:09:57',
+            'end_time' => '2026-09-24 19:10:03',
+            'duration' => 62,
+            'max_viewers' => 10244,
+            'comment_count' => 3155,
+            'gift_count' => 79,
+            'total_gold' => 1038,
+            'youtube_url' => 'https://youtu.be/wgE7TF1tklk',
+            'gifts' => [
+                ['name' => 'Angklung', 'image_url' => 'https://cdn.test/angklung.png', 'gold_per_unit' => 29, 'count' => 7, 'total_gold' => 203],
+            ],
+            'top_senders' => [
+                ['name' => 'Wetee .', 'avatar' => 'https://cdn.test/wetee.webp', 'total_gold' => 220],
+            ],
+        ]);
+
+        $response = $this->actingAs($user)->get(route('live-streaming.index'));
+
+        $response->assertOk()
+            ->assertSee('openDetailLiveStreamModal', false)
+            ->assertSee('modal-detail-live-stream', false)
+            ->assertSee('detail-senders-left', false)
+            ->assertSee('detail-senders-right', false)
+            ->assertSee('detail-gifts', false)
+            ->assertSee('10244', false)
+            ->assertSee('Angklung', false)
+            ->assertSee('Wetee .', false);
+
+        $html = $response->getContent();
+        $this->assertMatchesRegularExpression('/data-detail="\{&quot;platform&quot;:&quot;IDN App&quot;/', $html);
+        $this->assertStringContainsString('&quot;live_date&quot;:&quot;24 September 2026&quot;', $html);
+        $this->assertStringContainsString('&quot;start_time&quot;:&quot;24 September 2026, 18:09&quot;', $html);
+        $this->assertStringContainsString('openDetailLiveStreamModal', $html);
+        $this->assertStringContainsString('captureDetailLiveStreamModal', $html);
+        $this->assertStringContainsString('html2canvas-pro', $html);
+
+        $this->assertSame($stream->id, LiveStreaming::query()->firstOrFail()->id);
+    }
 }
