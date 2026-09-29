@@ -135,6 +135,57 @@
             <div class="flex h-32 items-center justify-center rounded-xl border border-dashed border-zinc-300 text-sm text-zinc-500">{{ __('Tambahkan link YouTube') }}</div>
         @endif
         @break
+    @case('gallery')
+        @php
+            $galleryImages = array_values(array_filter(array_map(function ($image) {
+                $path = $image['storage_path'] ?? null;
+
+                if (blank($path)) {
+                    return null;
+                }
+
+                return [
+                    'url' => Storage::url($path),
+                    'alt' => (string) ($image['alt'] ?? ''),
+                ];
+            }, $data['images'] ?? [])));
+
+            $galleryTotal = count($galleryImages);
+            $visibleCount = max(1, min((int) ($data['initial_count'] ?? 3), max(1, $galleryTotal)));
+            $hasCarousel = $galleryTotal > $visibleCount;
+            $imageRounded = $preview ? 'rounded-lg' : 'rounded-xl';
+            $imageHeight = $preview ? 'h-28' : 'h-48';
+            $galleryItemWidth = 'calc((100% - '.($visibleCount - 1).'rem) / '.$visibleCount.')';
+        @endphp
+        @if ($galleryTotal === 0)
+            @if ($preview)
+                <div class="flex h-32 items-center justify-center rounded-xl border border-dashed border-zinc-300 text-sm text-zinc-500">{{ __('Tambahkan gambar gallery') }}</div>
+            @endif
+        @else
+            <div class="relative px-1" data-page-gallery data-page-gallery-visible="{{ $visibleCount }}">
+                <div class="overflow-hidden">
+                    <div class="flex gap-4 transition-transform duration-500 ease-out" data-page-gallery-track>
+                        @foreach ($galleryImages as $image)
+                            <div data-page-gallery-item class="shrink-0 overflow-hidden {{ $imageRounded }}" style="width: {{ $galleryItemWidth }};">
+                                <img src="{{ $image['url'] }}" alt="{{ $image['alt'] }}" class="w-full {{ $imageHeight }} object-cover" loading="lazy" decoding="async">
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                @if ($hasCarousel)
+                    <button type="button" data-page-gallery-nav data-page-gallery-prev aria-label="{{ __('Previous') }}"
+                            class="absolute -left-2 top-1/2 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-zinc-200 bg-white/90 text-zinc-600 shadow-md backdrop-blur transition hover:text-indigo-600 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900/90 dark:text-zinc-300 dark:hover:text-indigo-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4"><path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 0 1-.02 1.06L8.832 10l3.938 3.71a.75.75 0 1 1-1.04 1.08l-4.5-4.25a.75.75 0 0 1 0-1.08l4.5-4.25a.75.75 0 0 1 1.06.02Z" clip-rule="evenodd"/></svg>
+                    </button>
+                    <button type="button" data-page-gallery-nav data-page-gallery-next aria-label="{{ __('Next') }}"
+                            class="absolute -right-2 top-1/2 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-zinc-200 bg-white/90 text-zinc-600 shadow-md backdrop-blur transition hover:text-indigo-600 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900/90 dark:text-zinc-300 dark:hover:text-indigo-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 0 1 .02-1.06L11.168 10 7.23 6.29a.75.75 0 1 1 1.04-1.08l4.5 4.25a.75.75 0 0 1 0 1.08l-4.5 4.25a.75.75 0 0 1-1.06-.02Z" clip-rule="evenodd"/></svg>
+                    </button>
+                @endif
+            </div>
+        @endif
+        @break
     @case('button')
         <div class="{{ $buttonAlignment }}">
             @if ($preview)

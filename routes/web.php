@@ -6,6 +6,7 @@ use App\Http\Controllers\AdminSearchController;
 use App\Http\Controllers\ConcertEventsController;
 use App\Http\Controllers\Content\CategoryController;
 use App\Http\Controllers\Content\EditorImageController;
+use App\Http\Controllers\Content\EditorStatisticController;
 use App\Http\Controllers\Content\GalleryController;
 use App\Http\Controllers\Content\PostController;
 use App\Http\Controllers\Content\TimelineController;
@@ -108,6 +109,7 @@ Route::middleware(['auth', 'verified', 'block-view-only-writes'])->group(functio
         Route::get('pages', [CustomPageController::class, 'index'])->name('pages.index');
         Route::view('pages/create', 'custom-pages.admin')->name('pages.create');
         Route::get('pages/{customPage}/edit', [CustomPageController::class, 'edit'])->name('pages.edit');
+        Route::post('pages/{customPage}/duplicate', [CustomPageController::class, 'duplicate'])->name('pages.duplicate');
         Route::delete('pages/{customPage}', [CustomPageController::class, 'destroy'])->name('pages.destroy');
 
         // Majalah
@@ -121,6 +123,9 @@ Route::middleware(['auth', 'verified', 'block-view-only-writes'])->group(functio
 
         // Unggah gambar dari rich text editor
         Route::post('content/editor/image', EditorImageController::class)->name('content.editor.image');
+
+        // Hitung statistic card dari rich text editor
+        Route::post('content/editor/statistic', EditorStatisticController::class)->name('content.editor.statistic');
 
         // News & Blog (fitur sama, tabel berbeda)
         foreach (ContentSection::cases() as $contentSection) {
