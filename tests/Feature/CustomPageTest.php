@@ -939,4 +939,399 @@ class CustomPageTest extends TestCase
             ->assertOk()
             ->assertSee('color: #0F172A', false);
     }
+
+    public function test_user_can_duplicate_a_page_from_the_index_as_a_draft(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        $page = CustomPage::query()->create([
+            'title' => 'Profil Oshimen',
+            'slug' => 'profil-oshimen',
+            'status' => 'published',
+            'display_mode' => 'welcome',
+            'background_color' => 'indigo',
+            'title_alignment' => 'center',
+            'hero_enabled' => false,
+            'blocks' => [
+                [
+                    'id' => 'block-1',
+                    'type' => 'text',
+                    'data' => ['text' => 'Isi asli', 'alignment' => 'left', 'color' => '#2E2F3E', 'font_size' => 'base', 'heading' => 'none', 'bold' => false, 'italic' => false, 'underline' => false],
+                ],
+            ],
+        ]);
+
+        $response = $this->post(route('pages.duplicate', $page));
+
+        $duplicate = CustomPage::query()->where('id', '!=', $page->id)->firstOrFail();
+
+        $response->assertRedirect(route('pages.edit', $duplicate));
+
+        $this->assertSame(2, CustomPage::query()->count());
+        $this->assertSame('Profil Oshimen (Copy)', $duplicate->title);
+        $this->assertSame('profil-oshimen-copy', $duplicate->slug);
+        $this->assertSame('draft', $duplicate->status);
+        $this->assertSame('welcome', $duplicate->display_mode);
+        $this->assertSame('indigo', $duplicate->background_color);
+        $this->assertCount(1, $duplicate->blocks);
+        $this->assertSame('Isi asli', $duplicate->blocks[0]['data']['text']);
+
+        // The duplicate gets its own block ids.
+        $this->assertNotSame('block-1', $duplicate->blocks[0]['id']);
+
+        // The original page is untouched.
+        $this->assertSame('published', $page->fresh()->status);
+        $this->assertSame('block-1', $page->fresh()->blocks[0]['id']);
+    }
+
+    public function test_duplicating_a_page_twice_produces_unique_slugs(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        $page = CustomPage::query()->create([
+            'title' => 'Profil Oshimen',
+            'slug' => 'profil-oshimen',
+            'status' => 'published',
+            'blocks' => [
+                ['id' => 'block-1', 'type' => 'text', 'data' => ['text' => 'Isi', 'alignment' => 'left', 'color' => '#2E2F3E', 'font_size' => 'base', 'heading' => 'none', 'bold' => false, 'italic' => false, 'underline' => false]],
+            ],
+        ]);
+
+        $this->post(route('pages.duplicate', $page));
+        $this->post(route('pages.duplicate', $page));
+
+        $this->assertSame(3, CustomPage::query()->count());
+        $this->assertDatabaseHas('custom_pages', ['slug' => 'profil-oshimen-copy']);
+        $this->assertDatabaseHas('custom_pages', ['slug' => 'profil-oshimen-copy-2']);
+    }
+
+    public function test_view_only_user_cannot_duplicate_a_page(): void
+    {
+        $this->actingAs(User::factory()->viewOnly()->create());
+
+        $page = CustomPage::query()->create([
+            'title' => 'Halaman',
+            'slug' => 'halaman',
+            'status' => 'published',
+            'blocks' => [
+                ['id' => 'block-1', 'type' => 'text', 'data' => ['text' => 'Isi', 'alignment' => 'left', 'color' => '#2E2F3E', 'font_size' => 'base', 'heading' => 'none', 'bold' => false, 'italic' => false, 'underline' => false]],
+            ],
+        ]);
+
+        $this->post(route('pages.duplicate', $page))->assertForbidden();
+
+        $this->assertSame(1, CustomPage::query()->count());
+    }
+
+    public function test_pages_index_shows_the_duplicate_action(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        $page = CustomPage::query()->create([
+            'title' => 'Halaman Publik',
+            'slug' => 'halaman-publik',
+            'status' => 'published',
+            'blocks' => [],
+        ]);
+
+        $this->get(route('pages.index'))
+            ->assertOk()
+            ->assertSee(route('pages.duplicate', $page), false)
+            ->assertSee('Duplicate page', false);
+    }
+
+    public function test_user_can_duplicate_a_container_block_with_new_ids(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Container')
+            ->set('blocks.0.data.background', 'accent')
+            ->set('blocks.0.data.vertical_alignment', 'middle')
+            ->call('addBlockToContainer', 0, 0, 'text')
+            ->set('blocks.0.data.columns.0.blocks.0.data.text', 'Isi di dalam container')
+            ->call('duplicateBlock', 0)
+            ->call('save', 'published')
+            ->assertHasNoErrors();
+
+        $page = CustomPage::query()->firstOrFail();
+
+        $this->assertCount(2, $page->blocks);
+
+        [$original, $clone] = $page->blocks;
+
+        $this->assertSame('container', $clone['type']);
+        $this->assertSame('accent', $clone['data']['background']);
+        $this->assertSame('middle', $clone['data']['vertical_alignment']);
+        $this->assertSame('Isi di dalam container', $clone['data']['columns'][0]['blocks'][0]['data']['text']);
+
+        // All ids are regenerated for the clone.
+        $this->assertNotSame($original['id'], $clone['id']);
+        $this->assertNotSame($original['data']['columns'][0]['id'], $clone['data']['columns'][0]['id']);
+        $this->assertNotSame(
+            $original['data']['columns'][0]['blocks'][0]['id'],
+            $clone['data']['columns'][0]['blocks'][0]['id'],
+        );
+    }
+
+    public function test_duplicating_a_container_copies_its_uploaded_image_files(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Gambar')
+            ->call('addBlockToContainer', 0, 0, 'image')
+            ->set('imageUpload', UploadedFile::fake()->image('gift.png'))
+            ->call('uploadImage')
+            ->assertHasNoErrors()
+            ->call('duplicateBlock', 0)
+            ->call('save', 'published')
+            ->assertHasNoErrors();
+
+        $page = CustomPage::query()->firstOrFail();
+
+        $this->assertCount(2, $page->blocks);
+
+        [$original, $clone] = $page->blocks;
+
+        $originalPath = $original['data']['columns'][0]['blocks'][0]['data']['storage_path'];
+        $clonePath = $clone['data']['columns'][0]['blocks'][0]['data']['storage_path'];
+
+        $this->assertNotSame($originalPath, $clonePath);
+        Storage::disk('public')->assertExists($originalPath);
+        Storage::disk('public')->assertExists($clonePath);
+    }
+
+    public function test_user_can_add_up_to_eight_gallery_images(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Gallery')
+            ->call('addBlock', 'gallery')
+            ->set('galleryUploads', [
+                UploadedFile::fake()->image('a.png'),
+                UploadedFile::fake()->image('b.png'),
+                UploadedFile::fake()->image('c.png'),
+            ])
+            ->call('uploadGalleryImages')
+            ->assertHasNoErrors()
+            ->call('save', 'published')
+            ->assertHasNoErrors();
+
+        $page = CustomPage::query()->firstOrFail();
+
+        $this->assertCount(2, $page->blocks);
+        $this->assertSame('gallery', $page->blocks[1]['type']);
+        $this->assertCount(3, $page->blocks[1]['data']['images']);
+
+        foreach ($page->blocks[1]['data']['images'] as $image) {
+            Storage::disk('public')->assertExists($image['storage_path']);
+        }
+    }
+
+    public function test_gallery_rejects_more_than_eight_images(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->create());
+
+        $uploads = [];
+        for ($i = 0; $i < 9; $i++) {
+            $uploads[] = UploadedFile::fake()->image("img-{$i}.png");
+        }
+
+        Livewire::test('pages::page-builder.index')
+            ->call('addBlock', 'gallery')
+            ->set('galleryUploads', $uploads)
+            ->call('uploadGalleryImages')
+            ->assertHasErrors('galleryUploads');
+    }
+
+    public function test_gallery_requires_an_initial_count_not_exceeding_its_images(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Gallery')
+            ->call('addBlock', 'gallery')
+            ->set('galleryUploads', [UploadedFile::fake()->image('a.png')])
+            ->call('uploadGalleryImages')
+            ->set('blocks.1.data.initial_count', 5)
+            ->call('save', 'published')
+            ->assertHasErrors('blocks.1.data.initial_count');
+    }
+
+    public function test_gallery_requires_at_least_one_image_before_publishing(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Gallery')
+            ->call('addBlock', 'gallery')
+            ->call('save', 'published')
+            ->assertHasErrors('blocks.1.data.images');
+    }
+
+    public function test_removing_a_gallery_image_deletes_the_stored_file(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->create());
+
+        $component = Livewire::test('pages::page-builder.index')
+            ->call('addBlock', 'gallery')
+            ->set('galleryUploads', [
+                UploadedFile::fake()->image('a.png'),
+                UploadedFile::fake()->image('b.png'),
+            ])
+            ->call('uploadGalleryImages')
+            ->assertHasNoErrors();
+
+        $path = $component->get('blocks.1.data.images.0.storage_path');
+        Storage::disk('public')->assertExists($path);
+
+        $component->call('removeGalleryImage', 0)->assertHasNoErrors();
+
+        Storage::disk('public')->assertMissing($path);
+        $this->assertCount(1, $component->get('blocks.1.data.images'));
+    }
+
+    public function test_gallery_renders_initial_images_and_a_carousel_trigger_publicly(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Gallery')
+            ->call('addBlock', 'gallery')
+            ->set('galleryUploads', [
+                UploadedFile::fake()->image('a.png'),
+                UploadedFile::fake()->image('b.png'),
+                UploadedFile::fake()->image('c.png'),
+                UploadedFile::fake()->image('d.png'),
+                UploadedFile::fake()->image('e.png'),
+            ])
+            ->call('uploadGalleryImages')
+            ->assertHasNoErrors()
+            ->set('blocks.1.data.initial_count', 2)
+            ->call('save', 'published')
+            ->assertHasNoErrors();
+
+        $page = CustomPage::query()->firstOrFail();
+
+        $this->get(route('custom-pages.show', $page))
+            ->assertOk()
+            ->assertSee('data-page-gallery-track', false)
+            ->assertSee('data-page-gallery-item', false)
+            ->assertSee('data-page-gallery-next', false)
+            ->assertSee('data-page-gallery-prev', false);
+    }
+
+    public function test_gallery_hides_carousel_arrows_when_images_fit_the_initial_count(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Gallery')
+            ->call('addBlock', 'gallery')
+            ->set('galleryUploads', [
+                UploadedFile::fake()->image('a.png'),
+                UploadedFile::fake()->image('b.png'),
+            ])
+            ->call('uploadGalleryImages')
+            ->set('blocks.1.data.initial_count', 2)
+            ->call('save', 'published')
+            ->assertHasNoErrors();
+
+        $page = CustomPage::query()->firstOrFail();
+
+        $this->get(route('custom-pages.show', $page))
+            ->assertOk()
+            ->assertSee('data-page-gallery-track', false)
+            ->assertDontSee('data-page-gallery-nav', false);
+    }
+
+    public function test_deleting_a_page_removes_its_gallery_files(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Gallery')
+            ->call('addBlock', 'gallery')
+            ->set('galleryUploads', [UploadedFile::fake()->image('a.png')])
+            ->call('uploadGalleryImages')
+            ->call('save', 'published')
+            ->assertHasNoErrors();
+
+        $page = CustomPage::query()->firstOrFail();
+        $path = $page->blocks[1]['data']['images'][0]['storage_path'];
+        Storage::disk('public')->assertExists($path);
+
+        Livewire::test('pages::page-builder.index', ['pageId' => $page->id])
+            ->call('deletePage');
+
+        Storage::disk('public')->assertMissing($path);
+        $this->assertSame(0, CustomPage::query()->count());
+    }
+
+    public function test_duplicating_a_page_copies_gallery_files(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Gallery')
+            ->call('addBlock', 'gallery')
+            ->set('galleryUploads', [UploadedFile::fake()->image('a.png')])
+            ->call('uploadGalleryImages')
+            ->call('save', 'published')
+            ->assertHasNoErrors();
+
+        $page = CustomPage::query()->firstOrFail();
+        $originalPath = $page->blocks[1]['data']['images'][0]['storage_path'];
+
+        $this->post(route('pages.duplicate', $page));
+
+        $duplicate = CustomPage::query()->where('id', '!=', $page->id)->firstOrFail();
+        $clonePath = $duplicate->blocks[1]['data']['images'][0]['storage_path'];
+
+        $this->assertNotSame($originalPath, $clonePath);
+        Storage::disk('public')->assertExists($originalPath);
+        Storage::disk('public')->assertExists($clonePath);
+    }
+
+    public function test_gallery_block_can_be_added_inside_a_container(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Gallery')
+            ->call('addBlockToContainer', 0, 0, 'gallery')
+            ->set('galleryUploads', [UploadedFile::fake()->image('a.png')])
+            ->call('uploadGalleryImages')
+            ->assertHasNoErrors()
+            ->call('save', 'published')
+            ->assertHasNoErrors();
+
+        $page = CustomPage::query()->firstOrFail();
+        $nested = $page->blocks[0]['data']['columns'][0]['blocks'][0];
+
+        $this->assertSame('gallery', $nested['type']);
+        $this->assertCount(1, $nested['data']['images']);
+    }
 }

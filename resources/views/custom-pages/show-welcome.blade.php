@@ -39,4 +39,6 @@
             </div>
         </div>
     </div>
+
+    @include('custom-pages.gallery-script')
 @endsection

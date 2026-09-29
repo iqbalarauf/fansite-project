@@ -1,6 +1,7 @@
-﻿<?php
+<?php
 
 use App\Models\CustomPage;
+use App\Support\CustomPageDuplicator;
 use App\Support\ImageOptimizer;
 use Flux\Flux;
 use Illuminate\Support\Facades\DB;
@@ -33,6 +34,7 @@ new #[Title('Custom Pages')] class extends Component {
     public ?int $selectedColumnIndex = null;
     public ?int $selectedNestedBlockIndex = null;
     public mixed $imageUpload = null;
+    public array $galleryUploads = [];
     public bool $showPreview = false;
     public bool $heroEnabled = false;
     public ?string $heroImagePath = null;
@@ -63,6 +65,7 @@ new #[Title('Custom Pages')] class extends Component {
         $this->selectedColumnIndex = null;
         $this->selectedNestedBlockIndex = null;
         $this->imageUpload = null;
+        $this->galleryUploads = [];
         $this->heroEnabled = false;
         $this->heroImagePath = null;
         $this->heroImageUpload = null;
@@ -74,9 +77,26 @@ new #[Title('Custom Pages')] class extends Component {
         $this->loadPage(CustomPage::query()->findOrFail($id));
     }
 
+    public function duplicateBlock(int $index): void
+    {
+        if (! isset($this->blocks[$index])) {
+            return;
+        }
+
+        $clone = app(CustomPageDuplicator::class)->duplicateBlock($this->blocks[$index]);
+
+        array_splice($this->blocks, $index + 1, 0, [$clone]);
+
+        $this->selectedBlockIndex = $index + 1;
+        $this->selectedColumnIndex = null;
+        $this->selectedNestedBlockIndex = null;
+        $this->imageUpload = null;
+        $this->galleryUploads = [];
+    }
+
     public function addBlock(string $type): void
     {
-        if (! in_array($type, ['container', 'text', 'statistic', 'image', 'video', 'button', 'embed'], true)) {
+        if (! in_array($type, ['container', 'text', 'statistic', 'image', 'video', 'gallery', 'button', 'embed'], true)) {
             return;
         }
 
@@ -89,6 +109,7 @@ new #[Title('Custom Pages')] class extends Component {
                 'statistic' => ['metric' => 'show_teater_all', 'label' => 'Total Show Teater'],
                 'image' => ['url' => '', 'alt' => '', 'source' => 'url', 'display' => 'fit'],
                 'video' => ['url' => '', 'title' => ''],
+                'gallery' => ['images' => [], 'initial_count' => 3],
                 'button' => ['label' => 'Buka tautan', 'url' => 'https://', 'alignment' => 'left', 'bg_color' => '#4F46E5', 'text_color' => '#FFFFFF'],
                 'embed' => ['html' => '<div>Masukkan HTML embed di sini.</div>'],
             },
@@ -98,11 +119,12 @@ new #[Title('Custom Pages')] class extends Component {
         $this->selectedColumnIndex = null;
         $this->selectedNestedBlockIndex = null;
         $this->imageUpload = null;
+        $this->galleryUploads = [];
     }
 
     public function addBlockToContainer(int $containerIndex, int $columnIndex, string $type): void
     {
-        if (($this->blocks[$containerIndex]['type'] ?? null) !== 'container' || ! in_array($type, ['text', 'statistic', 'image', 'video', 'button', 'embed'], true)) {
+        if (($this->blocks[$containerIndex]['type'] ?? null) !== 'container' || ! in_array($type, ['text', 'statistic', 'image', 'video', 'gallery', 'button', 'embed'], true)) {
             return;
         }
 
@@ -114,6 +136,7 @@ new #[Title('Custom Pages')] class extends Component {
                 'statistic' => ['metric' => 'show_teater_all', 'label' => 'Total Show Teater'],
                 'image' => ['url' => '', 'alt' => '', 'source' => 'url', 'display' => 'fit'],
                 'video' => ['url' => '', 'title' => ''],
+                'gallery' => ['images' => [], 'initial_count' => 3],
                 'button' => ['label' => 'Buka tautan', 'url' => 'https://', 'alignment' => 'left', 'bg_color' => '#4F46E5', 'text_color' => '#FFFFFF'],
                 'embed' => ['html' => '<div>Masukkan HTML embed di sini.</div>'],
             },
@@ -123,6 +146,7 @@ new #[Title('Custom Pages')] class extends Component {
         $this->selectedColumnIndex = $columnIndex;
         $this->selectedNestedBlockIndex = count($this->blocks[$containerIndex]['data']['columns'][$columnIndex]['blocks']) - 1;
         $this->imageUpload = null;
+        $this->galleryUploads = [];
     }
 
     public function setContainerColumns(int $containerIndex, int $columnCount): void
@@ -148,6 +172,7 @@ new #[Title('Custom Pages')] class extends Component {
             $this->selectedColumnIndex = null;
             $this->selectedNestedBlockIndex = null;
             $this->imageUpload = null;
+            $this->galleryUploads = [];
             $this->resetErrorBag('imageUpload');
         }
     }
@@ -159,6 +184,7 @@ new #[Title('Custom Pages')] class extends Component {
             $this->selectedColumnIndex = $columnIndex;
             $this->selectedNestedBlockIndex = $blockIndex;
             $this->imageUpload = null;
+            $this->galleryUploads = [];
             $this->resetErrorBag('imageUpload');
         }
     }
@@ -174,6 +200,7 @@ new #[Title('Custom Pages')] class extends Component {
         array_splice($this->blocks, $index, 1);
         $this->selectedBlockIndex = max(0, min($this->selectedBlockIndex, count($this->blocks) - 1));
         $this->imageUpload = null;
+        $this->galleryUploads = [];
     }
 
     public function sortBlock(string $item, int $position): void
@@ -234,6 +261,7 @@ new #[Title('Custom Pages')] class extends Component {
         $this->selectedColumnIndex = null;
         $this->selectedNestedBlockIndex = null;
         $this->imageUpload = null;
+        $this->galleryUploads = [];
     }
 
     public function setPageBackground(string $color): void
@@ -388,6 +416,7 @@ new #[Title('Custom Pages')] class extends Component {
         $data['url'] = '';
         $this->updateSelectedImageData($data);
         $this->imageUpload = null;
+        $this->galleryUploads = [];
 
         Flux::toast(variant: 'success', text: __('Image uploaded.'));
     }
@@ -411,6 +440,7 @@ new #[Title('Custom Pages')] class extends Component {
         $data['url'] = '';
         $this->updateSelectedImageData($data);
         $this->imageUpload = null;
+        $this->galleryUploads = [];
 
         Flux::toast(variant: 'success', text: __('Image removed.'));
     }
@@ -445,6 +475,132 @@ new #[Title('Custom Pages')] class extends Component {
         }
 
         return null;
+    }
+
+    public function uploadGalleryImages(): void
+    {
+        abort_if(auth()->user()?->isViewOnly(), 403);
+
+        $this->validate([
+            'galleryUploads' => ['array', 'max:8'],
+            'galleryUploads.*' => ['image', 'max:3072'],
+        ], [
+            'galleryUploads.max' => __('A gallery can hold at most 8 images.'),
+        ]);
+
+        $data = $this->selectedBlockData();
+
+        if (! is_array($data) || ($this->selectedBlockType() !== 'gallery') || $this->galleryUploads === []) {
+            return;
+        }
+
+        $images = $data['images'] ?? [];
+
+        foreach ($this->galleryUploads as $upload) {
+            if (count($images) >= 8) {
+                break;
+            }
+
+            if (! $upload) {
+                continue;
+            }
+
+            $images[] = [
+                'storage_path' => ImageOptimizer::store($upload, 'pages/gallery'),
+                'alt' => '',
+            ];
+        }
+
+        $data['images'] = array_values($images);
+
+        $initialCount = (int) ($data['initial_count'] ?? 3);
+        $data['initial_count'] = max(1, min($initialCount, count($data['images'])));
+
+        $this->updateSelectedBlockData($data);
+        $this->galleryUploads = [];
+
+        Flux::toast(variant: 'success', text: __('Images uploaded.'));
+    }
+
+    public function removeGalleryImage(int $imageIndex): void
+    {
+        abort_if(auth()->user()?->isViewOnly(), 403);
+
+        $data = $this->selectedBlockData();
+
+        if (! is_array($data) || ($this->selectedBlockType() !== 'gallery')) {
+            return;
+        }
+
+        $images = array_values($data['images'] ?? []);
+
+        if (! isset($images[$imageIndex])) {
+            return;
+        }
+
+        if (! blank($images[$imageIndex]['storage_path'] ?? null)) {
+            Storage::disk('public')->delete($images[$imageIndex]['storage_path']);
+        }
+
+        array_splice($images, $imageIndex, 1);
+        $data['images'] = $images;
+        $this->updateSelectedBlockData($data);
+
+        Flux::toast(variant: 'success', text: __('Image removed.'));
+    }
+
+    /**
+     * @return array<int, array{url: string, alt: string}>
+     */
+    public function galleryImagePreviews(): array
+    {
+        $data = $this->selectedBlockData();
+
+        if (! is_array($data)) {
+            return [];
+        }
+
+        $previews = [];
+
+        foreach (($data['images'] ?? []) as $image) {
+            $path = $image['storage_path'] ?? null;
+
+            $previews[] = [
+                'url' => blank($path) ? '' : Storage::disk('public')->url($path),
+                'alt' => (string) ($image['alt'] ?? ''),
+            ];
+        }
+
+        return $previews;
+    }
+
+    private function selectedBlockType(): ?string
+    {
+        if ($this->selectedColumnIndex === null || $this->selectedNestedBlockIndex === null) {
+            return $this->blocks[$this->selectedBlockIndex]['type'] ?? null;
+        }
+
+        return $this->blocks[$this->selectedBlockIndex]['data']['columns'][$this->selectedColumnIndex]['blocks'][$this->selectedNestedBlockIndex]['type'] ?? null;
+    }
+
+    private function selectedBlockData(): ?array
+    {
+        if ($this->selectedColumnIndex === null || $this->selectedNestedBlockIndex === null) {
+            return $this->blocks[$this->selectedBlockIndex]['data'] ?? null;
+        }
+
+        return $this->blocks[$this->selectedBlockIndex]['data']['columns'][$this->selectedColumnIndex]['blocks'][$this->selectedNestedBlockIndex]['data'] ?? null;
+    }
+
+    private function updateSelectedBlockData(array $data): void
+    {
+        if ($this->selectedColumnIndex === null || $this->selectedNestedBlockIndex === null) {
+            $this->blocks[$this->selectedBlockIndex]['data'] = $data;
+
+            return;
+        }
+
+        $this->blocks[$this->selectedBlockIndex]['data']['columns'][$this->selectedColumnIndex]['blocks'][$this->selectedNestedBlockIndex]['data'] = $data;
     }
 
     private function isSelectedBlockImage(): bool
@@ -486,6 +642,16 @@ new #[Title('Custom Pages')] class extends Component {
             foreach (($block['data']['columns'] ?? []) as $column) {
                 foreach (($column['blocks'] ?? []) as $nestedBlock) {
                     $this->deleteBlockFile($nestedBlock);
+                }
+            }
+
+            return;
+        }
+
+        if (($block['type'] ?? null) === 'gallery') {
+            foreach (($block['data']['images'] ?? []) as $image) {
+                if (! blank($image['storage_path'] ?? null)) {
+                    Storage::disk('public')->delete($image['storage_path']);
                 }
             }
 
@@ -541,6 +707,7 @@ new #[Title('Custom Pages')] class extends Component {
         $this->selectedColumnIndex = null;
         $this->selectedNestedBlockIndex = null;
         $this->imageUpload = null;
+        $this->galleryUploads = [];
     }
 
     private function uniqueSlug(): string
@@ -568,7 +735,7 @@ new #[Title('Custom Pages')] class extends Component {
             'heroImageUpload' => ['nullable', 'image', 'max:3072'],
             'blocks' => ['array', 'min:1'],
             'blocks.*.id' => ['required', 'string', 'max:80'],
-            'blocks.*.type' => ['required', 'in:container,text,statistic,image,video,button,embed'],
+            'blocks.*.type' => ['required', 'in:container,text,statistic,image,video,gallery,button,embed'],
             'blocks.*.data' => ['array'],
             'blocks.*.data.background' => ['nullable', 'regex:/^(?:white|soft|accent|transparent|#[0-9A-Fa-f]{6})$/'],
             'blocks.*.data.vertical_alignment' => ['nullable', 'in:top,middle,bottom'],
@@ -585,7 +752,7 @@ new #[Title('Custom Pages')] class extends Component {
             'blocks.*.data.underline' => ['nullable', 'boolean'],
             'blocks.*.data.metric' => ['nullable', 'in:show_teater_all,show_teater_date_range,show_teater_setlist,unit_song_all,unit_song_date_range,unit_song_setlist,center_unit_song_all,center_unit_song_unit_song,center_unit_song_setlist,center_unit_song_date_range,global_center_date_range,global_center_setlist,live_streaming_time,live_streaming_row,live_streaming_platform'],
             'blocks.*.data.columns.*.blocks.*.id' => ['required', 'string', 'max:80'],
-            'blocks.*.data.columns.*.blocks.*.type' => ['required', 'in:text,statistic,image,video,button,embed'],
+            'blocks.*.data.columns.*.blocks.*.type' => ['required', 'in:text,statistic,image,video,gallery,button,embed'],
             'blocks.*.data.columns.*.blocks.*.data' => ['array'],
             'blocks.*.data.columns.*.blocks.*.data.alignment' => ['nullable', 'in:left,center,right,justify'],
             'blocks.*.data.columns.*.blocks.*.data.color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
@@ -661,6 +828,25 @@ new #[Title('Custom Pages')] class extends Component {
             return;
         }
 
+        if ($type === 'gallery') {
+            $images = array_values($data['images'] ?? []);
+
+            if ($images === []) {
+                $this->addError("{$path}.data.images", __('Upload at least one image.'));
+            } elseif (count($images) > 8) {
+                $this->addError("{$path}.data.images", __('A gallery can hold at most 8 images.'));
+            }
+
+            $initialCount = (int) ($data['initial_count'] ?? 3);
+
+            if ($initialCount < 1 || $initialCount > max(1, count($images))) {
+                $this->addError("{$path}.data.initial_count", __('Choose how many images show first.'));
+            }
+
+            return;
+        }
+
+
         $requiredField = match ($type) {
             'text' => 'text',
             'statistic' => 'metric',
@@ -715,7 +901,14 @@ new #[Title('Custom Pages')] class extends Component {
                         <article wire:sort:item="{{ $block['id'] }}" wire:key="block-{{ $block['id'] }}" wire:click="selectBlock({{ $index }})" class="group cursor-pointer rounded-2xl border bg-white p-5 shadow-sm transition dark:bg-zinc-900 {{ $selectedBlockIndex === $index ? 'border-indigo-500 ring-2 ring-indigo-500/20' : 'border-zinc-200 dark:border-zinc-700' }}">
                             <div class="mb-3 flex items-center justify-between gap-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
                                 <span class="flex items-center gap-2"><flux:icon name="bars-3" class="size-4 cursor-grab" /> {{ $block['type'] }}</span>
-                                <flux:button wire:click.stop="removeBlock({{ $index }})" icon="trash" size="sm" square :aria-label="__('Remove block')" />
+                                <div class="flex items-center gap-1">
+                                    @if (($block['type'] ?? null) === 'container')
+                                        <flux:tooltip content="{{ __('Duplicate container') }}">
+                                            <flux:button wire:click.stop="duplicateBlock({{ $index }})" icon="document-duplicate" size="sm" square :aria-label="__('Duplicate container')" />
+                                        </flux:tooltip>
+                                    @endif
+                                    <flux:button wire:click.stop="removeBlock({{ $index }})" icon="trash" size="sm" square :aria-label="__('Remove block')" />
+                                </div>
                             </div>
                             <x-custom-page-block :block="$block" preview />
                         </article>
@@ -800,6 +993,8 @@ new #[Title('Custom Pages')] class extends Component {
                             @elseif ($nestedType === 'video')
                                 <flux:input wire:model.live="{{ $nestedPath }}.data.url" :label="__('YouTube URL')" type="url" />
                                 <flux:input wire:model.live="{{ $nestedPath }}.data.title" :label="__('Video title')" />
+                            @elseif ($nestedType === 'gallery')
+                                @include('custom-pages.gallery-fields', ['path' => $nestedPath])
                             @elseif ($nestedType === 'button')
                                 @include('custom-pages.button-fields', ['path' => $nestedPath])
                             @elseif ($nestedType === 'embed')
@@ -845,7 +1040,7 @@ new #[Title('Custom Pages')] class extends Component {
                                         @endforeach
                                     </div>
                                     <div class="grid gap-2">
-                                        @foreach ([['text', 'Text'], ['statistic', 'Statistic'], ['image', 'Image'], ['video', 'YouTube video'], ['button', 'Button'], ['embed', 'Embed HTML']] as [$type, $label])
+                                        @foreach ([['text', 'Text'], ['statistic', 'Statistic'], ['image', 'Image'], ['video', 'YouTube video'], ['gallery', 'Gallery'], ['button', 'Button'], ['embed', 'Embed HTML']] as [$type, $label])
                                             <flux:button wire:click="addBlockToContainer({{ $selectedBlockIndex }}, {{ $columnIndex }}, '{{ $type }}')" size="sm" variant="outline">{{ __('Add :element', ['element' => __($label)]) }}</flux:button>
                                         @endforeach
                                     </div>
@@ -856,6 +1051,8 @@ new #[Title('Custom Pages')] class extends Component {
                         @elseif ($blocks[$selectedBlockIndex]['type'] === 'video')
                             <flux:input wire:model.live="blocks.{{ $selectedBlockIndex }}.data.url" :label="__('YouTube URL')" type="url" placeholder="https://youtube.com/watch?v=..." />
                             <flux:input wire:model.live="blocks.{{ $selectedBlockIndex }}.data.title" :label="__('Video title')" />
+                        @elseif ($blocks[$selectedBlockIndex]['type'] === 'gallery')
+                            @include('custom-pages.gallery-fields', ['path' => "blocks.{$selectedBlockIndex}"])
                         @elseif ($blocks[$selectedBlockIndex]['type'] === 'button')
                             @include('custom-pages.button-fields', ['path' => "blocks.{$selectedBlockIndex}"])
                         @elseif ($blocks[$selectedBlockIndex]['type'] === 'embed')
@@ -874,7 +1071,7 @@ new #[Title('Custom Pages')] class extends Component {
                     @if ($addElementOpen)
                         <div class="mt-4 space-y-3 border-t border-zinc-200 pt-4 dark:border-zinc-700">
                             <div class="grid gap-2">
-                                @foreach ([['container', 'squares-2x2', 'Container'], ['text', 'bars-3-bottom-left', 'Text'], ['statistic', 'chart-bar', 'Statistic'], ['image', 'photo', 'Image'], ['video', 'video-camera', 'YouTube video'], ['button', 'cursor-arrow-rays', 'Button'], ['embed', 'code-bracket', 'Embed HTML']] as [$type, $icon, $label])
+                                @foreach ([['container', 'squares-2x2', 'Container'], ['text', 'bars-3-bottom-left', 'Text'], ['statistic', 'chart-bar', 'Statistic'], ['image', 'photo', 'Image'], ['video', 'video-camera', 'YouTube video'], ['gallery', 'photo', 'Gallery'], ['button', 'cursor-arrow-rays', 'Button'], ['embed', 'code-bracket', 'Embed HTML']] as [$type, $icon, $label])
                                     <flux:button wire:click="addBlock('{{ $type }}')" variant="outline" icon="{{ $icon }}" class="justify-start">{{ __($label) }}</flux:button>
                                 @endforeach
                             </div>
@@ -920,5 +1117,7 @@ new #[Title('Custom Pages')] class extends Component {
                     </div>
                 </div>
             </div>
+
+            @include('custom-pages.gallery-script')
         @endif
 </section>

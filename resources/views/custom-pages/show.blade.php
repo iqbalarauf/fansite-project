@@ -43,5 +43,7 @@
                 @endforeach
             </div>
         </main>
+
+        @include('custom-pages.gallery-script')
     </body>
 </html>
