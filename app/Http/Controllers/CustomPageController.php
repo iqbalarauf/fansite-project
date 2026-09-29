@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CustomPage;
+use App\Support\CustomPageDuplicator;
 use App\Support\ListingQuery;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -48,6 +49,15 @@ class CustomPageController extends Controller
         $customPage->delete();
 
         return to_route('pages.index')->with('success', __('Page deleted.'));
+    }
+
+    public function duplicate(CustomPage $customPage): RedirectResponse
+    {
+        Gate::authorize('create', CustomPage::class);
+
+        $duplicate = app(CustomPageDuplicator::class)->duplicate($customPage);
+
+        return to_route('pages.edit', $duplicate)->with('success', __('Page duplicated as a draft.'));
     }
 
     public function show(CustomPage $customPage): View

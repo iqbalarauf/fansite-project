@@ -56,7 +56,7 @@
                     <div>
                         <flux:label>Konten</flux:label>
                         <div class="mt-1">
-                            <x-rich-text-editor name="content" :value="old('content', $post->content ?? '')" />
+                            <x-rich-text-editor name="content" :value="old('content', $post->content ?? '')" :statistics="true" />
                         </div>
                     </div>
                 </div>

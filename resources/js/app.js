@@ -2,6 +2,75 @@ import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
+import { Node, mergeAttributes } from '@tiptap/core';
+
+/**
+ * Node atom untuk statistic card. Menyimpan konfigurasi pada data-stat-*
+ * sehingga card dapat diedit/dihapus lagi tanpa menambah tabel baru.
+ */
+const StatisticCard = Node.create({
+    name: 'statisticCard',
+    group: 'block',
+    atom: true,
+    draggable: true,
+
+    addAttributes() {
+        return {
+            metric: { default: 'show_teater_all' },
+            label: { default: 'Statistic' },
+            value: { default: '0' },
+            dateFrom: { default: null },
+            dateTo: { default: null },
+            setlist: { default: null },
+            unitSong: { default: null },
+            platform: { default: null },
+        };
+    },
+
+    parseHTML() {
+        return [{
+            tag: 'div[data-stat-metric]',
+            getAttrs: (element) => ({
+                metric: element.getAttribute('data-stat-metric') || 'show_teater_all',
+                label: element.getAttribute('data-stat-label') || 'Statistic',
+                value: element.getAttribute('data-stat-value') || '0',
+                dateFrom: element.getAttribute('data-stat-date-from'),
+                dateTo: element.getAttribute('data-stat-date-to'),
+                setlist: element.getAttribute('data-stat-setlist'),
+                unitSong: element.getAttribute('data-stat-unit-song'),
+                platform: element.getAttribute('data-stat-platform'),
+            }),
+        }];
+    },
+
+    renderHTML({ node }) {
+        const attributes = { class: 'rich-stat-card' };
+
+        if (node.attrs.metric) attributes['data-stat-metric'] = node.attrs.metric;
+        if (node.attrs.label) attributes['data-stat-label'] = node.attrs.label;
+        if (node.attrs.value !== null && node.attrs.value !== undefined) attributes['data-stat-value'] = String(node.attrs.value);
+        if (node.attrs.dateFrom) attributes['data-stat-date-from'] = node.attrs.dateFrom;
+        if (node.attrs.dateTo) attributes['data-stat-date-to'] = node.attrs.dateTo;
+        if (node.attrs.setlist) attributes['data-stat-setlist'] = node.attrs.setlist;
+        if (node.attrs.unitSong) attributes['data-stat-unit-song'] = node.attrs.unitSong;
+        if (node.attrs.platform) attributes['data-stat-platform'] = node.attrs.platform;
+
+        return [
+            'div',
+            mergeAttributes(attributes),
+            [
+                'p',
+                { class: 'rich-stat-card-label' },
+                node.attrs.label || 'Statistic',
+            ],
+            [
+                'p',
+                { class: 'rich-stat-card-value' },
+                String(node.attrs.value ?? '0'),
+            ],
+        ];
+    },
+});
 
 function runCommand(editor, command) {
     const chain = editor.chain().focus();
@@ -38,6 +107,10 @@ function runCommand(editor, command) {
         }
         case 'image': {
             // Ditangani melalui input unggah berkas (lihat initRichText).
+            return false;
+        }
+        case 'statisticCard': {
+            // Ditangani melalui dialog statistic card (lihat initRichText).
             return false;
         }
         case 'undo':
@@ -90,11 +163,192 @@ function refreshToolbar(root, editor) {
     });
 }
 
+const STAT_METRICS = [
+    { value: 'show_teater_all', label: 'Show Teater: Count all', group: 'show' },
+    { value: 'show_teater_date_range', label: 'Show Teater: Count by range date', group: 'show', date: true },
+    { value: 'show_teater_setlist', label: 'Show Teater: Count by setlist', group: 'show', setlist: true },
+    { value: 'unit_song_all', label: 'Unit Song: Count all', group: 'unit' },
+    { value: 'unit_song_date_range', label: 'Unit Song: Count by range date', group: 'unit', date: true },
+    { value: 'unit_song_setlist', label: 'Unit Song: Count by setlist', group: 'unit', setlist: true },
+    { value: 'center_unit_song_all', label: 'Center US: Count all', group: 'center' },
+    { value: 'center_unit_song_unit_song', label: 'Center US: Count by unit song', group: 'center', unitSong: true },
+    { value: 'center_unit_song_setlist', label: 'Center US: Count by setlist', group: 'center', setlist: true },
+    { value: 'center_unit_song_date_range', label: 'Center US: Count by range date', group: 'center', date: true },
+    { value: 'global_center_date_range', label: 'Global Center: Count by range date', group: 'global', date: true },
+    { value: 'global_center_setlist', label: 'Global Center: Count by setlist', group: 'global', setlist: true },
+];
+
+function metricConfig(metric) {
+    return STAT_METRICS.find((item) => item.value === metric) || STAT_METRICS[0];
+}
+
+function escapeAttribute(value) {
+    return String(value ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function buildStatisticCard(attrs) {
+    const attributes = {
+        class: 'rich-stat-card',
+        'data-stat-metric': attrs.metric || 'show_teater_all',
+        'data-stat-label': attrs.label || 'Statistic',
+        'data-stat-value': String(attrs.value ?? '0'),
+    };
+
+    if (attrs.dateFrom) attributes['data-stat-date-from'] = attrs.dateFrom;
+    if (attrs.dateTo) attributes['data-stat-date-to'] = attrs.dateTo;
+    if (attrs.setlist) attributes['data-stat-setlist'] = attrs.setlist;
+    if (attrs.unitSong) attributes['data-stat-unit-song'] = attrs.unitSong;
+
+    const attributePairs = Object.entries(attributes)
+        .map(([name, value]) => `${name}="${escapeAttribute(value)}"`)
+        .join(' ');
+
+    return `<div ${attributePairs}><p class="rich-stat-card-label">${escapeAttribute(attributes['data-stat-label'])}</p><p class="rich-stat-card-value">${escapeAttribute(attributes['data-stat-value'])}</p></div>`;
+}
+
+function openStatisticDialog(root, editor) {
+    const dialog = root.querySelector('[data-stat-dialog]');
+
+    if (!dialog) {
+        return;
+    }
+
+    const endpoint = root.dataset.statisticUploadUrl || '';
+    const csrfToken = root.dataset.csrfToken || '';
+    const setlists = JSON.parse(root.dataset.statSetlists || '[]');
+    const unitSongs = JSON.parse(root.dataset.statUnitSongs || '[]');
+
+    const metricSelect = dialog.querySelector('[data-stat-field="metric"]');
+    const labelInput = dialog.querySelector('[data-stat-field="label"]');
+    const dateFields = dialog.querySelector('[data-stat-dates]');
+    const dateFromInput = dialog.querySelector('[data-stat-field="date_from"]');
+    const dateToInput = dialog.querySelector('[data-stat-field="date_to"]');
+    const setlistField = dialog.querySelector('[data-stat-setlist]');
+    const setlistSelect = dialog.querySelector('[data-stat-field="setlist"]');
+    const unitSongField = dialog.querySelector('[data-stat-unit-song]');
+    const unitSongSelect = dialog.querySelector('[data-stat-field="unit_song"]');
+    const preview = dialog.querySelector('[data-stat-preview]');
+
+    function currentMetric() {
+        return metricSelect.value;
+    }
+
+    function toggleFields() {
+        const config = metricConfig(currentMetric());
+        dateFields.classList.toggle('hidden', !config.date);
+        setlistField.classList.toggle('hidden', !config.setlist);
+        unitSongField.classList.toggle('hidden', !config.unitSong);
+    }
+
+    function prefill() {
+        metricSelect.value = 'show_teater_all';
+        labelInput.value = 'Total Show Teater';
+        dateFromInput.value = '';
+        dateToInput.value = '';
+        setlistSelect.value = '';
+        unitSongSelect.value = '';
+        toggleFields();
+        updatePreview();
+    }
+
+    async function updatePreview() {
+        if (!endpoint) {
+            return;
+        }
+
+        const payload = {
+            metric: currentMetric(),
+            label: labelInput.value,
+            date_from: dateFromInput.value || null,
+            date_to: dateToInput.value || null,
+            setlist: setlistSelect.value || null,
+            unit_song: unitSongSelect.value || null,
+        };
+
+        preview.textContent = '…';
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+                throw new Error('Request failed');
+            }
+
+            const data = await response.json();
+            preview.textContent = Number(data.value || 0).toLocaleString('id-ID');
+        } catch (error) {
+            preview.textContent = '—';
+        }
+    }
+
+    function close() {
+        dialog.classList.add('hidden');
+        dialog.classList.remove('flex');
+        document.body.style.overflow = '';
+    }
+
+    function open() {
+        prefill();
+        dialog.classList.remove('hidden');
+        dialog.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+    }
+
+    metricSelect.addEventListener('change', () => {
+        const config = metricConfig(currentMetric());
+        labelInput.value = config.label;
+        toggleFields();
+        updatePreview();
+    });
+
+    [labelInput, dateFromInput, dateToInput, setlistSelect, unitSongSelect].forEach((field) => {
+        field.addEventListener('change', updatePreview);
+    });
+
+    dialog.querySelector('[data-stat-cancel]').addEventListener('click', close);
+
+    dialog.querySelector('[data-stat-insert]').addEventListener('click', () => {
+        const html = buildStatisticCard({
+            metric: currentMetric(),
+            label: labelInput.value,
+            value: preview.textContent.replace(/[^0-9]/g, '') || '0',
+            dateFrom: dateFromInput.value || null,
+            dateTo: dateToInput.value || null,
+            setlist: setlistSelect.value || null,
+            unitSong: unitSongSelect.value || null,
+        });
+
+        editor.chain().focus().insertContent(html).run();
+        close();
+    });
+
+    dialog.addEventListener('click', (event) => {
+        if (event.target === dialog) {
+            close();
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !dialog.classList.contains('hidden')) {
+            close();
+        }
+    });
+
+    open();
+}
+
 function initRichText(root) {
     if (root.dataset.richTextReady === 'true') {
         return;
     }
-
     const canvas = root.querySelector('[data-rich-text-canvas]');
     const input = root.querySelector('[data-rich-text-input]');
 
@@ -114,6 +368,7 @@ function initRichText(root) {
                 },
             }),
             Image,
+            StatisticCard,
             Placeholder.configure({
                 placeholder: input.dataset.placeholder || 'Tulis konten di sini...',
             }),
@@ -176,6 +431,12 @@ function initRichText(root) {
         button.addEventListener('click', () => {
             if (button.dataset.richTextCommand === 'image' && imageInput) {
                 imageInput.click();
+
+                return;
+            }
+
+            if (button.dataset.richTextCommand === 'statisticCard') {
+                openStatisticDialog(root, editor);
 
                 return;
             }
