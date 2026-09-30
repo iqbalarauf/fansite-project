@@ -70,7 +70,7 @@
     data-rich-text
     data-image-upload-url="{{ route('content.editor.image') }}"
     data-csrf-token="{{ csrf_token() }}"
-    @if ($statistics && \Illuminate\Support\Facades\Route::has('content.editor.statistic'))
+    @if ($statistics)
         data-statistic-upload-url="{{ route('content.editor.statistic') }}"
         data-stat-setlists="{{ json_encode($statSetlists) }}"
         data-stat-unit-songs="{{ json_encode($statUnitSongs) }}"
