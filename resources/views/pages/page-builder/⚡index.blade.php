@@ -96,7 +96,7 @@ new #[Title('Custom Pages')] class extends Component {
 
     public function addBlock(string $type): void
     {
-        if (! in_array($type, ['container', 'text', 'statistic', 'image', 'video', 'gallery', 'button', 'embed'], true)) {
+        if (! in_array($type, ['container', 'text', 'statistic', 'image', 'video', 'gallery', 'youtube_playlist', 'button', 'embed'], true)) {
             return;
         }
 
@@ -110,6 +110,7 @@ new #[Title('Custom Pages')] class extends Component {
                 'image' => ['url' => '', 'alt' => '', 'source' => 'url', 'display' => 'fit'],
                 'video' => ['url' => '', 'title' => ''],
                 'gallery' => ['images' => [], 'initial_count' => 3],
+                'youtube_playlist' => ['playlist_url' => '', 'visible_count' => 3, 'section_title' => 'Lihat konten terbaru'],
                 'button' => ['label' => 'Buka tautan', 'url' => 'https://', 'alignment' => 'left', 'bg_color' => '#4F46E5', 'text_color' => '#FFFFFF'],
                 'embed' => ['html' => '<div>Masukkan HTML embed di sini.</div>'],
             },
@@ -124,7 +125,7 @@ new #[Title('Custom Pages')] class extends Component {
 
     public function addBlockToContainer(int $containerIndex, int $columnIndex, string $type): void
     {
-        if (($this->blocks[$containerIndex]['type'] ?? null) !== 'container' || ! in_array($type, ['text', 'statistic', 'image', 'video', 'gallery', 'button', 'embed'], true)) {
+        if (($this->blocks[$containerIndex]['type'] ?? null) !== 'container' || ! in_array($type, ['text', 'statistic', 'image', 'video', 'gallery', 'youtube_playlist', 'button', 'embed'], true)) {
             return;
         }
 
@@ -137,6 +138,7 @@ new #[Title('Custom Pages')] class extends Component {
                 'image' => ['url' => '', 'alt' => '', 'source' => 'url', 'display' => 'fit'],
                 'video' => ['url' => '', 'title' => ''],
                 'gallery' => ['images' => [], 'initial_count' => 3],
+                'youtube_playlist' => ['playlist_url' => '', 'visible_count' => 3, 'section_title' => 'Lihat konten terbaru'],
                 'button' => ['label' => 'Buka tautan', 'url' => 'https://', 'alignment' => 'left', 'bg_color' => '#4F46E5', 'text_color' => '#FFFFFF'],
                 'embed' => ['html' => '<div>Masukkan HTML embed di sini.</div>'],
             },
@@ -735,7 +737,7 @@ new #[Title('Custom Pages')] class extends Component {
             'heroImageUpload' => ['nullable', 'image', 'max:3072'],
             'blocks' => ['array', 'min:1'],
             'blocks.*.id' => ['required', 'string', 'max:80'],
-            'blocks.*.type' => ['required', 'in:container,text,statistic,image,video,gallery,button,embed'],
+            'blocks.*.type' => ['required', 'in:container,text,statistic,image,video,gallery,youtube_playlist,button,embed'],
             'blocks.*.data' => ['array'],
             'blocks.*.data.background' => ['nullable', 'regex:/^(?:white|soft|accent|transparent|#[0-9A-Fa-f]{6})$/'],
             'blocks.*.data.vertical_alignment' => ['nullable', 'in:top,middle,bottom'],
@@ -743,6 +745,7 @@ new #[Title('Custom Pages')] class extends Component {
             'blocks.*.data.color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'blocks.*.data.font_size' => ['nullable', 'in:sm,base,lg,xl,2xl,3xl,4xl'],
             'blocks.*.data.heading' => ['nullable', 'in:none,h1,h2,h3,h4'],
+            'blocks.*.data.section_title' => ['nullable', 'string', 'max:120'],
             'blocks.*.data.bg_color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'blocks.*.data.text_color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'blocks.*.data.source' => ['nullable', 'in:url,upload'],
@@ -752,12 +755,13 @@ new #[Title('Custom Pages')] class extends Component {
             'blocks.*.data.underline' => ['nullable', 'boolean'],
             'blocks.*.data.metric' => ['nullable', 'in:show_teater_all,show_teater_date_range,show_teater_setlist,unit_song_all,unit_song_date_range,unit_song_setlist,center_unit_song_all,center_unit_song_unit_song,center_unit_song_setlist,center_unit_song_date_range,global_center_date_range,global_center_setlist,live_streaming_time,live_streaming_row,live_streaming_platform'],
             'blocks.*.data.columns.*.blocks.*.id' => ['required', 'string', 'max:80'],
-            'blocks.*.data.columns.*.blocks.*.type' => ['required', 'in:text,statistic,image,video,gallery,button,embed'],
+            'blocks.*.data.columns.*.blocks.*.type' => ['required', 'in:text,statistic,image,video,gallery,youtube_playlist,button,embed'],
             'blocks.*.data.columns.*.blocks.*.data' => ['array'],
             'blocks.*.data.columns.*.blocks.*.data.alignment' => ['nullable', 'in:left,center,right,justify'],
             'blocks.*.data.columns.*.blocks.*.data.color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'blocks.*.data.columns.*.blocks.*.data.font_size' => ['nullable', 'in:sm,base,lg,xl,2xl,3xl,4xl'],
             'blocks.*.data.columns.*.blocks.*.data.heading' => ['nullable', 'in:none,h1,h2,h3,h4'],
+            'blocks.*.data.columns.*.blocks.*.data.section_title' => ['nullable', 'string', 'max:120'],
             'blocks.*.data.columns.*.blocks.*.data.bg_color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'blocks.*.data.columns.*.blocks.*.data.text_color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'blocks.*.data.columns.*.blocks.*.data.source' => ['nullable', 'in:url,upload'],
@@ -846,6 +850,24 @@ new #[Title('Custom Pages')] class extends Component {
             return;
         }
 
+
+        if ($type === 'youtube_playlist') {
+            $url = $data['playlist_url'] ?? null;
+
+            if (blank($url)) {
+                $this->addError("{$path}.data.playlist_url", __('Enter a YouTube playlist URL.'));
+            } elseif (! \App\Support\YoutubeRss::playlistId((string) $url)) {
+                $this->addError("{$path}.data.playlist_url", __('Enter a valid YouTube playlist URL.'));
+            }
+
+            $visibleCount = (int) ($data['visible_count'] ?? 3);
+
+            if ($visibleCount < 1 || $visibleCount > 4) {
+                $this->addError("{$path}.data.visible_count", __('Choose between 1 and 4 cards.'));
+            }
+
+            return;
+        }
 
         $requiredField = match ($type) {
             'text' => 'text',
@@ -995,6 +1017,8 @@ new #[Title('Custom Pages')] class extends Component {
                                 <flux:input wire:model.live="{{ $nestedPath }}.data.title" :label="__('Video title')" />
                             @elseif ($nestedType === 'gallery')
                                 @include('custom-pages.gallery-fields', ['path' => $nestedPath])
+                            @elseif ($nestedType === 'youtube_playlist')
+                                @include('custom-pages.youtube-playlist-fields', ['path' => $nestedPath])
                             @elseif ($nestedType === 'button')
                                 @include('custom-pages.button-fields', ['path' => $nestedPath])
                             @elseif ($nestedType === 'embed')
@@ -1040,7 +1064,7 @@ new #[Title('Custom Pages')] class extends Component {
                                         @endforeach
                                     </div>
                                     <div class="grid gap-2">
-                                        @foreach ([['text', 'Text'], ['statistic', 'Statistic'], ['image', 'Image'], ['video', 'YouTube video'], ['gallery', 'Gallery'], ['button', 'Button'], ['embed', 'Embed HTML']] as [$type, $label])
+                                        @foreach ([['text', 'Text'], ['statistic', 'Statistic'], ['image', 'Image'], ['video', 'YouTube video'], ['gallery', 'Gallery'], ['youtube_playlist', 'YouTube Playlist'], ['button', 'Button'], ['embed', 'Embed HTML']] as [$type, $label])
                                             <flux:button wire:click="addBlockToContainer({{ $selectedBlockIndex }}, {{ $columnIndex }}, '{{ $type }}')" size="sm" variant="outline">{{ __('Add :element', ['element' => __($label)]) }}</flux:button>
                                         @endforeach
                                     </div>
@@ -1053,6 +1077,8 @@ new #[Title('Custom Pages')] class extends Component {
                             <flux:input wire:model.live="blocks.{{ $selectedBlockIndex }}.data.title" :label="__('Video title')" />
                         @elseif ($blocks[$selectedBlockIndex]['type'] === 'gallery')
                             @include('custom-pages.gallery-fields', ['path' => "blocks.{$selectedBlockIndex}"])
+                        @elseif ($blocks[$selectedBlockIndex]['type'] === 'youtube_playlist')
+                            @include('custom-pages.youtube-playlist-fields', ['path' => "blocks.{$selectedBlockIndex}"])
                         @elseif ($blocks[$selectedBlockIndex]['type'] === 'button')
                             @include('custom-pages.button-fields', ['path' => "blocks.{$selectedBlockIndex}"])
                         @elseif ($blocks[$selectedBlockIndex]['type'] === 'embed')
@@ -1071,7 +1097,7 @@ new #[Title('Custom Pages')] class extends Component {
                     @if ($addElementOpen)
                         <div class="mt-4 space-y-3 border-t border-zinc-200 pt-4 dark:border-zinc-700">
                             <div class="grid gap-2">
-                                @foreach ([['container', 'squares-2x2', 'Container'], ['text', 'bars-3-bottom-left', 'Text'], ['statistic', 'chart-bar', 'Statistic'], ['image', 'photo', 'Image'], ['video', 'video-camera', 'YouTube video'], ['gallery', 'photo', 'Gallery'], ['button', 'cursor-arrow-rays', 'Button'], ['embed', 'code-bracket', 'Embed HTML']] as [$type, $icon, $label])
+                                @foreach ([['container', 'squares-2x2', 'Container'], ['text', 'bars-3-bottom-left', 'Text'], ['statistic', 'chart-bar', 'Statistic'], ['image', 'photo', 'Image'], ['video', 'video-camera', 'YouTube video'], ['gallery', 'photo', 'Gallery'], ['youtube_playlist', 'play-circle', 'YouTube Playlist'], ['button', 'cursor-arrow-rays', 'Button'], ['embed', 'code-bracket', 'Embed HTML']] as [$type, $icon, $label])
                                     <flux:button wire:click="addBlock('{{ $type }}')" variant="outline" icon="{{ $icon }}" class="justify-start">{{ __($label) }}</flux:button>
                                 @endforeach
                             </div>
