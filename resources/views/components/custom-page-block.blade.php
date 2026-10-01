@@ -186,6 +186,67 @@
             </div>
         @endif
         @break
+    @case('youtube_playlist')
+        @php
+            $playlistUrl = (string) ($data['playlist_url'] ?? '');
+            $playlistVideos = filled($playlistUrl) ? \App\Support\YoutubePlaylist::videos($playlistUrl, 7) : [];
+            $playlistVisible = max(1, min((int) ($data['visible_count'] ?? 3), 4));
+            $playlistHeading = trim((string) ($data['section_title'] ?? '')) ?: __('Lihat konten terbaru');
+            $playlistHasCarousel = count($playlistVideos) > $playlistVisible;
+            $cardRounded = $preview ? 'rounded-xl' : 'rounded-2xl';
+        @endphp
+        @if ($playlistVideos === [])
+            @if ($preview)
+                <div class="flex h-32 items-center justify-center rounded-xl border border-dashed border-zinc-300 text-sm text-zinc-500">{{ __('Tambahkan URL playlist YouTube') }}</div>
+            @endif
+        @else
+            <div class="space-y-4">
+                @if (filled($playlistHeading))
+                    <p class="text-xl font-black text-zinc-900 dark:text-zinc-100">{{ $playlistHeading }}</p>
+                @endif
+
+                <div class="relative px-1" data-page-youtube data-page-youtube-visible="{{ $playlistVisible }}">
+                    <div class="overflow-hidden">
+                        <div class="flex gap-4 transition-transform duration-500 ease-out" data-page-youtube-track>
+                            @foreach ($playlistVideos as $video)
+                                <a
+                                    href="{{ $video['url'] }}"
+                                    target="_blank"
+                                    rel="noopener"
+                                    data-page-youtube-item
+                                    class="group flex w-full shrink-0 flex-col overflow-hidden {{ $cardRounded }} border border-zinc-200 bg-white shadow-sm transition hover:border-indigo-300 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-indigo-700"
+                                    style="width: calc((100% - {{ ($playlistVisible - 1) }}rem) / {{ $playlistVisible }});"
+                                >
+                                    <div class="aspect-video w-full overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+                                        @if ($video['thumbnail'])
+                                            <img src="{{ $video['thumbnail'] }}" alt="{{ $video['title'] }}" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" decoding="async">
+                                        @endif
+                                    </div>
+                                    <div class="flex flex-1 flex-col gap-2 p-4">
+                                        <p class="line-clamp-2 text-sm font-bold text-zinc-900 transition group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400">{{ $video['title'] }}</p>
+                                        @if (! empty($video['description']))
+                                            <p class="line-clamp-2 text-xs text-zinc-500 dark:text-zinc-400">{{ $video['description'] }}</p>
+                                        @endif
+                                    </div>
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    @if ($playlistHasCarousel)
+                        <button type="button" data-page-youtube-nav data-page-youtube-prev aria-label="{{ __('Previous') }}"
+                                class="absolute -left-2 top-1/2 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-zinc-200 bg-white/90 text-zinc-600 shadow-md backdrop-blur transition hover:text-indigo-600 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900/90 dark:text-zinc-300 dark:hover:text-indigo-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4"><path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 0 1-.02 1.06L8.832 10l3.938 3.71a.75.75 0 1 1-1.04 1.08l-4.5-4.25a.75.75 0 0 1 0-1.08l4.5-4.25a.75.75 0 0 1 1.06.02Z" clip-rule="evenodd"/></svg>
+                        </button>
+                        <button type="button" data-page-youtube-nav data-page-youtube-next aria-label="{{ __('Next') }}"
+                                class="absolute -right-2 top-1/2 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-zinc-200 bg-white/90 text-zinc-600 shadow-md backdrop-blur transition hover:text-indigo-600 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900/90 dark:text-zinc-300 dark:hover:text-indigo-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 0 1 .02-1.06L11.168 10 7.23 6.29a.75.75 0 1 1 1.04-1.08l4.5 4.25a.75.75 0 0 1 0 1.08l-4.5 4.25a.75.75 0 0 1-1.06-.02Z" clip-rule="evenodd"/></svg>
+                        </button>
+                    @endif
+                </div>
+            </div>
+        @endif
+        @break
     @case('button')
         <div class="{{ $buttonAlignment }}">
             @if ($preview)

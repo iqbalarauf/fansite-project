@@ -9,6 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -1333,5 +1334,112 @@ class CustomPageTest extends TestCase
 
         $this->assertSame('gallery', $nested['type']);
         $this->assertCount(1, $nested['data']['images']);
+    }
+
+    public function test_youtube_playlist_block_requires_a_valid_playlist_url(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Playlist')
+            ->call('addBlock', 'youtube_playlist')
+            ->call('save', 'published')
+            ->assertHasErrors('blocks.1.data.playlist_url');
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Playlist')
+            ->call('addBlock', 'youtube_playlist')
+            ->set('blocks.1.data.playlist_url', 'https://www.youtube.com/watch?v=abc')
+            ->call('save', 'published')
+            ->assertHasErrors('blocks.1.data.playlist_url');
+    }
+
+    public function test_youtube_playlist_block_validates_visible_count(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Playlist')
+            ->call('addBlock', 'youtube_playlist')
+            ->set('blocks.1.data.playlist_url', 'https://www.youtube.com/playlist?list=PL1234567890')
+            ->set('blocks.1.data.visible_count', 9)
+            ->call('save', 'published')
+            ->assertHasErrors('blocks.1.data.visible_count');
+    }
+
+    public function test_youtube_playlist_block_renders_cards_and_carousel_publicly(): void
+    {
+        Http::fake([
+            'www.youtube.com/feeds/videos.xml*' => Http::response($this->youtubeFeed(5), 200),
+        ]);
+
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Playlist')
+            ->call('addBlock', 'youtube_playlist')
+            ->set('blocks.1.data.playlist_url', 'https://www.youtube.com/playlist?list=PL1234567890')
+            ->set('blocks.1.data.visible_count', 3)
+            ->call('save', 'published')
+            ->assertHasNoErrors();
+
+        $page = CustomPage::query()->firstOrFail();
+
+        $this->get(route('custom-pages.show', $page))
+            ->assertOk()
+            ->assertSee('data-page-youtube-track', false)
+            ->assertSee('data-page-youtube-item', false)
+            ->assertSee('data-page-youtube-next', false);
+    }
+
+    public function test_youtube_playlist_block_hides_arrows_when_videos_fit(): void
+    {
+        Http::fake([
+            'www.youtube.com/feeds/videos.xml*' => Http::response($this->youtubeFeed(2), 200),
+        ]);
+
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::page-builder.index')
+            ->set('title', 'Halaman Playlist')
+            ->call('addBlock', 'youtube_playlist')
+            ->set('blocks.1.data.playlist_url', 'https://www.youtube.com/playlist?list=PL1234567890')
+            ->set('blocks.1.data.visible_count', 3)
+            ->call('save', 'published')
+            ->assertHasNoErrors();
+
+        $page = CustomPage::query()->firstOrFail();
+
+        $this->get(route('custom-pages.show', $page))
+            ->assertOk()
+            ->assertSee('data-page-youtube-track', false)
+            ->assertDontSee('data-page-youtube-nav', false);
+    }
+
+    private function youtubeFeed(int $count): string
+    {
+        $entries = '';
+
+        for ($i = 1; $i <= $count; $i++) {
+            $entries .= <<<XML
+            <entry>
+                <yt:videoId>VID{$i}</yt:videoId>
+                <title>Video {$i}</title>
+                <published>2026-02-0{$i}T00:00:00+00:00</published>
+                <media:group>
+                    <media:title>Video {$i}</media:title>
+                    <media:description>Deskripsi {$i}</media:description>
+                    <media:thumbnail url="https://i.ytimg.com/vi/VID{$i}/hqdefault.jpg" width="480" height="360"/>
+                </media:group>
+            </entry>
+            XML;
+        }
+
+        return <<<XML
+        <?xml version="1.0" encoding="UTF-8"?>
+        <feed xmlns="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" xmlns:yt="http://www.youtube.com/xml/schemas/2015">
+        {$entries}
+        </feed>
+        XML;
     }
 }
