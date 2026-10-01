@@ -20,6 +20,6 @@
             <span class="font-semibold text-slate-900 dark:text-white">{{ $__fanbaseName }}</span>
         </div>
 
-        <p>© {{ now()->format('Y') }} {{ $__appName }}</p>
+        <p>© {{ now()->format('Y') }} Powered by Onielity Operational Team</p>
     </div>
 </footer>
