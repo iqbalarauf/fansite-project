@@ -4,6 +4,8 @@ namespace Database\Seeders;
 
 use App\Models\ShowTeaterCategories;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class ShowTeaterCategoriesSeeder extends Seeder
 {
@@ -13,7 +15,13 @@ class ShowTeaterCategoriesSeeder extends Seeder
      */
     public function run(): void
     {
-        ShowTeaterCategories::query()->truncate();
+        // Tabel ini direferensikan oleh FK (termasuk self-reference unit_song.setlist_id),
+        // sehingga TRUNCATE tidak diizinkan. Matikan FK check saat mengosongkan.
+        Schema::disableForeignKeyConstraints();
+
+        DB::table('show_teater_categories')->delete();
+
+        Schema::enableForeignKeyConstraints();
 
         $now = now();
 

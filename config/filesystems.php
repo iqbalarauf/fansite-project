@@ -41,9 +41,11 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => rtrim((string) env('APP_URL', 'http://localhost'), '/').'/storage',
+            // Relative default so URLs follow the request host when APP_URL is unset.
+            'url' => env('APP_URL') ? rtrim((string) env('APP_URL'), '/').'/storage' : '/storage',
             'visibility' => 'public',
-            'throw' => false,
+            // Surface write failures instead of silently returning a URL to a missing file.
+            'throw' => true,
             'report' => false,
         ],
 

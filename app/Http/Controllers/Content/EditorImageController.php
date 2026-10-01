@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Support\ImageOptimizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class EditorImageController extends Controller
 {
@@ -23,7 +25,26 @@ class EditorImageController extends Controller
             'image.max' => 'Ukuran gambar maksimal 5MB.',
         ]);
 
-        $path = ImageOptimizer::store($validated['image'], 'content/editor');
+        try {
+            $path = ImageOptimizer::store($validated['image'], 'content/editor');
+        } catch (Throwable $exception) {
+            Log::error('Gagal menyimpan gambar dari editor.', [
+                'directory' => 'content/editor',
+                'error' => $exception->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'Gagal menyimpan gambar. Silakan hubungi administrator.',
+            ], 500);
+        }
+
+        if (! Storage::disk('public')->exists($path)) {
+            Log::error('Gambar editor tidak ditemukan setelah disimpan.', ['path' => $path]);
+
+            return response()->json([
+                'message' => 'Gagal menyimpan gambar. Silakan hubungi administrator.',
+            ], 500);
+        }
 
         return response()->json([
             'url' => Storage::disk('public')->url($path),

@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\Encoders\WebpEncoder;
 use Intervention\Image\ImageManager;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -49,13 +50,35 @@ final class ImageOptimizer
             $encoded = $image->encode(new WebpEncoder(quality: $quality));
             $path = ($directory !== '' ? $directory.'/' : '').Str::ulid().'.webp';
 
-            Storage::disk($disk)->put($path, $encoded->toString());
+            $stored = Storage::disk($disk)->put($path, $encoded->toString());
+
+            if ($stored === false || ! Storage::disk($disk)->exists($path)) {
+                throw new RuntimeException("Failed to write optimized image to disk [{$disk}] at [{$path}].");
+            }
 
             return $path;
         } catch (Throwable $exception) {
             // Fallback: simpan berkas asli bila pemrosesan gagal.
-            return $file->store($directory, $disk);
+            return self::storeOriginal($file, $directory, $disk, $exception);
         }
+    }
+
+    /**
+     * Simpan berkas asli dan pastikan benar-benar tertulis; lempar error bila gagal.
+     */
+    private static function storeOriginal(UploadedFile $file, string $directory, string $disk, Throwable $previous): string
+    {
+        $path = $file->store($directory, $disk);
+
+        if ($path === false || ! Storage::disk($disk)->exists($path)) {
+            throw new RuntimeException(
+                "Failed to store uploaded image to disk [{$disk}]".($directory !== '' ? " at [{$directory}]" : '').'.',
+                0,
+                $previous,
+            );
+        }
+
+        return $path;
     }
 
     private static function isOptimizable(UploadedFile $file): bool
