@@ -27,6 +27,39 @@ class AppBrandingTest extends TestCase
             ->assertDontSee('/favicon.ico', false);
     }
 
+    public function test_welcome_page_uses_the_custom_homepage_tab_title_when_set(): void
+    {
+        DB::table('app_settings')->upsert([
+            ['key' => 'app_name', 'value' => 'FANSITE KUSTOM', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'homepage_tab_title', 'value' => 'Oniel Fansite', 'created_at' => now(), 'updated_at' => now()],
+        ], ['key'], ['value', 'updated_at']);
+
+        Cache::forget('app_settings');
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('<title>Oniel Fansite</title>', false)
+            ->assertDontSee('<title>FANSITE KUSTOM</title>', false);
+    }
+
+    public function test_homepage_tab_title_only_applies_to_the_welcome_page(): void
+    {
+        DB::table('app_settings')->upsert([
+            ['key' => 'app_name', 'value' => 'FANSITE KUSTOM', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'homepage_tab_title', 'value' => 'Oniel Fansite', 'created_at' => now(), 'updated_at' => now()],
+        ], ['key'], ['value', 'updated_at']);
+
+        Cache::forget('app_settings');
+
+        $user = User::factory()->create();
+
+        // Admin pages keep the app name in the tab title.
+        $this->actingAs($user)->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Dashboard - FANSITE KUSTOM', false)
+            ->assertDontSee('Oniel Fansite', false);
+    }
+
     public function test_welcome_page_falls_back_to_default_favicon_without_app_logo(): void
     {
         $response = $this->get(route('home'));

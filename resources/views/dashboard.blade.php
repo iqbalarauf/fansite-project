@@ -1,22 +1,11 @@
 <x-layouts::app :title="__('Dashboard')">
-    <div class="flex flex-col gap-6" id="dashboard-capture-area">
-
-        {{-- ================================================================
-             ROW 1: Header
-        ================================================================ --}}
-        <div class="flex flex-col gap-1">
-            <flux:heading size="xl" class="font-bold text-zinc-900 dark:text-white">
-                Selamat Datang, {{ auth()->user()->name }} 👋
-            </flux:heading>
-            <flux:subheading class="text-zinc-500 dark:text-zinc-400">
-                Berikut adalah statistik oshimen: <span class="font-semibold text-blue-600 dark:text-blue-400">{{ $idolName }}</span>
-            </flux:subheading>
-        </div>
+    <div class="flex flex-col gap-6">
 
         {{-- ================================================================
              ROW 2: Period Filter + Comparison + Capture
+             (di luar #dashboard-capture-area agar tidak ikut ter-capture)
         ================================================================ --}}
-        <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center justify-between gap-3" data-html2canvas-ignore="true">
             {{-- Period tabs --}}
             <form method="GET" action="{{ route('dashboard') }}" id="period-form" class="flex flex-wrap items-center gap-2">
                 <input type="hidden" name="comparison" value="{{ $showComparison ? '1' : '0' }}" id="comparison-hidden" />
@@ -116,6 +105,35 @@
                 </button>
             </div>
         </div>
+
+        {{-- ================================================================
+             AREA CAPTURE (mulai)
+        ================================================================ --}}
+        <div class="flex flex-col gap-6" id="dashboard-capture-area">
+
+        {{-- ROW 1: Header --}}
+        <div class="flex flex-col gap-1">
+            <flux:heading size="xl" class="font-bold text-zinc-900 dark:text-white">
+                Selamat Datang, {{ auth()->user()->name }} 👋
+            </flux:heading>
+            <flux:subheading class="text-zinc-500 dark:text-zinc-400">
+                Berikut adalah statistik oshimen: <span class="font-semibold text-blue-600 dark:text-blue-400">{{ $idolName }}</span>
+            </flux:subheading>
+        </div>
+
+        {{-- Ringkasan periode (ikut ter-capture). Date range hanya bila terisi. --}}
+        <div class="flex flex-wrap items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">
+            <span class="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-medium dark:border-zinc-700 dark:bg-zinc-800">
+                <span class="text-zinc-400 dark:text-zinc-500">Periode:</span>
+                {{ $periodLabel }}
+            </span>
+            @if ($customRangeLabel)
+                <span class="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 dark:border-blue-900/40 dark:bg-blue-950/40 dark:text-blue-300">
+                    {{ $customRangeLabel }}
+                </span>
+            @endif
+        </div>
+
 
         {{-- ================================================================
              ROW 3: Stats Cards
@@ -312,11 +330,20 @@
 
             {{-- Live Streaming --}}
             <div class="col-span-1 admin-card p-5">
-                <div class="mb-4 flex items-center justify-between">
+                <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
                     <flux:heading size="sm" class="font-semibold">Live Streaming</flux:heading>
-                    <span class="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                        {{ match($period) { 'all' => 'All', '7days' => '7 Hari', 'monthly' => 'Bulanan', 'quarter' => 'Kuartal', '6months' => '6 Bulan', 'yearly' => '1 Tahun', 'custom' => 'Custom' } }}
-                    </span>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                            {{ number_format($liveStreamingCount) }} live
+                        </span>
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                            @php
+                                $lsHours = intdiv($liveStreamingDuration, 60);
+                                $lsMinutes = $liveStreamingDuration % 60;
+                            @endphp
+                            {{ $lsHours > 0 ? $lsHours.' jam ' : '' }}{{ $lsMinutes }} menit
+                        </span>
+                    </div>
                 </div>
                 @forelse ($liveStreamingEvents as $ls)
                     <div class="mb-3 flex items-center gap-3 rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-800/50">
@@ -430,6 +457,8 @@
             <input type="hidden" name="date_to" value="{{ $customTo }}" />
             <input type="hidden" name="event_display_limit" id="event-controls-display-limit-hidden" value="{{ $eventDisplayLimit }}" />
         </form>
+
+        </div>{{-- /#dashboard-capture-area --}}
 
     </div>
 

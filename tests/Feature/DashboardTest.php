@@ -195,6 +195,70 @@ class DashboardTest extends TestCase
         $this->assertTrue($liveStreamingEvents->every(fn (object $event): bool => Carbon::parse($event->live_date)->greaterThanOrEqualTo(now()->subDays(6)->startOfDay())));
     }
 
+    public function test_live_streaming_totals_follow_the_selected_period(): void
+    {
+        DB::table('live_streaming')->insert([
+            ['platform' => 'Showroom', 'live_date' => now()->subDays(1)->toDateString(), 'duration' => 60, 'created_at' => now(), 'updated_at' => now()],
+            ['platform' => 'IDN App', 'live_date' => now()->subDays(2)->toDateString(), 'duration' => 30, 'created_at' => now(), 'updated_at' => now()],
+            ['platform' => 'IDN App', 'live_date' => now()->subMonths(2)->toDateString(), 'duration' => 90, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $user = User::factory()->create();
+
+        $all = $this->actingAs($user)->get(route('dashboard', ['period' => 'all']));
+        $all->assertOk();
+        $this->assertSame(3, $all->viewData('liveStreamingCount'));
+        $this->assertSame(180, $all->viewData('liveStreamingDuration'));
+
+        $week = $this->actingAs($user)->get(route('dashboard', ['period' => '7days']));
+        $week->assertOk();
+        $this->assertSame(2, $week->viewData('liveStreamingCount'));
+        $this->assertSame(90, $week->viewData('liveStreamingDuration'));
+        $week->assertSee('2 live');
+        $week->assertSee('1 jam 30 menit');
+    }
+
+    public function test_dashboard_capture_area_excludes_controls_and_shows_period_summary(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('dashboard', ['period' => 'monthly']));
+
+        $response->assertOk();
+
+        // Controls stay outside the capture area.
+        $html = $response->getContent();
+        $captureStart = strpos($html, 'id="dashboard-capture-area"');
+        $this->assertNotFalse($captureStart);
+
+        $periodFiltersPos = strpos($html, 'id="period-form"');
+        $this->assertNotFalse($periodFiltersPos);
+        $this->assertLessThan($captureStart, $periodFiltersPos, 'Period filter must be outside the capture area.');
+
+        // Period summary row is rendered inside the capture area.
+        $summaryPos = strpos($html, 'Periode:');
+        $this->assertNotFalse($summaryPos);
+        $this->assertGreaterThan($captureStart, $summaryPos);
+        $response->assertSee('Bulanan');
+    }
+
+    public function test_dashboard_period_summary_shows_custom_date_range_only_when_filled(): void
+    {
+        $user = User::factory()->create();
+
+        $withRange = $this->actingAs($user)->get(route('dashboard', [
+            'period' => 'custom',
+            'date_from' => '2026-01-01',
+            'date_to' => '2026-01-31',
+        ]));
+        $withRange->assertOk()->assertSee('1 Januari 2026 – 31 Januari 2026');
+        $this->assertSame('1 Januari 2026 – 31 Januari 2026', $withRange->viewData('customRangeLabel'));
+
+        $withoutRange = $this->actingAs($user)->get(route('dashboard', ['period' => 'monthly']));
+        $withoutRange->assertOk();
+        $this->assertNull($withoutRange->viewData('customRangeLabel'));
+    }
+
     public function test_dashboard_exposes_upcoming_show_count(): void
     {
         $today = Timezone::today();

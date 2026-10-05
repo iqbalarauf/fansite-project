@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\ShowTeaterCategories;
-use App\Support\Spreadsheet;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class ShowTeaterCategoriesController extends Controller
@@ -83,111 +81,6 @@ class ShowTeaterCategoriesController extends Controller
                 'tab' => $tab,
             ],
         ]);
-    }
-
-    public function import(Request $request): RedirectResponse
-    {
-        $request->validate([
-            'file' => ['required', 'file', 'extensions:xlsx,csv,txt', 'max:4096'],
-        ], [], ['file' => 'File']);
-
-        $rows = Spreadsheet::rows($request->file('file'));
-
-        if ($rows === []) {
-            return back()->withErrors(['file' => 'File kosong atau tidak dapat dibaca.']);
-        }
-
-        $header = array_map(
-            static fn ($value): string => strtolower(trim((string) $value)),
-            array_shift($rows),
-        );
-
-        $added = 0;
-        $updated = 0;
-        $errors = [];
-
-        foreach ($rows as $index => $row) {
-            $record = [];
-
-            foreach ($header as $position => $key) {
-                $record[$key] = trim((string) ($row[$position] ?? ''));
-            }
-
-            $type = strtolower($record['type'] ?? '');
-            $name = $record['name'] ?? '';
-            $jpName = $record['jp_name'] ?? '';
-            $setlistName = $record['setlist'] ?? '';
-            $line = $index + 2;
-
-            if (! in_array($type, ['setlist', 'unit_song'], true) || $name === '') {
-                $errors[] = "Baris {$line}: kolom type/name tidak valid.";
-
-                continue;
-            }
-
-            if ($type === 'setlist') {
-                $setlist = ShowTeaterCategories::query()->setlists()->where('name', $name)->first();
-
-                if ($setlist) {
-                    $setlist->update(['jp_name' => $jpName !== '' ? $jpName : null]);
-                    $updated++;
-                } else {
-                    ShowTeaterCategories::query()->create([
-                        'type' => ShowTeaterCategories::TYPE_SETLIST,
-                        'name' => $name,
-                        'jp_name' => $jpName !== '' ? $jpName : null,
-                        'setlist_id' => null,
-                        'is_active' => true,
-                    ]);
-                    $added++;
-                }
-
-                continue;
-            }
-
-            if ($setlistName === '') {
-                $errors[] = "Baris {$line}: unit_song membutuhkan kolom setlist.";
-
-                continue;
-            }
-
-            $setlist = ShowTeaterCategories::query()->setlists()->where('name', $setlistName)->first();
-
-            if (! $setlist) {
-                $errors[] = "Baris {$line}: setlist \"{$setlistName}\" tidak ditemukan.";
-
-                continue;
-            }
-
-            $existing = ShowTeaterCategories::query()
-                ->unitSongs()
-                ->where('setlist_id', $setlist->id)
-                ->where('name', $name)
-                ->first();
-
-            if ($existing) {
-                $existing->update(['jp_name' => $jpName !== '' ? $jpName : null]);
-                $updated++;
-            } else {
-                ShowTeaterCategories::query()->create([
-                    'type' => ShowTeaterCategories::TYPE_UNIT_SONG,
-                    'name' => $name,
-                    'jp_name' => $jpName !== '' ? $jpName : null,
-                    'setlist_id' => $setlist->id,
-                    'is_active' => true,
-                ]);
-                $added++;
-            }
-        }
-
-        $message = "Import selesai: {$added} ditambahkan, {$updated} diperbarui.";
-        $redirect = redirect()->route('show-teater.categories.index')->with('success', $message);
-
-        if ($errors !== []) {
-            return $redirect->withErrors(['file' => $errors]);
-        }
-
-        return $redirect;
     }
 
     public function store(Request $request)

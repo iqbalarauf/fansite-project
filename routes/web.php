@@ -79,7 +79,6 @@ Route::middleware(['auth', 'verified', 'block-view-only-writes'])->group(functio
         // Show Teater Categories
         Route::get('show-teater/categories', [ShowTeaterCategoriesController::class, 'index'])->name('show-teater.categories.index');
         Route::post('show-teater/categories', [ShowTeaterCategoriesController::class, 'store'])->name('show-teater.categories.store');
-        Route::post('show-teater/categories/import', [ShowTeaterCategoriesController::class, 'import'])->name('show-teater.categories.import');
         Route::put('show-teater/categories/{id}', [ShowTeaterCategoriesController::class, 'update'])->name('show-teater.categories.update');
         Route::post('show-teater/categories/{id}/toggle-status', [ShowTeaterCategoriesController::class, 'toggleStatus'])->name('show-teater.categories.toggle-status');
 

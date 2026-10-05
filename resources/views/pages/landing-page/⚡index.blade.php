@@ -64,6 +64,8 @@ new #[Title('Landing Page')] class extends Component
 
     public string $merchandiseShopUrl = '';
 
+    public string $homepageTabTitle = '';
+
     public function mount(): void
     {
         abort_unless(auth()->user()?->isSuperAdmin(), 403);
@@ -106,6 +108,7 @@ new #[Title('Landing Page')] class extends Component
         $this->youtubeDisplayMode = in_array($youtubeMode, ['cards', 'embed'], true) ? $youtubeMode : 'cards';
 
         $this->merchandiseShopUrl = (string) ($settings['merchandise_shop_url'] ?? '');
+        $this->homepageTabTitle = (string) ($settings['homepage_tab_title'] ?? '');
     }
 
     public function save(): void
@@ -136,6 +139,7 @@ new #[Title('Landing Page')] class extends Component
             'youtubePlaylistUrl' => ['nullable', 'string', 'max:2048'],
             'youtubeDisplayMode' => ['required', 'in:cards,embed'],
             'merchandiseShopUrl' => ['nullable', 'url', 'max:500'],
+            'homepageTabTitle' => ['nullable', 'string', 'max:255'],
         ]);
 
         if ($this->heroImageUpload) {
@@ -171,6 +175,7 @@ new #[Title('Landing Page')] class extends Component
             'youtube_playlist_url' => $this->youtubePlaylistUrl,
             'youtube_display_mode' => $this->youtubeDisplayMode,
             'merchandise_shop_url' => $this->merchandiseShopUrl,
+            'homepage_tab_title' => $this->homepageTabTitle,
         ]);
 
         $this->titleColor = strtoupper($this->titleColor);
@@ -282,6 +287,16 @@ new #[Title('Landing Page')] class extends Component
                             @endforeach
                         </div>
                     </div>
+                </div>
+
+                <div class="space-y-4 rounded-xl border border-zinc-200 p-5 dark:border-zinc-700">
+                    <div>
+                        <flux:heading size="sm">{{ __('Homepage Tab Title') }}</flux:heading>
+                        <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Judul yang tampil di tab browser pada halaman beranda. Kosongkan untuk memakai App Name.') }}</flux:text>
+                    </div>
+
+                    <flux:input wire:model="homepageTabTitle" :label="__('Homepage Tab Title')" type="text" placeholder="Oniel Fansite" />
+                    @error('homepageTabTitle') <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="grid items-stretch gap-6 lg:grid-cols-2">

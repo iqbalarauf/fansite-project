@@ -1,4 +1,4 @@
-@extends('layouts.public', ['title' => null, 'active' => 'home'])
+@extends('layouts.public', ['tabTitle' => \App\Support\SettingBag::app()['homepage_tab_title'] ?? null, 'active' => 'home'])
 
 @section('content')
     @php

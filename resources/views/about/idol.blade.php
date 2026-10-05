@@ -180,7 +180,7 @@
         @if (count($theater['setlists']) > 0)
             <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 @foreach ($theater['setlists'] as $setlist)
-                    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 min-w-0">
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <p class="truncate font-black text-slate-900 dark:text-white">{{ $setlist['name'] }}</p>
@@ -223,7 +223,7 @@
             @if (count($theater['unit_songs']) > 0)
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 @foreach ($theater['unit_songs'] as $song)
-                    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 min-w-0">
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <p class="truncate font-black text-slate-900 dark:text-white">{{ $song['name'] }}</p>

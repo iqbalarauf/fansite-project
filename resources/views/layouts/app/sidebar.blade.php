@@ -60,14 +60,12 @@
                             <flux:sidebar.item icon="rectangle-stack" :href="route('pages.index')" :current="request()->routeIs('pages.*')" wire:navigate>
                                 {{ __('Pages') }}
                             </flux:sidebar.item>
-                            @if (\App\Support\SettingBag::featureEnabled('magazines'))
-                                <flux:sidebar.item icon="book-open" :href="route('magazines.index')" :current="request()->routeIs('magazines.*')" wire:navigate>
-                                    {{ __('Majalah') }}
-                                </flux:sidebar.item>
-                            @endif
                             <flux:sidebar.item icon="photo" :href="route('content.gallery.index')" :current="request()->routeIs('content.gallery.*')" wire:navigate>
                                 {{ __('Galeri') }}
                             </flux:sidebar.item>
+                            <flux:sidebar.item icon="information-circle" :href="route('about.edit')" :current="request()->routeIs('about.edit')" wire:navigate>
+                            {{ __('Halaman "About"') }}
+                        </flux:sidebar.item>
                         </div>
                     </div>
 
@@ -82,6 +80,11 @@
                             @if ($__blogEnabled)
                                 <flux:sidebar.item icon="pencil-square" :href="route('content.blog.index')" :current="request()->routeIs('content.blog.*')" wire:navigate>
                                     {{ __('Blog') }}
+                                </flux:sidebar.item>
+                            @endif
+                            @if (\App\Support\SettingBag::featureEnabled('magazines'))
+                                <flux:sidebar.item icon="book-open" :href="route('magazines.index')" :current="request()->routeIs('magazines.*')" wire:navigate>
+                                    {{ __('Majalah') }}
                                 </flux:sidebar.item>
                             @endif
                             <flux:sidebar.item icon="clock" :href="route('content.timeline.index')" :current="request()->routeIs('content.timeline.*')" wire:navigate>
@@ -107,7 +110,7 @@
                 @endif
 
                 @if (auth()->user()->isSuperAdmin())
-                    <flux:sidebar.group :heading="__('Configuration')" class="grid">
+                    <flux:sidebar.group :heading="__('CONFIGURATION')" class="grid">
                         <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="home-modern" :href="route('landing-page.edit')" :current="request()->routeIs('landing-page.edit')" wire:navigate>
                             {{ __('Landing Page') }}
                         </flux:sidebar.item>
@@ -127,9 +130,6 @@
                         @endif
                         <flux:sidebar.item class="text-[#2E2F3E] hover:text-[#4E5FD4]" icon="users" :href="route('users.index')" :current="request()->routeIs('users.*')" wire:navigate>
                             {{ __('User Management') }}
-                        </flux:sidebar.item>
-                        <flux:sidebar.item icon="information-circle" :href="route('about.edit')" :current="request()->routeIs('about.edit')" wire:navigate>
-                            {{ __('Halaman "About"') }}
                         </flux:sidebar.item>
                     </flux:sidebar.group>
                 @endif
