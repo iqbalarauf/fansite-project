@@ -21,6 +21,7 @@ class AppSettingsSeeder extends Seeder
             'brand_color_tertiary' => '#FFD166',
             'app_name' => 'FANSIGHT DEV',
             'sidebar_name' => 'FANSIGHT DEV',
+            'homepage_tab_title' => null,
             'desc_app' => 'Welcome to FANSIGHT - your ultimate destination for all things related to your favorite idol!',
             'app_logo' => null,
             'hero_image' => null,

@@ -5,6 +5,7 @@ namespace Tests\Feature\Settings;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
@@ -33,7 +34,8 @@ class LandingPageSettingsTest extends TestCase
             ->assertSee('Contain')
             ->assertSee('Original')
             ->assertSee('Hero Buttons')
-            ->assertSee('Youtube Playlist');
+            ->assertSee('Youtube Playlist')
+            ->assertSee('Homepage Tab Title');
     }
 
     public function test_hero_image_display_mode_is_saved_and_rendered(): void
@@ -117,6 +119,24 @@ class LandingPageSettingsTest extends TestCase
         $this->assertSame('Jadwal', $settings['hero_button_2_label']);
         $this->assertSame('https://www.youtube.com/playlist?list=PL123', $settings['youtube_playlist_url']);
         $this->assertSame('cards', $settings['youtube_display_mode']);
+    }
+
+    public function test_homepage_tab_title_is_saved_and_applied_only_to_home(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test('pages::landing-page.index')
+            ->set('homepageTabTitle', 'Oniel Fansite')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertSame('Oniel Fansite', DB::table('app_settings')->where('key', 'homepage_tab_title')->value('value'));
+
+        Cache::forget('app_settings');
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('<title>Oniel Fansite</title>', false);
     }
 
     public function test_hero_image_can_be_uploaded(): void

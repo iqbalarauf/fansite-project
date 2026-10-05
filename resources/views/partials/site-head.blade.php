@@ -4,10 +4,11 @@
     $__app = SettingBag::app();
     $__appName = $__app['app_name'] ?? config('app.name', 'Laravel');
     $__appLogo = $__app['app_logo'] ?? null;
+    $__tabTitle = filled($tabTitle ?? null) ? $tabTitle : (filled($title ?? null) ? $title.' — '.$__appName : $__appName);
 @endphp
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{ filled($title ?? null) ? $title.' — '.$__appName : $__appName }}</title>
+<title>{{ $__tabTitle }}</title>
 @if (filled($metaDescription ?? null))
     <meta name="description" content="{{ $metaDescription }}">
 @endif

@@ -104,6 +104,35 @@ final class DashboardAssembler
                 ->all()
         ))->map(fn ($item) => (object) $item);
 
+        // Total live & durasi mengikuti filter periode (bukan dibatasi event_display_limit).
+        $liveStreamingTotals = Cache::remember(
+            "live_streaming_totals_{$dateFrom->toDateString()}_{$dateTo->toDateString()}_{$isAllPeriod}",
+            self::STATS_CACHE_SECONDS,
+            fn (): array => [
+                'count' => LiveStreaming::query()
+                    ->when(! $isAllPeriod, fn ($query) => $query->whereBetween('live_date', [$dateFrom->toDateString(), $dateTo->toDateString()]))
+                    ->count(),
+                'duration' => (int) LiveStreaming::query()
+                    ->when(! $isAllPeriod, fn ($query) => $query->whereBetween('live_date', [$dateFrom->toDateString(), $dateTo->toDateString()]))
+                    ->sum('duration'),
+            ]
+        );
+
+        $hasCustomRange = filled($customFrom) && filled($customTo);
+        $periodLabel = match ($period) {
+            'all' => 'All',
+            '7days' => '7 Hari',
+            'monthly' => 'Bulanan',
+            'quarter' => 'Kuartal',
+            '6months' => '6 Bulan',
+            'yearly' => '1 Tahun',
+            'custom' => 'Custom',
+            default => 'All',
+        };
+        $customRangeLabel = $hasCustomRange
+            ? Carbon::parse($customFrom)->locale('id')->isoFormat('D MMMM YYYY').' – '.Carbon::parse($customTo)->locale('id')->isoFormat('D MMMM YYYY')
+            : null;
+
         $today = Timezone::today();
         $fromStr = $dateFrom->toDateString();
         $toStr = $dateTo->toDateString();
@@ -134,6 +163,10 @@ final class DashboardAssembler
             'milestoneProgress' => $totalShows - $prevMilestone,
             'milestoneRemaining' => $nextMilestone - $totalShows,
             'liveStreamingEvents' => $liveStreamingEvents,
+            'liveStreamingCount' => $liveStreamingTotals['count'],
+            'liveStreamingDuration' => $liveStreamingTotals['duration'],
+            'periodLabel' => $periodLabel,
+            'customRangeLabel' => $customRangeLabel,
             'pastEvents' => $this->timeline->events('past', $isAllPeriod ? null : $fromStr, $isAllPeriod ? null : $toStr, $today, $eventDisplayLimit),
             'upcomingEvents' => $this->timeline->events('upcoming', $isAllPeriod ? null : $fromStr, $isAllPeriod ? null : $toStr, $today, $eventDisplayLimit),
             'upcomingShows' => $upcomingShows,
