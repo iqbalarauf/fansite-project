@@ -39,4 +39,26 @@ class LiveStreaming extends Model
         'gifts' => 'array',
         'top_senders' => 'array',
     ];
+
+    /**
+     * Payload detail untuk modal (dipakai dashboard & schedule).
+     *
+     * @return array<string, mixed>
+     */
+    public function detailPayload(): array
+    {
+        return [
+            'platform' => $this->platform,
+            'live_date' => $this->live_date?->translatedFormat('d F Y'),
+            'start_time' => $this->start_time?->translatedFormat('d F Y, H:i'),
+            'end_time' => $this->end_time?->translatedFormat('d F Y, H:i'),
+            'duration' => $this->duration,
+            'max_viewers' => $this->max_viewers,
+            'comment_count' => $this->comment_count,
+            'gift_count' => $this->gift_count,
+            'total_gold' => $this->total_gold,
+            'gifts' => $this->gifts ?? [],
+            'top_senders' => $this->top_senders ?? [],
+        ];
+    }
 }

@@ -259,6 +259,28 @@ class DashboardTest extends TestCase
         $this->assertNull($withoutRange->viewData('customRangeLabel'));
     }
 
+    public function test_dashboard_live_streaming_rows_are_clickable_with_detail_payload(): void
+    {
+        DB::table('live_streaming')->insert([
+            'platform' => 'IDN App',
+            'live_date' => now()->subDay()->toDateString(),
+            'duration' => 45,
+            'max_viewers' => 999,
+            'gifts' => json_encode([['name' => 'Angklung', 'image_url' => 'https://cdn.test/a.png', 'gold_per_unit' => 29, 'count' => 3, 'total_gold' => 87]]),
+            'top_senders' => json_encode([['name' => 'Wetee', 'avatar' => null, 'total_gold' => 120]]),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs(User::factory()->create())
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('openLiveStreamDetailModal', false)
+            ->assertSee('live-stream-detail-modal', false)
+            ->assertSee('Angklung', false)
+            ->assertSee('data-detail=', false);
+    }
+
     public function test_dashboard_exposes_upcoming_show_count(): void
     {
         $today = Timezone::today();

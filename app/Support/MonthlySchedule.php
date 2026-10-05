@@ -131,7 +131,7 @@ final class MonthlySchedule
             ->whereBetween('live_date', [$from, $to])
             ->orderBy('live_date')
             ->get() as $live) {
-            $events->push($this->event('Live Streaming', 'green', $live->platform, $live->live_date?->toDateString(), $live->duration ? $live->duration.' menit' : null));
+            $events->push($this->event('Live Streaming', 'green', $live->platform, $live->live_date?->toDateString(), $live->duration ? $live->duration.' menit' : null, null, $live->detailPayload()));
         }
 
         return $events
@@ -140,9 +140,10 @@ final class MonthlySchedule
     }
 
     /**
+     * @param  array<string, mixed>|null  $detail
      * @return array<string, mixed>
      */
-    private function event(string $type, string $badge, ?string $name, ?string $date, ?string $meta = null, ?string $purchaseLink = null): array
+    private function event(string $type, string $badge, ?string $name, ?string $date, ?string $meta = null, ?string $purchaseLink = null, ?array $detail = null): array
     {
         return [
             'type' => $type,
@@ -151,6 +152,7 @@ final class MonthlySchedule
             'date' => $date,
             'meta' => $meta,
             'purchase_link' => $purchaseLink,
+            'detail' => $detail,
         ];
     }
 

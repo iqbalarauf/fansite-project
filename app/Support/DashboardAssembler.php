@@ -100,7 +100,7 @@ final class DashboardAssembler
                 ->orderByDesc('live_date')
                 ->limit($eventDisplayLimit)
                 ->get()
-                ->map(fn ($item) => $item->toArray())
+                ->map(fn ($item) => array_merge($item->toArray(), ['detail' => $item->detailPayload()]))
                 ->all()
         ))->map(fn ($item) => (object) $item);
 

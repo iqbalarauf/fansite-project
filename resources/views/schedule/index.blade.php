@@ -95,7 +95,10 @@
 
                                         <div class="mt-1.5 space-y-1">
                                             @foreach ($day['events'] as $event)
-                                                @if ($event['purchase_link'])
+                                                @if (! empty($event['detail']))
+                                                    <button type="button" data-detail="{{ json_encode($event['detail']) }}" onclick="openLiveStreamDetailModal(this)" title="{{ $event['type'] }}: {{ $event['name'] }}"
+                                                            class="block w-full truncate rounded-md px-1.5 py-1 text-left text-[11px] font-medium transition hover:ring-1 hover:ring-green-400 {{ $badgeClasses[$event['badge']] }}">{{ $event['name'] }}</button>
+                                                @elseif ($event['purchase_link'])
                                                     <a href="{{ $event['purchase_link'] }}" target="_blank" rel="noopener" title="{{ $event['type'] }}: {{ $event['name'] }}"
                                                        class="block truncate rounded-md px-1.5 py-1 text-[11px] font-medium {{ $badgeClasses[$event['badge']] }}">{{ $event['name'] }}</a>
                                                 @else
@@ -123,7 +126,9 @@
                         <span class="mt-1.5 inline-block whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium {{ $badgeClasses[$event['badge']] }}">{{ $event['type'] }}</span>
                     </div>
                     <div class="min-w-0 flex-1">
-                        @if ($event['purchase_link'])
+                        @if (! empty($event['detail']))
+                            <button type="button" data-detail="{{ json_encode($event['detail']) }}" onclick="openLiveStreamDetailModal(this)" class="line-clamp-2 text-left font-bold text-slate-900 hover:text-indigo-600 dark:text-white dark:hover:text-indigo-400">{{ $event['name'] }}</button>
+                        @elseif ($event['purchase_link'])
                             <a href="{{ $event['purchase_link'] }}" target="_blank" rel="noopener" class="line-clamp-2 font-bold text-slate-900 hover:text-indigo-600 dark:text-white dark:hover:text-indigo-400">{{ $event['name'] }}</a>
                         @else
                             <p class="line-clamp-2 font-bold text-slate-900 dark:text-white">{{ $event['name'] }}</p>
@@ -141,6 +146,8 @@
             @endforelse
         </div>
     </section>
+
+    <x-live-stream-detail-modal />
 
     <script>
         (function () {
