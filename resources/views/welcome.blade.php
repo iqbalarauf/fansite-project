@@ -55,7 +55,7 @@
                         <span class="mt-1 block break-words sm:mt-2" style="color: {{ $heroName1Color }}">{{ $heroName1Text }}</span>
                     @endif
                 </h1>
-                <p class="mt-3 line-clamp-2 max-w-xl text-xs leading-6 text-indigo-100 sm:mt-4 sm:line-clamp-none sm:text-base sm:leading-8 lg:text-md">Temukan aktivitas terbaru, jadwal, dan momen favorit dari {{ $idolName }} dalam satu halaman yang selalu diperbarui.</p>
+                <p class="mt-3 line-clamp-2 max-w-xl text-xs leading-6 text-indigo-100 sm:mt-4 sm:line-clamp-none sm:text-base sm:leading-8 lg:text-md">Ingin bersenang-senang bersama mengikuti perjalanan {{ $idolName }} di JKT48? Mari berpartisipasi bersama Onielity.</p>
 
                 @if (! empty($heroButtons))
                     <div class="mt-4 flex w-full flex-col gap-2 sm:mt-8 sm:w-auto sm:flex-row sm:flex-wrap sm:gap-4">
@@ -137,7 +137,7 @@
                     <div class="flex items-center justify-between gap-4 border-b border-slate-200 pb-5 dark:border-slate-800">
                         <div>
                             <p class="text-sm font-bold uppercase tracking-[0.22em] text-indigo-600 dark:text-indigo-400">Statistik</p>
-                            <h3 class="mt-2 text-2xl font-black text-slate-900 dark:text-white">Data Oniel</h3>
+                            <h3 class="mt-2 text-2xl font-black text-slate-900 dark:text-white">Diskografi</h3>
                         </div>
                         <div class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-600 dark:bg-emerald-950 dark:text-emerald-300">
                             Last Event: {{ $lastEventDate ? Carbon::parse($lastEventDate)->locale('id')->isoFormat('D MMMM YYYY') : '-' }}
