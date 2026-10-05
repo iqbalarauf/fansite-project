@@ -79,7 +79,7 @@
                 </div>
 
                 <div class="flex items-center gap-2 admin-card px-3 py-2">
-                    <span class="text-sm font-medium text-zinc-600 dark:text-zinc-300">Jumlah event</span>
+                    <span class="text-sm font-medium text-zinc-600 dark:text-zinc-300">Jumlah event yang ditampilkan:</span>
                     <div class="flex items-center gap-2">
                         @foreach ([5, 10, 15] as $limit)
                             <button
@@ -346,7 +346,12 @@
                     </div>
                 </div>
                 @forelse ($liveStreamingEvents as $ls)
-                    <div class="mb-3 flex items-center gap-3 rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-800/50">
+                    <button
+                        type="button"
+                        data-detail="{{ json_encode($ls->detail ?? []) }}"
+                        onclick="openLiveStreamDetailModal(this)"
+                        class="mb-3 flex w-full items-center gap-3 rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2.5 text-left transition hover:border-green-300 hover:bg-green-50 dark:border-zinc-800 dark:bg-zinc-800/50 dark:hover:border-green-800 dark:hover:bg-green-900/10"
+                    >
                         <div class="rounded-lg bg-green-100 p-2 text-green-600 dark:bg-green-900/30 dark:text-green-400">
                             <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z"/>
@@ -361,7 +366,7 @@
                                 @endif
                             </div>
                         </div>
-                    </div>
+                    </button>
                 @empty
                     <div class="flex flex-col items-center justify-center py-10 text-center text-zinc-400">
                         <svg xmlns="http://www.w3.org/2000/svg" class="mb-2 size-8 text-zinc-300 dark:text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -459,6 +464,8 @@
         </form>
 
         </div>{{-- /#dashboard-capture-area --}}
+
+        <x-live-stream-detail-modal />
 
     </div>
 

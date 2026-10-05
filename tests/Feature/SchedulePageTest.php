@@ -138,6 +138,27 @@ class SchedulePageTest extends TestCase
             ->assertDontSee('Tenshi no Shippo');
     }
 
+    public function test_schedule_live_streaming_is_clickable_and_opens_detail_modal(): void
+    {
+        DB::table('live_streaming')->insert([
+            'platform' => 'IDN App',
+            'live_date' => '2026-09-25',
+            'duration' => 60,
+            'max_viewers' => 1234,
+            'gifts' => json_encode([['name' => 'Angklung', 'image_url' => 'https://cdn.test/a.png', 'gold_per_unit' => 29, 'count' => 2, 'total_gold' => 58]]),
+            'top_senders' => json_encode([['name' => 'Wetee', 'avatar' => null, 'total_gold' => 100]]),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->get(route('schedule.index', ['month' => 9, 'year' => 2026]))
+            ->assertOk()
+            ->assertSee('openLiveStreamDetailModal', false)
+            ->assertSee('live-stream-detail-modal', false)
+            ->assertSee('data-detail=', false)
+            ->assertSee('Angklung', false);
+    }
+
     private function seedMonth(): void
     {
         DB::table('show_teater')->insert([
