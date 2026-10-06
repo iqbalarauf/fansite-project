@@ -40,6 +40,10 @@ return [
         'key' => env('JKT48CONNECT_API_KEY'),
     ],
 
+    'fansight' => [
+        'url' => env('API_FANSIGHT_URL'),
+    ],
+
     'google' => [
         'service_account_path' => env('GOOGLE_SERVICE_ACCOUNT_PATH', storage_path('app/google/service-account.json')),
     ],

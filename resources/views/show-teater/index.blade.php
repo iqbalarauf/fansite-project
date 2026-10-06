@@ -13,18 +13,28 @@
                     Export to Excel
                 </flux:button>
 
-                {{-- Fetch Data Button --}}
-                <flux:button
-                    id="btn-fetch"
-                    variant="filled"
-                    icon="arrow-path"
-                    class="bg-orange-500 hover:bg-orange-600 text-white border-0"
-                    x-data
-                    @click="fetchData()"
-                    :disabled="auth()->user()?->isViewOnly()"
-                >
-                    Fetch Data
-                </flux:button>
+                {{-- Fetch Data Dropdown: JKT48Connect API atau FANSIGHT API --}}
+                <flux:dropdown position="bottom" align="end">
+                    <flux:button
+                        id="btn-fetch"
+                        variant="filled"
+                        icon="arrow-path"
+                        class="bg-orange-500 hover:bg-orange-600 text-white border-0"
+                        :disabled="auth()->user()?->isViewOnly()"
+                    >
+                        Fetch Data
+                    </flux:button>
+
+                    <flux:menu>
+                        <flux:menu.heading>Sumber Data</flux:menu.heading>
+                        <flux:menu.item icon="server" onclick="fetchData('jkt48connect')">
+                            JKT48Connect API
+                        </flux:menu.item>
+                        <flux:menu.item icon="globe-alt" onclick="fetchData('fansight')">
+                            FANSIGHT API
+                        </flux:menu.item>
+                    </flux:menu>
+                </flux:dropdown>
 
                 {{-- Add Show Modal Trigger --}}
                 <flux:modal.trigger name="modal-create-show">
@@ -568,14 +578,18 @@
         const CSRF_TOKEN = '{{ csrf_token() }}';
 
         // ------ Fetch Data ------
-        function fetchData() {
+        function fetchData(source = 'jkt48connect') {
             const btn = document.getElementById('btn-fetch');
+            if (!btn) return;
+
+            const originalContent = btn.innerHTML;
             btn.disabled = true;
             btn.textContent = 'Fetching...';
 
             fetch('{{ route('show-teater.fetch-manually') }}', {
                 method: 'POST',
                 headers: { 'X-CSRF-TOKEN': CSRF_TOKEN, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ source: source }),
             })
             .then(r => r.json())
             .then(data => {
@@ -587,7 +601,7 @@
                 }
             })
             .catch(() => window.appAlert('Terjadi kesalahan saat fetch data.', { variant: 'error' }))
-            .finally(() => { btn.disabled = false; btn.textContent = 'Fetch Data'; });
+            .finally(() => { btn.disabled = false; btn.innerHTML = originalContent; });
         }
 
         // ------ Confirm Member Show ------
