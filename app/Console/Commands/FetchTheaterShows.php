@@ -124,18 +124,41 @@ class FetchTheaterShows extends Command
         }
 
         $idolName = trim((string) $idolName);
+        // Normalisasi whitespace (termasuk NBSP) agar query cocok dengan API.
+        $idolName = (string) preg_replace('/\s+/u', ' ', $idolName);
 
-        $payload = $this->fetchFromApi("{$baseUrl}/shows?idol_name=".rawurlencode($idolName));
-        if ($payload === null) {
-            $this->error('Failed to fetch theater data from FANSIGHT API.');
+        $endpoint = "{$baseUrl}/shows";
+
+        try {
+            $response = Http::withHeaders(['Accept' => 'application/json'])
+                ->timeout(15)
+                ->get($endpoint, ['idol_name' => $idolName]);
+        } catch (\Throwable $exception) {
+            $this->error("Failed to reach FANSIGHT API ({$endpoint}): ".$exception->getMessage());
+
+            return self::FAILURE;
+        }
+
+        if (! $response->successful()) {
+            $this->error("FANSIGHT API returned HTTP {$response->status()} for {$endpoint}.");
+
+            return self::FAILURE;
+        }
+
+        $payload = $response->json();
+
+        if (! is_array($payload)) {
+            $this->error('FANSIGHT API returned a non-JSON response.');
 
             return self::FAILURE;
         }
 
         $shows = $payload['data'] ?? [];
         if (! is_array($shows) || $shows === []) {
-            $this->info("Tidak ada data show untuk {$idolName}");
-            $this->info('Fetch completed.');
+            $url = $response->effectiveUri();
+            $this->warn("Tidak ada data show untuk {$idolName}.");
+            $this->line("URL dipanggil: {$url}");
+            $this->line('Isi respons: '.mb_substr((string) $response->body(), 0, 500));
 
             return self::SUCCESS;
         }
