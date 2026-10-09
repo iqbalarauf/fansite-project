@@ -19,14 +19,14 @@ class FetchTheaterShows extends Command
      *
      * @var string
      */
-    protected $signature = 'app:fetch-theater-shows';
+    protected $signature = 'app:fetch-theater-shows {--source=jkt48connect : Data source: jkt48connect or fansight}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Fetch theater shows data from JKT48Connect API';
+    protected $description = 'Fetch theater shows data from JKT48Connect API or FANSIGHT API';
 
     /**
      * Execute the console command.
@@ -37,6 +37,24 @@ class FetchTheaterShows extends Command
         $now = Timezone::nowLocal();
         TheaterReference::deleteOldReferences($now->month, $now->year);
 
+        $source = (string) $this->option('source');
+
+        if (! in_array($source, ['jkt48connect', 'fansight'], true)) {
+            $this->error('Invalid source. Use jkt48connect or fansight.');
+
+            return self::FAILURE;
+        }
+
+        return $source === 'fansight'
+            ? $this->fetchFromFansight()
+            : $this->fetchFromConnect();
+    }
+
+    /**
+     * Fetch shows from the JKT48Connect API.
+     */
+    private function fetchFromConnect(): int
+    {
         $baseUrl = rtrim((string) config('services.jkt48connect.url'), '/');
         $apiKey = (string) config('services.jkt48connect.key');
 
@@ -80,6 +98,198 @@ class FetchTheaterShows extends Command
         $this->info('Fetch completed.');
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Fetch shows from the FANSIGHT API.
+     *
+     * The API is queried by idol name (spaces URL-encoded) and already returns
+     * only the shows whose lineup matches the idol.
+     */
+    private function fetchFromFansight(): int
+    {
+        $baseUrl = rtrim((string) config('services.fansight.url'), '/');
+
+        if ($baseUrl === '') {
+            $this->error('FANSIGHT API is not configured (API_FANSIGHT_URL).');
+
+            return self::FAILURE;
+        }
+
+        $idolName = AboutSettings::query()->where('key', 'idol_name')->value('value');
+        if (! filled($idolName)) {
+            $this->error('Idol name not found in about_settings.');
+
+            return self::FAILURE;
+        }
+
+        $idolName = trim((string) $idolName);
+        // Normalisasi whitespace (termasuk NBSP) agar query cocok dengan API.
+        $idolName = (string) preg_replace('/\s+/u', ' ', $idolName);
+
+        $endpoint = "{$baseUrl}/shows";
+
+        try {
+            $response = Http::withHeaders(['Accept' => 'application/json'])
+                ->timeout(15)
+                ->get($endpoint, ['idol_name' => $idolName]);
+        } catch (\Throwable $exception) {
+            $this->error("Failed to reach FANSIGHT API ({$endpoint}): ".$exception->getMessage());
+
+            return self::FAILURE;
+        }
+
+        if (! $response->successful()) {
+            $this->error("FANSIGHT API returned HTTP {$response->status()} for {$endpoint}.");
+
+            return self::FAILURE;
+        }
+
+        $payload = $response->json();
+
+        if (! is_array($payload)) {
+            $this->error('FANSIGHT API returned a non-JSON response.');
+
+            return self::FAILURE;
+        }
+
+        $shows = $payload['data'] ?? [];
+        if (! is_array($shows) || $shows === []) {
+            $url = $response->effectiveUri();
+            $this->warn("Tidak ada data show untuk {$idolName}.");
+            $this->line("URL dipanggil: {$url}");
+            $this->line('Isi respons: '.mb_substr((string) $response->body(), 0, 500));
+
+            return self::SUCCESS;
+        }
+
+        $unitSongPredictions = SettingBag::showTeaterPredictorEnabled()
+            ? app(ShowTeaterUnitSongPredictor::class)->mapBySetlist()
+            : [];
+
+        $saved = 0;
+
+        foreach ($shows as $show) {
+            if (is_array($show)) {
+                $saved += $this->processFansightShow($show, $idolName, $unitSongPredictions);
+            }
+        }
+
+        $this->info("FANSIGHT scan completed. {$saved} show(s) saved.");
+        $this->info('Fetch completed.');
+
+        return self::SUCCESS;
+    }
+
+    /**
+     * Persist a show coming from the FANSIGHT API.
+     *
+     * @param  array<string, mixed>  $show
+     * @param  array<string, array{unit_song: ?string, is_global_center: bool, is_us_center: bool}>  $unitSongPredictions
+     * @return int Number of saved show rows (0 or 1).
+     */
+    private function processFansightShow(array $show, string $idolName, array $unitSongPredictions): int
+    {
+        if (($show['type'] ?? null) !== 'SHOW') {
+            return 0;
+        }
+
+        $referenceCode = $show['reference_code'] ?? null;
+        $date = $show['date'] ?? null;
+        $title = isset($show['title']) ? trim((string) $show['title']) : '';
+
+        if (! is_string($referenceCode) || $referenceCode === '' || ! is_string($date) || $date === '' || $title === '') {
+            return 0;
+        }
+
+        // API sudah memfilter, tapi verifikasi lineup agar aman.
+        if (! $this->fansightShowIncludesIdol($show, $idolName)) {
+            return 0;
+        }
+
+        $alreadySynced = $this->showExists($date, $title);
+        $prediction = $unitSongPredictions[$title] ?? null;
+
+        if (TheaterReference::query()->where('reference_code', $referenceCode)->exists()) {
+            if ($alreadySynced) {
+                $this->attachReferenceCode($date, $title, $referenceCode, $prediction);
+                $this->error('Show terbaru sudah tersinkronisasi');
+            }
+
+            return 0;
+        }
+
+        $this->recordReference($referenceCode);
+
+        if ($alreadySynced) {
+            $this->attachReferenceCode($date, $title, $referenceCode, $prediction);
+            $this->error('Show terbaru sudah tersinkronisasi');
+
+            return 0;
+        }
+
+        $newShowId = (int) (ShowTeater::withTrashed()->max('show_id') ?? 0) + 1;
+
+        $attributes = [
+            'show_id' => $newShowId,
+            'show_date' => $date,
+            'setlist' => $title,
+            'unit_song' => $prediction['unit_song'] ?? null,
+            'reference_code' => $referenceCode,
+            'is_scraped_data' => 1,
+        ];
+
+        if ($prediction['is_global_center'] ?? false) {
+            $attributes['is_global_center'] = 1;
+        }
+
+        if ($prediction['is_us_center'] ?? false) {
+            $attributes['is_us_center'] = 1;
+        }
+
+        ShowTeater::query()->create($attributes);
+
+        app(ShowTeaterNormalizer::class)->syncShow($newShowId);
+
+        $this->info("Saved show: {$newShowId} - {$date} - {$title}");
+
+        return 1;
+    }
+
+    /**
+     * @param  array<string, mixed>  $show
+     */
+    private function fansightShowIncludesIdol(array $show, string $idolName): bool
+    {
+        $matched = $show['matched_members'] ?? null;
+
+        if (is_array($matched) && $matched !== []) {
+            return true;
+        }
+
+        return $this->lineupIncludesIdolName($show['members'] ?? $show['lineup'] ?? [], $idolName);
+    }
+
+    /**
+     * @param  mixed  $lineup
+     */
+    private function lineupIncludesIdolName($lineup, string $idolName): bool
+    {
+        if (! is_array($lineup) || $idolName === '') {
+            return false;
+        }
+
+        foreach ($lineup as $member) {
+            if (! is_array($member) || ! isset($member['name'])) {
+                continue;
+            }
+
+            if (strcasecmp(trim((string) $member['name']), $idolName) === 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -272,14 +482,17 @@ class FetchTheaterShows extends Command
     /**
      * @return array<string, mixed>|null
      */
-    private function fetchFromApi(string $url, string $apiKey, int $retry = 2): ?array
+    private function fetchFromApi(string $url, string $apiKey = '', int $retry = 2): ?array
     {
+        $headers = ['Accept' => 'application/json'];
+
+        if ($apiKey !== '') {
+            $headers['Authorization'] = 'Bearer '.$apiKey;
+            $headers['X-API-KEY'] = $apiKey;
+        }
+
         for ($attempt = 1; $attempt <= $retry; $attempt++) {
-            $response = Http::withHeaders([
-                'Accept' => 'application/json',
-                'Authorization' => 'Bearer '.$apiKey,
-                'X-API-KEY' => $apiKey,
-            ])->get($url);
+            $response = Http::withHeaders($headers)->get($url);
 
             if ($response->successful()) {
                 $json = $response->json();
