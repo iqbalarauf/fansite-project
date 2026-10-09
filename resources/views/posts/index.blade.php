@@ -5,13 +5,9 @@
         use Illuminate\Support\Facades\Storage;
     @endphp
 
-    <section class="bg-gradient-to-br from-indigo-950 via-slate-950 to-violet-950">
-        <div class="mx-auto flex max-w-7xl flex-col items-start px-4 py-20 text-left sm:px-6 lg:px-8 lg:py-24">
-            <span class="mb-4 inline-flex w-fit rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-indigo-50">{{ $section->label() }}</span>
-            <h1 class="max-w-2xl text-4xl font-black leading-tight text-white sm:text-5xl">{{ $section->label() }}</h1>
-            <p class="mt-4 max-w-xl text-base text-indigo-100 sm:text-lg">
-                {{ $section->value === 'news' ? 'Kabar dan informasi terbaru seputar aktivitas idol.' : 'Catatan, ulasan, dan tulisan panjang dari tim fansite.' }}
-            </p>
+    <section>
+        <div class="mx-auto flex max-w-7xl flex-col items-start px-4 py-10 text-left sm:px-6 lg:px-8">
+            <h1 class="max-w-2xl text-4xl font-black leading-tight text-slate-900 dark:text-white sm:text-5xl">{{ $section->label() }}</h1>
         </div>
     </section>
 

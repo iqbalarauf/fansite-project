@@ -38,7 +38,6 @@
 
     {{-- Profile --}}
     <section class="mx-auto max-w-7xl px-4 pt-12 sm:px-6 lg:px-8">
-        <p class="text-sm font-bold uppercase tracking-[0.22em] text-indigo-600 dark:text-indigo-400">About {{ $idolTerm ?? 'Idol' }}</p>
         <h1 class="mt-2 text-3xl font-black text-slate-900 dark:text-white sm:text-5xl">{{ $idolName }}</h1>
         @if ($idolDescription)
             <p class="mt-4 max-w-3xl text-lg leading-9 text-slate-600 dark:text-slate-300">{{ $idolDescription }}</p>

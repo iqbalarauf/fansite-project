@@ -5,11 +5,9 @@
         use Illuminate\Support\Facades\Storage;
     @endphp
 
-    <section class="bg-gradient-to-br from-indigo-950 via-slate-950 to-violet-950">
-        <div class="mx-auto flex max-w-7xl flex-col items-start px-4 py-20 text-left sm:px-6 lg:px-8 lg:py-24">
-            <span class="mb-4 inline-flex w-fit rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-indigo-50">Majalah</span>
-            <h1 class="max-w-2xl text-4xl font-black leading-tight text-white sm:text-5xl">Majalah Digital</h1>
-            <p class="mt-4 max-w-xl text-base text-indigo-100 sm:text-lg">Baca edisi terbaru dan telusuri arsip majalah yang bisa dibaca serta di-download kapan saja.</p>
+    <section>
+        <div class="mx-auto flex max-w-7xl flex-col items-start px-4 pt-10 text-left sm:px-6">
+            <h1 class="max-w-2xl text-4xl font-black leading-tight text-slate-900 dark:text-white sm:text-5xl">Onielimagz</h1> 
         </div>
     </section>
 
@@ -18,7 +16,7 @@
             $mainCover = $main->cover ? Storage::url($main->cover) : null;
         @endphp
 
-        <section class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <section class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
             <span class="inline-flex w-fit rounded-full bg-yellow-300 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-slate-900">Edisi Utama</span>
 
             <div class="mt-6 grid gap-8 overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
@@ -56,7 +54,7 @@
         </section>
     @endif
 
-    <section class="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
+    <section class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div class="flex items-end justify-between gap-4">
             <h2 class="text-2xl font-black text-slate-900 dark:text-white sm:text-3xl">Arsip Majalah</h2>
             <span class="text-sm text-slate-500 dark:text-slate-400">{{ $archive->count() }} edisi</span>

@@ -15,7 +15,6 @@
     <section class="bg-slate-950">
         <div class="bg-gradient-to-br from-indigo-950/85 via-slate-950/70 to-violet-950/80">
             <div class="mx-auto flex max-w-3xl flex-col items-center px-4 py-24 text-center sm:px-6 lg:py-28">
-                <span class="mb-4 inline-flex w-fit rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-indigo-50">About Fansite</span>
                 @if ($fanbaseLogo)
                     <img src="{{ Storage::url($fanbaseLogo) }}" alt="{{ $fanbaseName }}" class="mb-6 w-32 object-cover" loading="eager" decoding="async" />
                 @endif

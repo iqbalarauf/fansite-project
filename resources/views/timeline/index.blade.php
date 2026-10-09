@@ -5,13 +5,13 @@
         use Illuminate\Support\Facades\Storage;
     @endphp
 
-    <section class="mx-auto max-w-7xl px-4 pt-12 sm:px-6 lg:px-8">
-        <span class="inline-flex w-fit rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-300">Timeline</span>
-        <h1 class="mt-4 max-w-2xl text-4xl font-black leading-tight text-slate-900 dark:text-white sm:text-5xl">Timeline</h1>
-        <p class="mt-4 max-w-xl text-base text-slate-600 dark:text-slate-300 sm:text-lg">Perjalanan dan momen penting.</p>
+    <section>
+        <div class="mx-auto flex max-w-7xl flex-col items-start px-4 pt-10 text-left sm:px-6">
+            <h1 class="mt-4 max-w-2xl text-4xl font-black leading-tight text-slate-900 dark:text-white sm:text-5xl">Timeline Oniel</h1>
+        </div>
     </section>
 
-    <section class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+    <section class="mx-auto max-w-7xl px-4 pb-4 pt-10 sm:px-6 lg:px-8">
         @if ($timelines->isEmpty())
             <div class="rounded-[2rem] border border-dashed border-slate-300 bg-white p-12 text-center dark:border-slate-700 dark:bg-slate-900">
                 <p class="text-base font-semibold text-slate-700 dark:text-slate-200">Belum ada data timeline.</p>

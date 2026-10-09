@@ -5,17 +5,17 @@
         use Illuminate\Support\Facades\Storage;
     @endphp
 
-    <section class="mx-auto max-w-7xl px-4 pt-12 sm:px-6 lg:px-8">
-        <span class="inline-flex w-fit rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-300">Trivia</span>
-        <h1 class="mt-4 max-w-2xl text-4xl font-black leading-tight text-slate-900 dark:text-white sm:text-5xl">Trivia</h1>
-        <p class="mt-4 max-w-xl text-base text-slate-600 dark:text-slate-300 sm:text-lg">Kumpulan trivia menarik. Cari dengan kata kunci favoritmu.</p>
-    </section>
+    <section>
+        <div class="mx-auto flex max-w-7xl flex-col items-start px-4 pt-10 text-left sm:px-6">
+            <h1 class="mt-4 max-w-2xl text-4xl font-black leading-tight text-slate-900 dark:text-white sm:text-5xl">Trivia Cornelia</h1>
+        </div>
+    </section>  
 
-    <section class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+    <section class="mx-auto max-w-7xl px-4 pb-4 pt-10 sm:px-6 lg:px-8">
         <form method="GET" action="{{ route('trivia.index') }}">
             <div class="flex flex-wrap items-center gap-3">
                 <div class="min-w-0 flex-1">
-                    <input type="search" name="q" value="{{ $search }}" placeholder="Cari trivia..."
+                    <input type="search" name="q" value="{{ $search }}" placeholder="Gunakan kata kunci untuk mencari trivia..."
                            class="w-full rounded-full border border-slate-200 bg-white px-5 py-3 text-sm text-slate-700 shadow-sm outline-hidden transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200" />
                 </div>
                 <button type="submit" class="rounded-full bg-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500">Cari</button>
