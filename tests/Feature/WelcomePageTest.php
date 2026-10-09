@@ -51,7 +51,7 @@ class WelcomePageTest extends TestCase
             ->assertSee('https://instagram.com/freya')
             ->assertSee('https://x.com/freya')
             ->assertSee('https://tiktok.com/@freya')
-            ->assertSee('Data Oniel');
+            ->assertSee('Diskografi');
     }
 
     public function test_homepage_displays_upcoming_events_section_matching_dashboard(): void

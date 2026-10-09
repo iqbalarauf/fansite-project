@@ -55,7 +55,7 @@
                         <span class="mt-1 block break-words sm:mt-2" style="color: {{ $heroName1Color }}">{{ $heroName1Text }}</span>
                     @endif
                 </h1>
-                <p class="mt-3 line-clamp-2 max-w-xl text-xs leading-6 text-indigo-100 sm:mt-4 sm:line-clamp-none sm:text-base sm:leading-8 lg:text-md">Temukan aktivitas terbaru, jadwal, dan momen favorit dari {{ $idolName }} dalam satu halaman yang selalu diperbarui.</p>
+                <p class="mt-3 line-clamp-2 max-w-xl text-xs leading-6 text-indigo-100 sm:mt-4 sm:line-clamp-none sm:text-base sm:leading-8 lg:text-md">Mari bersama-sama mengenal lebih jauh dan mendukung {{ $idolName }} bersama kami.</p>
 
                 @if (! empty($heroButtons))
                     <div class="mt-4 flex w-full flex-col gap-2 sm:mt-8 sm:w-auto sm:flex-row sm:flex-wrap sm:gap-4">
@@ -76,7 +76,6 @@
                 <aside id="about" class="flex flex-col gap-8">
                     @if ($showOnWelcome)
                         <div class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
-                            <p class="text-sm font-bold uppercase tracking-[0.22em] text-indigo-600 dark:text-indigo-400">About</p>
                             <h3 class="mt-2 text-3xl font-black text-slate-900 dark:text-white">Tentang {{ $idolName }}</h3>
 
                             <div class="mt-6">
@@ -102,7 +101,6 @@
                         <div class="flex flex-1 flex-col rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
                             <div class="flex items-center justify-between gap-4 border-b border-slate-200 pb-5 dark:border-slate-800">
                                 <div>
-                                    <p class="text-sm font-bold uppercase tracking-[0.22em] text-indigo-600 dark:text-indigo-400">{{ $feed['label'] }}</p>
                                     <h3 class="mt-2 text-2xl font-black text-slate-900 dark:text-white">{{ $feed['heading'] }}</h3>
                                 </div>
                                 <a href="{{ $feed['indexRoute'] }}" class="shrink-0 text-sm font-semibold text-indigo-600 transition hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">Lihat Semua</a>
@@ -136,8 +134,7 @@
                 <section id="data" class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
                     <div class="flex items-center justify-between gap-4 border-b border-slate-200 pb-5 dark:border-slate-800">
                         <div>
-                            <p class="text-sm font-bold uppercase tracking-[0.22em] text-indigo-600 dark:text-indigo-400">Statistik</p>
-                            <h3 class="mt-2 text-2xl font-black text-slate-900 dark:text-white">Data Oniel</h3>
+                            <h3 class="mt-2 text-2xl font-black text-slate-900 dark:text-white">Diskografi</h3>
                         </div>
                         <div class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-600 dark:bg-emerald-950 dark:text-emerald-300">
                             Last Event: {{ $lastEventDate ? Carbon::parse($lastEventDate)->locale('id')->isoFormat('D MMMM YYYY') : '-' }}
@@ -169,7 +166,6 @@
                 <section id="schedule" class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
                     <div class="flex items-center justify-between gap-4 border-b border-slate-200 pb-5 dark:border-slate-800">
                         <div>
-                            <p class="text-sm font-bold uppercase tracking-[0.22em] text-indigo-600 dark:text-indigo-400">Schedule</p>
                             <h3 class="mt-2 text-2xl font-black text-slate-900 dark:text-white">Event Mendatang</h3>
                         </div>
                     </div>
@@ -208,13 +204,12 @@
 
                 <section id="live" class="flex flex-1 flex-col rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
                     <div class="border-b border-slate-200 pb-5 dark:border-slate-800">
-                        <p class="text-sm font-bold uppercase tracking-[0.22em] text-indigo-600 dark:text-indigo-400">Live</p>
-                        <h3 class="mt-2 text-2xl font-black text-slate-900 dark:text-white">Status Live</h3>
+                        <h3 class="mt-2 text-2xl font-black text-slate-900 dark:text-white">Live Streaming</h3>
                     </div>
 
                     @php
                         $livePlatforms = [
-                            ['key' => 'showroom', 'label' => 'Showroom Live', 'live' => $showroomLive, 'url' => $showroomStreamUrl, 'badge' => 'SR', 'accent' => 'from-orange-400 to-rose-500'],
+                            ['key' => 'showroom', 'label' => 'Showroom', 'live' => $showroomLive, 'url' => $showroomStreamUrl, 'badge' => 'SR', 'accent' => 'from-orange-400 to-rose-500'],
                             ['key' => 'idn', 'label' => 'IDN App', 'live' => $idnLive, 'url' => $idnStreamUrl, 'badge' => 'IDN', 'accent' => 'from-sky-400 to-emerald-500'],
                         ];
                     @endphp
@@ -267,8 +262,7 @@
         <section class="mx-auto max-w-7xl px-4 pt-16 sm:px-6 lg:px-8">
             <div class="flex items-end justify-between gap-4">
                 <div>
-                    <p class="text-sm font-bold uppercase tracking-[0.22em] text-indigo-600 dark:text-indigo-400">Galeri</p>
-                    <h2 class="mt-2 text-2xl font-black text-slate-900 dark:text-white sm:text-3xl">Foto Terbaru</h2>
+                    <h2 class="mt-2 text-2xl font-black text-slate-900 dark:text-white sm:text-3xl">Galeri Foto</h2>
                 </div>
                 <a href="{{ route('gallery.index') }}" class="shrink-0 text-sm font-semibold text-indigo-600 transition hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">Lihat Semua</a>
             </div>
@@ -308,7 +302,6 @@
             <div class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
                 <div class="flex flex-wrap items-center justify-between gap-4">
                     <div>
-                        <p class="text-sm font-bold uppercase tracking-[0.22em] text-indigo-600 dark:text-indigo-400">Playlist</p>
                         <h2 class="mt-2 text-2xl font-black text-slate-900 dark:text-white sm:text-3xl">Lihat konten terbaru</h2>
                     </div>
 

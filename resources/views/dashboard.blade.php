@@ -65,7 +65,7 @@
             <div class="flex flex-wrap items-center gap-3">
                 {{-- Comparison toggle --}}
                 <div class="flex items-center gap-2">
-                    <span class="text-sm text-zinc-500 dark:text-zinc-400">Perbandingan</span>
+                    <span class="text-sm text-zinc-500 dark:text-zinc-400">Bandingkan dengan periode sebelumnya</span>
                     <button
                         type="button"
                         id="comparison-toggle"
@@ -114,7 +114,7 @@
         {{-- ROW 1: Header --}}
         <div class="flex flex-col gap-1">
             <flux:heading size="xl" class="font-bold text-zinc-900 dark:text-white">
-                Selamat Datang, {{ auth()->user()->name }} 👋
+                Selamat Datang, {{ auth()->user()->name }}
             </flux:heading>
             <flux:subheading class="text-zinc-500 dark:text-zinc-400">
                 Berikut adalah statistik oshimen: <span class="font-semibold text-blue-600 dark:text-blue-400">{{ $idolName }}</span>
@@ -179,7 +179,7 @@
                         <div class="text-3xl font-bold text-zinc-900 dark:text-white">{{ number_format($card['value']) }}</div>
                         <div class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{{ $card['label'] }}</div>
                         @if ($showComparison && $card['prev'] !== null)
-                            <div class="mt-1 text-xs text-zinc-400 dark:text-zinc-500">vs {{ number_format($card['prev']) }} periode lalu</div>
+                            <div class="mt-1 text-xs text-zinc-400 dark:text-zinc-500">vs {{ number_format($card['prev']) }} pada periode lalu</div>
                         @endif
                         @if (! empty($card['badge']))
                             <div class="mt-2 inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
@@ -252,7 +252,7 @@
             {{-- Activity Chart --}}
             <div class="col-span-1 admin-card p-5 lg:col-span-1">
                 <div class="mb-4 flex items-center justify-between">
-                    <flux:heading size="sm" class="font-semibold">Oshimen Activity</flux:heading>
+                    <flux:heading size="sm" class="font-semibold">Aktivitas</flux:heading>
                     <span class="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
                         {{ match($period) { 'all' => 'All', '7days' => '7 Hari', 'monthly' => 'Bulanan', 'quarter' => 'Kuartal', '6months' => '6 Bulan', 'yearly' => '1 Tahun', 'custom' => 'Custom' } }}
                     </span>
