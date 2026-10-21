@@ -56,6 +56,24 @@ class RichTextEditorTest extends TestCase
         $this->assertStringContainsString('data-stat-field="metric"', $with);
     }
 
+    public function test_statistic_setlist_options_exclude_inactive_categories(): void
+    {
+        DB::table('show_teater')->insert([
+            ['show_id' => 1, 'show_date' => '2026/01/01', 'setlist' => 'Ramune', 'unit_song' => ''],
+            ['show_id' => 2, 'show_date' => '2026/01/02', 'setlist' => 'Lorong Waktu', 'unit_song' => ''],
+        ]);
+
+        DB::table('show_teater_categories')->insert([
+            ['id' => 1, 'type' => 'setlist', 'name' => 'Ramune', 'setlist_id' => null, 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 2, 'type' => 'setlist', 'name' => 'Lorong Waktu', 'setlist_id' => null, 'is_active' => 0, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $html = Blade::render('<x-rich-text-editor name="content" :statistics="true" />');
+
+        $this->assertStringContainsString('Ramune', $html);
+        $this->assertStringNotContainsString('Lorong Waktu', $html);
+    }
+
     public function test_statistic_endpoint_returns_the_computed_value(): void
     {
         $this->actingAs(User::factory()->create());
@@ -89,6 +107,46 @@ class RichTextEditorTest extends TestCase
         $this->postJson(route('content.editor.statistic'), [
             'metric' => 'not_a_metric',
         ])->assertStatus(422);
+    }
+
+    public function test_statistic_endpoint_returns_list_items_for_list_metrics(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        DB::table('show_teater')->insert([
+            ['show_id' => 1, 'show_date' => '2026/01/01', 'setlist' => 'Ramune'],
+            ['show_id' => 2, 'show_date' => '2026/01/02', 'setlist' => 'Ramune'],
+            ['show_id' => 3, 'show_date' => '2026/01/03', 'setlist' => 'Aitakatta'],
+            ['show_id' => 4, 'show_date' => '2026/01/04', 'setlist' => 'Nonaktif'],
+        ]);
+
+        DB::table('show_teater_categories')->insert([
+            ['id' => 1, 'type' => 'setlist', 'name' => 'Ramune', 'setlist_id' => null, 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 2, 'type' => 'setlist', 'name' => 'Aitakatta', 'setlist_id' => null, 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 3, 'type' => 'setlist', 'name' => 'Nonaktif', 'setlist_id' => null, 'is_active' => 0, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $this->postJson(route('content.editor.statistic'), [
+            'metric' => 'show_teater_active_setlist_list',
+        ])
+            ->assertOk()
+            ->assertJsonPath('type', 'list')
+            ->assertJsonPath('value', 2)
+            ->assertJsonPath('items.0.label', 'Aitakatta')
+            ->assertJsonPath('items.0.count', 1)
+            ->assertJsonPath('items.1.label', 'Ramune')
+            ->assertJsonPath('items.1.count', 2);
+    }
+
+    public function test_sanitizer_keeps_statistic_list_items_attribute(): void
+    {
+        $html = '<div class="rich-stat-card" data-stat-metric="show_teater_active_setlist_list" data-stat-items="[{&quot;label&quot;:&quot;Ramune&quot;,&quot;count&quot;:2}]">'.
+            '<ul class="rich-stat-card-list"><li><span>Ramune</span><span>2</span></li></ul></div>';
+
+        $clean = HtmlSanitizer::article($html);
+
+        $this->assertStringContainsString('data-stat-items=', $clean);
+        $this->assertStringContainsString('Ramune', $clean);
     }
 
     public function test_sanitizer_keeps_statistic_card_data_attributes_but_strips_dangerous_ones(): void

@@ -688,6 +688,138 @@ class CustomPageTest extends TestCase
             ->assertSee('1');
     }
 
+    public function test_statistic_new_show_teater_and_unit_song_count_metrics(): void
+    {
+        $this->seedStatisticData();
+
+        $january = ['date_from' => '2026-01-01', 'date_to' => '2026-01-31'];
+
+        foreach ([
+            ['metric' => 'show_teater_setlist', 'setlist' => 'Setlist A', 'expected' => 2],
+            ['metric' => 'show_teater_date_range', ...$january, 'expected' => 2],
+            ['metric' => 'show_teater_all_setlist', 'expected' => 3],
+            ['metric' => 'show_teater_setlist_count_date_range', ...$january, 'expected' => 1],
+            ['metric' => 'show_teater_active_setlist_count', 'expected' => 3],
+            ['metric' => 'unit_song_all', 'expected' => 2],
+            ['metric' => 'unit_song_date_range', ...$january, 'expected' => 2],
+            ['metric' => 'unit_song_setlist', 'setlist' => 'Setlist A', 'expected' => 2],
+            ['metric' => 'unit_song_active_count', 'expected' => 3],
+        ] as $data) {
+            $this->assertSame($data['expected'], CustomPageStatistic::value($data));
+        }
+    }
+
+    public function test_statistic_active_setlist_and_unit_song_lists(): void
+    {
+        $this->seedStatisticData();
+
+        $setlists = CustomPageStatistic::result(['metric' => 'show_teater_active_setlist_list']);
+        $this->assertSame('list', $setlists['type']);
+        $this->assertSame(3, $setlists['value']);
+        $this->assertSame(['Setlist A' => 2, 'Setlist B' => 1, 'Setlist C' => 0], collect($setlists['items'])->pluck('count', 'label')->all());
+
+        $unitSongs = CustomPageStatistic::result(['metric' => 'unit_song_active_list']);
+        $this->assertSame('list', $unitSongs['type']);
+        $this->assertSame(['Song A' => 1, 'Song B' => 1, 'Song C' => 0], collect($unitSongs['items'])->pluck('count', 'label')->all());
+    }
+
+    public function test_statistic_active_metrics_respect_is_active_flag(): void
+    {
+        $this->seedStatisticData();
+
+        DB::table('show_teater_categories')->insert([
+            ['id' => 31, 'type' => 'setlist', 'name' => 'Setlist Nonaktif', 'setlist_id' => null, 'is_active' => 0, 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 32, 'type' => 'unit_song', 'name' => 'Song Nonaktif', 'setlist_id' => 1, 'is_active' => 0, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $this->assertSame(3, CustomPageStatistic::value(['metric' => 'show_teater_active_setlist_count']));
+        $this->assertSame(3, CustomPageStatistic::value(['metric' => 'unit_song_active_count']));
+
+        $activeSetlists = collect(CustomPageStatistic::result(['metric' => 'show_teater_active_setlist_list'])['items'])->pluck('label');
+        $this->assertFalse($activeSetlists->contains('Setlist Nonaktif'));
+
+        $activeSongs = collect(CustomPageStatistic::result(['metric' => 'unit_song_active_list'])['items'])->pluck('label');
+        $this->assertFalse($activeSongs->contains('Song Nonaktif'));
+
+        $allSetlists = collect(CustomPageStatistic::result(['metric' => 'show_teater_all_setlist_list'])['items'])->pluck('label');
+        $this->assertTrue($allSetlists->contains('Setlist Nonaktif'));
+    }
+
+    public function test_statistic_master_setlist_and_unit_song_lists_use_category_catalogue(): void
+    {
+        $this->seedStatisticData();
+
+        $allSetlists = CustomPageStatistic::result(['metric' => 'show_teater_all_setlist_list']);
+        $this->assertSame(['Setlist A', 'Setlist B', 'Setlist C'], array_column($allSetlists['items'], 'label'));
+        $this->assertSame([null, null, null], array_column($allSetlists['items'], 'count'));
+
+        $countedSetlists = CustomPageStatistic::result(['metric' => 'show_teater_all_setlist_list_count']);
+        $this->assertSame(['Setlist A' => 2, 'Setlist B' => 1, 'Setlist C' => 0], collect($countedSetlists['items'])->pluck('count', 'label')->all());
+
+        $allUnitSongs = CustomPageStatistic::result(['metric' => 'unit_song_all_list']);
+        $this->assertSame(['Song A', 'Song B', 'Song C'], array_column($allUnitSongs['items'], 'label'));
+
+        $countedUnitSongs = CustomPageStatistic::result(['metric' => 'unit_song_all_list_count']);
+        $this->assertSame(['Song A' => 1, 'Song B' => 1, 'Song C' => 0], collect($countedUnitSongs['items'])->pluck('count', 'label')->all());
+    }
+
+    public function test_statistic_show_list_date_range_returns_show_rows(): void
+    {
+        $this->seedStatisticData();
+
+        $result = CustomPageStatistic::result([
+            'metric' => 'show_teater_show_list_date_range',
+            'date_from' => '2026-01-01',
+            'date_to' => '2026-01-31',
+        ]);
+
+        $this->assertSame('list', $result['type']);
+        $this->assertSame(2, $result['value']);
+        $this->assertSame('2026-01-10 · Setlist A', $result['items'][0]['label']);
+    }
+
+    public function test_statistic_list_metric_renders_items_on_public_page(): void
+    {
+        $this->seedStatisticData();
+
+        $page = CustomPage::query()->create([
+            'title' => 'Statistik Setlist',
+            'slug' => 'statistik-setlist',
+            'status' => 'published',
+            'blocks' => [['id' => 'statistic-1', 'type' => 'statistic', 'data' => ['metric' => 'show_teater_all_setlist_list_count', 'label' => 'Setlist Aktif']]],
+        ]);
+
+        $this->get(route('custom-pages.show', $page))
+            ->assertOk()
+            ->assertSee('Setlist Aktif')
+            ->assertSee('Setlist A')
+            ->assertSee('Setlist C');
+    }
+
+    private function seedStatisticData(): void
+    {
+        DB::table('show_teater')->insert([
+            ['show_id' => 1, 'show_date' => '2026-01-10', 'setlist' => 'Setlist A', 'unit_song' => 'Song A'],
+            ['show_id' => 2, 'show_date' => '2026-01-15', 'setlist' => 'Setlist A', 'unit_song' => 'Song B'],
+            ['show_id' => 3, 'show_date' => '2026-02-01', 'setlist' => 'Setlist B', 'unit_song' => null],
+            ['show_id' => 4, 'show_date' => '2026-02-05', 'setlist' => '', 'unit_song' => null],
+        ]);
+
+        DB::table('show_teater_categories')->insert([
+            ['id' => 1, 'type' => 'setlist', 'name' => 'Setlist A', 'setlist_id' => null, 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 2, 'type' => 'setlist', 'name' => 'Setlist B', 'setlist_id' => null, 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 3, 'type' => 'setlist', 'name' => 'Setlist C', 'setlist_id' => null, 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 11, 'type' => 'unit_song', 'name' => 'Song A', 'setlist_id' => 1, 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 12, 'type' => 'unit_song', 'name' => 'Song B', 'setlist_id' => 1, 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 13, 'type' => 'unit_song', 'name' => 'Song C', 'setlist_id' => 1, 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        DB::table('show_teater_unit_song')->insert([
+            ['show_id' => 1, 'show_teater_categories_id' => 11, 'position' => 0, 'created_at' => now(), 'updated_at' => now()],
+            ['show_id' => 2, 'show_teater_categories_id' => 12, 'position' => 0, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+    }
+
     public function test_page_display_mode_is_saved_and_welcome_mode_renders_header_and_footer(): void
     {
         $this->actingAs(User::factory()->create());
