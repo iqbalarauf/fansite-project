@@ -5,6 +5,50 @@ import Placeholder from '@tiptap/extension-placeholder';
 import { Node, mergeAttributes } from '@tiptap/core';
 
 /**
+ * Parse daftar item statistic (JSON) menjadi array yang aman.
+ */
+function parseStatItems(raw) {
+    if (!raw) {
+        return null;
+    }
+
+    try {
+        const parsed = JSON.parse(raw);
+
+        return Array.isArray(parsed) ? parsed : null;
+    } catch (error) {
+        return null;
+    }
+}
+
+/**
+ * Konten dalam kartu statistic: nilai tunggal atau daftar nama + jumlah.
+ */
+function renderStatisticCardContent(attrs) {
+    const content = [['p', { class: 'rich-stat-card-label' }, attrs.label || 'Statistic']];
+
+    if (Array.isArray(attrs.items) && attrs.items.length > 0) {
+        content.push([
+            'ul',
+            { class: 'rich-stat-card-list' },
+            ...attrs.items.map((item) => {
+                const cells = [['span', {}, String(item.label ?? '')]];
+
+                if (item.count !== null && item.count !== undefined) {
+                    cells.push(['span', { class: 'rich-stat-card-list-count' }, Number(item.count).toLocaleString('id-ID')]);
+                }
+
+                return ['li', {}, ...cells];
+            }),
+        ]);
+    } else {
+        content.push(['p', { class: 'rich-stat-card-value' }, String(attrs.value ?? '0')]);
+    }
+
+    return content;
+}
+
+/**
  * Node atom untuk statistic card. Menyimpan konfigurasi pada data-stat-*
  * sehingga card dapat diedit/dihapus lagi tanpa menambah tabel baru.
  */
@@ -16,9 +60,10 @@ const StatisticCard = Node.create({
 
     addAttributes() {
         return {
-            metric: { default: 'show_teater_all' },
+            metric: { default: 'show_teater_all_setlist' },
             label: { default: 'Statistic' },
             value: { default: '0' },
+            items: { default: null },
             dateFrom: { default: null },
             dateTo: { default: null },
             setlist: { default: null },
@@ -31,9 +76,10 @@ const StatisticCard = Node.create({
         return [{
             tag: 'div[data-stat-metric]',
             getAttrs: (element) => ({
-                metric: element.getAttribute('data-stat-metric') || 'show_teater_all',
+                metric: element.getAttribute('data-stat-metric') || 'show_teater_all_setlist',
                 label: element.getAttribute('data-stat-label') || 'Statistic',
                 value: element.getAttribute('data-stat-value') || '0',
+                items: parseStatItems(element.getAttribute('data-stat-items')),
                 dateFrom: element.getAttribute('data-stat-date-from'),
                 dateTo: element.getAttribute('data-stat-date-to'),
                 setlist: element.getAttribute('data-stat-setlist'),
@@ -45,10 +91,15 @@ const StatisticCard = Node.create({
 
     renderHTML({ node }) {
         const attributes = { class: 'rich-stat-card' };
+        const hasItems = Array.isArray(node.attrs.items) && node.attrs.items.length > 0;
 
         if (node.attrs.metric) attributes['data-stat-metric'] = node.attrs.metric;
         if (node.attrs.label) attributes['data-stat-label'] = node.attrs.label;
-        if (node.attrs.value !== null && node.attrs.value !== undefined) attributes['data-stat-value'] = String(node.attrs.value);
+        if (hasItems) {
+            attributes['data-stat-items'] = JSON.stringify(node.attrs.items);
+        } else if (node.attrs.value !== null && node.attrs.value !== undefined) {
+            attributes['data-stat-value'] = String(node.attrs.value);
+        }
         if (node.attrs.dateFrom) attributes['data-stat-date-from'] = node.attrs.dateFrom;
         if (node.attrs.dateTo) attributes['data-stat-date-to'] = node.attrs.dateTo;
         if (node.attrs.setlist) attributes['data-stat-setlist'] = node.attrs.setlist;
@@ -58,16 +109,7 @@ const StatisticCard = Node.create({
         return [
             'div',
             mergeAttributes(attributes),
-            [
-                'p',
-                { class: 'rich-stat-card-label' },
-                node.attrs.label || 'Statistic',
-            ],
-            [
-                'p',
-                { class: 'rich-stat-card-value' },
-                String(node.attrs.value ?? '0'),
-            ],
+            ...renderStatisticCardContent(node.attrs),
         ];
     },
 });
@@ -163,36 +205,23 @@ function refreshToolbar(root, editor) {
     });
 }
 
-const STAT_METRICS = [
-    { value: 'show_teater_all', label: 'Show Teater: Count all', group: 'show' },
-    { value: 'show_teater_date_range', label: 'Show Teater: Count by range date', group: 'show', date: true },
-    { value: 'show_teater_setlist', label: 'Show Teater: Count by setlist', group: 'show', setlist: true },
-    { value: 'unit_song_all', label: 'Unit Song: Count all', group: 'unit' },
-    { value: 'unit_song_date_range', label: 'Unit Song: Count by range date', group: 'unit', date: true },
-    { value: 'unit_song_setlist', label: 'Unit Song: Count by setlist', group: 'unit', setlist: true },
-    { value: 'center_unit_song_all', label: 'Center US: Count all', group: 'center' },
-    { value: 'center_unit_song_unit_song', label: 'Center US: Count by unit song', group: 'center', unitSong: true },
-    { value: 'center_unit_song_setlist', label: 'Center US: Count by setlist', group: 'center', setlist: true },
-    { value: 'center_unit_song_date_range', label: 'Center US: Count by range date', group: 'center', date: true },
-    { value: 'global_center_date_range', label: 'Global Center: Count by range date', group: 'global', date: true },
-    { value: 'global_center_setlist', label: 'Global Center: Count by setlist', group: 'global', setlist: true },
-];
-
-function metricConfig(metric) {
-    return STAT_METRICS.find((item) => item.value === metric) || STAT_METRICS[0];
-}
-
 function escapeAttribute(value) {
     return String(value ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 function buildStatisticCard(attrs) {
+    const isList = Array.isArray(attrs.items) && attrs.items.length > 0;
     const attributes = {
         class: 'rich-stat-card',
-        'data-stat-metric': attrs.metric || 'show_teater_all',
+        'data-stat-metric': attrs.metric || 'show_teater_all_setlist',
         'data-stat-label': attrs.label || 'Statistic',
-        'data-stat-value': String(attrs.value ?? '0'),
     };
+
+    if (isList) {
+        attributes['data-stat-items'] = JSON.stringify(attrs.items);
+    } else {
+        attributes['data-stat-value'] = String(attrs.value ?? '0');
+    }
 
     if (attrs.dateFrom) attributes['data-stat-date-from'] = attrs.dateFrom;
     if (attrs.dateTo) attributes['data-stat-date-to'] = attrs.dateTo;
@@ -203,7 +232,22 @@ function buildStatisticCard(attrs) {
         .map(([name, value]) => `${name}="${escapeAttribute(value)}"`)
         .join(' ');
 
-    return `<div ${attributePairs}><p class="rich-stat-card-label">${escapeAttribute(attributes['data-stat-label'])}</p><p class="rich-stat-card-value">${escapeAttribute(attributes['data-stat-value'])}</p></div>`;
+    const labelHtml = `<p class="rich-stat-card-label">${escapeAttribute(attributes['data-stat-label'])}</p>`;
+    let bodyHtml;
+
+    if (isList) {
+        bodyHtml = '<ul class="rich-stat-card-list">'.concat(attrs.items.map((item) => {
+            const count = (item.count === null || item.count === undefined)
+                ? ''
+                : `<span class="rich-stat-card-list-count">${escapeAttribute(Number(item.count).toLocaleString('id-ID'))}</span>`;
+
+            return `<li><span>${escapeAttribute(item.label ?? '')}</span>${count}</li>`;
+        }).join(''), '</ul>');
+    } else {
+        bodyHtml = `<p class="rich-stat-card-value">${escapeAttribute(attributes['data-stat-value'])}</p>`;
+    }
+
+    return `<div ${attributePairs}>${labelHtml}${bodyHtml}</div>`;
 }
 
 function openStatisticDialog(root, editor) {
@@ -217,6 +261,8 @@ function openStatisticDialog(root, editor) {
     const csrfToken = root.dataset.csrfToken || '';
     const setlists = JSON.parse(root.dataset.statSetlists || '[]');
     const unitSongs = JSON.parse(root.dataset.statUnitSongs || '[]');
+    const metrics = JSON.parse(root.dataset.statMetrics || '[]');
+    let lastResult = null;
 
     const metricSelect = dialog.querySelector('[data-stat-field="metric"]');
     const labelInput = dialog.querySelector('[data-stat-field="label"]');
@@ -233,16 +279,21 @@ function openStatisticDialog(root, editor) {
         return metricSelect.value;
     }
 
+    function metricConfig(metric) {
+        return metrics.find((item) => item.value === metric) || metrics[0] || {};
+    }
+
     function toggleFields() {
         const config = metricConfig(currentMetric());
         dateFields.classList.toggle('hidden', !config.date);
         setlistField.classList.toggle('hidden', !config.setlist);
-        unitSongField.classList.toggle('hidden', !config.unitSong);
+        unitSongField.classList.toggle('hidden', !config.unit_song);
     }
 
     function prefill() {
-        metricSelect.value = 'show_teater_all';
-        labelInput.value = 'Total Show Teater';
+        const config = metricConfig(metrics[0] && metrics[0].value);
+        metricSelect.value = config.value || 'show_teater_all_setlist';
+        labelInput.value = config.label || 'Statistic';
         dateFromInput.value = '';
         dateToInput.value = '';
         setlistSelect.value = '';
@@ -283,8 +334,15 @@ function openStatisticDialog(root, editor) {
             }
 
             const data = await response.json();
-            preview.textContent = Number(data.value || 0).toLocaleString('id-ID');
+            lastResult = data;
+
+            if (data.type === 'list') {
+                preview.textContent = `${(data.items || []).length} item`;
+            } else {
+                preview.textContent = Number(data.value || 0).toLocaleString('id-ID');
+            }
         } catch (error) {
+            lastResult = null;
             preview.textContent = '—';
         }
     }
@@ -319,7 +377,8 @@ function openStatisticDialog(root, editor) {
         const html = buildStatisticCard({
             metric: currentMetric(),
             label: labelInput.value,
-            value: preview.textContent.replace(/[^0-9]/g, '') || '0',
+            value: lastResult ? lastResult.value : 0,
+            items: lastResult && lastResult.type === 'list' ? lastResult.items : null,
             dateFrom: dateFromInput.value || null,
             dateTo: dateToInput.value || null,
             setlist: setlistSelect.value || null,

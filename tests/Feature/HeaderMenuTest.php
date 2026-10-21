@@ -95,6 +95,27 @@ class HeaderMenuTest extends TestCase
             ->assertDontSee('href="'.route('schedule.index').'"', false);
     }
 
+    public function test_custom_menu_submenu_renders_inline_on_mobile_and_floating_on_desktop(): void
+    {
+        $items = [[
+            'id' => 1,
+            'label' => 'Blog',
+            'url' => null,
+            'external' => false,
+            'children' => [
+                ['id' => 2, 'label' => 'The 24th Journiel', 'url' => 'https://example.test/blog', 'external' => false, 'children' => []],
+            ],
+        ]];
+
+        $mobile = view('partials.header-menu', ['items' => $items, 'level' => 0, 'mobile' => true])->render();
+        $this->assertStringContainsString('flex flex-col gap-1 pb-1 pl-3', $mobile);
+        $this->assertStringNotContainsString('absolute right-0 top-full', $mobile);
+
+        $desktop = view('partials.header-menu', ['items' => $items, 'level' => 0, 'mobile' => false])->render();
+        $this->assertStringContainsString('absolute right-0 top-full', $desktop);
+        $this->assertStringNotContainsString('flex flex-col gap-1 pb-1 pl-3', $desktop);
+    }
+
     public function test_page_list_item_links_to_a_prebuilt_page(): void
     {
         MenuItem::query()->create(['label' => 'Jadwal', 'type' => 'page_list', 'target' => 'schedule']);

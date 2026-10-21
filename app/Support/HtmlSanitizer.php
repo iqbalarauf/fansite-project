@@ -58,7 +58,7 @@ final class HtmlSanitizer
     private const ARTICLE_STAT_ATTRS = [
         'data-stat-metric', 'data-stat-label', 'data-stat-value',
         'data-stat-date-from', 'data-stat-date-to', 'data-stat-setlist',
-        'data-stat-unit-song', 'data-stat-platform',
+        'data-stat-unit-song', 'data-stat-platform', 'data-stat-items',
     ];
 
     /**

@@ -102,15 +102,56 @@
         <{{ $headingTag }} class="whitespace-pre-line {{ $fontSizeClass }} {{ $textAlignment }} {{ ($data['bold'] ?? false) || $headingTag !== 'p' ? 'font-bold' : '' }} {{ ($data['italic'] ?? false) ? 'italic' : '' }} {{ ($data['underline'] ?? false) ? 'underline' : '' }}" style="color: {{ $textColor }}">{{ $data['text'] ?? '' }}</{{ $headingTag }}>
         @break
     @case('statistic')
+        @php
+            $statistic = CustomPageStatistic::result($data);
+            $statisticItems = array_slice($statistic['items'], 0, 100);
+            $statisticMore = count($statistic['items']) - count($statisticItems);
+        @endphp
         @if ($preview)
             <div class="rounded-lg border border-indigo-200 bg-indigo-50 p-4 text-indigo-950">
                 <div class="text-sm font-semibold">{{ $data['label'] ?? __('Statistic') }}</div>
-                <div class="mt-1 text-3xl font-bold">{{ number_format(CustomPageStatistic::value($data)) }}</div>
+                @if ($statistic['type'] === 'list')
+                    <ul class="mt-2 space-y-1 text-sm">
+                        @forelse ($statisticItems as $item)
+                            <li class="flex items-baseline justify-between gap-3">
+                                <span>{{ $item['label'] }}</span>
+                                @if ($item['count'] !== null)
+                                    <span class="font-bold">{{ number_format($item['count']) }}</span>
+                                @endif
+                            </li>
+                        @empty
+                            <li class="text-current/60">{{ __('No data') }}</li>
+                        @endforelse
+                    </ul>
+                    @if ($statisticMore > 0)
+                        <p class="mt-2 text-xs text-current/60">{{ __(':count more', ['count' => $statisticMore]) }}</p>
+                    @endif
+                @else
+                    <div class="mt-1 text-3xl font-bold">{{ number_format($statistic['value']) }}</div>
+                @endif
             </div>
         @else
             <section class="rounded-2xl border border-indigo-100 bg-white p-6 shadow-sm">
                 <p class="text-sm font-semibold text-slate-500">{{ $data['label'] ?? __('Statistic') }}</p>
-                <p class="mt-2 text-4xl font-black text-indigo-700">{{ number_format(CustomPageStatistic::value($data)) }}</p>
+                @if ($statistic['type'] === 'list')
+                    <ul class="mt-3 divide-y divide-slate-100">
+                        @forelse ($statisticItems as $item)
+                            <li class="flex items-baseline justify-between gap-4 py-2">
+                                <span class="text-slate-700">{{ $item['label'] }}</span>
+                                @if ($item['count'] !== null)
+                                    <span class="text-lg font-bold text-indigo-700">{{ number_format($item['count']) }}</span>
+                                @endif
+                            </li>
+                        @empty
+                            <li class="py-2 text-slate-400">{{ __('No data') }}</li>
+                        @endforelse
+                    </ul>
+                    @if ($statisticMore > 0)
+                        <p class="mt-2 text-xs text-slate-400">{{ __(':count more', ['count' => $statisticMore]) }}</p>
+                    @endif
+                @else
+                    <p class="mt-2 text-4xl font-black text-indigo-700">{{ number_format($statistic['value']) }}</p>
+                @endif
             </section>
         @endif
         @break

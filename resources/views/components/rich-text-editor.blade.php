@@ -1,6 +1,9 @@
 @props(['name', 'value' => '', 'placeholder' => 'Tulis konten di sini...', 'statistics' => false])
 
 @php
+    use App\Models\ShowTeaterCategories;
+    use App\Support\StatisticMetric;
+
     $tools = [
         ['command' => 'bold', 'icon' => 'bold', 'label' => 'Tebal'],
         ['command' => 'italic', 'icon' => 'italic', 'label' => 'Miring'],
@@ -23,43 +26,17 @@
         $tools[] = ['command' => 'statisticCard', 'icon' => 'chart-bar', 'label' => 'Statistic Card'];
     }
 
-    $statMetricGroups = [
-        'show' => [
-            'label' => 'Show Teater',
-            'metrics' => [
-                ['value' => 'show_teater_all', 'label' => 'Count all'],
-                ['value' => 'show_teater_date_range', 'label' => 'Count by range date', 'date' => true],
-                ['value' => 'show_teater_setlist', 'label' => 'Count by setlist', 'setlist' => true],
-            ],
-        ],
-        'unit' => [
-            'label' => 'Unit Song',
-            'metrics' => [
-                ['value' => 'unit_song_all', 'label' => 'Count all'],
-                ['value' => 'unit_song_date_range', 'label' => 'Count by range date', 'date' => true],
-                ['value' => 'unit_song_setlist', 'label' => 'Count by setlist', 'setlist' => true],
-            ],
-        ],
-        'center' => [
-            'label' => 'Center US',
-            'metrics' => [
-                ['value' => 'center_unit_song_all', 'label' => 'Count all'],
-                ['value' => 'center_unit_song_unit_song', 'label' => 'Count by unit song', 'unit_song' => true],
-                ['value' => 'center_unit_song_setlist', 'label' => 'Count by setlist', 'setlist' => true],
-                ['value' => 'center_unit_song_date_range', 'label' => 'Count by range date', 'date' => true],
-            ],
-        ],
-        'global' => [
-            'label' => 'Global Center',
-            'metrics' => [
-                ['value' => 'global_center_date_range', 'label' => 'Count by range date', 'date' => true],
-                ['value' => 'global_center_setlist', 'label' => 'Count by setlist', 'setlist' => true],
-            ],
-        ],
-    ];
+    $statMetricGroups = $statistics ? StatisticMetric::editorGroups() : [];
+    $statMetricConfigs = $statistics
+        ? collect(StatisticMetric::editorGroups())
+            ->flatMap(fn (array $group): array => $group['metrics'])
+            ->map(fn (array $metric): array => StatisticMetric::config($metric['value']))
+            ->values()
+            ->all()
+        : [];
 
     $statSetlists = $statistics
-        ? DB::table('show_teater')->whereNull('deleted_at')->whereNotNull('setlist')->where('setlist', '!=', '')->distinct()->orderBy('setlist')->pluck('setlist')->all()
+        ? ShowTeaterCategories::query()->setlists()->active()->orderBy('name')->pluck('name')->unique()->values()->all()
         : [];
     $statUnitSongs = $statistics
         ? DB::table('show_teater')->whereNull('deleted_at')->whereNotNull('unit_song')->where('unit_song', '!=', '')->distinct()->orderBy('unit_song')->pluck('unit_song')->all()
@@ -74,6 +51,7 @@
         data-statistic-upload-url="{{ route('content.editor.statistic') }}"
         data-stat-setlists="{{ json_encode($statSetlists) }}"
         data-stat-unit-songs="{{ json_encode($statUnitSongs) }}"
+        data-stat-metrics="{{ json_encode($statMetricConfigs) }}"
     @endif
     class="overflow-hidden admin-card"
 >

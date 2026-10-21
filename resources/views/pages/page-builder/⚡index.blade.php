@@ -3,6 +3,7 @@
 use App\Models\CustomPage;
 use App\Support\CustomPageDuplicator;
 use App\Support\ImageOptimizer;
+use App\Support\StatisticMetric;
 use Flux\Flux;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -106,7 +107,7 @@ new #[Title('Custom Pages')] class extends Component {
             'data' => match ($type) {
                 'container' => ['background' => 'white', 'padding' => 'medium', 'vertical_alignment' => 'top', 'columns' => [['id' => (string) Str::uuid(), 'blocks' => []]]],
                 'text' => ['text' => 'Tulis isi halaman di sini.', 'alignment' => 'left', 'color' => '#2E2F3E', 'font_size' => 'base', 'heading' => 'none', 'bold' => false, 'italic' => false, 'underline' => false],
-                'statistic' => ['metric' => 'show_teater_all', 'label' => 'Total Show Teater'],
+                'statistic' => ['metric' => StatisticMetric::DEFAULT, 'label' => 'Total Show Teater'],
                 'image' => ['url' => '', 'alt' => '', 'source' => 'url', 'display' => 'fit'],
                 'video' => ['url' => '', 'title' => ''],
                 'gallery' => ['images' => [], 'initial_count' => 3],
@@ -134,7 +135,7 @@ new #[Title('Custom Pages')] class extends Component {
             'type' => $type,
             'data' => match ($type) {
                 'text' => ['text' => 'Tulis isi halaman di sini.', 'alignment' => 'left', 'color' => '#2E2F3E', 'font_size' => 'base', 'heading' => 'none', 'bold' => false, 'italic' => false, 'underline' => false],
-                'statistic' => ['metric' => 'show_teater_all', 'label' => 'Total Show Teater'],
+                'statistic' => ['metric' => StatisticMetric::DEFAULT, 'label' => 'Total Show Teater'],
                 'image' => ['url' => '', 'alt' => '', 'source' => 'url', 'display' => 'fit'],
                 'video' => ['url' => '', 'title' => ''],
                 'gallery' => ['images' => [], 'initial_count' => 3],
@@ -753,7 +754,7 @@ new #[Title('Custom Pages')] class extends Component {
             'blocks.*.data.bold' => ['nullable', 'boolean'],
             'blocks.*.data.italic' => ['nullable', 'boolean'],
             'blocks.*.data.underline' => ['nullable', 'boolean'],
-            'blocks.*.data.metric' => ['nullable', 'in:show_teater_all,show_teater_date_range,show_teater_setlist,unit_song_all,unit_song_date_range,unit_song_setlist,center_unit_song_all,center_unit_song_unit_song,center_unit_song_setlist,center_unit_song_date_range,global_center_date_range,global_center_setlist,live_streaming_time,live_streaming_row,live_streaming_platform'],
+            'blocks.*.data.metric' => ['nullable', Rule::in(StatisticMetric::values())],
             'blocks.*.data.columns.*.blocks.*.id' => ['required', 'string', 'max:80'],
             'blocks.*.data.columns.*.blocks.*.type' => ['required', 'in:text,statistic,image,video,gallery,youtube_playlist,button,embed'],
             'blocks.*.data.columns.*.blocks.*.data' => ['array'],
@@ -769,7 +770,7 @@ new #[Title('Custom Pages')] class extends Component {
             'blocks.*.data.columns.*.blocks.*.data.bold' => ['nullable', 'boolean'],
             'blocks.*.data.columns.*.blocks.*.data.italic' => ['nullable', 'boolean'],
             'blocks.*.data.columns.*.blocks.*.data.underline' => ['nullable', 'boolean'],
-            'blocks.*.data.columns.*.blocks.*.data.metric' => ['nullable', 'in:show_teater_all,show_teater_date_range,show_teater_setlist,unit_song_all,unit_song_date_range,unit_song_setlist,center_unit_song_all,center_unit_song_unit_song,center_unit_song_setlist,center_unit_song_date_range,global_center_date_range,global_center_setlist,live_streaming_time,live_streaming_row,live_streaming_platform'],
+            'blocks.*.data.columns.*.blocks.*.data.metric' => ['nullable', Rule::in(StatisticMetric::values())],
         ]);
 
         if (! in_array($nextStatus, ['draft', 'published'], true)) {

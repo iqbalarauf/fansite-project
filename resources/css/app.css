@@ -402,6 +402,18 @@ select:focus[data-flux-control] {
     .rich-content .rich-stat-card-value {
         @apply mt-2 mb-0 text-4xl font-black text-indigo-700 dark:text-indigo-400;
     }
+
+    .rich-content .rich-stat-card-list {
+        @apply mt-2 mb-0 list-none space-y-0 p-0;
+    }
+
+    .rich-content .rich-stat-card-list li {
+        @apply flex items-baseline justify-between gap-3 border-b border-zinc-100 py-1.5 text-sm text-slate-700 last:border-b-0 dark:border-zinc-800 dark:text-slate-300;
+    }
+
+    .rich-content .rich-stat-card-list-count {
+        @apply font-bold text-indigo-700 dark:text-indigo-400;
+    }
 }
 
 /* =========================================================================

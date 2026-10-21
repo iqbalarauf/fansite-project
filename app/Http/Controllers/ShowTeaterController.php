@@ -433,8 +433,17 @@ class ShowTeaterController extends Controller
 
     public function fetchManually(Request $request)
     {
+        $source = (string) $request->input('source', 'jkt48connect');
+
+        if (! in_array($source, ['jkt48connect', 'fansight'], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sumber data tidak valid.',
+            ], 422);
+        }
+
         try {
-            $exitCode = Artisan::call('app:fetch-theater-shows');
+            $exitCode = Artisan::call('app:fetch-theater-shows', ['--source' => $source]);
             $output = Artisan::output();
 
             if ($exitCode !== 0) {

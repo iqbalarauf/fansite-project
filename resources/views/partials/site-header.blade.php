@@ -60,7 +60,7 @@
 
         <nav class="hidden items-center gap-1 text-sm font-medium md:flex">
             @if ($__customMenu)
-                @include('partials.header-menu', ['items' => $__customMenuItems, 'level' => 0])
+                @include('partials.header-menu', ['items' => $__customMenuItems, 'level' => 0, 'mobile' => false])
             @else
             <a href="{{ route('home') }}"
                class="rounded-full px-4 py-2 transition {{ $__navItem($__active === 'home') }}">Home</a>
@@ -176,7 +176,7 @@
     <div id="site-mobile-menu" data-mobile-menu class="hidden border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 md:hidden">
         <nav class="mx-auto flex max-w-6xl flex-col gap-1 px-4 py-4 text-sm font-medium sm:px-6">
             @if ($__customMenu)
-                @include('partials.header-menu', ['items' => $__customMenuItems, 'level' => 0])
+                @include('partials.header-menu', ['items' => $__customMenuItems, 'level' => 0, 'mobile' => true])
             @else
                 <a href="{{ route('home') }}" class="rounded-xl px-4 py-3 transition {{ $__navItem($__active === 'home') }}">Home</a>
 
