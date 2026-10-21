@@ -6,7 +6,7 @@
     @endphp
 
     <section>
-        <div class="mx-auto flex max-w-7xl flex-col items-start px-4 pt-10 text-left sm:px-6">
+        <div class="mx-auto flex max-w-7xl flex-col items-center px-4 py-16 text-center sm:px-6">
             <h1 class="mt-4 max-w-2xl text-4xl font-black leading-tight text-slate-900 dark:text-white sm:text-5xl">Timeline Oniel</h1>
         </div>
     </section>
