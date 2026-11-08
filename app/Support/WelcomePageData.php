@@ -96,6 +96,10 @@ final class WelcomePageData
             'idnLive' => $liveStatus['idn']['live'],
             'showroomStreamUrl' => $liveStatus['showroom']['url'],
             'idnStreamUrl' => $liveStatus['idn']['url'],
+            'showroomLiveName' => $liveStatus['showroom']['name'],
+            'idnLiveName' => $liveStatus['idn']['name'],
+            'showroomLiveImage' => $liveStatus['showroom']['image'],
+            'idnLiveImage' => $liveStatus['idn']['image'],
         ];
     }
 

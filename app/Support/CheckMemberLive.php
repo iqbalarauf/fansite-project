@@ -30,9 +30,9 @@ final class CheckMemberLive
     }
 
     /**
-     * Per-platform live state and stream URL for the given member.
+     * Per-platform live state, stream URL, and member metadata for the given member.
      *
-     * @return array{showroom: array{live: bool, url: string|null}, idn: array{live: bool, url: string|null}}
+     * @return array{showroom: array{live: bool, url: string|null, name: string|null, image: string|null}, idn: array{live: bool, url: string|null, name: string|null, image: string|null}}
      */
     public function details(string $memberName): array
     {
@@ -83,7 +83,7 @@ final class CheckMemberLive
                     'Accept' => 'application/json',
                     'Authorization' => 'Bearer '.$apiKey,
                     'X-API-KEY' => $apiKey,
-                ])->timeout(self::TIMEOUT_SECONDS)->get("{$baseUrl}/api/v1/live");
+                ])->timeout(self::TIMEOUT_SECONDS)->get("{$baseUrl}/api/now-live");
             } catch (Throwable) {
                 return [];
             }
@@ -92,11 +92,13 @@ final class CheckMemberLive
                 return [];
             }
 
-            $items = $response->json('data');
+            $payload = $response->json();
 
-            if (! is_array($items)) {
+            if (! is_array($payload)) {
                 return [];
             }
+
+            $items = is_array($payload['data'] ?? null) ? $payload['data'] : $payload;
 
             return array_values(array_filter($items, 'is_array'));
         });
@@ -104,7 +106,7 @@ final class CheckMemberLive
 
     /**
      * @param  array<int, array<string, mixed>>  $items
-     * @return array{showroom: array{live: bool, url: string|null}, idn: array{live: bool, url: string|null}}
+     * @return array{showroom: array{live: bool, url: string|null, name: string|null, image: string|null}, idn: array{live: bool, url: string|null, name: string|null, image: string|null}}
      */
     private function detailsFromItems(array $items, string $memberName): array
     {
@@ -115,7 +117,7 @@ final class CheckMemberLive
                 continue;
             }
 
-            $platform = strtolower(trim((string) ($item['platform'] ?? $item['type'] ?? '')));
+            $platform = strtolower(trim((string) ($item['type'] ?? $item['platform'] ?? '')));
 
             $key = match (true) {
                 $platform === 'showroom' => 'showroom',
@@ -129,10 +131,26 @@ final class CheckMemberLive
 
             $details[$key]['live'] = true;
 
-            if ($details[$key]['url'] === null) {
-                $url = $item['stream_url'] ?? ($item['streaming'][0]['url'] ?? null);
+            if ($details[$key]['name'] === null) {
+                $name = trim((string) ($item['name'] ?? ''));
 
-                if (is_string($url) && $url !== '') {
+                if ($name !== '') {
+                    $details[$key]['name'] = $name;
+                }
+            }
+
+            if ($details[$key]['image'] === null) {
+                $image = trim((string) ($item['img'] ?? ($item['image'] ?? '')));
+
+                if ($image !== '') {
+                    $details[$key]['image'] = $image;
+                }
+            }
+
+            if ($details[$key]['url'] === null) {
+                $url = $this->streamUrl($item);
+
+                if ($url !== null) {
                     $details[$key]['url'] = $url;
                 }
             }
@@ -142,30 +160,62 @@ final class CheckMemberLive
     }
 
     /**
-     * The live API returns member names with a "JKT48" suffix (e.g. "Oniel JKT48")
-     * and a url_key like "jkt48_oniel", so matching must be normalized and suffix-aware.
+     * The live API may list the same IDN session twice: one entry holds the
+     * streaming URLs and the other has an empty list, so only accept real URLs.
+     *
+     * @param  array<string, mixed>  $item
+     */
+    private function streamUrl(array $item): ?string
+    {
+        $direct = $item['stream_url'] ?? null;
+
+        if (is_string($direct) && $direct !== '') {
+            return $direct;
+        }
+
+        foreach (['streaming_url_list', 'streaming'] as $key) {
+            $list = $item[$key] ?? null;
+
+            if (! is_array($list)) {
+                continue;
+            }
+
+            foreach ($list as $entry) {
+                $url = is_array($entry) ? ($entry['url'] ?? null) : null;
+
+                if (is_string($url) && $url !== '') {
+                    return $url;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Live entries expose a url_key such as "jkt48_oniel" (or "JKT48_Nayla"),
+     * so the idol shortname is matched against that normalized key first.
      *
      * @param  array<string, mixed>  $item
      */
     private function matchesMember(array $item, string $memberName): bool
     {
-        $target = $this->normalize($memberName);
+        $target = $this->normalize('jkt48_'.$memberName);
 
         if ($target === '') {
             return false;
         }
 
-        $candidates = array_unique([$target, $this->normalize($memberName.' JKT48')]);
-        $keys = array_map(fn (string $candidate): string => 'jkt48'.$candidate, $candidates);
-
-        $name = $this->normalize((string) ($item['name'] ?? ''));
-        if ($name !== '' && in_array($name, $candidates, true)) {
-            return true;
-        }
-
         $urlKey = $this->normalize((string) ($item['url_key'] ?? ''));
 
-        return $urlKey !== '' && in_array($urlKey, $keys, true);
+        if ($urlKey !== '') {
+            return $urlKey === $target;
+        }
+
+        $candidates = array_unique([$this->normalize($memberName), $this->normalize($memberName.' JKT48')]);
+        $name = $this->normalize((string) ($item['name'] ?? ''));
+
+        return $name !== '' && in_array($name, $candidates, true);
     }
 
     private function normalize(string $value): string
@@ -174,13 +224,13 @@ final class CheckMemberLive
     }
 
     /**
-     * @return array{showroom: array{live: bool, url: string|null}, idn: array{live: bool, url: string|null}}
+     * @return array{showroom: array{live: bool, url: string|null, name: string|null, image: string|null}, idn: array{live: bool, url: string|null, name: string|null, image: string|null}}
      */
     private function offlineDetails(): array
     {
         return [
-            'showroom' => ['live' => false, 'url' => null],
-            'idn' => ['live' => false, 'url' => null],
+            'showroom' => ['live' => false, 'url' => null, 'name' => null, 'image' => null],
+            'idn' => ['live' => false, 'url' => null, 'name' => null, 'image' => null],
         ];
     }
 }
