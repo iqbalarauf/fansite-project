@@ -95,7 +95,7 @@ class CheckMemberLiveStatus extends Command
             ? Carbon::parse($startedAt)->timezone('Asia/Jakarta')->toDateString()
             : Timezone::nowLocal()->toDateString();
 
-        $title = $item['title'] ?? ($item['idn']['title'] ?? null);
+        $title = $item['title'] ?? ($item['idn']['title'] ?? ($item['notification_caption'] ?? null));
 
         LiveStreaming::query()->create([
             'live_id' => $liveId,

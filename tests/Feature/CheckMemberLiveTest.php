@@ -25,8 +25,8 @@ class CheckMemberLiveTest extends TestCase
     public function test_it_detects_showroom_live(): void
     {
         $this->fakeLive([
-            ['name' => 'Jesslyn', 'platform' => 'showroom'],
-            ['name' => 'Oniel', 'platform' => 'showroom'],
+            ['name' => 'Jesslyn', 'type' => 'showroom', 'url_key' => 'jkt48_jesslyn'],
+            ['name' => 'Oniel', 'type' => 'showroom', 'url_key' => 'jkt48_oniel'],
         ]);
 
         $status = app(CheckMemberLive::class)->status('Oniel');
@@ -38,7 +38,7 @@ class CheckMemberLiveTest extends TestCase
     public function test_it_detects_idn_live(): void
     {
         $this->fakeLive([
-            ['name' => 'Oniel', 'platform' => 'idn'],
+            ['name' => 'Oniel', 'type' => 'idn', 'url_key' => 'jkt48_oniel'],
         ]);
 
         $status = app(CheckMemberLive::class)->status('Oniel');
@@ -50,7 +50,7 @@ class CheckMemberLiveTest extends TestCase
     public function test_it_returns_offline_when_the_member_is_not_found(): void
     {
         $this->fakeLive([
-            ['name' => 'Jesslyn', 'platform' => 'showroom'],
+            ['name' => 'Jesslyn', 'type' => 'showroom', 'url_key' => 'jkt48_jesslyn'],
         ]);
 
         $status = app(CheckMemberLive::class)->status('Oniel');
@@ -62,7 +62,7 @@ class CheckMemberLiveTest extends TestCase
     public function test_it_returns_offline_when_the_api_fails(): void
     {
         Http::fake([
-            'https://jkt48connect.test/api/v1/live*' => Http::response([], 500),
+            'https://jkt48connect.test/api/now-live*' => Http::response([], 500),
         ]);
 
         $status = app(CheckMemberLive::class)->status('Oniel');
@@ -75,7 +75,7 @@ class CheckMemberLiveTest extends TestCase
     {
         $this->setShortname('Oniel');
         $this->fakeLive([
-            ['name' => 'Oniel', 'platform' => 'showroom'],
+            ['name' => 'Oniel', 'type' => 'showroom', 'url_key' => 'jkt48_oniel'],
         ]);
 
         $this->get(route('home'))
@@ -105,7 +105,7 @@ class CheckMemberLiveTest extends TestCase
         DB::table('about_settings')->where('key', 'idol_shortname')->delete();
 
         $this->fakeLive([
-            ['name' => 'Cornelia Vanisa', 'platform' => 'showroom'],
+            ['name' => 'Cornelia Vanisa', 'type' => 'showroom', 'url_key' => 'jkt48_cornelia'],
         ]);
 
         $this->get(route('home'))
@@ -114,10 +114,22 @@ class CheckMemberLiveTest extends TestCase
             ->assertDontSee('Online');
     }
 
-    public function test_it_matches_names_with_the_jkt48_suffix(): void
+    public function test_it_matches_url_key_case_insensitively(): void
     {
         $this->fakeLive([
-            ['name' => 'Oniel JKT48', 'platform' => 'idn', 'type' => 'idn', 'url_key' => 'jkt48_oniel'],
+            ['name' => 'Nayla Suji', 'type' => 'showroom', 'url_key' => 'JKT48_Nayla'],
+        ]);
+
+        $status = app(CheckMemberLive::class)->status('Nayla');
+
+        $this->assertTrue($status['showroom']);
+        $this->assertFalse($status['idn']);
+    }
+
+    public function test_it_matches_by_url_key_even_when_the_name_differs(): void
+    {
+        $this->fakeLive([
+            ['name' => 'Cornelia Vanisa', 'url_key' => 'jkt48_oniel', 'type' => 'idn'],
         ]);
 
         $status = app(CheckMemberLive::class)->status('Oniel');
@@ -126,19 +138,19 @@ class CheckMemberLiveTest extends TestCase
         $this->assertTrue($status['idn']);
     }
 
-    public function test_it_matches_by_url_key_when_available(): void
+    public function test_it_does_not_match_by_name_when_url_key_is_present_and_differs(): void
     {
         $this->fakeLive([
-            ['name' => 'Cornelia Vanisa JKT48', 'url_key' => 'jkt48_oniel', 'type' => 'idn'],
+            ['name' => 'Oniel JKT48', 'url_key' => 'jkt48_jesslyn', 'type' => 'idn'],
         ]);
 
         $status = app(CheckMemberLive::class)->status('Oniel');
 
         $this->assertFalse($status['showroom']);
-        $this->assertTrue($status['idn']);
+        $this->assertFalse($status['idn']);
     }
 
-    public function test_it_falls_back_to_the_type_field_when_platform_is_missing(): void
+    public function test_it_falls_back_to_the_name_when_url_key_is_missing(): void
     {
         $this->fakeLive([
             ['name' => 'Oniel JKT48', 'type' => 'showroom'],
@@ -150,37 +162,126 @@ class CheckMemberLiveTest extends TestCase
         $this->assertFalse($status['idn']);
     }
 
-    public function test_welcome_page_shows_online_badge_with_the_real_api_name_format(): void
+    public function test_it_uses_the_type_field_to_determine_the_platform(): void
+    {
+        $this->fakeLive([
+            ['name' => 'Oniel', 'type' => 'showroom', 'url_key' => 'jkt48_oniel'],
+        ]);
+
+        $status = app(CheckMemberLive::class)->status('Oniel');
+
+        $this->assertTrue($status['showroom']);
+        $this->assertFalse($status['idn']);
+    }
+
+    public function test_welcome_page_shows_the_live_member_name_and_image(): void
     {
         $this->setShortname('Oniel');
         $this->fakeLive([
-            ['name' => 'Oniel JKT48', 'platform' => 'idn', 'type' => 'idn', 'url_key' => 'jkt48_oniel'],
+            [
+                'name' => 'Live Oniel 123',
+                'img' => 'https://cdn.example/oniel-live.webp',
+                'type' => 'idn',
+                'url_key' => 'jkt48_oniel',
+                'streaming_url_list' => [
+                    ['label' => 'original', 'quality' => 1, 'url' => 'https://stream.example/oniel.m3u8'],
+                ],
+            ],
         ]);
 
         $this->get(route('home'))
             ->assertOk()
             ->assertSee('IDN App')
-            ->assertSee('Online');
+            ->assertSee('Online')
+            ->assertSee('Live Oniel 123')
+            ->assertSee('https://cdn.example/oniel-live.webp', false);
     }
 
     public function test_details_returns_live_state_and_stream_url_per_platform(): void
     {
         $this->fakeLive([
-            ['name' => 'Oniel JKT48', 'platform' => 'idn', 'url_key' => 'jkt48_oniel', 'stream_url' => 'https://stream.example/oniel.m3u8'],
+            [
+                'name' => 'Oniel',
+                'img' => 'https://cdn.example/oniel.webp',
+                'type' => 'idn',
+                'url_key' => 'jkt48_oniel',
+                'streaming_url_list' => [
+                    ['label' => 'original', 'quality' => 1, 'url' => 'https://stream.example/oniel.m3u8'],
+                    ['label' => 'low', 'quality' => 100, 'url' => 'https://stream.example/oniel-low.m3u8'],
+                ],
+            ],
         ]);
 
         $details = app(CheckMemberLive::class)->details('Oniel');
 
         $this->assertTrue($details['idn']['live']);
         $this->assertSame('https://stream.example/oniel.m3u8', $details['idn']['url']);
+        $this->assertSame('Oniel', $details['idn']['name']);
+        $this->assertSame('https://cdn.example/oniel.webp', $details['idn']['image']);
         $this->assertFalse($details['showroom']['live']);
         $this->assertNull($details['showroom']['url']);
+        $this->assertNull($details['showroom']['name']);
+        $this->assertNull($details['showroom']['image']);
     }
 
-    public function test_details_falls_back_to_streaming_url(): void
+    public function test_details_skips_duplicate_idn_entries_with_an_empty_stream_list(): void
     {
         $this->fakeLive([
-            ['name' => 'Oniel JKT48', 'platform' => 'showroom', 'streaming' => [['url' => 'https://stream.example/showroom.m3u8']]],
+            [
+                'name' => 'Eli',
+                'img' => 'https://cdn.example/eli-live.webp',
+                'type' => 'idn',
+                'url_key' => 'jkt48_eli',
+                'streaming_url_list' => [
+                    ['label' => 'original', 'quality' => 1, 'url' => 'https://stream.example/eli.m3u8'],
+                ],
+            ],
+            [
+                'name' => 'Helisma Putri',
+                'img' => 'https://cdn.example/eli-member.jpg',
+                'type' => 'idn',
+                'url_key' => 'jkt48_eli',
+                'streaming_url_list' => [],
+            ],
+        ]);
+
+        $details = app(CheckMemberLive::class)->details('Eli');
+
+        $this->assertTrue($details['idn']['live']);
+        $this->assertSame('https://stream.example/eli.m3u8', $details['idn']['url']);
+        $this->assertSame('Eli', $details['idn']['name']);
+        $this->assertSame('https://cdn.example/eli-live.webp', $details['idn']['image']);
+    }
+
+    public function test_details_does_not_overwrite_an_existing_url_with_an_empty_list(): void
+    {
+        $this->fakeLive([
+            [
+                'name' => 'Mikaela',
+                'type' => 'idn',
+                'url_key' => 'jkt48_mikaela',
+                'streaming_url_list' => [],
+            ],
+            [
+                'name' => 'Mikaela Kusjanto',
+                'type' => 'idn',
+                'url_key' => 'jkt48_mikaela',
+                'streaming_url_list' => [
+                    ['label' => 'original', 'quality' => 1, 'url' => 'https://stream.example/mikaela.m3u8'],
+                ],
+            ],
+        ]);
+
+        $details = app(CheckMemberLive::class)->details('Mikaela');
+
+        $this->assertTrue($details['idn']['live']);
+        $this->assertSame('https://stream.example/mikaela.m3u8', $details['idn']['url']);
+    }
+
+    public function test_details_falls_back_to_the_legacy_streaming_field(): void
+    {
+        $this->fakeLive([
+            ['name' => 'Oniel JKT48', 'type' => 'showroom', 'streaming' => [['url' => 'https://stream.example/showroom.m3u8']]],
         ]);
 
         $details = app(CheckMemberLive::class)->details('Oniel');
@@ -189,11 +290,31 @@ class CheckMemberLiveTest extends TestCase
         $this->assertSame('https://stream.example/showroom.m3u8', $details['showroom']['url']);
     }
 
+    public function test_details_falls_back_to_the_legacy_stream_url_field(): void
+    {
+        $this->fakeLive([
+            ['name' => 'Oniel', 'type' => 'idn', 'url_key' => 'jkt48_oniel', 'stream_url' => 'https://stream.example/live-oniel'],
+        ]);
+
+        $details = app(CheckMemberLive::class)->details('Oniel');
+
+        $this->assertTrue($details['idn']['live']);
+        $this->assertSame('https://stream.example/live-oniel', $details['idn']['url']);
+    }
+
     public function test_welcome_page_links_to_stream_url_and_shows_the_platform_icon(): void
     {
         $this->setShortname('Oniel');
         $this->fakeLive([
-            ['name' => 'Oniel JKT48', 'platform' => 'idn', 'url_key' => 'jkt48_oniel', 'stream_url' => 'https://stream.example/live-oniel'],
+            [
+                'name' => 'Oniel',
+                'img' => 'https://cdn.example/oniel-live.webp',
+                'type' => 'idn',
+                'url_key' => 'jkt48_oniel',
+                'streaming_url_list' => [
+                    ['label' => 'original', 'quality' => 1, 'url' => 'https://stream.example/live-oniel'],
+                ],
+            ],
         ]);
 
         $this->get(route('home'))
@@ -230,10 +351,7 @@ class CheckMemberLiveTest extends TestCase
     private function fakeLive(array $items): void
     {
         Http::fake([
-            'https://jkt48connect.test/api/v1/live*' => Http::response([
-                'ok' => true,
-                'data' => $items,
-            ], 200),
+            'https://jkt48connect.test/api/now-live*' => Http::response($items, 200),
         ]);
     }
 }

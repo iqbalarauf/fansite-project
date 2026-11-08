@@ -26,8 +26,8 @@ class CheckMemberLiveStatusCommandTest extends TestCase
     {
         $this->setShortname('Oniel');
         $this->fakeLive([
-            ['name' => 'Oniel JKT48', 'platform' => 'showroom', 'url_key' => 'jkt48_oniel', 'slug' => 'oniel-showroom-1', 'started_at' => '2026-09-16T22:53:50+07:00', 'title' => null],
-            ['name' => 'Lulu JKT48', 'platform' => 'idn', 'slug' => 'lulu-idn-1', 'started_at' => '2026-09-16T22:00:00+07:00'],
+            ['name' => 'Oniel', 'type' => 'showroom', 'url_key' => 'jkt48_oniel', 'slug' => 'oniel-showroom-1', 'started_at' => '2026-09-16T22:53:50+07:00'],
+            ['name' => 'Lulu', 'type' => 'idn', 'url_key' => 'jkt48_lulu', 'slug' => 'lulu-idn-1', 'started_at' => '2026-09-16T22:00:00+07:00'],
         ]);
 
         $this->artisan('app:check-member-live')->assertExitCode(0);
@@ -45,7 +45,14 @@ class CheckMemberLiveStatusCommandTest extends TestCase
     {
         $this->setShortname('Oniel');
         $this->fakeLive([
-            ['name' => 'Oniel JKT48', 'platform' => 'idn', 'url_key' => 'jkt48_oniel', 'slug' => 'oniel-idn-1', 'started_at' => '2026-09-16T23:10:00+07:00', 'title' => 'Ngobrol santai'],
+            [
+                'name' => 'Oniel',
+                'type' => 'idn',
+                'url_key' => 'jkt48_oniel',
+                'slug' => 'oniel-idn-1',
+                'started_at' => '2026-09-16T23:10:00+07:00',
+                'notification_caption' => '🔴 Oniel — Ngobrol santai',
+            ],
         ]);
 
         $this->artisan('app:check-member-live')->assertExitCode(0);
@@ -53,7 +60,7 @@ class CheckMemberLiveStatusCommandTest extends TestCase
         $this->assertDatabaseHas('live_streaming', [
             'live_id' => 'oniel-idn-1',
             'platform' => 'IDN App',
-            'additional_info' => 'Ngobrol santai',
+            'additional_info' => '🔴 Oniel — Ngobrol santai',
         ]);
     }
 
@@ -61,7 +68,7 @@ class CheckMemberLiveStatusCommandTest extends TestCase
     {
         $this->setShortname('Oniel');
         $this->fakeLive([
-            ['name' => 'Oniel JKT48', 'platform' => 'showroom', 'slug' => 'oniel-showroom-1', 'started_at' => '2026-09-16T22:53:50+07:00'],
+            ['name' => 'Oniel', 'type' => 'showroom', 'url_key' => 'jkt48_oniel', 'slug' => 'oniel-showroom-1', 'started_at' => '2026-09-16T22:53:50+07:00'],
         ]);
 
         $this->artisan('app:check-member-live')->assertExitCode(0);
@@ -74,7 +81,7 @@ class CheckMemberLiveStatusCommandTest extends TestCase
     {
         $this->setShortname('Oniel');
         $this->fakeLive([
-            ['name' => 'Oniel JKT48', 'platform' => 'unknown', 'slug' => 'oniel-unknown-1', 'started_at' => '2026-09-16T22:53:50+07:00'],
+            ['name' => 'Oniel', 'type' => 'unknown', 'url_key' => 'jkt48_oniel', 'slug' => 'oniel-unknown-1', 'started_at' => '2026-09-16T22:53:50+07:00'],
         ]);
 
         $this->artisan('app:check-member-live')->assertExitCode(0);
@@ -103,10 +110,7 @@ class CheckMemberLiveStatusCommandTest extends TestCase
     private function fakeLive(array $items): void
     {
         Http::fake([
-            'https://jkt48connect.test/api/v1/live*' => Http::response([
-                'ok' => true,
-                'data' => $items,
-            ], 200),
+            'https://jkt48connect.test/api/now-live*' => Http::response($items, 200),
         ]);
     }
 }
