@@ -110,7 +110,7 @@ class CheckMemberLiveStatusCommandTest extends TestCase
     private function fakeLive(array $items): void
     {
         Http::fake([
-            'https://jkt48connect.test/api/now-live*' => Http::response($items, 200),
+            'https://jkt48connect.test/api/now_live*' => Http::response($items, 200),
         ]);
     }
 }

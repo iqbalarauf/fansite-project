@@ -30,18 +30,29 @@ class CheckMemberLiveStatus extends Command
      */
     public function handle(CheckMemberLive $memberLive): int
     {
-        $idolShortname = AboutSettings::query()->where('key', 'idol_shortname')->value('value');
+        $settings = AboutSettings::query()
+            ->whereIn('key', ['idol_name', 'idol_shortname'])
+            ->pluck('value', 'key');
 
-        if (! $idolShortname) {
-            $this->error('Idol shortname not found in about_settings.');
+        $memberNames = array_values(array_filter(
+            [
+                trim((string) $settings->get('idol_name')),
+                trim((string) $settings->get('idol_shortname')),
+            ],
+            fn (string $name): bool => $name !== '',
+        ));
+
+        if ($memberNames === []) {
+            $this->error('Idol name/shortname not found in about_settings.');
 
             return self::FAILURE;
         }
 
-        $items = $memberLive->matchingItems(trim((string) $idolShortname));
+        $idolLabel = implode(' / ', $memberNames);
+        $items = $memberLive->matchingItems($memberNames);
 
         if ($items === []) {
-            $this->info("Tidak ada live streaming untuk {$idolShortname}.");
+            $this->info("Tidak ada live streaming untuk {$idolLabel}.");
 
             return self::SUCCESS;
         }

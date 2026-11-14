@@ -62,7 +62,7 @@ class CheckMemberLiveTest extends TestCase
     public function test_it_returns_offline_when_the_api_fails(): void
     {
         Http::fake([
-            'https://jkt48connect.test/api/now-live*' => Http::response([], 500),
+            'https://jkt48connect.test/api/now_live*' => Http::response([], 500),
         ]);
 
         $status = app(CheckMemberLive::class)->status('Oniel');
@@ -96,7 +96,7 @@ class CheckMemberLiveTest extends TestCase
             ->assertDontSee('Online');
     }
 
-    public function test_matching_uses_idol_shortname_only(): void
+    public function test_matching_uses_the_idol_name_when_shortname_is_missing(): void
     {
         DB::table('about_settings')->updateOrInsert(
             ['key' => 'idol_name'],
@@ -110,8 +110,41 @@ class CheckMemberLiveTest extends TestCase
 
         $this->get(route('home'))
             ->assertOk()
-            ->assertSee('Offline')
-            ->assertDontSee('Online');
+            ->assertSee('Online')
+            ->assertSee('Showroom Live');
+    }
+
+    public function test_matching_uses_idol_name_or_idol_shortname(): void
+    {
+        DB::table('about_settings')->updateOrInsert(
+            ['key' => 'idol_name'],
+            ['value' => 'Cornelia Vanisa', 'updated_at' => now()],
+        );
+        DB::table('about_settings')->updateOrInsert(
+            ['key' => 'idol_shortname'],
+            ['value' => 'Oniel', 'updated_at' => now()],
+        );
+
+        $this->fakeLive([
+            ['name' => 'Cornelia Vanisa', 'type' => 'showroom', 'url_key' => 'jkt48_cornelia'],
+        ]);
+
+        $status = app(CheckMemberLive::class)->details(['Cornelia Vanisa', 'Oniel']);
+
+        $this->assertTrue($status['showroom']['live']);
+        $this->assertSame('Cornelia Vanisa', $status['showroom']['name']);
+    }
+
+    public function test_it_requests_the_jkt48_group_from_the_now_live_endpoint(): void
+    {
+        $this->fakeLive([]);
+
+        app(CheckMemberLive::class)->status('Oniel');
+
+        Http::assertSent(function ($request): bool {
+            return str_contains($request->url(), '/api/now_live')
+                && $request['group'] === 'jkt48';
+        });
     }
 
     public function test_it_matches_url_key_case_insensitively(): void
@@ -138,7 +171,7 @@ class CheckMemberLiveTest extends TestCase
         $this->assertTrue($status['idn']);
     }
 
-    public function test_it_does_not_match_by_name_when_url_key_is_present_and_differs(): void
+    public function test_it_matches_by_name_even_when_url_key_differs(): void
     {
         $this->fakeLive([
             ['name' => 'Oniel JKT48', 'url_key' => 'jkt48_jesslyn', 'type' => 'idn'],
@@ -147,7 +180,7 @@ class CheckMemberLiveTest extends TestCase
         $status = app(CheckMemberLive::class)->status('Oniel');
 
         $this->assertFalse($status['showroom']);
-        $this->assertFalse($status['idn']);
+        $this->assertTrue($status['idn']);
     }
 
     public function test_it_falls_back_to_the_name_when_url_key_is_missing(): void
@@ -351,7 +384,7 @@ class CheckMemberLiveTest extends TestCase
     private function fakeLive(array $items): void
     {
         Http::fake([
-            'https://jkt48connect.test/api/now-live*' => Http::response($items, 200),
+            'https://jkt48connect.test/api/now_live*' => Http::response($items, 200),
         ]);
     }
 }

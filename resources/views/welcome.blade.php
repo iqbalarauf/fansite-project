@@ -214,8 +214,8 @@
 
                     @php
                         $livePlatforms = [
-                            ['key' => 'showroom', 'label' => 'Showroom Live', 'live' => $showroomLive, 'url' => $showroomStreamUrl, 'name' => $showroomLiveName, 'image' => $showroomLiveImage, 'badge' => 'SR', 'accent' => 'from-orange-400 to-rose-500'],
-                            ['key' => 'idn', 'label' => 'IDN App', 'live' => $idnLive, 'url' => $idnStreamUrl, 'name' => $idnLiveName, 'image' => $idnLiveImage, 'badge' => 'IDN', 'accent' => 'from-sky-400 to-emerald-500'],
+                            ['key' => 'showroom', 'label' => 'Showroom Live', 'live' => $showroomLive, 'url' => $showroomStreamUrl, 'image' => $showroomLiveImage, 'badge' => 'SR', 'accent' => 'from-orange-400 to-rose-500'],
+                            ['key' => 'idn', 'label' => 'IDN App', 'live' => $idnLive, 'url' => $idnStreamUrl, 'image' => $idnLiveImage, 'badge' => 'IDN', 'accent' => 'from-sky-400 to-emerald-500'],
                         ];
                     @endphp
 
@@ -229,7 +229,7 @@
                             <div class="relative flex flex-col items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-5 transition dark:border-slate-800 dark:bg-slate-800/40 {{ $isLink ? 'hover:border-indigo-300 hover:shadow-md dark:hover:border-indigo-700' : '' }}">
                                 @if ($liveImage !== null)
                                     <div class="relative">
-                                        <img src="{{ $liveImage }}" alt="{{ $platform['name'] ?: $platform['label'] }}" class="size-16 rounded-2xl object-cover shadow-md" loading="lazy" decoding="async" />
+                                        <img src="{{ $liveImage }}" alt="{{ $platform['label'] }}" class="size-16 rounded-2xl object-cover shadow-md" loading="lazy" decoding="async" />
                                         @if ($icon)
                                             <img src="{{ $icon }}" alt="{{ $platform['label'] }}" class="absolute -bottom-1 -right-1 size-7 rounded-lg border-2 border-white bg-white object-contain shadow dark:border-slate-800 dark:bg-slate-900" />
                                         @endif
@@ -245,9 +245,6 @@
                                 <p class="text-base font-bold text-slate-900 dark:text-white">{{ $platform['label'] }}</p>
 
                                 @if ($platform['live'])
-                                    @if (! empty($platform['name']))
-                                        <p class="-mt-2 line-clamp-1 text-xs font-medium text-slate-500 dark:text-slate-400">{{ $platform['name'] }}</p>
-                                    @endif
                                     <span class="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900 dark:text-green-300">
                                         <span class="size-1.5 rounded-full bg-green-500 dark:bg-green-400"></span>
                                         Online

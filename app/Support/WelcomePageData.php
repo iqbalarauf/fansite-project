@@ -33,7 +33,11 @@ final class WelcomePageData
         $feedEnabled = SettingBag::featureEnabled($feedSource);
 
         $idolMemberName = (string) ($about['idol_shortname'] ?? '');
-        $liveStatus = $this->memberLive->details($idolMemberName);
+        $idolFullName = (string) ($about['idol_name'] ?? '');
+        $liveStatus = $this->memberLive->details(array_values(array_filter(
+            [$idolFullName, $idolMemberName],
+            fn (string $name): bool => trim($name) !== '',
+        )));
 
         $youtubeEnabled = filter_var($app['youtube_embed_enabled'] ?? 'false', FILTER_VALIDATE_BOOLEAN);
         $youtubeModeValue = (string) ($app['youtube_display_mode'] ?? 'cards');
