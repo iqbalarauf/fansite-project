@@ -10,7 +10,14 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Schedule::command('app:fetch-streaming-info')->everyTenMinutes()->withoutOverlapping();
+// Detail live streaming (/api/recent) cukup dipanggil dua kali sehari.
+Schedule::command('app:fetch-streaming-info')->twiceDaily(0, 12)->withoutOverlapping();
+
+// Status live (/api/now_live) dipanggil setiap 10 menit.
+Schedule::command('app:check-member-live')->everyTenMinutes()->withoutOverlapping();
+
+// Data show teater disinkronkan sekali sehari.
+Schedule::command('app:fetch-theater-shows')->daily()->withoutOverlapping();
 
 Schedule::command('app:sync-google-sheets')->hourly()->withoutOverlapping();
 

@@ -93,7 +93,7 @@ class FetchTheaterShowsTest extends TestCase
         $this->setShortname('Oniel');
 
         $this->fakeTheater([
-            $this->show(['reference_code' => 'REF-LINEUP', 'lineup' => [['name' => 'Aralie'], ['name' => 'Christy']]]),
+            $this->show(['reference_code' => 'REF-LINEUP', 'members' => [['name' => 'Aralie'], ['name' => 'Christy']]]),
         ]);
 
         $this->artisan('app:fetch-theater-shows')->assertExitCode(0);
@@ -367,6 +367,157 @@ class FetchTheaterShowsTest extends TestCase
         $this->assertStringContainsString('Show terbaru sudah tersinkronisasi', (string) $response->json('message'));
     }
 
+    public function test_it_saves_seitansai_as_the_event_label(): void
+    {
+        $this->setShortname('Oniel');
+
+        $this->fakeTheater([
+            $this->show([
+                'date' => '2026-11-15',
+                'title' => 'Pertaruhan Cinta',
+                'seitansai' => [
+                    ['id' => '195', 'name' => 'Raisha', 'url_key' => 'raisha-syifa'],
+                ],
+            ]),
+        ]);
+
+        $this->artisan('app:fetch-theater-shows')->assertExitCode(0);
+
+        $this->assertDatabaseHas('show_teater', [
+            'show_date' => '2026-11-15',
+            'setlist' => 'Pertaruhan Cinta',
+            'is_the_show_has_event' => 'STS Raisha',
+        ]);
+    }
+
+    public function test_it_joins_multiple_seitansai_names(): void
+    {
+        $this->setShortname('Oniel');
+
+        $this->fakeTheater([
+            $this->show([
+                'seitansai' => [
+                    ['id' => '195', 'name' => 'Raisha'],
+                    ['id' => '185', 'name' => 'Oline'],
+                ],
+            ]),
+        ]);
+
+        $this->artisan('app:fetch-theater-shows')->assertExitCode(0);
+
+        $this->assertSame(
+            'STS Raisha, Oline',
+            DB::table('show_teater')->where('show_date', '2026-09-13')->value('is_the_show_has_event'),
+        );
+    }
+
+    public function test_it_does_not_write_an_event_when_seitansai_is_null_or_has_no_name(): void
+    {
+        $this->setShortname('Oniel');
+
+        $this->fakeTheater([
+            $this->show([
+                'id' => 'NOS1',
+                'date' => '2026-11-13',
+                'title' => 'Pajama Drive',
+                'seitansai' => null,
+            ]),
+            $this->show([
+                'id' => 'NOS2',
+                'date' => '2026-11-06',
+                'title' => 'ITADAKI LOVE',
+                'seitansai' => [
+                    ['id' => 'undefined', 'url_key' => ''],
+                ],
+            ]),
+        ]);
+
+        $this->artisan('app:fetch-theater-shows')->assertExitCode(0);
+
+        $this->assertNull(DB::table('show_teater')->where('show_date', '2026-11-13')->value('is_the_show_has_event'));
+        $this->assertNull(DB::table('show_teater')->where('show_date', '2026-11-06')->value('is_the_show_has_event'));
+    }
+
+    public function test_it_backfills_the_event_on_an_already_synced_show(): void
+    {
+        $this->setShortname('Oniel');
+
+        TheaterReference::query()->create([
+            'reference_code' => 'SH2EE4',
+            'month' => Timezone::nowLocal()->month,
+            'year' => Timezone::nowLocal()->year,
+            'processed_at' => now(),
+        ]);
+
+        $nextShowId = (int) (DB::table('show_teater')->max('show_id') ?? 0) + 1;
+        DB::table('show_teater')->insert([
+            'show_id' => $nextShowId,
+            'show_date' => '2026-11-15',
+            'setlist' => 'Pertaruhan Cinta',
+            'is_member_show' => 1,
+        ]);
+
+        $this->fakeTheater([
+            $this->show([
+                'id' => 'SH2EE4',
+                'date' => '2026-11-15T00:00:00.000Z',
+                'title' => 'Pertaruhan Cinta',
+                'seitansai' => [
+                    ['id' => '195', 'name' => 'Raisha'],
+                ],
+            ]),
+        ]);
+
+        $this->artisan('app:fetch-theater-shows')->assertExitCode(0);
+
+        $this->assertSame(
+            'STS Raisha',
+            DB::table('show_teater')->where('show_id', $nextShowId)->value('is_the_show_has_event'),
+        );
+    }
+
+    public function test_it_normalizes_the_iso_date_and_uses_the_id_as_reference_code(): void
+    {
+        $this->setShortname('Oniel');
+
+        $this->fakeTheater([
+            $this->show([
+                'id' => 'SH2EE4',
+                'date' => '2026-11-15T00:00:00.000Z',
+                'start_date' => '2026-11-15T12:00:00.000Z',
+                'end_date' => '2026-11-15T14:00:00.000Z',
+                'title' => 'Pertaruhan Cinta',
+            ]),
+        ]);
+
+        $this->artisan('app:fetch-theater-shows')->assertExitCode(0);
+
+        $this->assertDatabaseHas('show_teater', [
+            'show_date' => '2026-11-15',
+            'setlist' => 'Pertaruhan Cinta',
+            'reference_code' => 'SH2EE4',
+        ]);
+        $this->assertDatabaseHas('theater_references', ['reference_code' => 'SH2EE4']);
+    }
+
+    public function test_it_processes_shows_from_the_oldest_to_the_newest(): void
+    {
+        $this->setShortname('Oniel');
+
+        $this->fakeTheater([
+            $this->show(['id' => 'NEWER', 'date' => '2026-11-15', 'title' => 'Pertaruhan Cinta']),
+            $this->show(['id' => 'OLDER', 'date' => '2026-11-01', 'title' => 'Pajama Drive']),
+        ]);
+
+        $this->artisan('app:fetch-theater-shows')->assertExitCode(0);
+
+        $olderShowId = (int) DB::table('show_teater')->where('reference_code', 'OLDER')->value('show_id');
+        $newerShowId = (int) DB::table('show_teater')->where('reference_code', 'NEWER')->value('show_id');
+
+        $this->assertGreaterThan(0, $olderShowId);
+        $this->assertGreaterThan($olderShowId, $newerShowId);
+    }
+
     public function test_about_settings_get_helper_fetches_value_by_key(): void
     {
         DB::table('about_settings')->updateOrInsert(
@@ -392,9 +543,11 @@ class FetchTheaterShowsTest extends TestCase
     private function fakeTheater(array $shows): void
     {
         Http::fake([
-            'https://jkt48connect.test/api/v1/theater*' => Http::response([
-                'ok' => true,
-                'data' => $shows,
+            'https://jkt48connect.test/api/theater*' => Http::response([
+                'theater' => $shows,
+                'page' => 1,
+                'perpage' => 10,
+                'total_count' => count($shows),
             ], 200),
         ]);
     }
@@ -406,14 +559,14 @@ class FetchTheaterShowsTest extends TestCase
     private function show(array $overrides = []): array
     {
         return array_merge([
+            'id' => 'REF-001',
             'date' => '2026-09-13',
-            'type' => 'SHOW',
             'title' => 'Cara Meminum Ramune',
-            'reference_code' => 'REF-001',
-            'lineup' => [
+            'members' => [
                 ['name' => 'Aralie'],
                 ['name' => 'Oniel'],
             ],
+            'seitansai' => null,
         ], $overrides);
     }
 }

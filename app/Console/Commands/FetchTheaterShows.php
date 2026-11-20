@@ -71,14 +71,14 @@ class FetchTheaterShows extends Command
             return self::FAILURE;
         }
 
-        $payload = $this->fetchFromApi("{$baseUrl}/api/v1/theater?page=1", $apiKey);
+        $payload = $this->fetchFromApi("{$baseUrl}/api/theater", $apiKey);
         if ($payload === null) {
             $this->error('Failed to fetch theater data from JKT48Connect API.');
 
             return self::FAILURE;
         }
 
-        $shows = $payload['data'] ?? [];
+        $shows = $payload['theater'] ?? $payload['data'] ?? [];
         if (! is_array($shows) || $shows === []) {
             $this->error('No theater data found.');
 
@@ -89,7 +89,7 @@ class FetchTheaterShows extends Command
             ? app(ShowTeaterUnitSongPredictor::class)->mapBySetlist()
             : [];
 
-        foreach ($shows as $show) {
+        foreach ($this->sortShowsByDate($shows) as $show) {
             if (is_array($show)) {
                 $this->processShow($show, trim((string) $idolShortname), $unitSongPredictions);
             }
@@ -169,7 +169,7 @@ class FetchTheaterShows extends Command
 
         $saved = 0;
 
-        foreach ($shows as $show) {
+        foreach ($this->sortShowsByDate($shows) as $show) {
             if (is_array($show)) {
                 $saved += $this->processFansightShow($show, $idolName, $unitSongPredictions);
             }
@@ -298,45 +298,50 @@ class FetchTheaterShows extends Command
      */
     private function processShow(array $show, string $idolShortname, array $unitSongPredictions): void
     {
-        // Reference code diambil dari data.link (query ?code=), fallback ke reference_code.
-        $referenceCode = $this->extractReferenceCode($show['link'] ?? null, $show['reference_code'] ?? null);
+        // Reference code diambil dari id/url, fallback ke reference_code atau link ?code=.
+        $referenceCode = $this->extractReferenceCode(
+            $show['url'] ?? $show['link'] ?? null,
+            $show['reference_code'] ?? $show['id'] ?? null,
+        );
 
         if (! $referenceCode) {
             return;
         }
 
-        $date = $show['date'] ?? null;
+        $date = $this->normalizeShowDate($show['date'] ?? $show['start_date'] ?? null);
         $title = isset($show['title']) ? trim((string) $show['title']) : '';
 
-        if (! $date || $title === '') {
+        if ($date === null || $title === '') {
             return;
         }
 
-        $alreadySynced = $this->showExists((string) $date, $title);
+        $alreadySynced = $this->showExists($date, $title);
         $prediction = $unitSongPredictions[$title] ?? null;
+        $event = $this->seitansaiEvent($show['seitansai'] ?? null);
 
         // Reference sudah pernah diproses pada bulan berjalan.
         if (TheaterReference::query()->where('reference_code', $referenceCode)->exists()) {
             if ($alreadySynced) {
-                $this->attachReferenceCode((string) $date, $title, $referenceCode, $prediction);
+                $this->attachReferenceCode($date, $title, $referenceCode, $prediction, $event);
                 $this->error('Show terbaru sudah tersinkronisasi');
             }
 
             return;
         }
 
-        if (! $this->lineupIncludesIdol($show['lineup'] ?? [], $idolShortname)) {
+        if (! $this->lineupIncludesIdol($show['members'] ?? $show['lineup'] ?? [], $idolShortname)) {
             return;
         }
 
-        if (($show['type'] ?? null) !== 'SHOW') {
+        // Endpoint lama memakai field type (SHOW/EVENT); endpoint /api/theater tidak mengirimnya.
+        if (array_key_exists('type', $show) && $show['type'] !== null && $show['type'] !== 'SHOW') {
             return;
         }
 
         $this->recordReference($referenceCode);
 
         if ($alreadySynced) {
-            $this->attachReferenceCode((string) $date, $title, $referenceCode, $prediction);
+            $this->attachReferenceCode($date, $title, $referenceCode, $prediction, $event);
             $this->error('Show terbaru sudah tersinkronisasi');
 
             return;
@@ -353,12 +358,16 @@ class FetchTheaterShows extends Command
 
         $attributes = [
             'show_id' => $newShowId,
-            'show_date' => (string) $date,
+            'show_date' => $date,
             'setlist' => $title,
             'unit_song' => $unitSong,
             'reference_code' => $referenceCode,
             'is_scraped_data' => 1,
         ];
+
+        if ($event !== null) {
+            $attributes['is_the_show_has_event'] = $event;
+        }
 
         // Center (input manual, tidak ada di API): ikut prediksi bila show sebelumnya center.
         if ($prediction['is_global_center'] ?? false) {
@@ -377,11 +386,11 @@ class FetchTheaterShows extends Command
     }
 
     /**
-     * Isi reference_code & center pada show yang sudah ada namun belum terisi.
+     * Isi reference_code, event & center pada show yang sudah ada namun belum terisi.
      *
      * @param  array{unit_song: ?string, is_global_center: bool, is_us_center: bool}|null  $prediction
      */
-    private function attachReferenceCode(string $date, string $title, string $referenceCode, ?array $prediction = null): void
+    private function attachReferenceCode(string $date, string $title, string $referenceCode, ?array $prediction = null, ?string $event = null): void
     {
         $dateSlash = str_replace('-', '/', $date);
 
@@ -395,6 +404,11 @@ class FetchTheaterShows extends Command
             ->whereNull('reference_code')
             ->update(['reference_code' => $referenceCode]);
 
+        // Event diisi hanya bila belum ada nilainya, agar input manual tidak tertimpa.
+        if ($event !== null) {
+            $matchShow()->whereNull('is_the_show_has_event')->update(['is_the_show_has_event' => $event]);
+        }
+
         // Center diisi hanya bila belum ada nilainya (NULL), agar input manual 0 tidak tertimpa.
         if ($prediction['is_global_center'] ?? false) {
             $matchShow()->whereNull('is_global_center')->update(['is_global_center' => 1]);
@@ -403,6 +417,77 @@ class FetchTheaterShows extends Command
         if ($prediction['is_us_center'] ?? false) {
             $matchShow()->whereNull('is_us_center')->update(['is_us_center' => 1]);
         }
+    }
+
+    /**
+     * Format seitansai menjadi label event "STS {name}" (null bila tidak ada nama valid).
+     */
+    private function seitansaiEvent(mixed $seitansai): ?string
+    {
+        if (! is_array($seitansai)) {
+            return null;
+        }
+
+        $names = [];
+
+        foreach ($seitansai as $entry) {
+            if (! is_array($entry)) {
+                continue;
+            }
+
+            $name = isset($entry['name']) ? trim((string) $entry['name']) : '';
+
+            if ($name !== '') {
+                $names[] = $name;
+            }
+        }
+
+        return $names === [] ? null : 'STS '.implode(', ', array_unique($names));
+    }
+
+    /**
+     * Ubah tanggal API (ISO 8601 atau Y-m-d) menjadi tanggal lokal Y-m-d.
+     */
+    private function normalizeShowDate(mixed $value): ?string
+    {
+        if (! is_string($value) || trim($value) === '') {
+            return null;
+        }
+
+        try {
+            return Timezone::toLocal(trim($value))?->toDateString();
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * Urutkan show dari tanggal paling lama ke paling baru agar show_id mengikuti kronologi.
+     *
+     * @param  array<int, mixed>  $shows
+     * @return array<int, mixed>
+     */
+    private function sortShowsByDate(array $shows): array
+    {
+        $keyed = [];
+
+        foreach ($shows as $index => $show) {
+            $date = is_array($show)
+                ? $this->normalizeShowDate($show['date'] ?? $show['start_date'] ?? null)
+                : null;
+
+            $keyed[] = ['index' => $index, 'date' => $date, 'show' => $show];
+        }
+
+        usort($keyed, function (array $left, array $right): int {
+            if ($left['date'] === null || $right['date'] === null) {
+                return $left['date'] === $right['date'] ? $left['index'] <=> $right['index'] : ($left['date'] === null ? 1 : -1);
+            }
+
+            return $left['date'] <=> $right['date'] ?: $left['index'] <=> $right['index'];
+        });
+
+        return array_values(array_map(fn (array $entry): mixed => $entry['show'], $keyed));
     }
 
     /**

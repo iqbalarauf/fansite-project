@@ -8,7 +8,18 @@ use Throwable;
 
 final class CheckMemberLive
 {
-    private const CACHE_SECONDS = 20;
+    /**
+     * Reuse the computed per-member state briefly so live URL/image changes are
+     * picked up quickly without hitting the API again.
+     */
+    private const DETAILS_CACHE_SECONDS = 20;
+
+    /**
+     * The /api/now_live payload is refreshed by the scheduler every 10 minutes.
+     * Keep page-side cache slightly longer so a page request between two
+     * scheduler runs never triggers an extra API call.
+     */
+    private const ITEMS_CACHE_SECONDS = 660;
 
     private const TIMEOUT_SECONDS = 3;
 
@@ -17,11 +28,12 @@ final class CheckMemberLive
     /**
      * Determine which live platforms are currently streaming for the given member.
      *
+     * @param  string|array<int, string>  $memberNames
      * @return array{showroom: bool, idn: bool}
      */
-    public function status(string $memberName): array
+    public function status(string|array $memberNames): array
     {
-        $details = $this->details($memberName);
+        $details = $this->details($memberNames);
 
         return [
             'showroom' => $details['showroom']['live'],
@@ -32,44 +44,78 @@ final class CheckMemberLive
     /**
      * Per-platform live state, stream URL, and member metadata for the given member.
      *
+     * @param  string|array<int, string>  $memberNames  Idol name and/or shortname.
      * @return array{showroom: array{live: bool, url: string|null, name: string|null, image: string|null}, idn: array{live: bool, url: string|null, name: string|null, image: string|null}}
      */
-    public function details(string $memberName): array
+    public function details(string|array $memberNames): array
     {
-        $memberName = trim($memberName);
+        $names = $this->normalizeNames($memberNames);
         $baseUrl = rtrim((string) config('services.jkt48connect.url'), '/');
         $apiKey = (string) config('services.jkt48connect.key');
 
-        if ($memberName === '' || $baseUrl === '' || $apiKey === '') {
+        if ($names === [] || $baseUrl === '' || $apiKey === '') {
             return $this->offlineDetails();
         }
 
         return Cache::remember(
-            'member_live_'.md5(strtolower($memberName)),
-            self::CACHE_SECONDS,
-            fn (): array => $this->detailsFromItems($this->items($baseUrl, $apiKey), $memberName),
+            'member_live_'.md5(implode('|', $names)),
+            self::DETAILS_CACHE_SECONDS,
+            fn (): array => $this->detailsFromItems($this->items($baseUrl, $apiKey), $names),
         );
     }
 
     /**
      * Raw live entries from the API that belong to the given member.
      *
+     * @param  string|array<int, string>  $memberNames  Idol name and/or shortname.
+     * @param  bool  $refresh  Bypass the shared cache and fetch a fresh payload.
      * @return array<int, array<string, mixed>>
      */
-    public function matchingItems(string $memberName): array
+    public function matchingItems(string|array $memberNames, bool $refresh = false): array
     {
-        $memberName = trim($memberName);
+        $names = $this->normalizeNames($memberNames);
         $baseUrl = rtrim((string) config('services.jkt48connect.url'), '/');
         $apiKey = (string) config('services.jkt48connect.key');
 
-        if ($memberName === '' || $baseUrl === '' || $apiKey === '') {
+        if ($names === [] || $baseUrl === '' || $apiKey === '') {
             return [];
         }
 
+        $items = $refresh
+            ? $this->refreshItems($baseUrl, $apiKey)
+            : $this->items($baseUrl, $apiKey);
+
         return array_values(array_filter(
-            $this->items($baseUrl, $apiKey),
-            fn (mixed $item): bool => is_array($item) && $this->matchesMember($item, $memberName),
+            $items,
+            fn (mixed $item): bool => is_array($item) && $this->matchesMember($item, $names),
         ));
+    }
+
+    /**
+     * @param  string|array<int, string>  $memberNames
+     * @return array<int, string>
+     */
+    private function normalizeNames(string|array $memberNames): array
+    {
+        $names = is_array($memberNames) ? $memberNames : [$memberNames];
+        $normalized = [];
+
+        foreach ($names as $name) {
+            if (! is_string($name)) {
+                continue;
+            }
+
+            $name = trim($name);
+            $key = $this->normalize($name);
+
+            if ($key !== '') {
+                $normalized[$key] = $name;
+            }
+        }
+
+        ksort($normalized);
+
+        return array_values($normalized);
     }
 
     /**
@@ -77,43 +123,75 @@ final class CheckMemberLive
      */
     private function items(string $baseUrl, string $apiKey): array
     {
-        return Cache::remember(self::ITEMS_CACHE_KEY, self::CACHE_SECONDS, function () use ($baseUrl, $apiKey): array {
-            try {
-                $response = Http::withHeaders([
-                    'Accept' => 'application/json',
-                    'Authorization' => 'Bearer '.$apiKey,
-                    'X-API-KEY' => $apiKey,
-                ])->timeout(self::TIMEOUT_SECONDS)->get("{$baseUrl}/api/now-live");
-            } catch (Throwable) {
-                return [];
-            }
+        return Cache::remember(
+            self::ITEMS_CACHE_KEY,
+            self::ITEMS_CACHE_SECONDS,
+            fn (): array => $this->fetchItems($baseUrl, $apiKey) ?? [],
+        );
+    }
 
-            if (! $response->successful()) {
-                return [];
-            }
+    /**
+     * Fetch a fresh payload and replace the shared cache entry.
+     *
+     * If the API call fails, keep the last successful payload instead of
+     * caching an empty response for the whole scheduler window.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function refreshItems(string $baseUrl, string $apiKey): array
+    {
+        $items = $this->fetchItems($baseUrl, $apiKey);
 
-            $payload = $response->json();
+        if ($items === null) {
+            return $this->items($baseUrl, $apiKey);
+        }
 
-            if (! is_array($payload)) {
-                return [];
-            }
+        Cache::put(self::ITEMS_CACHE_KEY, $items, self::ITEMS_CACHE_SECONDS);
 
-            $items = is_array($payload['data'] ?? null) ? $payload['data'] : $payload;
+        return $items;
+    }
 
-            return array_values(array_filter($items, 'is_array'));
-        });
+    /**
+     * @return array<int, array<string, mixed>>|null
+     */
+    private function fetchItems(string $baseUrl, string $apiKey): ?array
+    {
+        try {
+            $response = Http::withHeaders([
+                'Accept' => 'application/json',
+                'Authorization' => 'Bearer '.$apiKey,
+                'X-API-KEY' => $apiKey,
+            ])->timeout(self::TIMEOUT_SECONDS)->get("{$baseUrl}/api/now_live", ['group' => 'jkt48']);
+        } catch (Throwable) {
+            return null;
+        }
+
+        if (! $response->successful()) {
+            return null;
+        }
+
+        $payload = $response->json();
+
+        if (! is_array($payload)) {
+            return null;
+        }
+
+        $items = is_array($payload['data'] ?? null) ? $payload['data'] : $payload;
+
+        return array_values(array_filter($items, 'is_array'));
     }
 
     /**
      * @param  array<int, array<string, mixed>>  $items
+     * @param  array<int, string>  $memberNames
      * @return array{showroom: array{live: bool, url: string|null, name: string|null, image: string|null}, idn: array{live: bool, url: string|null, name: string|null, image: string|null}}
      */
-    private function detailsFromItems(array $items, string $memberName): array
+    private function detailsFromItems(array $items, array $memberNames): array
     {
         $details = $this->offlineDetails();
 
         foreach ($items as $item) {
-            if (! $this->matchesMember($item, $memberName)) {
+            if (! $this->matchesMember($item, $memberNames)) {
                 continue;
             }
 
@@ -194,28 +272,34 @@ final class CheckMemberLive
 
     /**
      * Live entries expose a url_key such as "jkt48_oniel" (or "JKT48_Nayla"),
-     * so the idol shortname is matched against that normalized key first.
+     * while the display name can be the idol full name or shortname. Match
+     * either the normalized url_key or the name so both settings work.
      *
      * @param  array<string, mixed>  $item
+     * @param  array<int, string>  $memberNames
      */
-    private function matchesMember(array $item, string $memberName): bool
+    private function matchesMember(array $item, array $memberNames): bool
     {
-        $target = $this->normalize('jkt48_'.$memberName);
-
-        if ($target === '') {
-            return false;
-        }
-
         $urlKey = $this->normalize((string) ($item['url_key'] ?? ''));
-
-        if ($urlKey !== '') {
-            return $urlKey === $target;
-        }
-
-        $candidates = array_unique([$this->normalize($memberName), $this->normalize($memberName.' JKT48')]);
         $name = $this->normalize((string) ($item['name'] ?? ''));
 
-        return $name !== '' && in_array($name, $candidates, true);
+        foreach ($memberNames as $memberName) {
+            $target = $this->normalize($memberName);
+
+            if ($target === '') {
+                continue;
+            }
+
+            if ($urlKey !== '' && $urlKey === $this->normalize('jkt48_'.$memberName)) {
+                return true;
+            }
+
+            if ($name !== '' && ($name === $target || $name === $this->normalize($memberName.' JKT48'))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function normalize(string $value): string
