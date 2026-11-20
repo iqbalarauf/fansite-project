@@ -49,7 +49,7 @@ class CheckMemberLiveStatus extends Command
         }
 
         $idolLabel = implode(' / ', $memberNames);
-        $items = $memberLive->matchingItems($memberNames);
+        $items = $memberLive->matchingItems($memberNames, refresh: true);
 
         if ($items === []) {
             $this->info("Tidak ada live streaming untuk {$idolLabel}.");

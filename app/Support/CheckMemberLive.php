@@ -8,7 +8,18 @@ use Throwable;
 
 final class CheckMemberLive
 {
-    private const CACHE_SECONDS = 20;
+    /**
+     * Reuse the computed per-member state briefly so live URL/image changes are
+     * picked up quickly without hitting the API again.
+     */
+    private const DETAILS_CACHE_SECONDS = 20;
+
+    /**
+     * The /api/now_live payload is refreshed by the scheduler every 10 minutes.
+     * Keep page-side cache slightly longer so a page request between two
+     * scheduler runs never triggers an extra API call.
+     */
+    private const ITEMS_CACHE_SECONDS = 660;
 
     private const TIMEOUT_SECONDS = 3;
 
@@ -48,7 +59,7 @@ final class CheckMemberLive
 
         return Cache::remember(
             'member_live_'.md5(implode('|', $names)),
-            self::CACHE_SECONDS,
+            self::DETAILS_CACHE_SECONDS,
             fn (): array => $this->detailsFromItems($this->items($baseUrl, $apiKey), $names),
         );
     }
@@ -57,9 +68,10 @@ final class CheckMemberLive
      * Raw live entries from the API that belong to the given member.
      *
      * @param  string|array<int, string>  $memberNames  Idol name and/or shortname.
+     * @param  bool  $refresh  Bypass the shared cache and fetch a fresh payload.
      * @return array<int, array<string, mixed>>
      */
-    public function matchingItems(string|array $memberNames): array
+    public function matchingItems(string|array $memberNames, bool $refresh = false): array
     {
         $names = $this->normalizeNames($memberNames);
         $baseUrl = rtrim((string) config('services.jkt48connect.url'), '/');
@@ -69,8 +81,12 @@ final class CheckMemberLive
             return [];
         }
 
+        $items = $refresh
+            ? $this->refreshItems($baseUrl, $apiKey)
+            : $this->items($baseUrl, $apiKey);
+
         return array_values(array_filter(
-            $this->items($baseUrl, $apiKey),
+            $items,
             fn (mixed $item): bool => is_array($item) && $this->matchesMember($item, $names),
         ));
     }
@@ -107,31 +123,62 @@ final class CheckMemberLive
      */
     private function items(string $baseUrl, string $apiKey): array
     {
-        return Cache::remember(self::ITEMS_CACHE_KEY, self::CACHE_SECONDS, function () use ($baseUrl, $apiKey): array {
-            try {
-                $response = Http::withHeaders([
-                    'Accept' => 'application/json',
-                    'Authorization' => 'Bearer '.$apiKey,
-                    'X-API-KEY' => $apiKey,
-                ])->timeout(self::TIMEOUT_SECONDS)->get("{$baseUrl}/api/now_live", ['group' => 'jkt48']);
-            } catch (Throwable) {
-                return [];
-            }
+        return Cache::remember(
+            self::ITEMS_CACHE_KEY,
+            self::ITEMS_CACHE_SECONDS,
+            fn (): array => $this->fetchItems($baseUrl, $apiKey) ?? [],
+        );
+    }
 
-            if (! $response->successful()) {
-                return [];
-            }
+    /**
+     * Fetch a fresh payload and replace the shared cache entry.
+     *
+     * If the API call fails, keep the last successful payload instead of
+     * caching an empty response for the whole scheduler window.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function refreshItems(string $baseUrl, string $apiKey): array
+    {
+        $items = $this->fetchItems($baseUrl, $apiKey);
 
-            $payload = $response->json();
+        if ($items === null) {
+            return $this->items($baseUrl, $apiKey);
+        }
 
-            if (! is_array($payload)) {
-                return [];
-            }
+        Cache::put(self::ITEMS_CACHE_KEY, $items, self::ITEMS_CACHE_SECONDS);
 
-            $items = is_array($payload['data'] ?? null) ? $payload['data'] : $payload;
+        return $items;
+    }
 
-            return array_values(array_filter($items, 'is_array'));
-        });
+    /**
+     * @return array<int, array<string, mixed>>|null
+     */
+    private function fetchItems(string $baseUrl, string $apiKey): ?array
+    {
+        try {
+            $response = Http::withHeaders([
+                'Accept' => 'application/json',
+                'Authorization' => 'Bearer '.$apiKey,
+                'X-API-KEY' => $apiKey,
+            ])->timeout(self::TIMEOUT_SECONDS)->get("{$baseUrl}/api/now_live", ['group' => 'jkt48']);
+        } catch (Throwable) {
+            return null;
+        }
+
+        if (! $response->successful()) {
+            return null;
+        }
+
+        $payload = $response->json();
+
+        if (! is_array($payload)) {
+            return null;
+        }
+
+        $items = is_array($payload['data'] ?? null) ? $payload['data'] : $payload;
+
+        return array_values(array_filter($items, 'is_array'));
     }
 
     /**
