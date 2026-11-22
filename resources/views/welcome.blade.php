@@ -208,8 +208,8 @@
 
                 <section id="live" class="flex flex-1 flex-col rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
                     <div class="border-b border-slate-200 pb-5 dark:border-slate-800">
-                        <p class="text-sm font-bold uppercase tracking-[0.22em] text-indigo-600 dark:text-indigo-400">Live</p>
-                        <h3 class="mt-2 text-2xl font-black text-slate-900 dark:text-white">Status Live</h3>
+                        <p class="text-sm font-bold uppercase tracking-[0.22em] text-indigo-600 dark:text-indigo-400">Live Streaming</p>
+                        <h3 class="mt-2 text-2xl font-black text-slate-900 dark:text-white">Informasi Live Oshimen</h3>
                     </div>
 
                     @php
