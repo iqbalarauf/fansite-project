@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\LiveStreaming;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -22,7 +21,7 @@ class CheckMemberLiveStatusCommandTest extends TestCase
         ]);
     }
 
-    public function test_it_stores_new_live_sessions_for_the_idol(): void
+    public function test_it_refreshes_live_sessions_without_storing_them(): void
     {
         $this->setShortname('Oniel');
         $this->fakeLive([
@@ -32,16 +31,11 @@ class CheckMemberLiveStatusCommandTest extends TestCase
 
         $this->artisan('app:check-member-live')->assertExitCode(0);
 
-        $this->assertDatabaseHas('live_streaming', [
-            'live_id' => 'oniel-showroom-1',
-            'platform' => 'Showroom',
-            'live_date' => '2026-09-16',
-        ]);
-
-        $this->assertDatabaseMissing('live_streaming', ['live_id' => 'lulu-idn-1']);
+        Http::assertSentCount(1);
+        $this->assertDatabaseCount('live_streaming', 0);
     }
 
-    public function test_it_stores_idn_sessions_with_additional_info(): void
+    public function test_it_does_not_persist_the_notification_caption_to_live_streaming(): void
     {
         $this->setShortname('Oniel');
         $this->fakeLive([
@@ -57,14 +51,11 @@ class CheckMemberLiveStatusCommandTest extends TestCase
 
         $this->artisan('app:check-member-live')->assertExitCode(0);
 
-        $this->assertDatabaseHas('live_streaming', [
-            'live_id' => 'oniel-idn-1',
-            'platform' => 'IDN App',
-            'additional_info' => '🔴 Oniel — Ngobrol santai',
-        ]);
+        $this->assertDatabaseMissing('live_streaming', ['live_id' => 'oniel-idn-1']);
+        $this->assertDatabaseCount('live_streaming', 0);
     }
 
-    public function test_it_does_not_duplicate_existing_live_sessions(): void
+    public function test_it_does_not_create_rows_when_run_repeatedly(): void
     {
         $this->setShortname('Oniel');
         $this->fakeLive([
@@ -74,10 +65,10 @@ class CheckMemberLiveStatusCommandTest extends TestCase
         $this->artisan('app:check-member-live')->assertExitCode(0);
         $this->artisan('app:check-member-live')->assertExitCode(0);
 
-        $this->assertSame(1, LiveStreaming::query()->where('live_id', 'oniel-showroom-1')->count());
+        $this->assertDatabaseCount('live_streaming', 0);
     }
 
-    public function test_it_skips_items_with_unknown_platform(): void
+    public function test_it_ignores_items_with_unknown_platform(): void
     {
         $this->setShortname('Oniel');
         $this->fakeLive([
@@ -87,6 +78,7 @@ class CheckMemberLiveStatusCommandTest extends TestCase
         $this->artisan('app:check-member-live')->assertExitCode(0);
 
         $this->assertDatabaseMissing('live_streaming', ['live_id' => 'oniel-unknown-1']);
+        $this->assertDatabaseCount('live_streaming', 0);
     }
 
     public function test_it_fails_when_idol_shortname_is_missing(): void

@@ -207,7 +207,7 @@ class CheckMemberLiveTest extends TestCase
         $this->assertFalse($status['idn']);
     }
 
-    public function test_welcome_page_shows_the_live_image_without_the_stream_title(): void
+    public function test_welcome_page_does_not_render_the_stream_title_or_streamer_image(): void
     {
         $this->setShortname('Oniel');
         $this->fakeLive([
@@ -226,8 +226,9 @@ class CheckMemberLiveTest extends TestCase
             ->assertOk()
             ->assertSee('IDN App')
             ->assertSee('Online')
+            ->assertSee('icon-app/idn.webp', false)
             ->assertDontSee('Live Oniel 123')
-            ->assertSee('https://cdn.example/oniel-live.webp', false);
+            ->assertDontSee('https://cdn.example/oniel-live.webp', false);
     }
 
     public function test_details_returns_live_state_and_stream_url_per_platform(): void

@@ -3,11 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Models\AboutSettings;
-use App\Models\LiveStreaming;
 use App\Support\CheckMemberLive;
-use App\Support\Timezone;
 use Illuminate\Console\Command;
-use Illuminate\Support\Carbon;
 
 class CheckMemberLiveStatus extends Command
 {
@@ -23,7 +20,7 @@ class CheckMemberLiveStatus extends Command
      *
      * @var string
      */
-    protected $description = 'Check the idol live status and store new live sessions to the database';
+    protected $description = 'Refresh the idol live status from the JKT48Connect API';
 
     /**
      * Execute the console command.
@@ -49,75 +46,20 @@ class CheckMemberLiveStatus extends Command
         }
 
         $idolLabel = implode(' / ', $memberNames);
+
+        // Refresh the /api/now_live cache used by the Status Live card.
+        // Live sessions are intentionally not persisted here: live_streaming
+        // is filled from /api/recent after a session has ended.
         $items = $memberLive->matchingItems($memberNames, refresh: true);
 
         if ($items === []) {
             $this->info("Tidak ada live streaming untuk {$idolLabel}.");
-
-            return self::SUCCESS;
+        } else {
+            $this->info(count($items)." live streaming aktif untuk {$idolLabel}.");
         }
 
-        $saved = 0;
-        $skipped = 0;
-
-        foreach ($items as $item) {
-            if ($this->store($item)) {
-                $saved++;
-            } else {
-                $skipped++;
-            }
-        }
-
-        $this->info("{$saved} live streaming disimpan, {$skipped} dilewati.");
         $this->info('Check completed.');
 
         return self::SUCCESS;
-    }
-
-    /**
-     * @param  array<string, mixed>  $item
-     */
-    private function store(array $item): bool
-    {
-        $liveId = $item['slug'] ?? $item['_id'] ?? $item['data_id'] ?? null;
-
-        if (! $liveId) {
-            return false;
-        }
-
-        $liveId = (string) $liveId;
-
-        if (LiveStreaming::query()->where('live_id', $liveId)->exists()) {
-            return false;
-        }
-
-        $platform = match (strtolower(trim((string) ($item['platform'] ?? $item['type'] ?? '')))) {
-            'idn', 'idn app' => 'IDN App',
-            'showroom' => 'Showroom',
-            default => null,
-        };
-
-        if ($platform === null) {
-            return false;
-        }
-
-        $startedAt = $item['started_at'] ?? null;
-        $liveDate = $startedAt
-            ? Carbon::parse($startedAt)->timezone('Asia/Jakarta')->toDateString()
-            : Timezone::nowLocal()->toDateString();
-
-        $title = $item['title'] ?? ($item['idn']['title'] ?? ($item['notification_caption'] ?? null));
-
-        LiveStreaming::query()->create([
-            'live_id' => $liveId,
-            'platform' => $platform,
-            'live_date' => $liveDate,
-            'duration' => null,
-            'additional_info' => $title !== null ? trim((string) $title) : null,
-        ]);
-
-        $this->info("Saved live streaming: {$platform} - {$liveDate}");
-
-        return true;
     }
 }
