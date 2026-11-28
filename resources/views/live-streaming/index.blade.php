@@ -15,6 +15,9 @@
                         Fetch Data
                     </button>
                 @endunless
+                <flux:button variant="outline" icon="chart-bar" :href="route('live-streaming.dashboard')">
+                    Statistik
+                </flux:button>
                 <flux:button variant="filled" icon="arrow-down-tray" :href="route('live-streaming.export')">
                     Export to Excel
                 </flux:button>

@@ -15,6 +15,7 @@ use App\Http\Controllers\CustomPageController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LiveRecordingController;
 use App\Http\Controllers\LiveStreamingController;
+use App\Http\Controllers\LiveStreamingDashboardController;
 use App\Http\Controllers\MagazineController;
 use App\Http\Controllers\MeetGreetEventsController;
 use App\Http\Controllers\MerchandiseController;
@@ -99,6 +100,7 @@ Route::middleware(['auth', 'verified', 'block-view-only-writes'])->group(functio
 
         // Live Streaming
         Route::get('live-streaming', [LiveStreamingController::class, 'index'])->name('live-streaming.index');
+        Route::get('live-streaming/dashboard', [LiveStreamingDashboardController::class, 'index'])->name('live-streaming.dashboard');
         Route::get('live-streaming/export', [LiveStreamingController::class, 'export'])->name('live-streaming.export');
         Route::post('live-streaming', [LiveStreamingController::class, 'store'])->name('live-streaming.store');
         Route::post('live-streaming/fetch', [LiveStreamingController::class, 'fetchManually'])->name('live-streaming.fetch-manually');

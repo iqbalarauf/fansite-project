@@ -40,8 +40,11 @@
                             <flux:sidebar.item icon="radio" :href="route('concert-events.index')" :current="request()->routeIs('concert-events.*')" :tooltip="__('Concert & Events')" wire:navigate>
                                 {{ __('Concert & Events') }}
                             </flux:sidebar.item>
-                            <flux:sidebar.item icon="video-camera" :href="route('live-streaming.index')" :current="request()->routeIs('live-streaming.*')" wire:navigate>
+                            <flux:sidebar.item icon="video-camera" :href="route('live-streaming.index')" :current="request()->routeIs('live-streaming.index')" wire:navigate>
                                 {{ __('Live Streaming') }}
+                            </flux:sidebar.item>
+                            <flux:sidebar.item icon="chart-bar" :href="route('live-streaming.dashboard')" :current="request()->routeIs('live-streaming.dashboard')" wire:navigate>
+                                {{ __('Statistik Live') }}
                             </flux:sidebar.item>
                             <flux:sidebar.item icon="film" :href="route('live-recordings.index')" :current="request()->routeIs('live-recordings.*')" wire:navigate>
                                 {{ __('Rekaman Live') }}
