@@ -85,10 +85,59 @@ final class CheckMemberLive
             ? $this->refreshItems($baseUrl, $apiKey)
             : $this->items($baseUrl, $apiKey);
 
+        return $this->filterMatching($items, $names);
+    }
+
+    /**
+     * Matching live entries from a fresh API call, or null when the API is
+     * unavailable. Unlike matchingItems(), this never falls back to stale
+     * cache, so callers can skip destructive decisions during an outage.
+     *
+     * @param  string|array<int, string>  $memberNames
+     * @return array<int, array<string, mixed>>|null
+     */
+    public function freshMatchingItems(string|array $memberNames): ?array
+    {
+        $names = $this->normalizeNames($memberNames);
+        $baseUrl = rtrim((string) config('services.jkt48connect.url'), '/');
+        $apiKey = (string) config('services.jkt48connect.key');
+
+        if ($names === [] || $baseUrl === '' || $apiKey === '') {
+            return [];
+        }
+
+        $items = $this->fetchItems($baseUrl, $apiKey);
+
+        if ($items === null) {
+            return null;
+        }
+
+        Cache::put(self::ITEMS_CACHE_KEY, $items, self::ITEMS_CACHE_SECONDS);
+
+        return $this->filterMatching($items, $names);
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $items
+     * @param  array<int, string>  $names
+     * @return array<int, array<string, mixed>>
+     */
+    private function filterMatching(array $items, array $names): array
+    {
         return array_values(array_filter(
             $items,
             fn (mixed $item): bool => is_array($item) && $this->matchesMember($item, $names),
         ));
+    }
+
+    /**
+     * Extract the HLS/stream URL from a raw /api/now_live item.
+     *
+     * @param  array<string, mixed>  $item
+     */
+    public function streamUrlFor(array $item): ?string
+    {
+        return $this->streamUrl($item);
     }
 
     /**

@@ -13,6 +13,7 @@ use App\Http\Controllers\Content\TimelineController;
 use App\Http\Controllers\Content\TriviaController;
 use App\Http\Controllers\CustomPageController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LiveRecordingController;
 use App\Http\Controllers\LiveStreamingController;
 use App\Http\Controllers\MagazineController;
 use App\Http\Controllers\MeetGreetEventsController;
@@ -102,6 +103,12 @@ Route::middleware(['auth', 'verified', 'block-view-only-writes'])->group(functio
         Route::post('live-streaming', [LiveStreamingController::class, 'store'])->name('live-streaming.store');
         Route::post('live-streaming/fetch', [LiveStreamingController::class, 'fetchManually'])->name('live-streaming.fetch-manually');
         Route::put('live-streaming/{liveStreaming}', [LiveStreamingController::class, 'update'])->name('live-streaming.update');
+
+        // Live Recordings (admin-only)
+        Route::get('live-recordings', [LiveRecordingController::class, 'index'])->name('live-recordings.index');
+        Route::get('live-recordings/{recording}/download', [LiveRecordingController::class, 'download'])->name('live-recordings.download');
+        Route::get('live-recordings/{recording}', [LiveRecordingController::class, 'preview'])->name('live-recordings.preview');
+        Route::delete('live-recordings/{recording}', [LiveRecordingController::class, 'destroy'])->name('live-recordings.destroy');
     });
 
     Route::middleware('role:super_admin,view_only,content_creator')->group(function () {

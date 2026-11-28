@@ -38,6 +38,15 @@ return [
             'report' => false,
         ],
 
+        'recordings' => [
+            'driver' => 'local',
+            'root' => storage_path('app/recordings'),
+            // Recordings must never be reachable without an authenticated admin.
+            'serve' => false,
+            'throw' => true,
+            'report' => false,
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

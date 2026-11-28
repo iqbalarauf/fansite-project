@@ -34,5 +34,26 @@ class ScheduledTasksTest extends TestCase
 
         $this->assertNotNull($theater);
         $this->assertSame('0 0 * * *', $theater->expression);
+
+        $record = $events->first(
+            fn ($event): bool => str_contains((string) $event->command, 'app:record-member-live'),
+        );
+
+        $this->assertNotNull($record);
+        $this->assertSame('*/5 * * * *', $record->expression);
+
+        $finalize = $events->first(
+            fn ($event): bool => str_contains((string) $event->command, 'app:finalize-live-recordings'),
+        );
+
+        $this->assertNotNull($finalize);
+        $this->assertSame('* * * * *', $finalize->expression);
+
+        $prune = $events->first(
+            fn ($event): bool => str_contains((string) $event->command, 'app:prune-live-recordings'),
+        );
+
+        $this->assertNotNull($prune);
+        $this->assertSame('15 3 * * *', $prune->expression);
     }
 }

@@ -19,6 +19,12 @@ Schedule::command('app:check-member-live')->everyTenMinutes()->withoutOverlappin
 // Data show teater disinkronkan sekali sehari.
 Schedule::command('app:fetch-theater-shows')->daily()->withoutOverlapping();
 
+// Rekaman live oshimen: deteksi live baru, hentikan yang selesai, lalu bersihkan
+// rekaman lama. Command tetap aman dijalankan saat fitur dinonaktifkan.
+Schedule::command('app:record-member-live')->everyFiveMinutes()->withoutOverlapping();
+Schedule::command('app:finalize-live-recordings')->everyMinute()->withoutOverlapping();
+Schedule::command('app:prune-live-recordings')->dailyAt('03:15')->withoutOverlapping();
+
 Schedule::command('app:sync-google-sheets')->hourly()->withoutOverlapping();
 
 // Reset bulanan reference teater (reference yang dipakai show belum lewat dipertahankan).

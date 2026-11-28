@@ -43,6 +43,9 @@
                             <flux:sidebar.item icon="video-camera" :href="route('live-streaming.index')" :current="request()->routeIs('live-streaming.*')" wire:navigate>
                                 {{ __('Live Streaming') }}
                             </flux:sidebar.item>
+                            <flux:sidebar.item icon="film" :href="route('live-recordings.index')" :current="request()->routeIs('live-recordings.*')" wire:navigate>
+                                {{ __('Rekaman Live') }}
+                            </flux:sidebar.item>
                         </div>
                     </div>
                 @endif
